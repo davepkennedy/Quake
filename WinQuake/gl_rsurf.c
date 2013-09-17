@@ -21,7 +21,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern int			skytexturenum;
+
+#else
+
 int			skytexturenum;
+
+#endif /* APPLE || MACOSX */
 
 #ifndef GL_RGBA4
 #define	GL_RGBA4	0
@@ -34,7 +42,7 @@ int		lightmap_textures;
 
 unsigned		blocklights[18*18];
 
-#define	BLOCK_WIDTH		128
+#define	BLOCK_WIDTH	128
 #define	BLOCK_HEIGHT	128
 
 #define	MAX_LIGHTMAPS	64
@@ -57,6 +65,19 @@ byte		lightmaps[4*MAX_LIGHTMAPS*BLOCK_WIDTH*BLOCK_HEIGHT];
 // For gl_texsort 0
 msurface_t  *skychain = NULL;
 msurface_t  *waterchain = NULL;
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void 	EmitBothSkyLayers (msurface_t *);
+extern void 	EmitWaterPolys (msurface_t *);
+extern void 	EmitSkyPolys (msurface_t *);
+extern qboolean R_CullBox (vec3_t, vec3_t);
+extern void 	R_DrawSkyChain (msurface_t *);
+extern void 	R_MarkLights (dlight_t *, int, mnode_t *);
+extern void	R_RotateForEntity (entity_t *);
+extern void 	R_StoreEfrags (efrag_t **);
+
+#endif /* APPLE || MACOSX */
 
 void R_RenderDynamicLightmaps (msurface_t *fa);
 
@@ -137,13 +158,13 @@ Combine and scale multiple lightmaps into the 8.8 format in blocklights
 */
 void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 {
-	int			smax, tmax;
-	int			t;
-	int			i, j, size;
+	int		smax, tmax;
+	int		t;
+	int		i, j, size;
 	byte		*lightmap;
 	unsigned	scale;
-	int			maps;
-	int			lightadj[4];
+	int		maps;
+//	int		lightadj[4];
 	unsigned	*bl;
 
 	surf->cached_dlight = (surf->dlightframe == r_framecount);
@@ -411,11 +432,11 @@ void R_DrawSequentialPoly (msurface_t *s)
 {
 	glpoly_t	*p;
 	float		*v;
-	int			i;
+	int		i;
 	texture_t	*t;
-	vec3_t		nv, dir;
-	float		ss, ss2, length;
-	float		s1, t1;
+	vec3_t		nv;//, dir;
+//	float		ss, ss2, length;
+//	float		s1, t1;
 	glRect_t	*theRect;
 
 	//
@@ -593,9 +614,9 @@ Warp the vertex coordinates
 void DrawGLWaterPoly (glpoly_t *p)
 {
 	int		i;
-	float	*v;
-	float	s, t, os, ot;
-	vec3_t	nv;
+	float		*v;
+//	float		s, t, os, ot;
+	vec3_t		nv;
 
 	GL_DisableMultitexture();
 
@@ -617,9 +638,9 @@ void DrawGLWaterPoly (glpoly_t *p)
 void DrawGLWaterPolyLightmap (glpoly_t *p)
 {
 	int		i;
-	float	*v;
-	float	s, t, os, ot;
-	vec3_t	nv;
+	float		*v;
+//	float		s, t, os, ot;
+	vec3_t		nv;
 
 	GL_DisableMultitexture();
 
@@ -831,11 +852,11 @@ Multitexture
 */
 void R_RenderDynamicLightmaps (msurface_t *fa)
 {
-	texture_t	*t;
+//	texture_t	*t;
 	byte		*base;
-	int			maps;
-	glRect_t    *theRect;
-	int smax, tmax;
+	int		maps;
+	glRect_t    	*theRect;
+	int		smax, tmax;
 
 	c_brush_polys++;
 
@@ -1074,9 +1095,9 @@ R_DrawBrushModel
 */
 void R_DrawBrushModel (entity_t *e)
 {
-	int			j, k;
+	int		/* j, */ k;
 	vec3_t		mins, maxs;
-	int			i, numsurfaces;
+	int		i;//, numsurfaces;
 	msurface_t	*psurf;
 	float		dot;
 	mplane_t	*pplane;
@@ -1186,13 +1207,13 @@ R_RecursiveWorldNode
 */
 void R_RecursiveWorldNode (mnode_t *node)
 {
-	int			i, c, side, *pindex;
-	vec3_t		acceptpt, rejectpt;
+	int		/* i, */ c, side;//, *pindex;
+//	vec3_t		acceptpt, rejectpt;
 	mplane_t	*plane;
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
-	double		d, dot;
-	vec3_t		mins, maxs;
+	double		/* d, */ dot;
+//	vec3_t		mins, maxs;
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -1313,7 +1334,7 @@ R_DrawWorld
 void R_DrawWorld (void)
 {
 	entity_t	ent;
-	int			i;
+//	int		i;
 
 	memset (&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
@@ -1401,7 +1422,7 @@ int AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
-	int		bestx;
+//	int		bestx;
 	int		texnum;
 
 	for (texnum=0 ; texnum<MAX_LIGHTMAPS ; texnum++)
@@ -1436,6 +1457,7 @@ int AllocBlock (int w, int h, int *x, int *y)
 	}
 
 	Sys_Error ("AllocBlock: full");
+        return(0);
 }
 
 
@@ -1451,14 +1473,14 @@ BuildSurfaceDisplayList
 */
 void BuildSurfaceDisplayList (msurface_t *fa)
 {
-	int			i, lindex, lnumverts, s_axis, t_axis;
-	float		dist, lastdist, lzi, scale, u, v, frac;
-	unsigned	mask;
-	vec3_t		local, transformed;
+	int		i, lindex, lnumverts;//, s_axis, t_axis;
+//	float		dist, lastdist, lzi, scale, u, v, frac;
+//	unsigned	mask;
+//	vec3_t		local, transformed;
 	medge_t		*pedges, *r_pedge;
-	mplane_t	*pplane;
-	int			vertpage, newverts, newpage, lastvert;
-	qboolean	visible;
+//	mplane_t	*pplane;
+	int		vertpage; //, newverts, newpage, lastvert;
+//	qboolean	visible;
 	float		*vec;
 	float		s, t;
 	glpoly_t	*poly;
@@ -1529,7 +1551,7 @@ void BuildSurfaceDisplayList (msurface_t *fa)
 		{
 			vec3_t v1, v2;
 			float *prev, *this, *next;
-			float f;
+			//float f;
 
 			prev = poly->verts[(i + lnumverts - 1) % lnumverts];
 			this = poly->verts[i];
@@ -1571,7 +1593,7 @@ GL_CreateSurfaceLightmap
 */
 void GL_CreateSurfaceLightmap (msurface_t *surf)
 {
-	int		smax, tmax, s, t, l, i;
+	int		smax, tmax;//, s, t, l, i;
 	byte	*base;
 
 	if (surf->flags & (SURF_DRAWSKY|SURF_DRAWTURB))
@@ -1600,6 +1622,9 @@ void GL_BuildLightmaps (void)
 	int		i, j;
 	model_t	*m;
 	extern qboolean isPermedia;
+#if defined(__APPLE__) || defined(MACOSX)
+        extern qboolean	gl_luminace_lightmaps;
+#endif /* __APPLE__ || MACOSX */
 
 	memset (allocated, 0, sizeof(allocated));
 
@@ -1611,10 +1636,23 @@ void GL_BuildLightmaps (void)
 		texture_extension_number += MAX_LIGHTMAPS;
 	}
 
-	gl_lightmap_format = GL_LUMINANCE;
+#if defined(__APPLE__) || defined(MACOSX)
+
+        // <AWE> MacOS X v10.1, GLQuake v1.0.2:
+        // Using GL_LUMINACE causes frame drops in rooms with many lightmap textures.
+        // Since GL_INTENSITY, GL_ALPHA result in totaly dark surfaces, we have to use GL_RGBA as default.
+        
+        if (gl_luminace_lightmaps == false)
+            gl_lightmap_format = GL_RGBA;
+        else
+
+#endif /* __APPLE__ || MACOSX */
+            gl_lightmap_format = GL_LUMINANCE;
+
 	// default differently on the Permedia
 	if (isPermedia)
 		gl_lightmap_format = GL_RGBA;
+
 
 	if (COM_CheckParm ("-lm_1"))
 		gl_lightmap_format = GL_LUMINANCE;
@@ -1682,6 +1720,10 @@ void GL_BuildLightmaps (void)
 		GL_Bind(lightmap_textures + i);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#if defined (__APPLE__) || defined (MACOSX)
+                GL_CheckTextureRAM (GL_TEXTURE_2D, 0, lightmap_bytes, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 0,
+                                    gl_lightmap_format, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 		glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes
 		, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 
 		gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps+i*BLOCK_WIDTH*BLOCK_HEIGHT*lightmap_bytes);

@@ -205,5 +205,10 @@ extern	int		gl_lightmap_format;
 extern	int		gl_solid_format;
 extern	int		gl_alpha_format;
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern void R_TranslatePlayerSkin (int playernum);
+extern void GL_Bind (int texnum);
+#else
 void R_TranslatePlayerSkin (int playernum);
 void GL_Bind (int texnum);
+#endif /* APPLE || MACOSX */

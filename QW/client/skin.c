@@ -117,12 +117,20 @@ byte	*Skin_Cache (skin_t *skin)
 //
 // load the pic from disk
 //
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, 1024, "skins/%s.pcx", skin->name);
+#else
 	sprintf (name, "skins/%s.pcx", skin->name);
+#endif /* __APPLE__ || MACOSX */
 	raw = COM_LoadTempFile (name);
 	if (!raw)
 	{
 		Con_Printf ("Couldn't load skin %s\n", name);
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (name, 1024, "skins/%s.pcx", baseskin.string);
+#else
 		sprintf (name, "skins/%s.pcx", baseskin.string);
+#endif /* __APPLE__ || MACOSX */
 		raw = COM_LoadTempFile (name);
 		if (!raw)
 		{
@@ -136,6 +144,19 @@ byte	*Skin_Cache (skin_t *skin)
 //
 	pcx = (pcx_t *)raw;
 	raw = &pcx->data;
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+        pcx->xmax = LittleShort (pcx->xmax);
+        pcx->ymax = LittleShort (pcx->ymax);
+        pcx->xmin = LittleShort (pcx->xmin);
+        pcx->ymin = LittleShort (pcx->ymin);
+        pcx->hres = LittleShort (pcx->hres);
+        pcx->vres = LittleShort (pcx->vres);
+        pcx->bytes_per_line = LittleShort (pcx->bytes_per_line);
+        pcx->palette_type = LittleShort (pcx->palette_type);
+
+#endif /* __APPLE__ || MACOSX */
 
 	if (pcx->manufacturer != 0x0a
 		|| pcx->version != 5

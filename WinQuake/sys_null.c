@@ -208,7 +208,7 @@ void Sys_LowFPPrecision (void)
 
 //=============================================================================
 
-void main (int argc, char **argv)
+int main (int argc, char **argv)
 {
 	static quakeparms_t    parms;
 
@@ -227,6 +227,8 @@ void main (int argc, char **argv)
 	{
 		Host_Frame (0.1);
 	}
+
+        return(0);
 }
 
 

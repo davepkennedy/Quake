@@ -59,11 +59,11 @@ void SV_FlushRedirect (void)
 		send[4] = A2C_PRINT;
 		memcpy (send+5, outputbuf, strlen(outputbuf)+1);
 
-		NET_SendPacket (strlen(send)+1, send, net_from);
+		NET_SendPacket (((int) strlen(send))+1, send, net_from);
 	}
 	else if (sv_redirected == RD_CLIENT)
 	{
-		ClientReliableWrite_Begin (host_client, svc_print, strlen(outputbuf)+3);
+		ClientReliableWrite_Begin (host_client, svc_print, ((int) strlen(outputbuf))+3);
 		ClientReliableWrite_Byte (host_client, PRINT_HIGH);
 		ClientReliableWrite_String (host_client, outputbuf);
 	}
@@ -109,7 +109,11 @@ void Con_Printf (char *fmt, ...)
 	char		msg[MAXPRINTMSG];
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	// add to redirected message
@@ -142,7 +146,11 @@ void Con_DPrintf (char *fmt, ...)
 		return;
 
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ ||ÊMACOSX */
 	va_end (argptr);
 	
 	Con_Printf ("%s", msg);
@@ -158,7 +166,7 @@ EVENT MESSAGES
 
 static void SV_PrintToClient(client_t *cl, int level, char *string)
 {
-	ClientReliableWrite_Begin (cl, svc_print, strlen(string)+3);
+	ClientReliableWrite_Begin (cl, svc_print, ((int) strlen(string))+3);
 	ClientReliableWrite_Byte (cl, level);
 	ClientReliableWrite_String (cl, string);
 }
@@ -180,7 +188,11 @@ void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...)
 		return;
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, fmt,argptr);
+#else
 	vsprintf (string, fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	SV_PrintToClient(cl, level, string);
@@ -201,7 +213,11 @@ void SV_BroadcastPrintf (int level, char *fmt, ...)
 	int			i;
 
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, fmt,argptr);
+#else
 	vsprintf (string, fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 	Sys_Printf ("%s", string);	// print to the console
@@ -232,7 +248,11 @@ void SV_BroadcastCommand (char *fmt, ...)
 	if (!sv.state)
 		return;
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, fmt,argptr);
+#else
 	vsprintf (string, fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);
@@ -265,7 +285,7 @@ void SV_Multicast (vec3_t origin, int to)
 	if (!leaf)
 		leafnum = 0;
 	else
-		leafnum = leaf - sv.worldmodel->leafs;
+		leafnum = (int) (leaf - sv.worldmodel->leafs);
 
 	reliable = false;
 
@@ -311,7 +331,7 @@ void SV_Multicast (vec3_t origin, int to)
 		if (leaf)
 		{
 			// -1 is because pvs rows are 1 based, not 0 based like leafs
-			leafnum = leaf - sv.worldmodel->leafs - 1;
+			leafnum = ((int) (leaf - sv.worldmodel->leafs)) - 1;
 			if ( !(mask[leafnum>>3] & (1<<(leafnum&7)) ) )
 			{
 //				Con_Printf ("supressed multicast\n");

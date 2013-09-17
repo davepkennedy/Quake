@@ -23,7 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#ifndef GL_COLOR_INDEX8_EXT
 #define GL_COLOR_INDEX8_EXT     0x80E5
+#endif /* GL_COLOR_INDEX8_EXT */
 
 extern unsigned char d_15to8table[65536];
 
@@ -46,6 +48,13 @@ typedef struct
 
 byte		conback_buffer[sizeof(qpic_t) + sizeof(glpic_t)];
 qpic_t		*conback = (qpic_t *)&conback_buffer;
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern int GL_LoadPicTexture (qpic_t *pic);
+extern qboolean VID_Is8bit();
+
+#endif /* APPLE || MACOSX */
 
 int		gl_lightmap_format = 4;
 int		gl_solid_format = 3;
@@ -72,6 +81,10 @@ int			numgltextures;
 
 void GL_Bind (int texnum)
 {
+#if defined (__APPLE__) || defined (MACOSX)
+        extern qboolean		gl_texturefilteranisotropic;
+#endif /* __APPLE__ || MACOSX */
+
 	if (gl_nobind.value)
 		texnum = char_texture;
 	if (currenttexture == texnum)
@@ -81,6 +94,15 @@ void GL_Bind (int texnum)
 	bindTexFunc (GL_TEXTURE_2D, texnum);
 #else
 	glBindTexture(GL_TEXTURE_2D, texnum);
+
+#if defined (__APPLE__) || defined (MACOSX)
+        if (gl_texturefilteranisotropic)
+        {
+            extern GLfloat	gl_texureanisotropylevel;
+            
+            glTexParameterfv (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &gl_texureanisotropylevel);
+        }
+#endif /* __APPLE__ || MACOSX */        
 #endif
 }
 
@@ -100,17 +122,17 @@ void GL_Bind (int texnum)
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
 
-int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
+int		scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
 byte		scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
 qboolean	scrap_dirty;
-int			scrap_texnum;
+int		scrap_texnum;
 
 // returns a texture number and the position inside it
 int Scrap_AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
-	int		bestx;
+//	int		bestx;
 	int		texnum;
 
 	for (texnum=0 ; texnum<MAX_SCRAPS ; texnum++)
@@ -145,6 +167,7 @@ int Scrap_AllocBlock (int w, int h, int *x, int *y)
 	}
 
 	Sys_Error ("Scrap_AllocBlock: full");
+        return(0);
 }
 
 int	scrap_uploads;
@@ -368,15 +391,17 @@ Draw_Init
 void Draw_Init (void)
 {
 	int		i;
-	qpic_t	*cb;
-	byte	*dest, *src;
+	qpic_t		*cb;
+	byte		*dest;
 	int		x, y;
-	char	ver[40];
-	glpic_t	*gl;
+	char		ver[40];
+	glpic_t		*gl;
 	int		start;
-	byte	*ncdata;
+	byte		*ncdata;
+#if 0
+        byte		 *src;
 	int		f, fstep;
-
+#endif
 
 	Cvar_RegisterVariable (&gl_nobind);
 	Cvar_RegisterVariable (&gl_max_size);
@@ -411,11 +436,13 @@ void Draw_Init (void)
 	// hack the version number directly into the pic
 #if defined(__linux__)
 	sprintf (ver, "(Linux %2.2f, gl %4.2f) %4.2f", (float)LINUX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
+#elif defined (__APPLE__) || defined (__MACOSX__)
+	snprintf (ver, 40, "(MacOS X %2.2f, gl %4.2f) %4.2f", (float)MACOSX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
 #else
 	sprintf (ver, "(gl %4.2f) %4.2f", (float)GLQUAKE_VERSION, (float)VERSION);
 #endif
 	dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
-	y = strlen(ver);
+	y = (int) strlen(ver);
 	for (x=0 ; x<y ; x++)
 		Draw_CharToConback (ver[x], dest+(x<<3));
 
@@ -496,11 +523,11 @@ smoothly scrolled off.
 */
 void Draw_Character (int x, int y, int num)
 {
-	byte			*dest;
-	byte			*source;
-	unsigned short	*pusdest;
-	int				drawline;	
-	int				row, col;
+//	byte			*dest;
+//	byte			*source;
+//	unsigned short		*pusdest;
+//	int			drawline;	
+	int			row, col;
 	float			frow, fcol, size;
 
 	if (num == 32)
@@ -567,9 +594,9 @@ Draw_AlphaPic
 */
 void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 {
-	byte			*dest, *source;
-	unsigned short	*pusdest;
-	int				v, u;
+//	byte			*dest, *source;
+//	unsigned short		*pusdest;
+//	int			v, u;
 	glpic_t			*gl;
 
 	if (scrap_dirty)
@@ -604,9 +631,9 @@ Draw_Pic
 */
 void Draw_Pic (int x, int y, qpic_t *pic)
 {
-	byte			*dest, *source;
-	unsigned short	*pusdest;
-	int				v, u;
+//	byte			*dest, *source;
+//	unsigned short		*pusdest;
+//	int			v, u;
 	glpic_t			*gl;
 
 	if (scrap_dirty)
@@ -634,9 +661,9 @@ Draw_TransPic
 */
 void Draw_TransPic (int x, int y, qpic_t *pic)
 {
-	byte	*dest, *source, tbyte;
-	unsigned short	*pusdest;
-	int				v, u;
+//	byte		*dest, *source, tbyte;
+//	unsigned short	*pusdest;
+//	int		v, u;
 
 	if (x < 0 || (unsigned)(x + pic->width) > vid.width || y < 0 ||
 		 (unsigned)(y + pic->height) > vid.height)
@@ -646,7 +673,6 @@ void Draw_TransPic (int x, int y, qpic_t *pic)
 		
 	Draw_Pic (x, y, pic);
 }
-
 
 /*
 =============
@@ -680,6 +706,10 @@ void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 		}
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -708,6 +738,13 @@ Draw_ConsoleBackground
 void Draw_ConsoleBackground (int lines)
 {
 	int y = (vid.height * 3) >> 2;
+
+#if defined(__APPLE__) || defined (MACOSX)
+
+	conback->width	= vid.width;
+	conback->height	= vid.height;
+	
+#endif // __APPLE__ || MACOSX
 
 	if (lines > y)
 		Draw_Pic(0, lines - vid.height, conback);
@@ -808,9 +845,24 @@ void Draw_BeginDisc (void)
 {
 	if (!draw_disc)
 		return;
-	glDrawBuffer  (GL_FRONT);
+    
+#if defined (__APPLE__) || defined (MACOSX)
+    GLboolean multiSampleEnabled = glIsEnabled (GL_MULTISAMPLE);
+    
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
+    {
+        glDrawBuffer  (GL_FRONT);
+    }
+    
 	Draw_Pic (vid.width - 24, 0, draw_disc);
-	glDrawBuffer  (GL_BACK);
+
+#if defined (__APPLE__) || defined (MACOSX)
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
+    {
+        glDrawBuffer  (GL_BACK);
+    }
 }
 
 
@@ -1027,15 +1079,28 @@ static	unsigned	scaled[1024*512];	// [512*256];
 
 #if 0
 	if (mipmap)
+        {
 		gluBuild2DMipmaps (GL_TEXTURE_2D, samples, width, height, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-	else if (scaled_width == width && scaled_height == height)
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+        }
 	else
-	{
-		gluScaleImage (GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
-			scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled);
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-	}
+        { 
+            if (scaled_width == width && scaled_height == height)
+             {
+#if defined (__APPLE__) || defined (MACOSX)
+                GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, width, height, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+		glTexImage2D (GL_TEXTURE_2D, 0, samples, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+             }
+            else
+            {
+                    gluScaleImage (GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
+                            scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled);
+#if defined (__APPLE__) || defined (MACOSX)
+                    GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+                    glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+            }
+        }
 #else
 texels += scaled_width * scaled_height;
 
@@ -1043,6 +1108,9 @@ texels += scaled_width * scaled_height;
 	{
 		if (!mipmap)
 		{
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 			glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			goto done;
 		}
@@ -1051,7 +1119,12 @@ texels += scaled_width * scaled_height;
 	else
 		GL_ResampleTexture (data, width, height, scaled, scaled_width, scaled_height);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, 0, GL_RGBA,
+                            GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+
 	if (mipmap)
 	{
 		int		miplevel;
@@ -1067,6 +1140,11 @@ texels += scaled_width * scaled_height;
 			if (scaled_height < 1)
 				scaled_height = 1;
 			miplevel++;
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, 0,
+                                            GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+
 			glTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 		}
 	}
@@ -1089,11 +1167,11 @@ done: ;
 void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboolean alpha) 
 {
 	int			i, s;
-	qboolean	noalpha;
-	int			p;
-	static unsigned j;
+	qboolean		noalpha;
+//	int			p;
+//	static unsigned 	j;
 	int			samples;
-    static	unsigned char scaled[1024*512];	// [512*256];
+        static unsigned char 	scaled[1024*512];	// [512*256];
 	int			scaled_width, scaled_height;
 
 	s = width*height;
@@ -1135,6 +1213,10 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 	{
 		if (!mipmap)
 		{
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height,
+                                            0, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 			glTexImage2D (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX , GL_UNSIGNED_BYTE, data);
 			goto done;
 		}
@@ -1143,6 +1225,10 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 	else
 		GL_Resample8BitTexture (data, width, height, scaled, scaled_width, scaled_height);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, 0,
+                            GL_COLOR_INDEX, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
 	if (mipmap)
 	{
@@ -1159,7 +1245,11 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 			if (scaled_height < 1)
 				scaled_height = 1;
 			miplevel++;
-			glTexImage2D (GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width,
+                                            scaled_height, 0, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+                        glTexImage2D (GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
 		}
 	}
 done: ;
@@ -1233,8 +1323,8 @@ GL_LoadTexture
 */
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha)
 {
-	qboolean	noalpha;
-	int			i, p, s;
+//	qboolean	noalpha;
+	int		i;//, p, s;
 	gltexture_t	*glt;
 
 	// see if the texture is allready present

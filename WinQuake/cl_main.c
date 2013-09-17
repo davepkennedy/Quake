@@ -193,7 +193,11 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		MSG_WriteString (&cls.message, va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (str, 8192, "spawn %s", cls.spawnparms);
+#else
 		sprintf (str, "spawn %s", cls.spawnparms);
+#endif /* __APPLE__ || MACOSX */
 		MSG_WriteString (&cls.message, str);
 		break;
 		
@@ -236,7 +240,11 @@ void CL_NextDemo (void)
 		}
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (str,1024,"playdemo %s\n", cls.demos[cls.demonum]);
+#else
 	sprintf (str,"playdemo %s\n", cls.demos[cls.demonum]);
+#endif /* __APPLE__ || MACOSX */
 	Cbuf_InsertText (str);
 	cls.demonum++;
 }
@@ -641,15 +649,16 @@ int CL_ReadFromServer (void)
 	do
 	{
 		ret = CL_GetMessage ();
+
 		if (ret == -1)
 			Host_Error ("CL_ReadFromServer: lost server connection");
 		if (!ret)
 			break;
 		
 		cl.last_received_message = realtime;
-		CL_ParseServerMessage ();
+                CL_ParseServerMessage ();
 	} while (ret && cls.state == ca_connected);
-	
+
 	if (cl_shownet.value)
 		Con_Printf ("\n");
 

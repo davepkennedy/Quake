@@ -21,6 +21,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#if defined (__APPLE__) || defined (MACOSX)
+
+extern qboolean	gl_palettedtex;
+
+#endif /* __APPLE__ || MACOSX */
+
 extern void R_InitBubble();
 
 /*
@@ -88,6 +94,9 @@ void R_InitParticleTexture (void)
 			data[y][x][3] = dottexture[x][y]*255;
 		}
 	}
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_alpha_format, 8, 8, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -227,22 +236,30 @@ R_TranslatePlayerSkin
 Translates a skin texture by the per-player color lookup
 ===============
 */
+
+#if defined(__APPLE__) || defined(MACOSX)
+static unsigned int	pixels[512*256];
+#endif /* APPLE || MACOSX */
+
 void R_TranslatePlayerSkin (int playernum)
 {
 	int		top, bottom;
-	byte	translate[256];
+	byte		translate[256];
 	unsigned	translate32[256];
 	int		i, j;
-	byte	*original;
-	unsigned	pixels[512*256], *out;
+	byte		*original;
+#if !defined(__APPLE__) && !defined(MACOSX)
+	unsigned	pixels[512*256];
+#endif /* !APPLE && !MACOSX */
+        unsigned	*out;
 	unsigned	scaled_width, scaled_height;
-	int			inwidth, inheight;
-	int			tinwidth, tinheight;
+	int		inwidth, inheight;
+	int		tinwidth, tinheight;
 	byte		*inrow;
 	unsigned	frac, fracstep;
-	player_info_t *player;
-	extern	byte		player_8bit_texels[320*200];
-	char s[512];
+	player_info_t	*player;
+	extern	byte	player_8bit_texels[320*200];
+	char		s[512];
 
 	GL_DisableMultitexture();
 
@@ -252,7 +269,11 @@ void R_TranslatePlayerSkin (int playernum)
 
 	strcpy(s, Info_ValueForKey(player->userinfo, "skin"));
 	COM_StripExtension(s, s);
+#if defined(__APPLE__) || defined(MACOSX)
+        if (player->skin && !Q_strcasecmp(s, player->skin->name))
+#else
 	if (player->skin && !stricmp(s, player->skin->name))
+#endif /* APPLE || MACOSX */
 		player->skin = NULL;
 
 	if (player->_topcolor != player->topcolor ||
@@ -331,7 +352,11 @@ void R_TranslatePlayerSkin (int playernum)
 		scaled_width >>= (int)gl_playermip.value;
 		scaled_height >>= (int)gl_playermip.value;
 
-		if (VID_Is8bit()) { // 8bit texture upload
+		if (VID_Is8bit()
+#if defined (__APPLE__) || defined (MACOSX)
+                    && gl_palettedtex
+#endif /* __APPLE__ || MACOSX */
+                    ) { // 8bit texture upload
 			byte *out2;
 
 			out2 = (byte *)pixels;
@@ -381,6 +406,10 @@ void R_TranslatePlayerSkin (int playernum)
 			}
 		}
 
+#if defined (__APPLE__) || defined (MACOSX)
+            GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_solid_format, scaled_width, scaled_height, 0, 0, GL_RGBA,
+                                GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 		glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 
 			scaled_width, scaled_height, 0, GL_RGBA, 
 			GL_UNSIGNED_BYTE, pixels);
@@ -447,6 +476,11 @@ void R_TimeRefresh_f (void)
 	int			i;
 	float		start, stop, time;
 
+#if defined (__APPLE__) || defined (MACOSX)
+    GLboolean multiSampleEnabled = glIsEnabled (GL_MULTISAMPLE);
+    
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
 	glDrawBuffer  (GL_FRONT);
 	glFinish ();
 
@@ -462,6 +496,9 @@ void R_TimeRefresh_f (void)
 	time = stop-start;
 	Con_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
+#if defined (__APPLE__) || defined (MACOSX)
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
 	glDrawBuffer  (GL_BACK);
 	GL_EndRendering ();
 }

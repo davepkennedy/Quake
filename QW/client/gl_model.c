@@ -40,6 +40,10 @@ int		mod_numknown;
 
 cvar_t gl_subdivide_size = {"gl_subdivide_size", "128", true};
 
+#if defined (__APPLE__) || defined (MACOSX)
+int	texture_mode = GL_LINEAR;
+#endif /* __APPLE__ || MACOSX */
+
 /*
 ===============
 Mod_Init
@@ -906,7 +910,11 @@ void Mod_LoadLeafs (lump_t *l)
 
 	loadmodel->leafs = out;
 	loadmodel->numleafs = count;
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(s, 80, "maps/%s.bsp", Info_ValueForKey(cl.serverinfo,"map"));
+#else
 	sprintf(s, "maps/%s.bsp", Info_ValueForKey(cl.serverinfo,"map"));
+#endif /* __APPLE__ || MACOSX */
 	if (!strcmp(s, loadmodel->name))
 		isnotmap = false;
 	for ( i=0 ; i<count ; i++, in++, out++)
@@ -1027,7 +1035,7 @@ void Mod_MakeHull0 (void)
 
 	for (i=0 ; i<count ; i++, out++, in++)
 	{
-		out->planenum = in->plane - loadmodel->planes;
+		out->planenum = (int)(in->plane - loadmodel->planes);
 		for (j=0 ; j<2 ; j++)
 		{
 			child = in->children[j];
@@ -1240,7 +1248,11 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		{	// duplicate the basic information
 			char	name[10];
 
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 10, "*%i", i+1);
+#else
 			sprintf (name, "*%i", i+1);
+#endif /* __APPLE__ ||ÊMACOSX */
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
 			strcpy (loadmodel->name, name);
@@ -1463,7 +1475,11 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 					Sys_Error ("Player skin too large");
 				memcpy (player_8bit_texels, (byte *)(pskintype + 1), s);
 			}
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 32, "%s_%i", loadmodel->name, i);
+#else
 			sprintf (name, "%s_%i", loadmodel->name, i);
+#endif /* __APPLE__ || MACOSX */
 			pheader->gl_texturenum[i][0] =
 			pheader->gl_texturenum[i][1] =
 			pheader->gl_texturenum[i][2] =
@@ -1483,7 +1499,11 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 			for (j=0 ; j<groupskins ; j++)
 			{
 					Mod_FloodFillSkin( skin, pheader->skinwidth, pheader->skinheight );
+#if defined (__APPLE__) || defined (MACOSX)
+					snprintf (name, 32, "%s_%i_%i", loadmodel->name, i,j);
+#else
 					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
+#endif /* __APPLE__ || MACOSX */
 					pheader->gl_texturenum[i][j&3] = 
 						GL_LoadTexture (name, pheader->skinwidth, 
 						pheader->skinheight, (byte *)(pskintype), true, false);
@@ -1529,15 +1549,23 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 		CRC_Init(&crc);
 		for (len = com_filesize, p = buffer; len; len--, p++)
 			CRC_ProcessByte(&crc, *p);
-	
+
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf(st, 40, "%d", (int) crc);
+#else	
 		sprintf(st, "%d", (int) crc);
+#endif /* __APPLE__ ||ÊMACOSX */
 		Info_SetValueForKey (cls.userinfo, 
 			!strcmp(loadmodel->name, "progs/player.mdl") ? pmodel_name : emodel_name,
 			st, MAX_INFO_STRING);
 
 		if (cls.state >= ca_connected) {
 			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf(st, 40, "setinfo %s %d", 
+#else
 			sprintf(st, "setinfo %s %d", 
+#endif /* __APPLE__ ||ÊMACOSX */
 				!strcmp(loadmodel->name, "progs/player.mdl") ? pmodel_name : emodel_name,
 				(int)crc);
 			SZ_Print (&cls.netchan.message, st);
@@ -1727,7 +1755,11 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, 64, "%s_%i", loadmodel->name, framenum);
+#else
 	sprintf (name, "%s_%i", loadmodel->name, framenum);
+#endif /* __APPLE__ || MACOSX */
 	pspriteframe->gl_texturenum = GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), true, true);
 
 	return (void *)((byte *)pinframe + sizeof (dspriteframe_t) + size);

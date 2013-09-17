@@ -1015,7 +1015,7 @@ void Mod_MakeHull0 (void)
 
 	for (i=0 ; i<count ; i++, out++, in++)
 	{
-		out->planenum = in->plane - loadmodel->planes;
+		out->planenum = (int) (in->plane - loadmodel->planes);
 		for (j=0 ; j<2 ; j++)
 		{
 			child = in->children[j];
@@ -1210,7 +1210,11 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		{	// duplicate the basic information
 			char	name[10];
 
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 10, "*%i", i+1);
+#else
 			sprintf (name, "*%i", i+1);
+#endif /* __APPLE__ ||ÊMACOSX */
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
 			strcpy (loadmodel->name, name);
@@ -1254,7 +1258,7 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 	pinframe = (trivertx_t *)(pdaliasframe + 1);
 	pframe = Hunk_AllocName (numv * sizeof(*pframe), loadname);
 
-	*pframeindex = (byte *)pframe - (byte *)pheader;
+	*pframeindex = (int) ((byte *)pframe - (byte *)pheader);
 
 	for (j=0 ; j<numv ; j++)
 	{
@@ -1306,13 +1310,13 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 		pbboxmax->v[i] = pingroup->bboxmax.v[i];
 	}
 
-	*pframeindex = (byte *)paliasgroup - (byte *)pheader;
+	*pframeindex = (int) ((byte *)paliasgroup - (byte *)pheader);
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
 
 	poutintervals = Hunk_AllocName (numframes * sizeof (float), loadname);
 
-	paliasgroup->intervals = (byte *)poutintervals - (byte *)pheader;
+	paliasgroup->intervals = (int) ((byte *)poutintervals - (byte *)pheader);
 
 	for (i=0 ; i<numframes ; i++)
 	{
@@ -1354,7 +1358,7 @@ void * Mod_LoadAliasSkin (void * pin, int *pskinindex, int skinsize,
 
 	pskin = Hunk_AllocName (skinsize * r_pixbytes, loadname);
 	pinskin = (byte *)pin;
-	*pskinindex = (byte *)pskin - (byte *)pheader;
+	*pskinindex = (int) ((byte *)pskin - (byte *)pheader);
 
 	if (r_pixbytes == 1)
 	{
@@ -1404,13 +1408,13 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 
 	paliasskingroup->numskins = numskins;
 
-	*pskinindex = (byte *)paliasskingroup - (byte *)pheader;
+	*pskinindex = (int) ((byte *)paliasskingroup - (byte *)pheader);
 
 	pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
 
 	poutskinintervals = Hunk_AllocName (numskins * sizeof (float),loadname);
 
-	paliasskingroup->intervals = (byte *)poutskinintervals - (byte *)pheader;
+	paliasskingroup->intervals = (int) ((byte *)poutskinintervals - (byte *)pheader);
 
 	for (i=0 ; i<numskins ; i++)
 	{
@@ -1525,7 +1529,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	if (pmodel->skinwidth & 0x03)
 		Sys_Error ("Mod_LoadAliasModel: skinwidth not multiple of 4");
 
-	pheader->model = (byte *)pmodel - (byte *)pheader;
+	pheader->model = (int) ((byte *)pmodel - (byte *)pheader);
 
 //
 // load the skins
@@ -1540,7 +1544,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pskindesc = Hunk_AllocName (numskins * sizeof (maliasskindesc_t),
 								loadname);
 
-	pheader->skindesc = (byte *)pskindesc - (byte *)pheader;
+	pheader->skindesc = (int) ((byte *)pskindesc - (byte *)pheader);
 
 	for (i=0 ; i<numskins ; i++)
 	{
@@ -1571,7 +1575,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pstverts = (stvert_t *)&pmodel[1];
 	pinstverts = (stvert_t *)pskintype;
 
-	pheader->stverts = (byte *)pstverts - (byte *)pheader;
+	pheader->stverts = (int) ((byte *)pstverts - (byte *)pheader);
 
 	for (i=0 ; i<pmodel->numverts ; i++)
 	{
@@ -1587,7 +1591,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	ptri = (mtriangle_t *)&pstverts[pmodel->numverts];
 	pintriangles = (dtriangle_t *)&pinstverts[pmodel->numverts];
 
-	pheader->triangles = (byte *)ptri - (byte *)pheader;
+	pheader->triangles = (int) ((byte *)ptri - (byte *)pheader);
 
 	for (i=0 ; i<pmodel->numtris ; i++)
 	{

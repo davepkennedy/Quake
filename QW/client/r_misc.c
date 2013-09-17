@@ -210,7 +210,7 @@ R_NetGraph
 void R_NetGraph (void)
 {
 	int		a, x, y, y2, w, i;
-	frame_t	*frame;
+//	frame_t	*frame;
 	int lost;
 	char st[80];
 
@@ -233,7 +233,11 @@ void R_NetGraph (void)
 		i = (cls.netchan.outgoing_sequence-a) & NET_TIMINGSMASK;
 		R_LineGraph (x+w-1-a, y, packet_latency[i]);
 	}
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(st, 80, "%3i%% packet loss", lost);
+#else
 	sprintf(st, "%3i%% packet loss", lost);
+#endif /* __APPLE__ || MACOSX */
 	Draw_String(8, y2, st);
 }
 
@@ -455,7 +459,7 @@ r_drawflat.value = 0;
 	if (r_numsurfs.value)
 	{
 		if ((surface_p - surfaces) > r_maxsurfsseen)
-			r_maxsurfsseen = surface_p - surfaces;
+			r_maxsurfsseen = (int) (surface_p - surfaces);
 
 		Con_Printf ("Used %d of %d surfs; %d max\n", surface_p - surfaces,
 				surf_max - surfaces, r_maxsurfsseen);
@@ -463,7 +467,7 @@ r_drawflat.value = 0;
 
 	if (r_numedges.value)
 	{
-		edgecount = edge_p - r_edges;
+		edgecount = (int) (edge_p - r_edges);
 
 		if (edgecount > r_maxedgesseen)
 			r_maxedgesseen = edgecount;

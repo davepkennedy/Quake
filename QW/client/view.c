@@ -380,6 +380,13 @@ void V_ParseDamage (void)
 	v_dmg_pitch = count*side*v_kickpitch.value;
 
 	v_dmg_time = v_kicktime.value;
+    
+#if defined (__APPLE__) || defined (MAXOSX)
+    extern void     IN_Damage (float);
+    extern cvar_t   in_actuatorduration;
+    
+    IN_Damage (in_actuatorduration.value);
+#endif // __APPLE__ || MACOSX
 }
 
 

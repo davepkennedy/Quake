@@ -104,7 +104,11 @@ void SV_Logfile_f (void)
 		return;
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/qconsole.log", com_gamedir);
+#else
 	sprintf (name, "%s/qconsole.log", com_gamedir);
+#endif /* __APPLE__ || MACOSX */
 	Con_Printf ("Logging text to %s.\n", name);
 	sv_logfile = fopen (name, "w");
 	if (!sv_logfile)
@@ -133,7 +137,11 @@ void SV_Fraglogfile_f (void)
 	// find an unused name
 	for (i=0 ; i<1000 ; i++)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (name, MAX_OSPATH, "%s/frag_%i.log", com_gamedir, i);
+#else
 		sprintf (name, "%s/frag_%i.log", com_gamedir, i);
+#endif /* __APPLE__ || MACOSX */
 		sv_fraglogfile = fopen (name, "r");
 		if (!sv_fraglogfile)
 		{	// can't read it, so create this one
@@ -321,7 +329,11 @@ void SV_Map_f (void)
 #endif
 
 	// check to make sure the level exists
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
+#else
 	sprintf (expanded, "maps/%s.bsp", level);
+#endif /* __APPLE__ || MACOSX */
 	COM_FOpenFile (expanded, &f);
 	if (!f)
 	{
@@ -445,12 +457,12 @@ void SV_Status_f (void)
 
 			s = NET_BaseAdrToString ( cl->netchan.remote_address);
 			Con_Printf ("%s", s);
-			l = 16 - strlen(s);
+			l = 16 - ((int) strlen(s));
 			for (j=0 ; j<l ; j++)
 				Con_Printf (" ");
 			
 			Con_Printf ("%s", cl->name);
-			l = 16 - strlen(cl->name);
+			l = 16 - ((int) strlen(cl->name));
 			for (j=0 ; j<l ; j++)
 				Con_Printf (" ");
 			if (cl->state == cs_connected)
@@ -724,7 +736,11 @@ void SV_Floodprotmsg_f (void)
 		Con_Printf("Usage: floodprotmsg \"<message>\"\n");
 		return;
 	}
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(fp_msg, 255, "%s", Cmd_Argv(1));
+#else
 	sprintf(fp_msg, "%s", Cmd_Argv(1));
+#endif /* __APPLE__ || MACOSX */
 }
   
 /*
@@ -734,7 +750,13 @@ SV_Gamedir_f
 Sets the gamedir and path to a different directory.
 ================
 */
+
+#if defined(__APPLE__) || defined(MACOSX)
+extern char	gamedirfile[MAX_OSPATH];
+#else
 char	gamedirfile[MAX_OSPATH];
+#endif /* APPLE || MACOSX */
+
 void SV_Gamedir_f (void)
 {
 	char			*dir;
@@ -788,9 +810,14 @@ void SV_Snap (int uid)
 		return;
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(pcxname, 80, "%d-00.pcx", uid);
+	snprintf(checkname, MAX_OSPATH, "%s/snap", gamedirfile);
+#else
 	sprintf(pcxname, "%d-00.pcx", uid);
-
 	sprintf(checkname, "%s/snap", gamedirfile);
+#endif /* __APPLE__ || MACOSX */
+
 	Sys_mkdir(gamedirfile);
 	Sys_mkdir(checkname);
 		
@@ -798,7 +825,11 @@ void SV_Snap (int uid)
 	{ 
 		pcxname[strlen(pcxname) - 6] = i/10 + '0'; 
 		pcxname[strlen(pcxname) - 5] = i%10 + '0'; 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (checkname, MAX_OSPATH, "%s/snap/%s", gamedirfile, pcxname);
+#else
 		sprintf (checkname, "%s/snap/%s", gamedirfile, pcxname);
+#endif /* __APPLE__ || MACOSX */
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 

@@ -116,7 +116,7 @@ int CL_CalcNet (void)
 	int		a, i;
 	frame_t	*frame;
 	int lost;
-	char st[80];
+//	char st[80];
 
 	for (i=cls.netchan.outgoing_sequence-UPDATE_BACKUP+1
 		; i <= cls.netchan.outgoing_sequence
@@ -334,7 +334,7 @@ A download message has been received from the server
 void CL_ParseDownload (void)
 {
 	int		size, percent;
-	byte	name[1024];
+	char	name[1024];
 	int		r;
 
 
@@ -365,9 +365,17 @@ void CL_ParseDownload (void)
 	if (!cls.download)
 	{
 		if (strncmp(cls.downloadtempname,"skins/",6))
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 1024, "%s/%s", com_gamedir, cls.downloadtempname);
+#else
 			sprintf (name, "%s/%s", com_gamedir, cls.downloadtempname);
+#endif /* __APPLE__ || MACOSX */
 		else
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 1024, "qw/%s", cls.downloadtempname);
+#else
 			sprintf (name, "qw/%s", cls.downloadtempname);
+#endif /* __APPLE__ || MACOSX */
 
 		COM_CreatePath (name);
 
@@ -415,11 +423,21 @@ void CL_ParseDownload (void)
 		// rename the temp file to it's final name
 		if (strcmp(cls.downloadtempname, cls.downloadname)) {
 			if (strncmp(cls.downloadtempname,"skins/",6)) {
+#if defined (__APPLE__) || defined (MACOSX)
+				snprintf (oldn, MAX_OSPATH, "%s/%s", com_gamedir, cls.downloadtempname);
+				snprintf (newn, MAX_OSPATH, "%s/%s", com_gamedir, cls.downloadname);
+#else
 				sprintf (oldn, "%s/%s", com_gamedir, cls.downloadtempname);
 				sprintf (newn, "%s/%s", com_gamedir, cls.downloadname);
+#endif /* __APPLE__ ||ÊMACOSX */
 			} else {
+#if defined (__APPLE__) || defined (MACOSX)
+				snprintf (oldn, MAX_OSPATH, "qw/%s", cls.downloadtempname);
+				snprintf (newn, MAX_OSPATH, "qw/%s", cls.downloadname);
+#else
 				sprintf (oldn, "qw/%s", cls.downloadtempname);
 				sprintf (newn, "qw/%s", cls.downloadname);
+#endif /* __APPLE__ ||ÊMACOSX */
 			}
 			r = rename (oldn, newn);
 			if (r)
@@ -549,7 +567,11 @@ void CL_ParseServerData (void)
 	// game directory
 	str = MSG_ReadString ();
 
+#if defined(__APPLE__) || defined(MACOSX)
+	if (Q_strcasecmp(gamedirfile, str)) {
+#else
 	if (stricmp(gamedirfile, str)) {
+#endif /* APPLE || MACOSX */
 		// save current config
 		Host_WriteConfiguration (); 
 		cflag = true;
@@ -560,7 +582,11 @@ void CL_ParseServerData (void)
 	//ZOID--run the autoexec.cfg in the gamedir
 	//if it exists
 	if (cflag) {
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf(fn, MAX_OSPATH, "%s/%s", com_gamedir, "config.cfg");
+#else
 		sprintf(fn, "%s/%s", com_gamedir, "config.cfg");
+#endif /* __APPLE__ || MACOSX */
 		if ((f = fopen(fn, "r")) != NULL) {
 			fclose(f);
 			Cbuf_AddText ("cl_warncmd 0\n");
@@ -890,7 +916,11 @@ void CL_NewTranslation (int slot)
 
 	strcpy(s, Info_ValueForKey(player->userinfo, "skin"));
 	COM_StripExtension(s, s);
+#if defined(__APPLE__) || defined(MACOSX)
+	if (player->skin && !Q_strcasecmp(s, player->skin->name))
+#else
 	if (player->skin && !stricmp(s, player->skin->name))
+#endif /* APPLE || MACOSX */
 		player->skin = NULL;
 
 	if (player->_topcolor != player->topcolor ||
@@ -1008,8 +1038,8 @@ CL_ServerInfo
 */
 void CL_ServerInfo (void)
 {
-	int		slot;
-	player_info_t	*player;
+//	int		slot;
+//	player_info_t	*player;
 	char key[MAX_MSGLEN];
 	char value[MAX_MSGLEN];
 

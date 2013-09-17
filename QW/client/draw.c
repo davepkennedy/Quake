@@ -659,11 +659,17 @@ void Draw_ConsoleBackground (int lines)
 	//sprintf (ver, "start commands with a \\ character %4.2f", VERSION);
 
 	if (cls.download) {
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (ver, 100, "%4.2f", VERSION);
+#else
 		sprintf (ver, "%4.2f", VERSION);
+#endif /* __APPLE__ || MACOSX */
 		dest = conback->data + 320 + 320*186 - 11 - 8*strlen(ver);
 	} else {
 #if defined(__linux__)
 		sprintf (ver, "Linux (%4.2f) QuakeWorld %4.2f", LINUX_VERSION, VERSION);
+#elif defined (__APPLE__) || defined (MACOSX)
+		snprintf (ver, 100, "MacOS X (%4.2f) QuakeWorld %4.2f", MACOSX_VERSION, VERSION);
 #else
 		sprintf (ver, "QuakeWorld %4.2f", VERSION);
 #endif

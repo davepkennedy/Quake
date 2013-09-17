@@ -60,7 +60,7 @@ void Host_Status_f (void)
 	int			minutes;
 	int			hours = 0;
 	int			j;
-	void		(*print) (char *fmt, ...);
+	void		(*print) (const char *fmt, ...);
 	
 	if (cmd_source == src_command)
 	{
@@ -447,7 +447,11 @@ void Host_SavegameComment (char *text)
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
 		text[i] = ' ';
 	memcpy (text, cl.levelname, strlen(cl.levelname));
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (kills,20,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+#else
 	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+#endif /* __APPLE__ || MACOSX */
 	memcpy (text+22, kills, strlen(kills));
 // convert space to _ to make stdio happy
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
@@ -511,7 +515,11 @@ void Host_Savegame_f (void)
 		}
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, 256, "%s/%s", com_gamedir, Cmd_Argv(1));
+#else
 	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+#endif /* __APPLE__ || MACOSX */
 	COM_DefaultExtension (name, ".sav");
 	
 	Con_Printf ("Saving game to %s...\n", name);
@@ -582,7 +590,11 @@ void Host_Loadgame_f (void)
 
 	cls.demonum = -1;		// stop demo loop in case this fails
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s", com_gamedir, Cmd_Argv(1));
+#else
 	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+#endif /* __APPLE__ || MACOSX */
 	COM_DefaultExtension (name, ".sav");
 	
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has
@@ -641,7 +653,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = Hunk_Alloc (strlen(str)+1);
+		sv.lightstyles[i] = Hunk_Alloc ((int) strlen(str)+1);
 		strcpy (sv.lightstyles[i], str);
 	}
 
@@ -715,7 +727,11 @@ void SaveGamestate()
 	char	comment[SAVEGAME_COMMENT_LENGTH+1];
 	edict_t	*ent;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, 256, "%s/%s.gip", com_gamedir, sv.name);
+#else
 	sprintf (name, "%s/%s.gip", com_gamedir, sv.name);
+#endif /* __APPLE__ || MACOSX */
 	
 	Con_Printf ("Saving game to %s...\n", name);
 	f = fopen (name, "w");
@@ -771,7 +787,11 @@ int LoadGamestate(char *level, char *startspot)
 	int		version;
 //	float	spawn_parms[NUM_SPAWN_PARMS];
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s.gip", com_gamedir, level);
+#else
 	sprintf (name, "%s/%s.gip", com_gamedir, level);
+#endif /* __APPLE__ || MACOSX */
 	
 	Con_Printf ("Loading game from %s...\n", name);
 	f = fopen (name, "r");
@@ -936,12 +956,12 @@ void Host_Name_f (void)
 		if (Q_strcmp(host_client->name, newName) != 0)
 			Con_Printf ("%s renamed to %s\n", host_client->name, newName);
 	Q_strcpy (host_client->name, newName);
-	host_client->edict->v.netname = host_client->name - pr_strings;
+	host_client->edict->v.netname = (string_t) (host_client->name - pr_strings);
 	
 // send notification to all clients
 	
 	MSG_WriteByte (&sv.reliable_datagram, svc_updatename);
-	MSG_WriteByte (&sv.reliable_datagram, host_client - svs.clients);
+	MSG_WriteByte (&sv.reliable_datagram, (int) (host_client - svs.clients));
 	MSG_WriteString (&sv.reliable_datagram, host_client->name);
 }
 
@@ -1043,16 +1063,24 @@ void Host_Say(qboolean teamonly)
 
 // turn on color set 1
 	if (!fromServer)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf ((char*) text, 64, "%c%s: ", 1, save->name);
+#else
 		sprintf (text, "%c%s: ", 1, save->name);
+#endif /* __APPLE__ || MACOSX */
 	else
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf ((char*) text, 64, "%c<%s> ", 1, hostname.string);
+#else
 		sprintf (text, "%c<%s> ", 1, hostname.string);
+#endif /* __APPLE__ || MACOSX */
 
-	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
+	j = sizeof(text) - 2 - Q_strlen((char*) text);  // -2 for /n and null terminator
 	if (Q_strlen(p) > j)
 		p[j] = 0;
 
-	strcat (text, p);
-	strcat (text, "\n");
+	strcat ((char*) text, p);
+	strcat ((char*) text, "\n");
 
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
 	{
@@ -1180,7 +1208,7 @@ void Host_Color_f(void)
 
 // send notification to all clients
 	MSG_WriteByte (&sv.reliable_datagram, svc_updatecolors);
-	MSG_WriteByte (&sv.reliable_datagram, host_client - svs.clients);
+	MSG_WriteByte (&sv.reliable_datagram, (int) (host_client - svs.clients));
 	MSG_WriteByte (&sv.reliable_datagram, host_client->colors);
 }
 
@@ -1204,7 +1232,7 @@ void Host_Kill_f (void)
 	}
 	
 	pr_global_struct->time = sv.time;
-	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 	PR_ExecuteProgram (pr_global_struct->ClientKill);
 }
 
@@ -1308,7 +1336,7 @@ void Host_Spawn_f (void)
 		memset (&ent->v, 0, progs->entityfields * 4);
 		ent->v.colormap = NUM_FOR_EDICT(ent);
 		ent->v.team = (host_client->colors & 15) + 1;
-		ent->v.netname = host_client->name - pr_strings;
+		ent->v.netname = (string_t) (host_client->name - pr_strings);
 
 		// copy spawn parms out of the client_t
 
@@ -1318,7 +1346,7 @@ void Host_Spawn_f (void)
 		// call the spawn function
 
 		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (pr_global_struct->ClientConnect);
 
 		if ((Sys_FloatTime() - host_client->netconnection->connecttime) <= sv.time)
@@ -1382,7 +1410,7 @@ void Host_Spawn_f (void)
 // in a state where it is expecting the client to correct the angle
 // and it won't happen if the game was just loaded, so you wind up
 // with a permanent head tilt
-	ent = EDICT_NUM( 1 + (host_client - svs.clients) );
+	ent = EDICT_NUM( 1 + ((int) (host_client - svs.clients)) );
 	MSG_WriteByte (&host_client->message, svc_setangle);
 	for (i=0 ; i < 2 ; i++)
 		MSG_WriteAngle (&host_client->message, ent->v.angles[i] );
@@ -1516,7 +1544,7 @@ Host_Give_f
 void Host_Give_f (void)
 {
 	char	*t;
-	int		v, w;
+	int	v; //, w;
 	eval_t	*val;
 
 	if (cmd_source == src_command)

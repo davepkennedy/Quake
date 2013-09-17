@@ -166,7 +166,7 @@ void SV_SaveSpawnparms (void)
 		host_client->state = cs_connected;
 
 		// call the progs to get default spawn parms for the new client
-		pr_global_struct->self = EDICT_TO_PROG(host_client->edict);
+		pr_global_struct->self = (int) EDICT_TO_PROG(host_client->edict);
 		PR_ExecuteProgram (pr_global_struct->SetChangeParms);
 		for (j=0 ; j<NUM_SPAWN_PARMS ; j++)
 			host_client->spawn_parms[j] = (&pr_global_struct->parm1)[j];
@@ -337,7 +337,11 @@ void SV_SpawnServer (char *server)
 	sv.time = 1.0;
 	
 	strcpy (sv.name, server);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (sv.modelname,MAX_QPATH,"maps/%s.bsp", server);
+#else
 	sprintf (sv.modelname,"maps/%s.bsp", server);
+#endif /* __APPLE__ ||ÊMACOSX */
 	sv.worldmodel = Mod_ForName (sv.modelname, true);
 	SV_CalcPHS ();
 

@@ -1244,7 +1244,11 @@ char	*va(char *format, ...)
 	static char		string[1024];
 	
 	va_start (argptr, format);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, format,argptr);
+#else
 	vsprintf (string, format,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	return string;	
@@ -1332,9 +1336,9 @@ int COM_filelength (FILE *f)
 	int		pos;
 	int		end;
 
-	pos = ftell (f);
+	pos = (int) ftell (f);
 	fseek (f, 0, SEEK_END);
-	end = ftell (f);
+	end = (int) ftell (f);
 	fseek (f, pos, SEEK_SET);
 
 	return end;
@@ -1388,8 +1392,12 @@ void COM_WriteFile (char *filename, void *data, int len)
 {
 	FILE	*f;
 	char	name[MAX_OSPATH];
-	
+
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s", com_gamedir, filename);
+#else	
 	sprintf (name, "%s/%s", com_gamedir, filename);
+#endif /* __APPLE__ || MACOSX */
 	
 	f = fopen (name, "wb");
 	if (!f) {
@@ -1516,7 +1524,11 @@ int COM_FOpenFile (char *filename, FILE **file)
 					continue;
 			}
 			
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (netpath, MAX_OSPATH, "%s/%s",search->filename, filename);
+#else
 			sprintf (netpath, "%s/%s",search->filename, filename);
+#endif /* __APPLE__ ||ÊMACOSX */
 			
 			findtime = Sys_FileTime (netpath);
 			if (findtime == -1)
@@ -1734,7 +1746,11 @@ void COM_AddGameDirectory (char *dir)
 //
 	for (i=0 ; ; i++)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (pakfile, MAX_OSPATH, "%s/pak%i.pak", dir, i);
+#else
 		sprintf (pakfile, "%s/pak%i.pak", dir, i);
+#endif /* __APPLE__ ||ÊMACOSX */
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;
@@ -1795,7 +1811,11 @@ void COM_Gamedir (char *dir)
 	if (!strcmp(dir,"id1") || !strcmp(dir, "qw"))
 		return;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (com_gamedir, MAX_OSPATH, "%s/%s", com_basedir, dir);
+#else
 	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
+#endif /* __APPLE__ || MACOSX */
 
 	//
 	// add the directory to the search path
@@ -1810,7 +1830,11 @@ void COM_Gamedir (char *dir)
 	//
 	for (i=0 ; ; i++)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (pakfile, MAX_OSPATH, "%s/pak%i.pak", com_gamedir, i);
+#else
 		sprintf (pakfile, "%s/pak%i.pak", com_gamedir, i);
+#endif /* __APPLE__ ||ÊMACOSX */
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;
@@ -2043,7 +2067,11 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize)
 	if (!value || !strlen(value))
 		return;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (new, 1024, "\\%s\\%s", key, value);
+#else
 	sprintf (new, "\\%s\\%s", key, value);
+#endif /* __APPLE__ || MACOSX */
 
 	if ((int)(strlen(new) + strlen(s)) > maxsize)
 	{
@@ -2059,12 +2087,20 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize)
 		c = (unsigned char)*v++;
 #ifndef SERVERONLY
 		// client only allows highbits on name
+#if defined(__APPLE__) || defined(MACOSX)
+		if (Q_strcasecmp(key, "name") != 0) {
+#else
 		if (stricmp(key, "name") != 0) {
+#endif /* APPLE || MACOSX */
 			c &= 127;
 			if (c < 32 || c > 127)
 				continue;
 			// auto lowercase team
+#if defined(__APPLE__) || defined(MACOSX)
+			if (Q_strcasecmp(key, "team") == 0)
+#else
 			if (stricmp(key, "team") == 0)
+#endif /* APPLE || MACOSX */
 				c = tolower(c);
 		}
 #else
@@ -2107,7 +2143,7 @@ void Info_Print (char *s)
 		while (*s && *s != '\\')
 			*o++ = *s++;
 
-		l = o - key;
+		l = (int) (o - key);
 		if (l < 20)
 		{
 			memset (o, ' ', 20-l);
@@ -2173,11 +2209,11 @@ static byte chktbl[1024 + 4] = {
 0x00,0x00,0x00,0x00
 };
 
-static byte chkbuf[16 + 60 + 4];
+#if 0
 
+static byte	chkbuf[16 + 60 + 4];
 static unsigned last_mapchecksum = 0;
 
-#if 0
 /*
 ====================
 COM_BlockSequenceCheckByte
@@ -2188,7 +2224,7 @@ For proxy protecting
 byte	COM_BlockSequenceCheckByte (byte *base, int length, int sequence, unsigned mapchecksum)
 {
 	int		checksum;
-	byte	*p;
+	byte		*p;
 
 	if (last_mapchecksum != mapchecksum) {
 		last_mapchecksum = mapchecksum;

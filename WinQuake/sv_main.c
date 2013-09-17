@@ -59,7 +59,11 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_nostep);
 
 	for (i=0 ; i<MAX_MODELS ; i++)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (localmodels[i], 5, "*%i", i);
+#else
 		sprintf (localmodels[i], "*%i", i);
+#endif /* __APPLE__ || MACOSX */
 }
 
 /*
@@ -192,7 +196,11 @@ void SV_SendServerinfo (client_t *client)
 	char			message[2048];
 
 	MSG_WriteByte (&client->message, svc_print);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (message, 2048, "%c\nVERSION %4.2f SERVER (%i CRC)", 2, VERSION, pr_crc);
+#else
 	sprintf (message, "%c\nVERSION %4.2f SERVER (%i CRC)", 2, VERSION, pr_crc);
+#endif /* __APPLE__ ||ÊMACOSX */
 	MSG_WriteString (&client->message,message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
@@ -204,7 +212,11 @@ void SV_SendServerinfo (client_t *client)
 	else
 		MSG_WriteByte (&client->message, GAME_COOP);
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (message, 2048, "%s", pr_strings+sv.edicts->v.message);
+#else
 	sprintf (message, pr_strings+sv.edicts->v.message);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 	MSG_WriteString (&client->message,message);
 
@@ -984,8 +996,8 @@ Tell all the clients that the server is changing levels
 */
 void SV_SendReconnect (void)
 {
-	char	data[128];
-	sizebuf_t	msg;
+	unsigned char	data[128];
+	sizebuf_t		msg;
 
 	msg.data = data;
 	msg.cursize = 0;
@@ -1024,7 +1036,7 @@ void SV_SaveSpawnparms (void)
 			continue;
 
 	// call the progs to get default spawn parms for the new client
-		pr_global_struct->self = EDICT_TO_PROG(host_client->edict);
+		pr_global_struct->self = (int) EDICT_TO_PROG(host_client->edict);
 		PR_ExecuteProgram (pr_global_struct->SetChangeParms);
 		for (j=0 ; j<NUM_SPAWN_PARMS ; j++)
 			host_client->spawn_parms[j] = (&pr_global_struct->parm1)[j];
@@ -1126,7 +1138,11 @@ void SV_SpawnServer (char *server)
 	sv.time = 1.0;
 	
 	strcpy (sv.name, server);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (sv.modelname, 64, "maps/%s.bsp", server);
+#else
 	sprintf (sv.modelname,"maps/%s.bsp", server);
+#endif /* __APPLE__ || MACOSX */
 	sv.worldmodel = Mod_ForName (sv.modelname, false);
 	if (!sv.worldmodel)
 	{
@@ -1157,7 +1173,7 @@ void SV_SpawnServer (char *server)
 	ent = EDICT_NUM(0);
 	memset (&ent->v, 0, progs->entityfields * 4);
 	ent->free = false;
-	ent->v.model = sv.worldmodel->name - pr_strings;
+	ent->v.model = (string_t) (sv.worldmodel->name - pr_strings);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
@@ -1167,7 +1183,7 @@ void SV_SpawnServer (char *server)
 	else
 		pr_global_struct->deathmatch = deathmatch.value;
 
-	pr_global_struct->mapname = sv.name - pr_strings;
+	pr_global_struct->mapname = (string_t) (sv.name - pr_strings);
 #ifdef QUAKE2
 	pr_global_struct->startspot = sv.startspot - pr_strings;
 #endif

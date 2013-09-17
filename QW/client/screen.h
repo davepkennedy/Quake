@@ -48,6 +48,10 @@ extern cvar_t scr_viewsize;
 extern	int			scr_copytop;
 extern	int			scr_copyeverything;
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern	qboolean		scr_skipupdate;
+extern	qboolean		block_drawing;
+#else
 qboolean	scr_skipupdate;
-
 qboolean	block_drawing;
+#endif /* APPLE || MACOSX */

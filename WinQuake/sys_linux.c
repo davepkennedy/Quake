@@ -129,8 +129,6 @@ void Sys_Quit (void)
 	exit(0);
 }
 
-void Sys_Init(void)
-{
 #if id386
 	Sys_SetFPCW();
 #endif

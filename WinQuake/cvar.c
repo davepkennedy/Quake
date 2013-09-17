@@ -135,8 +135,12 @@ Cvar_SetValue
 void Cvar_SetValue (char *var_name, float value)
 {
 	char	val[32];
-	
+
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (val, 32, "%f",value);
+#else	
 	sprintf (val, "%f",value);
+#endif /* __APPLE__ || MACOSX */
 	Cvar_Set (var_name, val);
 }
 

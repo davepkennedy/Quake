@@ -199,14 +199,14 @@ void BuildTris (void)
 {
 	int		i, j, k;
 	int		startv;
-	mtriangle_t	*last, *check;
-	int		m1, m2;
-	int		striplength;
-	trivertx_t	*v;
-	mtriangle_t *tv;
-	float	s, t;
-	int		index;
-	int		len, bestlen, besttype;
+//	mtriangle_t	*last, *check;
+//	int		m1, m2;
+//	int		striplength;
+//	trivertx_t	*v;
+//	mtriangle_t 	*tv;
+	float		s, t;
+//	int		index;
+	int		len, bestlen, besttype = 0;
 	int		bestverts[1024];
 	int		besttris[1024];
 	int		type;
@@ -287,16 +287,34 @@ void BuildTris (void)
 GL_MakeAliasModelDisplayLists
 ================
 */
+
+// <AWE> required for reading/writing cache files in little endian:
+static void	SwapBufferEndianess()
+{
+	int i = 0;
+	
+	for (; i < numcommands; ++i)
+	{
+		commands[i] = LittleLong(commands[i]);
+	}
+
+	for (i = 0; i < numorder; ++i)
+	{
+		vertexorder[i] = LittleLong(vertexorder[i]);
+	}
+}
+
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 {
 	int		i, j;
-	maliasgroup_t	*paliasgroup;
-	int			*cmds;
+//	maliasgroup_t	*paliasgroup;
+	int		*cmds;
 	trivertx_t	*verts;
-	char	cache[MAX_QPATH], fullpath[MAX_OSPATH], *c;
-	FILE	*f;
-	int		len;
-	byte	*data;
+	char		cache[MAX_QPATH], fullpath[MAX_OSPATH];//, *c;
+	FILE		*f;
+	size_t		success = 0;
+//	int		len;
+//	byte		*data;
 
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
@@ -311,13 +329,41 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	COM_FOpenFile (cache, &f);	
 	if (f)
 	{
-		fread (&numcommands, 4, 1, f);
-		fread (&numorder, 4, 1, f);
-		fread (&commands, numcommands * sizeof(commands[0]), 1, f);
-		fread (&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
+		// <AWE> we always read now little endian and do more checks on fread:
+		success = fread (&numcommands, 4, 1, f);
+		
+		if (success == 1)
+		{
+			success = fread (&numorder, 4, 1, f);
+		}
+
+		numcommands	= LittleLong(numcommands);		
+		numorder	= LittleLong(numorder);
+		
+		if (numcommands >= 8192 || numorder >= 8192)
+		{
+			success = 0;
+		}
+
+		if (success == 1)
+		{
+			success = fread (&commands, numcommands * sizeof(commands[0]), 1, f);
+		}
+		
+		if (success == 1)
+		{
+			success = fread (&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
+		}
+		
+		if (success == 1)
+		{
+			SwapBufferEndianess();
+		}
+		
 		fclose (f);
 	}
-	else
+	
+	if (success == 0)
 	{
 		//
 		// build it from scratch
@@ -329,15 +375,41 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 		//
 		// save out the cached version
 		//
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (fullpath, MAX_OSPATH, "%s/%s", com_gamedir, cache);
+#else
 		sprintf (fullpath, "%s/%s", com_gamedir, cache);
+#endif /* __APPLE__ || MACOSX */
 		f = fopen (fullpath, "wb");
+/*
+		if (!f) {
+			char gldir[MAX_OSPATH];
+
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (gldir, MAX_OSPATH, "%s/glquake", com_gamedir);
+#else
+			sprintf (gldir, "%s/glquake", com_gamedir);
+#endif
+			Sys_mkdir (gldir);
+			f = fopen (fullpath, "wb");
+		}                
+*/              
 		if (f)
 		{
-			fwrite (&numcommands, 4, 1, f);
-			fwrite (&numorder, 4, 1, f);
+			// <AWE> we always write now in little endian:
+			int littleNumCommands	= LittleLong(numcommands);
+			int littleNumOrder		= LittleLong(numorder);
+						
+			fwrite (&littleNumCommands, 4, 1, f);
+			fwrite (&littleNumOrder, 4, 1, f);
+			
+			SwapBufferEndianess();
+			
 			fwrite (&commands, numcommands * sizeof(commands[0]), 1, f);
 			fwrite (&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
 			fclose (f);
+			
+			SwapBufferEndianess();
 		}
 	}
 
@@ -347,12 +419,12 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	paliashdr->poseverts = numorder;
 
 	cmds = Hunk_Alloc (numcommands * 4);
-	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
+	paliashdr->commands = (int) ((byte *)cmds - (byte *)paliashdr);
 	memcpy (cmds, commands, numcommands * 4);
 
 	verts = Hunk_Alloc (paliashdr->numposes * paliashdr->poseverts 
 		* sizeof(trivertx_t) );
-	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
+	paliashdr->posedata = (int) ((byte *)verts - (byte *)paliashdr);
 	for (i=0 ; i<paliashdr->numposes ; i++)
 		for (j=0 ; j<numorder ; j++)
 			*verts++ = poseverts[i][vertexorder[j]];

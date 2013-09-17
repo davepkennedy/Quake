@@ -109,7 +109,7 @@ Draw_Init
 */
 void Draw_Init (void)
 {
-	int		i;
+//	int		i;
 
 	draw_chars = W_GetLumpName ("conchars");
 	draw_disc = W_GetLumpName ("disc");
@@ -556,6 +556,9 @@ void Draw_ConsoleBackground (int lines)
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(__linux__)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
+	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+#elif defined (__APPLE__) || defined (__MACOSX__)
+	snprintf (ver, 100, "(MacOS X Quake %2.2f) %4.2f", (float)MACOSX_VERSION, (float)VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #else
 	dest = conback->data + 320 - 43 + 320*186;

@@ -70,6 +70,10 @@ texture_t	*r_notexture_mip;
 
 int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
+#if defined (__APPLE__) || defined (MACOSX)
+GLfloat				gldepthmin,
+                                gldepthmax;
+#endif /* __APPLE__ || MACOSX */
 
 void R_MarkLeaves (void);
 
@@ -95,7 +99,17 @@ cvar_t	gl_polyblend = {"gl_polyblend","1"};
 cvar_t	gl_flashblend = {"gl_flashblend","1"};
 cvar_t	gl_playermip = {"gl_playermip","0"};
 cvar_t	gl_nocolors = {"gl_nocolors","0"};
+
+#if defined(__APPLE__) || defined(MACOSX)
+
 cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","1"};
+
+#else
+
+cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
+
+#endif /* __APPLE__ ||ÊMACOSX */
+
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 cvar_t	gl_finish = {"gl_finish","0"};
 
@@ -544,7 +558,7 @@ void R_DrawAliasModel (entity_t *e)
 	// seperately for the players.  Heads are just uncolored.
 	if (currententity->scoreboard && !gl_nocolors.value)
 	{
-		i = currententity->scoreboard - cl.players;
+		i = (int) (currententity->scoreboard - cl.players);
 		if (!currententity->scoreboard->skin) {
 			Skin_Find(currententity->scoreboard);
 			R_TranslatePlayerSkin(i);

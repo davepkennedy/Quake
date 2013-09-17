@@ -17,6 +17,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+
+#if defined (__APPLE__) || defined (MACOSX)
+#include <ctype.h>
+#endif /* __APPLE__ || MACOSX */
+
 #include "quakedef.h"
 
 #ifdef _WIN32
@@ -99,6 +104,95 @@ char		m_return_reason [32];
 #define DirectConfig	(m_net_cursor == 1)
 #define	IPXConfig		(m_net_cursor == 2)
 #define	TCPIPConfig		(m_net_cursor == 3)
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+extern qboolean     gVidDisplayFullscreen;
+extern cvar_t       _windowed_mouse;
+extern cvar_t       in_actuators;
+
+void IN_Damage (float);
+
+static void M_NumPad2Key (int *key)
+{
+	switch (*key)
+	{
+            case K_SLASH_PAD:
+                    *key = '/';
+                    return;
+            case K_MINUS_PAD:
+                    *key = '-';
+                    return;
+            case K_PLUS_PAD:
+                    *key = '+';
+                    return;
+            case K_0_PAD:
+                    *key = '0';
+                    return;
+            case K_1_PAD:
+                    *key = '1';
+                    return;
+            case K_2_PAD:
+                    *key = '2';
+                    return;
+            case K_3_PAD:
+                    *key = '3';
+                    return;
+            case K_4_PAD:
+                    *key = '4';
+                    return;
+            case K_5_PAD:
+                    *key = '5';
+                    return;
+            case K_6_PAD:
+                    *key = '6';
+                    return;
+            case K_7_PAD:
+                    *key = '7';
+                    return;
+            case K_8_PAD:
+                    *key = '8';
+                    return;
+            case K_9_PAD:
+                    *key = '9';
+                    return;
+            case K_PERIOD_PAD:
+                    *key = '.';
+                    return;
+            case K_ENTER_PAD:
+                    *key = K_ENTER;
+                    return;
+            case K_ASTERISK_PAD:
+                    *key = '*';
+                    return;
+            case K_EQUAL_PAD:
+                    *key = '=';
+                    return;
+	}
+}
+
+static qboolean M_GetPasteString (int theKey, char *theString, int theStringSize)
+{
+    extern qboolean	keydown[];
+
+    if ((toupper (theKey) == 'V' && keydown[K_COMMAND]) || (theKey == K_INS && keydown[K_SHIFT]))
+    {
+        extern char *	Sys_GetClipboardData (void);
+        char *		myClipboardData;
+        
+        if ((myClipboardData = Sys_GetClipboardData()) != NULL)
+        {
+            strtok(myClipboardData, "\n\r\b");
+            
+            strncpy (theString, myClipboardData, theStringSize);
+            free (myClipboardData);
+        }
+        return (true);
+    }
+    return (false);
+}
+
+#endif /* __APPLE__ ||ÊMACOSX */
 
 void M_ConfigureNetSubsystem(void);
 
@@ -454,7 +548,11 @@ void M_ScanSaves (void)
 	{
 		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (name, MAX_OSPATH, "%s/s%i.sav", com_gamedir, i);
+#else
 		sprintf (name, "%s/s%i.sav", com_gamedir, i);
+#endif /* __APPLE__ || MACOSX */
 		f = fopen (name, "r");
 		if (!f)
 			continue;
@@ -735,16 +833,22 @@ void M_Setup_Draw (void)
 	M_DrawCharacter (56, setup_cursor_table [setup_cursor], 12+((int)(realtime*4)&1));
 
 	if (setup_cursor == 0)
-		M_DrawCharacter (168 + 8*strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*(int)strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
 
 	if (setup_cursor == 1)
-		M_DrawCharacter (168 + 8*strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*(int)strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
 }
 
 
 void M_Setup_Key (int k)
 {
 	int			l;
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+        M_NumPad2Key (&k);
+
+#endif /* __APPLE__ || MACOSX */
 
 	switch (k)
 	{
@@ -823,7 +927,10 @@ forward:
 			break;
 		if (setup_cursor == 0)
 		{
-			l = strlen(setup_hostname);
+			l = (int)strlen(setup_hostname);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (k, setup_hostname, 15) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 15)
 			{
 				setup_hostname[l+1] = 0;
@@ -832,7 +939,10 @@ forward:
 		}
 		if (setup_cursor == 1)
 		{
-			l = strlen(setup_myname);
+			l = (int)strlen(setup_myname);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (k, setup_myname, 15) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 15)
 			{
 				setup_myname[l+1] = 0;
@@ -1036,11 +1146,13 @@ again:
 //=============================================================================
 /* OPTIONS MENU */
 
-#ifdef _WIN32
+#if defined (_WIN32)
 #define	OPTIONS_ITEMS	14
+#elif defined (__APPLE__) || defined (MACOSX)
+#define	OPTIONS_ITEMS	15
 #else
 #define	OPTIONS_ITEMS	13
-#endif
+#endif /* _WIN32 ||Ê__APPLE__ ||ÊMACOSX */
 
 #define	SLIDER_RANGE	10
 
@@ -1052,12 +1164,19 @@ void M_Menu_Options_f (void)
 	m_state = m_options;
 	m_entersound = true;
 
-#ifdef _WIN32
+#if defined (_WIN32)
 	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		options_cursor = 0;
 	}
-#endif
+#endif /* _WIN32 */
+
+#if defined (__APPLE__) || defined (MACOSX)
+	if ((options_cursor == 14) && (gVidDisplayFullscreen != false))
+	{
+		options_cursor = 0;
+	}
+#endif /* __APPLE__ ||ÊMACOSX */
 }
 
 
@@ -1087,8 +1206,13 @@ void M_AdjustSliders (int dir)
 		sensitivity.value += dir * 0.5;
 		if (sensitivity.value < 1)
 			sensitivity.value = 1;
+#if defined (__APPLE__) || defined (MACOSX)
+		if (sensitivity.value > 32)
+			sensitivity.value = 32;
+#else
 		if (sensitivity.value > 11)
 			sensitivity.value = 11;
+#endif /* __APPLE__ || MACOSX */
 		Cvar_SetValue ("sensitivity", sensitivity.value);
 		break;
 	case 6:	// music volume
@@ -1137,11 +1261,27 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
 		break;
 
-#ifdef _WIN32
+#if defined (_WIN32)
 	case 13:	// _windowed_mouse
+                
 		Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
 		break;
-#endif
+#endif /* _WIN32 */
+            
+#if defined (__APPLE__) || defined (MACOSX) 
+    case 13:	// in_actuators
+        Cvar_SetValue ("actuators", !in_actuators.value);
+        
+        if (in_actuators.value)
+        {
+            IN_Damage (0.5f);
+        }
+        break;
+
+    case 14:	// _windowed_mouse
+        Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
+        break;
+#endif /* __APPLE__ || MACOSX */
 	}
 }
 
@@ -1197,7 +1337,11 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 64, r);
 
 	M_Print (16, 72, "           Mouse Speed");
+#if defined (__APPLE__) || defined (MACOSX)
+	r = (sensitivity.value - 1)/31;
+#else
 	r = (sensitivity.value - 1)/10;
+#endif /* __APPLE__ || MACOSX */
 	M_DrawSlider (220, 72, r);
 
 	M_Print (16, 80, "       CD Music Volume");
@@ -1223,14 +1367,25 @@ void M_Options_Draw (void)
 	if (vid_menudrawfn)
 		M_Print (16, 128, "         Video Options");
 
-#ifdef _WIN32
-	if (modestate == MS_WINDOWED)
+#if defined (__APPLE__) || defined (MACOSX)
+    M_Print (16, 136, "            Use Rumble");
+    M_DrawCheckbox (220, 136, in_actuators.value);
+    
+    if (gVidDisplayFullscreen == false)
+	{
+		M_Print (16, 144, "             Use Mouse");
+		M_DrawCheckbox (220, 144, _windowed_mouse.value);
+	}
+#endif /* __APPLE__ ||ÊMACOSX */
+    
+#if defined (_WIN32)
+    if (modestate == MS_WINDOWED)
 	{
 		M_Print (16, 136, "             Use Mouse");
 		M_DrawCheckbox (220, 136, _windowed_mouse.value);
 	}
-#endif
-
+#endif /* _WIN32 */
+    
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
 }
@@ -1270,6 +1425,12 @@ void M_Options_Key (int k)
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor--;
+#if defined (__APPLE__) || defined (MACOSX)
+        if (options_cursor == 13 && vid_menudrawfn == NULL && gVidDisplayFullscreen == false)
+        {
+            options_cursor = 12;
+        }
+#endif /* __APPLE__ || MACOSX */
 		if (options_cursor < 0)
 			options_cursor = OPTIONS_ITEMS-1;
 		break;
@@ -1277,6 +1438,12 @@ void M_Options_Key (int k)
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor++;
+#if defined (__APPLE__) || defined (MACOSX)
+        if (options_cursor == 14 && vid_menudrawfn == NULL && gVidDisplayFullscreen == false)
+        {
+            options_cursor = 14;
+        }
+#endif /* __APPLE__ || MACOSX */
 		if (options_cursor >= OPTIONS_ITEMS)
 			options_cursor = 0;
 		break;
@@ -1289,7 +1456,33 @@ void M_Options_Key (int k)
 		M_AdjustSliders (1);
 		break;
 	}
+    
+#if defined (__APPLE__) || defined (MACOSX)
+	if (options_cursor == 13 && vid_menudrawfn == NULL && gVidDisplayFullscreen != false)
+    {
+        if (k == K_UPARROW)
+            options_cursor = 12;
+        else
+            options_cursor = 0;
+    }
 
+    if ((options_cursor == 14) && (gVidDisplayFullscreen != false))
+    {
+        if (k == K_UPARROW)
+        {
+#if defined (GLQUAKE)
+            if (vid_menudrawfn == NULL)
+                options_cursor = 12;
+            else
+#endif /* GLQUAKE */
+                options_cursor = 13;
+        }
+        else
+        {
+            options_cursor = 0;
+        }
+    }
+#else
 	if (options_cursor == 12 && vid_menudrawfn == NULL)
 	{
 		if (k == K_UPARROW)
@@ -1297,16 +1490,18 @@ void M_Options_Key (int k)
 		else
 			options_cursor = 0;
 	}
-
-#ifdef _WIN32
+#if defined (_WIN32)
 	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		if (k == K_UPARROW)
+                {
 			options_cursor = 12;
-		else
+                }
+                else
 			options_cursor = 0;
 	}
-#endif
+#endif /* _WIN32 */
+#endif /* __APPLE__ || MACOSX */
 }
 
 //=============================================================================
@@ -1355,7 +1550,7 @@ void M_FindKeysForCommand (char *command, int *twokeys)
 	char	*b;
 
 	twokeys[0] = twokeys[1] = -1;
-	l = strlen(command);
+	l = (int)strlen(command);
 	count = 0;
 
 	for (j=0 ; j<256 ; j++)
@@ -1379,7 +1574,7 @@ void M_UnbindCommand (char *command)
 	int		l;
 	char	*b;
 
-	l = strlen(command);
+	l = (int)strlen(command);
 
 	for (j=0 ; j<256 ; j++)
 	{
@@ -1415,7 +1610,7 @@ void M_Keys_Draw (void)
 
 		M_Print (16, y, bindnames[i][1]);
 
-		l = strlen (bindnames[i][0]);
+		l = (int) strlen (bindnames[i][0]);
 
 		M_FindKeysForCommand (bindnames[i][0], keys);
 
@@ -1427,7 +1622,7 @@ void M_Keys_Draw (void)
 		{
 			name = Key_KeynumToString (keys[0]);
 			M_Print (140, y, name);
-			x = strlen(name) * 8;
+			x = (int) strlen(name) * 8;
 			if (keys[1] != -1)
 			{
 				M_Print (140 + x + 8, y, "or");
@@ -1457,8 +1652,12 @@ void M_Keys_Key (int k)
 		}
 		else if (k != '`')
 		{
-			sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
-			Cbuf_InsertText (cmd);
+#if defined (__APPLE__) || defined (MACOSX)
+                    snprintf (cmd,80,"bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
+#else
+                    sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
+#endif /* __APPLE__ || MACOSX */
+                    Cbuf_InsertText (cmd);
 		}
 
 		bind_grab = false;
@@ -1831,7 +2030,7 @@ void M_SerialConfig_Draw (void)
 	M_DrawCharacter (basex-8, serialConfig_cursor_table [serialConfig_cursor], 12+((int)(realtime*4)&1));
 
 	if (serialConfig_cursor == 4)
-		M_DrawCharacter (168 + 8*strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*(int)strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
@@ -1841,6 +2040,13 @@ void M_SerialConfig_Draw (void)
 void M_SerialConfig_Key (int key)
 {
 	int		l;
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+        M_NumPad2Key (&key);
+
+#endif /* __APPLE__ || MACOSX */
+
 
 	switch (key)
 	{
@@ -1980,7 +2186,10 @@ forward:
 			break;
 		if (serialConfig_cursor == 4)
 		{
-			l = strlen(serialConfig_phone);
+			l = (int)strlen(serialConfig_phone);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (key, serialConfig_phone, 15) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 15)
 			{
 				serialConfig_phone[l+1] = 0;
@@ -1990,16 +2199,28 @@ forward:
 	}
 
 	if (DirectConfig && (serialConfig_cursor == 3 || serialConfig_cursor == 4))
+    {
 		if (key == K_UPARROW)
+        {
 			serialConfig_cursor = 2;
+        }
 		else
+        {
 			serialConfig_cursor = 5;
+        }
+    }
 
 	if (SerialConfig && StartingGame && serialConfig_cursor == 4)
+    {
 		if (key == K_UPARROW)
+        {
 			serialConfig_cursor = 3;
+        }
 		else
+        {
 			serialConfig_cursor = 5;
+        }
+    }
 }
 
 //=============================================================================
@@ -2043,19 +2264,19 @@ void M_ModemConfig_Draw (void)
 	M_DrawTextBox (basex, modemConfig_cursor_table[1]+4, 16, 1);
 	M_Print (basex+8, modemConfig_cursor_table[1]+12, modemConfig_clear);
 	if (modemConfig_cursor == 1)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[2], "Init");
 	M_DrawTextBox (basex, modemConfig_cursor_table[2]+4, 30, 1);
 	M_Print (basex+8, modemConfig_cursor_table[2]+12, modemConfig_init);
 	if (modemConfig_cursor == 2)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[3], "Hangup");
 	M_DrawTextBox (basex, modemConfig_cursor_table[3]+4, 16, 1);
 	M_Print (basex+8, modemConfig_cursor_table[3]+12, modemConfig_hangup);
 	if (modemConfig_cursor == 3)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
 
 	M_DrawTextBox (basex, modemConfig_cursor_table[4]-8, 2, 1);
 	M_Print (basex+8, modemConfig_cursor_table[4], "OK");
@@ -2067,6 +2288,12 @@ void M_ModemConfig_Draw (void)
 void M_ModemConfig_Key (int key)
 {
 	int		l;
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+        M_NumPad2Key (&key);
+
+#endif /* __APPLE__ || MACOSX */
 
 	switch (key)
 	{
@@ -2144,7 +2371,10 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 1)
 		{
-			l = strlen(modemConfig_clear);
+			l = (int)strlen(modemConfig_clear);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (key, modemConfig_clear, 15) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 15)
 			{
 				modemConfig_clear[l+1] = 0;
@@ -2154,7 +2384,10 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 2)
 		{
-			l = strlen(modemConfig_init);
+			l = (int)strlen(modemConfig_init);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (key, modemConfig_init, 29) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 29)
 			{
 				modemConfig_init[l+1] = 0;
@@ -2164,7 +2397,10 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 3)
 		{
-			l = strlen(modemConfig_hangup);
+			l = (int)strlen(modemConfig_hangup);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (key, modemConfig_hangup, 15) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 15)
 			{
 				modemConfig_hangup[l+1] = 0;
@@ -2200,7 +2436,11 @@ void M_Menu_LanConfig_f (void)
 	if (StartingGame && lanConfig_cursor == 2)
 		lanConfig_cursor = 1;
 	lanConfig_port = DEFAULTnet_hostport;
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(lanConfig_portname, 6, "%u", lanConfig_port);
+#else
 	sprintf(lanConfig_portname, "%u", lanConfig_port);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 	m_return_onerror = false;
 	m_return_reason[0] = 0;
@@ -2256,10 +2496,10 @@ void M_LanConfig_Draw (void)
 	M_DrawCharacter (basex-8, lanConfig_cursor_table [lanConfig_cursor], 12+((int)(realtime*4)&1));
 
 	if (lanConfig_cursor == 0)
-		M_DrawCharacter (basex+9*8 + 8*strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+9*8 + 8*(int)strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
 
 	if (lanConfig_cursor == 2)
-		M_DrawCharacter (basex+16 + 8*strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+16 + 8*(int)strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
@@ -2269,6 +2509,12 @@ void M_LanConfig_Draw (void)
 void M_LanConfig_Key (int key)
 {
 	int		l;
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+        M_NumPad2Key (&key);
+
+#endif /* __APPLE__ || MACOSX */
 
 	switch (key)
 	{
@@ -2341,7 +2587,10 @@ void M_LanConfig_Key (int key)
 
 		if (lanConfig_cursor == 2)
 		{
-			l = strlen(lanConfig_joinname);
+			l = (int)strlen(lanConfig_joinname);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (key, lanConfig_joinname, 21) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 21)
 			{
 				lanConfig_joinname[l+1] = 0;
@@ -2353,7 +2602,10 @@ void M_LanConfig_Key (int key)
 			break;
 		if (lanConfig_cursor == 0)
 		{
-			l = strlen(lanConfig_portname);
+			l = (int)strlen(lanConfig_portname);
+#if defined (__APPLE__) || defined (MACOSX)
+                        if (M_GetPasteString (key, lanConfig_portname, 5) == false)
+#endif /* __APPLE__ || MACOSX */
 			if (l < 5)
 			{
 				lanConfig_portname[l+1] = 0;
@@ -2363,17 +2615,31 @@ void M_LanConfig_Key (int key)
 	}
 
 	if (StartingGame && lanConfig_cursor == 2)
+    {
 		if (key == K_UPARROW)
+        {
 			lanConfig_cursor = 1;
+        }
 		else
+        {
 			lanConfig_cursor = 0;
+        }
+    }
 
 	l =  Q_atoi(lanConfig_portname);
 	if (l > 65535)
+    {
 		l = lanConfig_port;
+    }
 	else
+    {
 		lanConfig_port = l;
+    }
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(lanConfig_portname, 6, "%u", lanConfig_port);
+#else
 	sprintf(lanConfig_portname, "%u", lanConfig_port);
+#endif /* __APPLE__ || MACOSX */
 }
 
 //=============================================================================
@@ -2940,9 +3206,17 @@ void M_ServerList_Draw (void)
 	for (n = 0; n < hostCacheCount; n++)
 	{
 		if (hostcache[n].maxusers)
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf(string, 64, "%-15.15s %-15.15s %2u/%2u\n", hostcache[n].name, hostcache[n].map, hostcache[n].users, hostcache[n].maxusers);
+#else
 			sprintf(string, "%-15.15s %-15.15s %2u/%2u\n", hostcache[n].name, hostcache[n].map, hostcache[n].users, hostcache[n].maxusers);
+#endif /* __APPLE__ || MACOSX */
 		else
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf(string, 64, "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
+#else
 			sprintf(string, "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
+#endif /* __APPLE__ || MACOSX */
 		M_Print (16, 32 + 8*n, string);
 	}
 	M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(realtime*4)&1));

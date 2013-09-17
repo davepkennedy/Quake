@@ -27,14 +27,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #endif
 
+#if defined(__APPLE__) || defined(MACOSX)
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <OpenGL/glext.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif /* APPLE || MACOSX */
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
 
 // Function prototypes for the Texture Object Extension routines
+#ifdef _WIN32
 typedef GLboolean (APIENTRY *ARETEXRESFUNCPTR)(GLsizei, const GLuint *,
                     const GLboolean *);
 typedef void (APIENTRY *BINDTEXFUNCPTR)(GLenum, GLuint);
@@ -48,6 +55,7 @@ typedef void (APIENTRY *TEXSUBIMAGEPTR)(int, int, int, int, int, int, int, int, 
 extern	BINDTEXFUNCPTR bindTexFunc;
 extern	DELTEXFUNCPTR delTexFunc;
 extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
+#endif /* _WIN32 */
 
 extern	int texture_extension_number;
 extern	int		texture_mode;
@@ -230,19 +238,38 @@ extern	const char *gl_renderer;
 extern	const char *gl_version;
 extern	const char *gl_extensions;
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern void R_TranslatePlayerSkin (int playernum);
+extern void GL_Bind (int texnum);
+extern void GL_CheckTextureRAM (GLenum theTarget, GLint theLevel, GLint theInternalFormat, GLsizei theWidth,
+                                GLsizei theHeight, GLsizei theDepth , GLint theBorder, GLenum theFormat,
+                                GLenum theType);
+#else
 void R_TranslatePlayerSkin (int playernum);
 void GL_Bind (int texnum);
+#endif /* APPLE || MACOSX */
 
 // Multitexture
+#if defined(__APPLE__) || defined(MACOSX)
+
+#define    TEXTURE0_SGIS				GL_TEXTURE0_ARB
+#define    TEXTURE1_SGIS				GL_TEXTURE1_ARB
+
+#else
+
 #define    TEXTURE0_SGIS				0x835E
 #define    TEXTURE1_SGIS				0x835F
 
-#ifdef _WIN32
+#endif /* APPLE || MACOSX */
+
+#ifndef _WIN32
+#define APIENTRY /* */
+#endif
+
 typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
 extern lpMTexFUNC qglMTexCoord2fSGIS;
 extern lpSelTexFUNC qglSelectTextureSGIS;
-#endif
 
 extern qboolean gl_mtexable;
 
@@ -252,51 +279,125 @@ void GL_EnableMultitexture(void);
 //
 // gl_warp.c
 //
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void GL_SubdivideSurface (msurface_t *fa);
+extern void EmitBothSkyLayers (msurface_t *fa);
+extern void EmitWaterPolys (msurface_t *fa);
+extern void EmitSkyPolys (msurface_t *fa);
+extern void R_DrawSkyChain (msurface_t *s);
+
+#else
+
 void GL_SubdivideSurface (msurface_t *fa);
 void EmitBothSkyLayers (msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa);
 void R_DrawSkyChain (msurface_t *s);
 
+#endif /* APPLE || MACOSX */
+
 //
 // gl_draw.c
 //
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern int GL_LoadPicTexture (qpic_t *pic);
+extern void GL_Set2D (void);
+
+#else
+
 int GL_LoadPicTexture (qpic_t *pic);
 void GL_Set2D (void);
+
+#endif /* APPLE || MACOSX */
 
 //
 // gl_rmain.c
 //
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+extern void R_RotateForEntity (entity_t *e);
+
+#else
+
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 void R_RotateForEntity (entity_t *e);
+
+#endif /* APPLE || MACOSX */
 
 //
 // gl_rlight.c
 //
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
+extern void R_AnimateLight (void);
+extern void R_RenderDlights (void);
+extern int R_LightPoint (vec3_t p);
+
+#else
+
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 void R_AnimateLight (void);
 void R_RenderDlights (void);
 int R_LightPoint (vec3_t p);
 
+#endif /* APPLE || MACOSX */
+
 //
 // gl_refrag.c
 //
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void R_StoreEfrags (efrag_t **ppefrag);
+
+#else
+
 void R_StoreEfrags (efrag_t **ppefrag);
+
+#endif /* APPLE || MACOSX */
 
 //
 // gl_mesh.c
 //
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+
+#else
+
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+
+#endif /* APPLE || MACOSX */
 
 //
 // gl_rsurf.c
 //
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void R_DrawBrushModel (entity_t *e);
+extern void R_DrawWorld (void);
+extern void GL_BuildLightmaps (void);
+
+#else
+
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void GL_BuildLightmaps (void);
 
+#endif /* APPLE || MACOSX */
+
 //
 // gl_ngraph.c
 //
+
 void R_NetGraph (void);
 

@@ -102,7 +102,15 @@ int			scr_fullupdate;
 int			clearconsole;
 int			clearnotify;
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern int		sb_lines;
+
+#else
+
 int			sb_lines;
+
+#endif /* APPLE || MACOSX */
 
 viddef_t	vid;				// global video state
 
@@ -458,7 +466,11 @@ void SCR_DrawFPS (void)
 	static double lastframetime;
 	double t;
 	extern int fps_count;
+#if defined(__APPLE__) || defined(MACOSX)
+        static int lastfps;
+#else
 	static lastfps;
+#endif /* APPLE || MACOSX */
 	int x, y;
 	char st[80];
 
@@ -472,8 +484,12 @@ void SCR_DrawFPS (void)
 		lastframetime = t;
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(st, 80, "%3d FPS", lastfps);
+#else
 	sprintf(st, "%3d FPS", lastfps);
-	x = vid.width - strlen(st) * 8 - 8;
+#endif /* __APPLE__ || MACOSX */
+	x = vid.width - ((int) strlen(st)) * 8 - 8;
 	y = vid.height - sb_lines - 8;
 //	Draw_TileClear(x, y, strlen(st) * 8, 8);
 	Draw_String(x, y, st);
@@ -642,14 +658,55 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 		*pack++ = *palette++;
 		
 // write output file 
-	length = pack - (byte *)pcx;
+	length = (int) (pack - (byte *)pcx);
 	if (upload)
 		CL_StartUpload((void *)pcx, length);
 	else
 		COM_WriteFile (filename, pcx, length);
 } 
- 
 
+#if defined (__APPLE__) || defined (MACOSX)
+
+/* 
+============== 
+WritePNGFile 
+============== 
+*/ 
+qboolean WritePNGFile (char *theFileName, byte *theData, int theWidth, int theHeight, int theRowBytes, byte *thePalette) 
+{
+    extern qboolean	VID_Screenshot (char *, unsigned char *, unsigned int, unsigned int, unsigned int);
+    unsigned int	mySize = theWidth * theHeight,
+                        myColorIndex,
+                        i, j;
+    unsigned char	*myRawRGBData = NULL,
+                        *myRGBPixel = NULL;
+    
+    // get some temp memory for the RGB data:
+    myRGBPixel = myRawRGBData = Hunk_TempAlloc (mySize * 3);
+    if (myRawRGBData == NULL)
+    {
+        Con_Printf ("SCR_ScreenShot_f: not enough memory\n");
+        return (false);
+    } 
+
+    // convert the indexed color data to RGB raw data:
+    for (i = 0; i < theHeight; i++)
+    {
+        for (j = 0; j < theWidth; j++)
+        {
+            myColorIndex = *(theData++) * 3;
+            *(myRGBPixel++) = thePalette[myColorIndex++];
+            *(myRGBPixel++) = thePalette[myColorIndex++];
+            *(myRGBPixel++) = thePalette[myColorIndex];
+        }
+        theData += theRowBytes - theWidth;
+    }
+
+    // finally write the PNG file:
+    return (VID_Screenshot (theFileName, myRawRGBData, theWidth, theHeight, theWidth * 3));    
+} 
+
+#endif /* !__APPLE__ && !MACOSX */
 
 /* 
 ================== 
@@ -658,26 +715,40 @@ SCR_ScreenShot_f
 */  
 void SCR_ScreenShot_f (void) 
 { 
-	int     i; 
+	int     	i; 
 	char		pcxname[80]; 
 	char		checkname[MAX_OSPATH];
 
 // 
 // find a file name to save it to 
 // 
+#if defined (__APPLE__) || defined (MACOSX)
+        qboolean	success = false;
+
+	strcpy(pcxname,"quake00.png");
+#else
 	strcpy(pcxname,"quake00.pcx");
+#endif /* __APPLE__ || MACOSX */
 		
 	for (i=0 ; i<=99 ; i++) 
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (checkname, MAX_OSPATH, "%s/%s", com_gamedir, pcxname);
+#else
 		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
+#endif /* __APPLE__ || MACOSX */
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 
 	if (i==100) 
 	{
-		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX"); 
+#if defined (__APPLE__) || defined (MACOSX)
+		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PNG file\n");
+#else
+		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n");
+#endif /* __APPLE__ || MACOSX */
 		return;
 	}
  
@@ -687,13 +758,20 @@ void SCR_ScreenShot_f (void)
 	D_EnableBackBufferAccess ();	// enable direct drawing of console to back
 									//  buffer
 
-	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
-				  host_basepal, false);
-
+#if defined (__APPLE__) || defined (MACOSX)
+        success = WritePNGFile (checkname, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
-									//  for linear writes all the time
-
+                                        //  for linear writes all the time
+        if (success == true)
+        {
+            Con_Printf ("Wrote %s\n", pcxname);
+        }
+#else
+	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
+	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
+                                        //  for linear writes all the time
 	Con_Printf ("Wrote %s\n", pcxname);
+#endif /* __APPLE__ ||ÊMACOSX */
 } 
 
 /*
@@ -703,7 +781,11 @@ int MipColor(int r, int g, int b)
 {
 	int i;
 	float dist;
+#if defined (__APPLE__) || defined (MACOSX)
+	int best = 0;
+#else
 	int best;
+#endif /* __APPLE__ ||ÊMACOSX */
 	float bestdist;
 	int r1, g1, b1;
 	static int lr = -1, lg = -1, lb = -1;
@@ -780,12 +862,15 @@ SCR_RSShot_f
 */  
 void SCR_RSShot_f (void) 
 { 
-	int     i, x, y;
-	unsigned char		*src, *dest;
-	char		pcxname[80]; 
+	int     	x, y;
+	unsigned char	*src, *dest;
+	char		pcxname[80];
+#if 0
+        int		i;
 	char		checkname[MAX_OSPATH];
-	unsigned char		*newbuf, *srcbuf;
-	int srcrowbytes;
+#endif
+	unsigned char		*newbuf; //, *srcbuf;
+//	int srcrowbytes;
 	int w, h;
 	int dx, dy, dex, dey, nx;
 	int r, b, g;
@@ -819,7 +904,11 @@ void SCR_RSShot_f (void)
 	{ 
 		pcxname[6] = i/10 + '0'; 
 		pcxname[7] = i%10 + '0'; 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (checkname, MAX_OSPATH, "%s/%s", com_gamedir, pcxname);
+#else
 		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
+#endif /* __APPLE__ || MACOSX */
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 
@@ -878,15 +967,15 @@ void SCR_RSShot_f (void)
 	time(&now);
 	strcpy(st, ctime(&now));
 	st[strlen(st) - 1] = 0;
-	SCR_DrawStringToSnap (st, newbuf, w - strlen(st)*8, 0, w);
+	SCR_DrawStringToSnap (st, newbuf, w - ((int) strlen(st))*8, 0, w);
 
 	strncpy(st, cls.servername, sizeof(st));
 	st[sizeof(st) - 1] = 0;
-	SCR_DrawStringToSnap (st, newbuf, w - strlen(st)*8, 10, w);
+	SCR_DrawStringToSnap (st, newbuf, w - ((int) strlen(st))*8, 10, w);
 
 	strncpy(st, name.string, sizeof(st));
 	st[sizeof(st) - 1] = 0;
-	SCR_DrawStringToSnap (st, newbuf, w - strlen(st)*8, 20, w);
+	SCR_DrawStringToSnap (st, newbuf, w - ((int) strlen(st))*8, 20, w);
 
 	WritePCXfile (pcxname, newbuf, w, h, w, host_basepal, true);
 
@@ -953,7 +1042,9 @@ int SCR_ModalMessage (char *text)
 	scr_fullupdate = 0;
 	scr_drawdialog = true;
 	SCR_UpdateScreen ();
-	scr_drawdialog = false;
+#if !defined (__APPLE__) && !defined (MACOSX)
+        scr_drawdialog = false;
+#endif /* !__APPLE__ && !MACOSX */
 	
 	S_ClearBuffer ();		// so dma doesn't loop current sound
 
@@ -963,6 +1054,9 @@ int SCR_ModalMessage (char *text)
 		Sys_SendKeyEvents ();
 	} while (key_lastpress != 'y' && key_lastpress != 'n' && key_lastpress != K_ESCAPE);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        scr_drawdialog = false;
+#endif /* __APPLE__ || MACOSX */
 	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 

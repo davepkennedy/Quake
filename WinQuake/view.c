@@ -376,6 +376,13 @@ void V_ParseDamage (void)
 	v_dmg_pitch = count*side*v_kickpitch.value;
 
 	v_dmg_time = v_kicktime.value;
+    
+#if defined (__APPLE__) || defined (MAXOSX)
+    extern void     IN_Damage (float);
+    extern cvar_t   in_actuatorduration;
+    
+    IN_Damage (in_actuatorduration.value);
+#endif // __APPLE__ || MACOSX
 }
 
 
@@ -1031,7 +1038,7 @@ void V_RenderView (void)
 		for (i=0 ; i<3 ; i++)
 			r_refdef.vieworg[i] -= right[i]*lcd_x.value;
 		R_RenderView ();
-
+                        
 		vid.buffer += vid.rowbytes>>1;
 
 		R_PushDlights ();

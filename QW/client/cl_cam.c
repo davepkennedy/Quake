@@ -124,7 +124,11 @@ void Cam_Lock(int playernum)
 {
 	char st[40];
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(st, 40, "ptrack %i", playernum);
+#else
 	sprintf(st, "ptrack %i", playernum);
+#endif /* __APPLE__ || MACOSX */
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 	MSG_WriteString (&cls.netchan.message, st);
 	spec_track = playernum;

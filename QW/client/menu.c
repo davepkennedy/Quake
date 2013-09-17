@@ -17,6 +17,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+
+#if defined (__APPLE__) || defined (MACOSX)
+#include <ctype.h>
+#endif /* __APPLE__ || MACOSX */
+
 #include "quakedef.h"
 #include "winquake.h"
 
@@ -89,6 +94,13 @@ qboolean	m_recursiveDraw;
 int			m_return_state;
 qboolean	m_return_onerror;
 char		m_return_reason [32];
+
+#if defined (__APPLE__) || defined (MACOSX)
+extern qboolean	gVidDisplayFullscreen;
+extern cvar_t in_actuators;
+
+void IN_Damage (float duration);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 #define StartingGame	(m_multiplayer_cursor == 1)
 #define JoiningGame		(m_multiplayer_cursor == 0)
@@ -360,7 +372,11 @@ void M_Main_Key (int key)
 //=============================================================================
 /* OPTIONS MENU */
 
+#if defined (__APPLE__) || defined (MACOSX)
+#define	OPTIONS_ITEMS	17
+#else
 #define	OPTIONS_ITEMS	16
+#endif /* __APPLE__ || MACOSX */
 
 #define	SLIDER_RANGE	10
 
@@ -400,8 +416,13 @@ void M_AdjustSliders (int dir)
 		sensitivity.value += dir * 0.5;
 		if (sensitivity.value < 1)
 			sensitivity.value = 1;
+#if defined (__APPLE__) || defined (MACOSX)
+		if (sensitivity.value > 32)
+			sensitivity.value = 32;
+#else
 		if (sensitivity.value > 11)
 			sensitivity.value = 11;
+#endif /* __APPLE__ || MACOSX */
 		Cvar_SetValue ("sensitivity", sensitivity.value);
 		break;
 	case 6:	// music volume
@@ -456,10 +477,26 @@ void M_AdjustSliders (int dir)
 
 	case 13:
 		Cvar_SetValue ("cl_hudswap", !cl_hudswap.value);
-
+        break;
+            
+#if defined (__APPLE__) || defined (MACOSX)
+    case 15:	// in_actuators
+        Cvar_SetValue ("actuators", !in_actuators.value);
+        
+        if (in_actuators.value)
+        {
+            IN_Damage (0.5f);
+        }
+        break;
+        
+    case 16:	// _windowed_mouse
+        Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
+        break;
+#else
 	case 15:	// _windowed_mouse
 		Cvar_SetValue ("_windowed_mouse", !_windowed_mouse.value);
 		break;
+#endif /* __APPLE__ || MACOSX */
 	}
 }
 
@@ -515,7 +552,11 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 64, r);
 
 	M_Print (16, 72, "           Mouse Speed");
+#if defined (__APPLE__) || defined (MACOSX)
+	r = (sensitivity.value - 1)/31;
+#else
 	r = (sensitivity.value - 1)/10;
+#endif /* __APPLE__ || MACOSX */
 	M_DrawSlider (220, 72, r);
 
 	M_Print (16, 80, "       CD Music Volume");
@@ -547,15 +588,22 @@ void M_Options_Draw (void)
 	if (vid_menudrawfn)
 		M_Print (16, 144, "         Video Options");
 
-#ifdef _WIN32
+#if defined (__APPLE__) || defined (MACOSX)
+    M_Print (16, 152, "            Use Rumble");
+    M_DrawCheckbox (220, 152, in_actuators.value);
+
+	if (gVidDisplayFullscreen == false)
+	{
+		M_Print (16, 160, "             Use Mouse");
+		M_DrawCheckbox (220, 160, _windowed_mouse.value);
+	}    
+#elif defined (_WIN32)
 	if (modestate == MS_WINDOWED)
 	{
-#endif
 		M_Print (16, 152, "             Use Mouse");
 		M_DrawCheckbox (220, 152, _windowed_mouse.value);
-#ifdef _WIN32
 	}
-#endif
+#endif /* _WIN32 */
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -596,6 +644,12 @@ void M_Options_Key (int k)
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor--;
+#if defined (__APPLE__) || defined (MACOSX)
+        if (options_cursor == 16 && vid_menudrawfn == NULL && gVidDisplayFullscreen == false)
+        {
+            options_cursor = 15;
+        }
+#endif /* __APPLE__ || MACOSX */
 		if (options_cursor < 0)
 			options_cursor = OPTIONS_ITEMS-1;
 		break;
@@ -603,6 +657,12 @@ void M_Options_Key (int k)
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor++;
+#if defined (__APPLE__) || defined (MACOSX)
+        if (options_cursor == 15 && vid_menudrawfn == NULL && gVidDisplayFullscreen == false)
+        {
+            options_cursor = 16;
+        }
+#endif /* __APPLE__ || MACOSX */
 		if (options_cursor >= OPTIONS_ITEMS)
 			options_cursor = 0;
 		break;	
@@ -624,17 +684,36 @@ void M_Options_Key (int k)
 			options_cursor = 0;
 	}
 
-	if ((options_cursor == 15) 
-#ifdef _WIN32
-	&& (modestate != MS_WINDOWED)
-#endif
-	)
+#if defined (__APPLE__) || defined (MACOSX)
+	if ((options_cursor == 16) && (gVidDisplayFullscreen != false))
 	{
 		if (k == K_UPARROW)
-			options_cursor = 14;
+        {
+            if (vid_menudrawfn == NULL)
+                options_cursor = 14;
+            else
+                options_cursor = 15;
+        }
 		else
 			options_cursor = 0;
 	}
+#else
+    
+	if ((options_cursor == 15) 
+#ifdef _WIN32
+	&& (modestate != MS_WINDOWED)
+#endif /* _WIN32 || __APPLE__ || MACOSX */
+	)
+	{
+		if (k == K_UPARROW)
+                {
+			options_cursor = 14;
+                }
+		else
+			options_cursor = 0;
+	}
+    
+#endif
 }
 
 
@@ -684,7 +763,7 @@ void M_FindKeysForCommand (char *command, int *twokeys)
 	char	*b;
 
 	twokeys[0] = twokeys[1] = -1;
-	l = strlen(command);
+	l = (int) strlen(command);
 	count = 0;
 
 	for (j=0 ; j<256 ; j++)
@@ -708,7 +787,7 @@ void M_UnbindCommand (char *command)
 	int		l;
 	char	*b;
 
-	l = strlen(command);
+	l = (int) strlen(command);
 
 	for (j=0 ; j<256 ; j++)
 	{
@@ -744,7 +823,7 @@ void M_Keys_Draw (void)
 
 		M_Print (16, y, bindnames[i][1]);
 
-		l = strlen (bindnames[i][0]);
+		l = (int) strlen (bindnames[i][0]);
 		
 		M_FindKeysForCommand (bindnames[i][0], keys);
 		
@@ -756,7 +835,7 @@ void M_Keys_Draw (void)
 		{
 			name = Key_KeynumToString (keys[0]);
 			M_Print (140, y, name);
-			x = strlen(name) * 8;
+			x = (int) strlen(name) * 8;
 			if (keys[1] != -1)
 			{
 				M_Print (140 + x + 8, y, "or");
@@ -786,7 +865,11 @@ void M_Keys_Key (int k)
 		}
 		else if (k != '`')
 		{
-			sprintf (cmd, "bind %s \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);			
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (cmd,80,"bind %s \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
+#else
+			sprintf (cmd, "bind %s \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
+#endif /* __APPLE__ || MACOSX */
 			Cbuf_InsertText (cmd);
 		}
 		
@@ -1064,6 +1147,11 @@ void M_Quit_Draw (void)
 	"0Additional Programming",
 	"1 Dave 'Zoid' Kirsch",
 	"1 Jack 'morbid' Mathews",
+#if defined (__APPLE__) || defined (MACOSX)
+        "0MacOS X Port",
+        "1 Axel'awe' Wefers",
+        "1 (c)2001-2012 Fruitz Of Dojo",
+#endif /* __APPLE__ || MACOSX */
 	"0Id Software is not responsible for",
     "0providing technical support for",
 	"0QUAKEWORLD(tm). (c)1996 Id Software,",
@@ -1090,7 +1178,11 @@ void M_Quit_Draw (void)
 		m_state = m_quit;
 	}
 #if 1
+#if defined (__APPLE__) || defined (MACOSX)
+	M_DrawTextBox (0, 0, 38, 26);
+#else
 	M_DrawTextBox (0, 0, 38, 23);
+#endif /* __APPLE__ || MACOSX */
 	y = 12;
 	for (p = cmsg; *p; p++, y += 8) {
 		if (**p == '0')

@@ -130,7 +130,11 @@ void SV_Error (char *error, ...)
 	inerror = true;
 
 	va_start (argptr,error);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string,1024,error,argptr);
+#else
 	vsprintf (string,error,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	Con_Printf ("SV_Error: %s\n",string);
@@ -186,20 +190,22 @@ void SV_DropClient (client_t *drop)
 	MSG_WriteByte (&drop->netchan.message, svc_disconnect);
 
 	if (drop->state == cs_spawned)
+    {
 		if (!drop->spectator)
 		{
 			// call the prog function for removing a client
 			// this will set the body to a dead frame, among other things
-			pr_global_struct->self = EDICT_TO_PROG(drop->edict);
+			pr_global_struct->self = (int) EDICT_TO_PROG(drop->edict);
 			PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
 		}
 		else if (SpectatorDisconnect)
 		{
 			// call the prog function for removing a client
 			// this will set the body to a dead frame, among other things
-			pr_global_struct->self = EDICT_TO_PROG(drop->edict);
+			pr_global_struct->self = (int) EDICT_TO_PROG(drop->edict);
 			PR_ExecuteProgram (SpectatorDisconnect);
 		}
+    }
 
 	if (drop->spectator)
 		Con_Printf ("Spectator %s removed\n",drop->name);
@@ -275,7 +281,7 @@ void SV_FullClientUpdate (client_t *client, sizebuf_t *buf)
 	int		i;
 	char	info[MAX_INFO_STRING];
 
-	i = client - svs.clients;
+	i = (int) (client - svs.clients);
 
 //Sys_Printf("SV_FullClientUpdate:  Updated frags for client %d\n", i);
 
@@ -313,7 +319,7 @@ Writes all update values to a client's reliable stream
 */
 void SV_FullClientUpdateToClient (client_t *client, client_t *cl)
 {
-	ClientReliableCheckBlock(cl, 24 + strlen(client->userinfo));
+	ClientReliableCheckBlock(cl, 24 + ((int) strlen(client->userinfo)));
 	if (cl->num_backbuf) {
 		SV_FullClientUpdate (client, &cl->backbuf);
 		ClientReliable_FinishWrite(cl);
@@ -424,10 +430,14 @@ void SVC_Log (void)
 
 	Con_DPrintf ("sending log %i to %s\n", svs.logsequence-1, NET_AdrToString(net_from));
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (data, MAX_DATAGRAM + 64, "stdlog %i\n", svs.logsequence-1);
+#else
 	sprintf (data, "stdlog %i\n", svs.logsequence-1);
+#endif /* __APPLE__ || MACOSX */
 	strcat (data, (char *)svs.log_buf[((svs.logsequence-1)&1)]);
 
-	NET_SendPacket (strlen(data)+1, data, net_from);
+	NET_SendPacket (((int) strlen(data))+1, data, net_from);
 }
 
 /*
@@ -554,7 +564,11 @@ void SVC_DirectConnect (void)
 	if (s[0] && strcmp(s, "0"))
 	{
 		if (spectator_password.string[0] && 
+#if defined(__APPLE__) || defined(MACOSX)
+			Q_strcasecmp(spectator_password.string, "none") &&
+#else
 			stricmp(spectator_password.string, "none") &&
+#endif /* APPLE || MACOSX */
 			strcmp(spectator_password.string, s) )
 		{	// failed
 			Con_Printf ("%s:spectator password failed\n", NET_AdrToString (net_from));
@@ -568,8 +582,12 @@ void SVC_DirectConnect (void)
 	else
 	{
 		s = Info_ValueForKey (userinfo, "password");
-		if (password.string[0] && 
+		if (password.string[0] &&
+#if defined(__APPLE__) || defined(MACOSX)
+			Q_strcasecmp(password.string, "none") &&
+#else
 			stricmp(password.string, "none") &&
+#endif /* APPLE || MACOSX */
 			strcmp(password.string, s) )
 		{
 			Con_Printf ("%s:password failed\n", NET_AdrToString (net_from));
@@ -672,7 +690,7 @@ void SVC_DirectConnect (void)
 
 	Netchan_OutOfBandPrint (adr, "%c", S2C_CONNECTION );
 
-	edictnum = (newcl-svs.clients)+1;
+	edictnum = ((int) (newcl-svs.clients))+1;
 	
 	Netchan_Setup (&newcl->netchan , adr, qport);
 
@@ -1000,7 +1018,11 @@ void SV_WriteIP_f (void)
 	byte	b[4];
 	int		i;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/listip.cfg", com_gamedir);
+#else
 	sprintf (name, "%s/listip.cfg", com_gamedir);
+#endif /* __APPLE__ || MACOSX */
 
 	Con_Printf ("Writing %s.\n", name);
 
@@ -1034,7 +1056,7 @@ void SV_SendBan (void)
 	data[5] = 0;
 	strcat (data, "\nbanned.\n");
 	
-	NET_SendPacket (strlen(data), data, net_from);
+	NET_SendPacket ((int) strlen(data), data, net_from);
 }
 
 /*
@@ -1363,7 +1385,11 @@ void SV_InitLocal (void)
 	Cmd_AddCommand ("writeip", SV_WriteIP_f);
 
 	for (i=0 ; i<MAX_MODELS ; i++)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (localmodels[i], 5, "*%i", i);
+#else
 		sprintf (localmodels[i], "*%i", i);
+#endif /* __APPLE__ || MACOSX */
 
 	Info_SetValueForStarKey (svs.info, "*version", va("%4.2f", VERSION), MAX_SERVERINFO_STRING);
 
@@ -1413,16 +1439,19 @@ void Master_Heartbeat (void)
 			active++;
 
 	svs.heartbeat_sequence++;
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (string, 2048, "%c\n%i\n%i\n", S2M_HEARTBEAT, svs.heartbeat_sequence, active);
+#else
 	sprintf (string, "%c\n%i\n%i\n", S2M_HEARTBEAT,
 		svs.heartbeat_sequence, active);
-
+#endif /* __APPLE__ ||ÊMACOSX */
 
 	// send to group master
 	for (i=0 ; i<MAX_MASTERS ; i++)
 		if (master_adr[i].port)
 		{
 			Con_Printf ("Sending heartbeat to %s\n", NET_AdrToString (master_adr[i]));
-			NET_SendPacket (strlen(string), string, master_adr[i]);
+			NET_SendPacket ((int) strlen(string), string, master_adr[i]);
 		}
 }
 
@@ -1438,14 +1467,18 @@ void Master_Shutdown (void)
 	char		string[2048];
 	int			i;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (string, 2048, "%c\n", S2M_SHUTDOWN);
+#else
 	sprintf (string, "%c\n", S2M_SHUTDOWN);
+#endif /* __APPLE__ || MACOSX */
 
 	// send to group master
 	for (i=0 ; i<MAX_MASTERS ; i++)
 		if (master_adr[i].port)
 		{
 			Con_Printf ("Sending heartbeat to %s\n", NET_AdrToString (master_adr[i]));
-			NET_SendPacket (strlen(string), string, master_adr[i]);
+			NET_SendPacket ((int) strlen(string), string, master_adr[i]);
 		}
 }
 
@@ -1496,7 +1529,11 @@ void SV_ExtractFromUserinfo (client_t *cl)
 		val = Info_ValueForKey (cl->userinfo, "name");
 	}
 
+#if defined(__APPLE__) || defined(MACOSX)
+	if (!val[0] || !Q_strcasecmp(val, "console")) {
+#else
 	if (!val[0] || !stricmp(val, "console")) {
+#endif /* APPLE || MACOSX */
 		Info_SetValueForKey (cl->userinfo, "name", "unnamed", MAX_INFO_STRING);
 		val = Info_ValueForKey (cl->userinfo, "name");
 	}
@@ -1506,7 +1543,11 @@ void SV_ExtractFromUserinfo (client_t *cl)
 		for (i=0, client = svs.clients ; i<MAX_CLIENTS ; i++, client++) {
 			if (client->state != cs_spawned || client == cl)
 				continue;
+#if defined(__APPLE__) || defined(MACOSX)
+			if (!Q_strcasecmp(client->name, val))
+#else
 			if (!stricmp(client->name, val))
+#endif /* APPLE || MACOSX */
 				break;
 		}
 		if (i != MAX_CLIENTS) { // dup name
@@ -1515,12 +1556,18 @@ void SV_ExtractFromUserinfo (client_t *cl)
 			p = val;
 
 			if (val[0] == '(')
+            {
 				if (val[2] == ')')
 					p = val + 3;
 				else if (val[3] == ')')
 					p = val + 4;
+            }
 
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf(newname, 80, "(%d)%-.40s", dupc++, p);
+#else
 			sprintf(newname, "(%d)%-.40s", dupc++, p);
+#endif /* __APPLE__ || MACOSX */
 			Info_SetValueForKey (cl->userinfo, "name", newname, MAX_INFO_STRING);
 			val = Info_ValueForKey (cl->userinfo, "name");
 		} else

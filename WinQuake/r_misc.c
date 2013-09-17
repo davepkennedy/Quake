@@ -382,7 +382,7 @@ void R_SetupFrame (void)
 	if (r_numsurfs.value)
 	{
 		if ((surface_p - surfaces) > r_maxsurfsseen)
-			r_maxsurfsseen = surface_p - surfaces;
+			r_maxsurfsseen = (int) (surface_p - surfaces);
 
 		Con_Printf ("Used %d of %d surfs; %d max\n", surface_p - surfaces,
 				surf_max - surfaces, r_maxsurfsseen);
@@ -390,7 +390,7 @@ void R_SetupFrame (void)
 
 	if (r_numedges.value)
 	{
-		edgecount = edge_p - r_edges;
+		edgecount = (int) (edge_p - r_edges);
 
 		if (edgecount > r_maxedgesseen)
 			r_maxedgesseen = edgecount;

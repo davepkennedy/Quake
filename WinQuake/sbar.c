@@ -45,7 +45,6 @@ qpic_t	*sb_face_invuln;
 qpic_t	*sb_face_invis_invuln;
 
 qboolean	sb_showscores;
-
 int			sb_lines;			// scan lines to draw
 
 qpic_t      *rsb_invbar[2];
@@ -338,7 +337,7 @@ int Sbar_itoa (int num, char *buf)
 
 	*str = 0;
 
-	return str-buf;
+	return (int) (str-buf);
 }
 
 
@@ -438,7 +437,11 @@ void Sbar_UpdateScoreboard (void)
 	{
 		k = fragsort[i];
 		s = &cl.scores[k];
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (&scoreboardtext[i][1], 19, "%3i %s", s->frags, s->name);
+#else
 		sprintf (&scoreboardtext[i][1], "%3i %s", s->frags, s->name);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 		top = s->colors & 0xf0;
 		bottom = (s->colors & 15) <<4;
@@ -460,10 +463,18 @@ void Sbar_SoloScoreboard (void)
 	int		minutes, seconds, tens, units;
 	int		l;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (str,80,"Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+#else
 	sprintf (str,"Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+#endif /* __APPLE__ ||ÊMACOSX */
 	Sbar_DrawString (8, 4, str);
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (str,80,"Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+#else
 	sprintf (str,"Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+#endif /* __APPLE__ ||ÊMACOSX */
 	Sbar_DrawString (8, 12, str);
 
 // time
@@ -471,11 +482,15 @@ void Sbar_SoloScoreboard (void)
 	seconds = cl.time - 60*minutes;
 	tens = seconds / 10;
 	units = seconds - 10*tens;
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (str,80,"Time :%3i:%i%i", minutes, tens, units);
+#else
 	sprintf (str,"Time :%3i:%i%i", minutes, tens, units);
+#endif /* __APPLE__ ||ÊMACOSX */
 	Sbar_DrawString (184, 4, str);
 
 // draw level name
-	l = strlen (cl.levelname);
+	l = (int) strlen (cl.levelname);
 	Sbar_DrawString (232 - l*4, 12, cl.levelname);
 }
 
@@ -661,7 +676,11 @@ void Sbar_DrawInventory (void)
 // ammo counts
 	for (i=0 ; i<4 ; i++)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 6, "%3i",cl.stats[STAT_SHELLS+i] );
+#else
 		sprintf (num, "%3i",cl.stats[STAT_SHELLS+i] );
+#endif /* __APPLE__ || MACOSX */
 		if (num[0] != ' ')
 			Sbar_DrawCharacter ( (6*i+1)*8 - 2, -24, 18 + num[0] - '0');
 		if (num[1] != ' ')
@@ -802,7 +821,11 @@ void Sbar_DrawFrags (void)
 
 	// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 
 		Sbar_DrawCharacter ( (x+1)*8 , -24, num[0]);
 		Sbar_DrawCharacter ( (x+2)*8 , -24, num[1]);
@@ -859,7 +882,11 @@ void Sbar_DrawFace (void)
 
 		// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 
 		if (top==8)
 		{
@@ -1124,7 +1151,11 @@ void Sbar_DeathmatchOverlay (void)
 
 	// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 
 		Draw_Character ( x+8 , y, num[0]);
 		Draw_Character ( x+16 , y, num[1]);
@@ -1145,7 +1176,11 @@ void Sbar_DeathmatchOverlay (void)
 		tens = n/10;
 		units = n%10;
 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i:%i%i", minutes, tens, units);
+#else
 		sprintf (num, "%3i:%i%i", minutes, tens, units);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 		Draw_String ( x+48 , y, num);
 }
@@ -1166,13 +1201,13 @@ Sbar_DeathmatchOverlay
 */
 void Sbar_MiniDeathmatchOverlay (void)
 {
-	qpic_t			*pic;
-	int				i, k, l;
-	int				top, bottom;
-	int				x, y, f;
+//	qpic_t			*pic;
+	int			i, k, l;
+	int			top, bottom;
+	int			x, y, f;
 	char			num[12];
-	scoreboard_t	*s;
-	int				numlines;
+	scoreboard_t		*s;
+	int			numlines;
 
 	if (vid.width < 512 || !sb_lines)
 		return;
@@ -1224,7 +1259,11 @@ void Sbar_MiniDeathmatchOverlay (void)
 
 	// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 
 		Draw_Character ( x+8 , y, num[0]);
 		Draw_Character ( x+16 , y, num[1]);
@@ -1247,7 +1286,11 @@ void Sbar_MiniDeathmatchOverlay (void)
 		tens = n/10;
 		units = n%10;
 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i:%i%i", minutes, tens, units);
+#else
 		sprintf (num, "%3i:%i%i", minutes, tens, units);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 		Draw_String ( x+48 , y, num);
 }

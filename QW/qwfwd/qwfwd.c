@@ -59,8 +59,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <netinet/in.h>
 #include <unistd.h>
 #include <syslog.h>
-
 #endif
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <string.h>
+
+void NET_Init (void);
+int connectsock(char *host, char *service, char *protocol);
+
+#endif /* __APPLE__ || MACOSX */
 
 int host_port; // port we are listening on
 
@@ -113,7 +123,7 @@ int connectsock(char *host, char *service, char *protocol)
 	sin.sin_family = AF_INET;
 
 /* Map service name to port number */
-	if(pse = getservbyname(service, protocol))
+	if((pse = getservbyname(service, protocol)))
 		sin.sin_port = pse->s_port;
 	else if((sin.sin_port = htons((u_short)atoi(service))) == 0)
 	{
@@ -122,7 +132,7 @@ int connectsock(char *host, char *service, char *protocol)
 	}
 
 /* Map host name to IP address, allowing for dotted decimal */
-	if(phe = gethostbyname(host))
+	if((phe = gethostbyname(host)))
 		memcpy((char *)&sin.sin_addr, phe->h_addr, phe->h_length);
 	else if((sin.sin_addr.s_addr = inet_addr(host)) == INADDR_NONE)
 	{
@@ -168,7 +178,7 @@ int main(int argc, char *argv[])
 	int i1;
 	char buffer[4095];
 	struct sockaddr_in fsin;
-	int alen;
+	unsigned int alen;
 	peer_t *p;
 	int s;
 	struct sockaddr_in	address;
@@ -210,7 +220,7 @@ int main(int argc, char *argv[])
 			if(FD_ISSET(s, &rfds))
 			{
 				alen = sizeof(fsin);
-				i1 = recvfrom(s, buffer, 4096, 0, (struct sockaddr *) &fsin, &alen);
+				i1 = (int) recvfrom(s, buffer, 4096, 0, (struct sockaddr *) &fsin, &alen);
 				if(i1 > 0) {
 					for (p = peers; p; p = p->next)
 						if (memcmp(&p->sin.sin_addr, &fsin.sin_addr, sizeof(p->sin.sin_addr)) == 0 &&
@@ -235,7 +245,7 @@ int main(int argc, char *argv[])
 			for (p = peers; p; p = p->next)
 				if(FD_ISSET(p->s, &rfds))
 				{
-					i1 = recv(p->s, buffer, 4096, 0);
+					i1 = (int) recv(p->s, buffer, 4096, 0);
 					if(i1 > 0) {
 						time(&p->last);
 						sendto(s, buffer, i1, 0, (struct sockaddr *) &p->sin, 

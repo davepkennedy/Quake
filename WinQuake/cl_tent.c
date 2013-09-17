@@ -112,6 +112,14 @@ void CL_ParseBeam (model_t *m)
 CL_ParseTEnt
 =================
 */
+
+#if defined(__APPLE__) || defined(MACOSX)
+#if GLTEST
+extern void Test_Spawn (vec3_t);
+#endif /* GLTEST */
+#endif /* __APPLE__ || MACOSX */
+
+
 void CL_ParseTEnt (void)
 {
 	int		type;

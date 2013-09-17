@@ -27,6 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <netinet/in.h>
 #endif
 
+#if defined(__APPLE__) || defined(MACOSX)
+#include <ctype.h>
+#endif /* APPLE || MACOSX */
 
 // we need to declare some mouse variables here, because the menu system
 // references them even when on a unix system.
@@ -142,6 +145,10 @@ char soundlist_name[] =
 	{ 's'^0xff, 'o'^0xff, 'u'^0xff, 'n'^0xff, 'd'^0xff, 'l'^0xff, 'i'^0xff, 's'^0xff, 't'^0xff, 
 		' '^0xff, '%'^0xff, 'i'^0xff, ' '^0xff, '%'^0xff, 'i'^0xff, 0 };
 
+#if defined (__APPLE__) || defined (MACOSX)
+extern void	VID_SetWindowTitle (char *theTitle);
+#endif /* __APPLE__ ||ÊMACOSX */
+
 /*
 ==================
 CL_Quit_f
@@ -216,9 +223,14 @@ void CL_SendConnectPacket (void)
 	Info_SetValueForStarKey (cls.userinfo, "*ip", NET_AdrToString(adr), MAX_INFO_STRING);
 
 //	Con_Printf ("Connecting to %s...\n", cls.servername);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (data, 2048, "%c%c%c%cconnect %i %i %i \"%s\"\n",
+                  255, 255, 255, 255,	PROTOCOL_VERSION, cls.qport, cls.challenge, cls.userinfo);
+#else
 	sprintf (data, "%c%c%c%cconnect %i %i %i \"%s\"\n",
 		255, 255, 255, 255,	PROTOCOL_VERSION, cls.qport, cls.challenge, cls.userinfo);
-	NET_SendPacket (strlen(data), data, adr);
+#endif /* __APPLE__ || MACOSX */
+	NET_SendPacket ((int)strlen(data), data, adr);
 }
 
 /*
@@ -263,8 +275,12 @@ void CL_CheckForResend (void)
 	connect_time = realtime+t2-t1;	// for retransmit requests
 
 	Con_Printf ("Connecting to %s...\n", cls.servername);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (data, 2048, "%c%c%c%cgetchallenge\n", 255, 255, 255, 255);
+#else
 	sprintf (data, "%c%c%c%cgetchallenge\n", 255, 255, 255, 255);
-	NET_SendPacket (strlen(data), data, adr);
+#endif /* __APPLE__ || MACOSX */
+	NET_SendPacket ((int) strlen(data), data, adr);
 }
 
 void CL_BeginServerConnect(void)
@@ -351,7 +367,7 @@ void CL_Rcon_f (void)
 		NET_StringToAdr (rcon_address.string, &to);
 	}
 	
-	NET_SendPacket (strlen(message)+1, message
+	NET_SendPacket (((int)strlen(message))+1, message
 		, to);
 }
 
@@ -411,6 +427,12 @@ void CL_Disconnect (void)
 
 #ifdef _WIN32
 	SetWindowText (mainwindow, "QuakeWorld: disconnected");
+#elif defined (__APPLE__) || defined (MACOSX)
+#if defined (GLQUAKE)
+        VID_SetWindowTitle ("GLQuakeWorld (disconnected)");
+#else
+        VID_SetWindowTitle ("QuakeWorld (disconnected)");
+#endif /* GLQUAKE */
 #endif
 
 // stop sounds (especially looping!)
@@ -425,7 +447,7 @@ void CL_Disconnect (void)
 			CL_Stop_f ();
 
 		final[0] = clc_stringcmd;
-		strcpy (final+1, "drop");
+		strcpy ((char*) final+1, "drop");
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
@@ -543,9 +565,17 @@ void CL_Color_f (void)
 	if (bottom > 13)
 		bottom = 13;
 	
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (num, 16, "%i", top);
+#else
 	sprintf (num, "%i", top);
+#endif /* __APPLE__ || MACOSX */
 	Cvar_Set ("topcolor", num);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (num, 16, "%i", bottom);
+#else
 	sprintf (num, "%i", bottom);
+#endif /* __APPLE__ || MACOSX */
 	Cvar_Set ("bottomcolor", num);
 }
 
@@ -625,7 +655,11 @@ void CL_FullInfo_f (void)
 		if (*s)
 			s++;
 
+#if defined(__APPLE__) || defined(MACOSX)
+		if (!Q_strcasecmp(key, pmodel_name) || !Q_strcasecmp(key, emodel_name))
+#else                
 		if (!stricmp(key, pmodel_name) || !stricmp(key, emodel_name))
+#endif /* APPLE || MACOSX */
 			continue;
 
 		Info_SetValueForKey (cls.userinfo, key, value, MAX_INFO_STRING);
@@ -651,7 +685,12 @@ void CL_SetInfo_f (void)
 		Con_Printf ("usage: setinfo [ <key> <value> ]\n");
 		return;
 	}
+
+#if defined(__APPLE__) || defined(MACOSX)
+        if (!Q_strcasecmp(Cmd_Argv(1), pmodel_name) || !Q_strcasecmp(Cmd_Argv(1), emodel_name))        
+#else
 	if (!stricmp(Cmd_Argv(1), pmodel_name) || !strcmp(Cmd_Argv(1), emodel_name))
+#endif /* APPLE ||ÊMACOSX */
 		return;
 
 	Info_SetValueForKey (cls.userinfo, Cmd_Argv(1), Cmd_Argv(2), MAX_INFO_STRING);
@@ -691,7 +730,7 @@ void CL_Packet_f (void)
 	out = send+4;
 	send[0] = send[1] = send[2] = send[3] = 0xff;
 
-	l = strlen (in);
+	l = (int) strlen (in);
 	for (i=0 ; i<l ; i++)
 	{
 		if (in[i] == '\\' && in[i+1] == 'n')
@@ -704,7 +743,7 @@ void CL_Packet_f (void)
 	}
 	*out = 0;
 
-	NET_SendPacket (out-send, send, adr);
+	NET_SendPacket ((int)(out-send), send, adr);
 }
 
 
@@ -733,7 +772,11 @@ void CL_NextDemo (void)
 		}
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (str,1024,"playdemo %s\n", cls.demos[cls.demonum]);
+#else
 	sprintf (str,"playdemo %s\n", cls.demos[cls.demonum]);
+#endif /* __APPLE__ || MACOSX */
 	Cbuf_InsertText (str);
 	cls.demonum++;
 }
@@ -1006,7 +1049,11 @@ void CL_Download_f (void)
 		return;
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (cls.downloadname, MAX_OSPATH, "%s/%s", com_gamedir, Cmd_Argv(1));
+#else
 	sprintf (cls.downloadname, "%s/%s", com_gamedir, Cmd_Argv(1));
+#endif /* __APPLE__ || MACOSX */
 
 	p = cls.downloadname;
 	for (;;) {
@@ -1060,7 +1107,11 @@ void CL_Init (void)
 	Info_SetValueForKey (cls.userinfo, "bottomcolor", "0", MAX_INFO_STRING);
 	Info_SetValueForKey (cls.userinfo, "rate", "2500", MAX_INFO_STRING);
 	Info_SetValueForKey (cls.userinfo, "msg", "1", MAX_INFO_STRING);
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (st, 80, "%4.2f-%04d", VERSION, build_number());
+#else
 	sprintf (st, "%4.2f-%04d", VERSION, build_number());
+#endif /* __APPLE__ || MACOSX */
 	Info_SetValueForStarKey (cls.userinfo, "*ver", st, MAX_INFO_STRING);
 
 	CL_InitInput ();
@@ -1191,7 +1242,11 @@ void Host_EndGame (char *message, ...)
 	char		string[1024];
 	
 	va_start (argptr,message);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string,1024,message,argptr);
+#else
 	vsprintf (string,message,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	Con_Printf ("\n===========================\n");
 	Con_Printf ("Host_EndGame: %s\n",string);
@@ -1220,7 +1275,11 @@ void Host_Error (char *error, ...)
 	inerror = true;
 	
 	va_start (argptr,error);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string,1024,error,argptr);
+#else
 	vsprintf (string,error,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	Con_Printf ("Host_Error: %s\n",string);
 	
@@ -1328,7 +1387,14 @@ void Host_Frame (float time)
 		host_frametime = 0.2;
 		
 	// get new key events
+#if !defined (__APPLE__) && !defined (MACOSX)
 	Sys_SendKeyEvents ();
+#else
+    {
+        extern void IN_SendKeyEvents(void);
+        IN_SendKeyEvents();
+    }
+#endif // !__APPLE__ && !MACOSX
 
 	// allow mice or other external controllers to add commands
 	IN_Commands ();
@@ -1463,6 +1529,7 @@ void Host_Init (quakeparms_t *parms)
 	IN_Init ();
 	CDAudio_Init ();
 	VID_Init (host_basepal);
+        
 	Draw_Init ();
 	SCR_Init ();
 	R_Init ();
@@ -1478,7 +1545,8 @@ void Host_Init (quakeparms_t *parms)
 	SCR_Init ();
 	R_Init ();
 //	S_Init ();		// S_Init is now done as part of VID. Sigh.
-#ifdef GLQUAKE
+//#if GLQUAKE
+#if defined(GLQUAKE) || defined(QUAKE_WORLD)
 	S_Init();
 #endif
 
@@ -1500,7 +1568,8 @@ void Host_Init (quakeparms_t *parms)
 
 	Con_Printf ("\nClient Version %4.2f (Build %04d)\n\n", VERSION, build_number());
 
-	Con_Printf ("€ QuakeWorld Initialized ‚\n");	
+    Con_Printf ("%c%c%c%c%c%c%c QuakeWorld Initialized %c%c%c%c%c%c%c\n",
+                0x80, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x82);
 }
 
 

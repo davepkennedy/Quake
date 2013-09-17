@@ -1,0 +1,6 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "QuakeWorld";
+CFBundleShortVersionString = "1.2.1";
+CFBundleGetInfoString = "QuakeWorld version 1.2.1, Copyright 2001-2013 Fruitz Of Dojo.";
+NSHumanReadableCopyright = "Copyright 2001-2013 Fruitz Of Dojo.";

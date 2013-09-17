@@ -56,14 +56,54 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	K_HOME			151
 #define	K_END			152
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+#define K_CAPSLOCK      	153
+#define K_COMMAND        	154
+#define K_NUMLOCK       	155
+#define K_F13           	156
+#define K_F14           	157
+#define K_F15           	158 
+
+#define K_EQUAL_PAD     	160
+#define K_SLASH_PAD     	161
+#define K_ASTERISK_PAD  	162
+#define K_MINUS_PAD     	163
+#define K_PLUS_PAD      	164
+#define K_ENTER_PAD     	165
+#define K_PERIOD_PAD    	166
+#define K_0_PAD         	167
+#define K_1_PAD         	168
+#define K_2_PAD         	169
+#define K_3_PAD         	170
+#define K_4_PAD         	171
+#define K_5_PAD         	172
+#define K_6_PAD         	173
+#define K_7_PAD         	174
+#define K_8_PAD         	175
+#define K_9_PAD         	176
+
+#define	K_MOUSE1		180
+#define	K_MOUSE2		181
+#define	K_MOUSE3		182
+#define	K_MOUSE4		183
+#define	K_MOUSE5		184
+
+#endif /* APPLE ||ÊMACOSX */
+
 #define K_PAUSE			255
 
 //
 // mouse buttons generate virtual keys
 //
+
+#if !defined (__APPLE__) && !defined (MACOSX)
+
 #define	K_MOUSE1		200
 #define	K_MOUSE2		201
 #define	K_MOUSE3		202
+
+#endif /* __APPLE__ || MACOSX */
 
 //
 // joystick buttons

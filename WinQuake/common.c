@@ -1172,7 +1172,11 @@ char    *va(char *format, ...)
 	static char             string[1024];
 	
 	va_start (argptr, format);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, format,argptr);
+#else
 	vsprintf (string, format,argptr);
+#endif /* __APPLE__ ||ÊMACOSX */
 	va_end (argptr);
 
 	return string;  
@@ -1282,8 +1286,12 @@ void COM_WriteFile (char *filename, void *data, int len)
 {
 	int             handle;
 	char    name[MAX_OSPATH];
-	
+
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s", com_gamedir, filename);
+#else	
 	sprintf (name, "%s/%s", com_gamedir, filename);
+#endif /* __APPLE__ ||ÊMACOSX */
 
 	handle = Sys_FileOpenWrite (name);
 	if (handle == -1)
@@ -1420,8 +1428,12 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 				if ( strchr (filename, '/') || strchr (filename,'\\'))
 					continue;
 			}
-			
+
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (netpath, MAX_OSPATH, "%s/%s",search->filename, filename);
+#else			
 			sprintf (netpath, "%s/%s",search->filename, filename);
+#endif /* __APPLE__ || MACOSX */
 			
 			findtime = Sys_FileTime (netpath);
 			if (findtime == -1)
@@ -1437,6 +1449,8 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 					sprintf (cachepath,"%s%s", com_cachedir, netpath);
 				else
 					sprintf (cachepath,"%s%s", com_cachedir, netpath+2);
+#elif defined (__APPLE__) || defined (MACOSX)
+				snprintf (cachepath,MAX_OSPATH,"%s%s", com_cachedir, netpath);
 #else
 				sprintf (cachepath,"%s%s", com_cachedir, netpath);
 #endif
@@ -1708,7 +1722,11 @@ void COM_AddGameDirectory (char *dir)
 //
 	for (i=0 ; ; i++)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (pakfile, MAX_OSPATH, "%s/pak%i.pak", dir, i);
+#else
 		sprintf (pakfile, "%s/pak%i.pak", dir, i);
+#endif /* __APPLE__ || MACOSX */
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			break;
@@ -1745,7 +1763,7 @@ void COM_InitFilesystem (void)
 	else
 		strcpy (basedir, host_parms.basedir);
 
-	j = strlen (basedir);
+	j = (int) strlen (basedir);
 
 	if (j > 0)
 	{

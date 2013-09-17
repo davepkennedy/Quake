@@ -24,6 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
+#if defined(__APPLE__) || defined(MACOSX)
+#include <sys/types.h>
+#include <unistd.h>
+#endif /* APPLE || MACOSX */
+
 #define	PACKET_HEADER	8
 
 /*
@@ -144,11 +149,15 @@ void Netchan_OutOfBandPrint (netadr_t adr, char *format, ...)
 	static char		string[8192];		// ??? why static?
 	
 	va_start (argptr, format);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 8192, format,argptr);
+#else
 	vsprintf (string, format,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 
-	Netchan_OutOfBand (adr, strlen(string), (byte *)string);
+	Netchan_OutOfBand (adr, (int) strlen(string), (byte *)string);
 }
 
 
@@ -328,7 +337,9 @@ qboolean Netchan_Process (netchan_t *chan)
 #ifdef SERVERONLY
 	int			qport;
 #endif
+#if 0
 	int i;
+#endif
 
 	if (
 #ifndef SERVERONLY

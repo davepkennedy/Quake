@@ -292,6 +292,20 @@ void Cmd_Exec_f (void)
 		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));
 		return;
 	}
+#if defined (__APPLE__) || defined (MACOSX)
+        {
+            char *	myData = f;
+            
+            while (*myData != 0x00)
+            {
+                if (*myData == 0x0D)
+                {
+                    *myData = 0x0A;
+                }
+                myData++;
+            }
+        }
+#endif /* __APPLE__ ||ÊMACOSX */
 	if (!Cvar_Command () && (cl_warncmd.value || developer.value))
 		Con_Printf ("execing %s\n",Cmd_Argv(1));
 	
@@ -328,7 +342,7 @@ char *CopyString (char *in)
 {
 	char	*out;
 	
-	out = Z_Malloc (strlen(in)+1);
+	out = Z_Malloc ((int)strlen(in)+1);
 	strcpy (out, in);
 	return out;
 }

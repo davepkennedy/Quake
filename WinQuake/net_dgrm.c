@@ -28,6 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #elif defined (NeXT)
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#elif defined (__APPLE__) || defined (MACOSX)
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #else
 #define AF_INET 		2	/* internet */
 struct in_addr
@@ -92,7 +97,12 @@ char *StrAddr (struct qsockaddr *addr)
 	int n;
 
 	for (n = 0; n < 16; n++)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (buf + ( n << 1 ), 34 - (n << 1), "%02x", *p++);
+#else
 		sprintf (buf + n * 2, "%02x", *p++);
+#endif /* __APPLE__ || MACOSX */
+
 	return buf;
 }
 #endif
@@ -106,7 +116,7 @@ void NET_Ban_f (void)
 {
 	char	addrStr [32];
 	char	maskStr [32];
-	void	(*print) (char *fmt, ...);
+	void	(*print) (const char *fmt, ...);
 
 	if (cmd_source == src_command)
 	{
@@ -1259,6 +1269,25 @@ static qsocket_t *_Datagram_Connect (char *host)
 		do
 		{
 			ret = dfunc.Read (newsock, net_message.data, net_message.maxsize, &readaddr);
+
+#if defined (__APPLE__) || defined (MACOSX)
+                        // work around for an OS bug...
+                        if (sfunc.AddrCompare(&readaddr, &sendaddr) != 0)
+                        {
+                            char 	mySendName[NET_NAMELEN];
+                            char 	myReadName[NET_NAMELEN];
+                            
+                            dfunc.GetNameFromAddr (&sendaddr, mySendName);
+                            dfunc.GetNameFromAddr (&readaddr, myReadName);
+                            
+                            if (strcasecmp (mySendName, myReadName) == 0)
+                            {
+                                Con_Printf ("Patching server address!\n");
+                                sendaddr = readaddr;
+                            }
+                        }
+#endif /* __APPLE__ ||ÊMACOSX */
+
 			// if we got something, validate it
 			if (ret > 0)
 			{

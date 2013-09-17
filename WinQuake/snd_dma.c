@@ -144,7 +144,6 @@ void S_Startup (void)
 	if (!fakedma)
 	{
 		rc = SNDDMA_Init();
-
 		if (!rc)
 		{
 #ifndef	_WIN32
@@ -152,9 +151,9 @@ void S_Startup (void)
 #endif
 			sound_started = 0;
 			return;
+
 		}
 	}
-
 	sound_started = 1;
 }
 
@@ -227,8 +226,11 @@ void S_Init (void)
 		shm->buffer = Hunk_AllocName(1<<16, "shmbuf");
 	}
 
-	Con_Printf ("Sound sampling rate: %i\n", shm->speed);
-
+    if (shm)
+    {
+        Con_Printf ("Sound sampling rate: %i\n", shm->speed);
+    }
+    
 	// provides a tick sound until washed clean
 
 //	if (shm->buffer)
@@ -238,6 +240,7 @@ void S_Init (void)
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
 
 	S_StopAllSounds (true);
+
 }
 
 
@@ -398,7 +401,7 @@ SND_Spatialize
 void SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
-    vec_t ldist, rdist, dist;
+    vec_t /*ldist, rdist,*/ dist;
     vec_t lscale, rscale, scale;
     vec3_t source_vec;
 	sfx_t *snd;

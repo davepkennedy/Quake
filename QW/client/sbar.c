@@ -311,7 +311,7 @@ int Sbar_itoa (int num, char *buf)
 	
 	*str = 0;
 	
-	return str-buf;
+	return (int) (str-buf);
 }
 
 
@@ -486,7 +486,11 @@ void Sbar_SoloScoreboard (void)
 	seconds = cl.time - 60*minutes;
 	tens = seconds / 10;
 	units = seconds - 10*tens;
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (str,80,"Time :%3i:%i%i", minutes, tens, units);
+#else
 	sprintf (str,"Time :%3i:%i%i", minutes, tens, units);
+#endif /* __APPLE__ || MACOSX */
 	Sbar_DrawString (184, 4, str);
 }
 
@@ -546,7 +550,11 @@ void Sbar_DrawInventory (void)
 // ammo counts
 	for (i=0 ; i<4 ; i++)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 6, "%3i",cl.stats[STAT_SHELLS+i] );
+#else
 		sprintf (num, "%3i",cl.stats[STAT_SHELLS+i] );
+#endif /* __APPLE__ || MACOSX */
 		if (headsup) {
 //			Sbar_DrawSubPic(3, -24, sb_ibar, 3, 0, 42,11);
 			Sbar_DrawSubPic((hudswap) ? 0 : (vid.width-42), -24 - (4-i)*11, sb_ibar, 3+(i*48), 0, 42, 11);
@@ -647,7 +655,11 @@ void Sbar_DrawFrags (void)
 
 	// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 		
 		Sbar_DrawCharacter ( (x+1)*8 , -24, num[0]);
 		Sbar_DrawCharacter ( (x+2)*8 , -24, num[1]);
@@ -806,8 +818,13 @@ void Sbar_Draw (void)
 					Sbar_DrawNormal ();
 
 //					Sbar_DrawString (160-14*8+4,4, "SPECTATOR MODE - TRACK CAMERA");
+#if defined (__APPLE__) || defined (MACOSX)
+				snprintf(st, 512, "Tracking %-.13s, [JUMP] for next",
+						  cl.players[spec_track].name);
+#else
 				sprintf(st, "Tracking %-.13s, [JUMP] for next",
 						cl.players[spec_track].name);
+#endif /* __APPLE__ || MACOSX */
 				Sbar_DrawString(0, -8, st);
 			}
 		} else if (sb_showscores || cl.stats[STAT_HEALTH] <= 0)
@@ -953,7 +970,11 @@ void Sbar_TeamOverlay (void)
 		if (pavg < 0 || pavg > 999)
 			pavg = 999;
 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i/%3i/%3i", plow, pavg, phigh);
+#else
 		sprintf (num, "%3i/%3i/%3i", plow, pavg, phigh);
+#endif /* __APPLE__ || MACOSX */
 		Draw_String ( x, y, num);
 
 	// draw team
@@ -962,11 +983,19 @@ void Sbar_TeamOverlay (void)
 		Draw_String (x + 104, y, team);
 
 	// draw total
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%5i", tm->frags);
+#else
 		sprintf (num, "%5i", tm->frags);
+#endif /* __APPLE__ || MACOSX */
 		Draw_String (x + 104 + 40, y, num);
 		
 	// draw players
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%5i", tm->players);
+#else
 		sprintf (num, "%5i", tm->players);
+#endif /* __APPLE__ || MACOSX */
 		Draw_String (x + 104 + 88, y, num);
 		
 		if (!strncmp(Info_ValueForKey(cl.players[cl.playernum].userinfo,
@@ -1066,12 +1095,20 @@ void Sbar_DeathmatchOverlay (int start)
 		p = s->ping;
 		if (p < 0 || p > 999)
 			p = 999;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%4i", p);
+#else
 		sprintf (num, "%4i", p);
+#endif /* __APPLE__ || MACOSX */
 		Draw_String ( x, y, num);
 
 		// draw pl
 		p = s->pl;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i", p);
+#else
 		sprintf (num, "%3i", p);
+#endif /* __APPLE__ || MACOSX */
 		if (p > 25)
 			Draw_Alt_String ( x+32, y, num);
 		else
@@ -1096,7 +1133,11 @@ void Sbar_DeathmatchOverlay (int start)
 		else
 			total = realtime - s->entertime;
 		minutes = (int)total/60;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%4i", minutes);
+#else
 		sprintf (num, "%4i", minutes);
+#endif /* __APPLE__ || MACOSX */
 		Draw_String ( x+64 , y, num);
 
 		// draw background
@@ -1113,7 +1154,11 @@ void Sbar_DeathmatchOverlay (int start)
 
 	// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 		
 		Draw_Character ( x+112 , y, num[0]);
 		Draw_Character ( x+120 , y, num[1]);
@@ -1225,7 +1270,11 @@ void Sbar_MiniDeathmatchOverlay (void)
 
 	// draw number
 		f = s->frags;
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%3i",f);
+#else
 		sprintf (num, "%3i",f);
+#endif /* __APPLE__ || MACOSX */
 		
 		Draw_Character ( x+8 , y, num[0]);
 		Draw_Character ( x+16, y, num[1]);
@@ -1278,7 +1327,11 @@ void Sbar_MiniDeathmatchOverlay (void)
 		Draw_String (x, y, team);
 
 	// draw total
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (num, 12, "%5i", tm->frags);
+#else
 		sprintf (num, "%5i", tm->frags);
+#endif /* __APPLE__ || MACOSX */
 		Draw_String (x + 40, y, num);
 		
 		if (!strncmp(Info_ValueForKey(cl.players[cl.playernum].userinfo,

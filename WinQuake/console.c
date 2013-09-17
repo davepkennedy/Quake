@@ -221,7 +221,11 @@ void Con_Init (void)
 	{
 		if (strlen (com_gamedir) < (MAXGAMEDIRLEN - strlen (t2)))
 		{
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (temp, MAXGAMEDIRLEN+1, "%s%s", com_gamedir, t2);
+#else
 			sprintf (temp, "%s%s", com_gamedir, t2);
+#endif /* __APPLE__ || MACOSX */
 			unlink (temp);
 		}
 	}
@@ -275,6 +279,13 @@ void Con_Print (char *txt)
 	static int	cr;
 	int		mask;
 	
+#if defined (__APPLE__) || defined (MACOSX)
+        if (con_initialized == false)
+        {
+            return;
+        }
+#endif /* __APPLE__ ||ÊMACOSX */
+        
 	con_backscroll = 0;
 
 	if (txt[0] == 1)
@@ -357,7 +368,11 @@ void Con_DebugLog(char *file, char *fmt, ...)
     int fd;
     
     va_start(argptr, fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+    vsnprintf(data, 1024, fmt, argptr);
+#else
     vsprintf(data, fmt, argptr);
+#endif /* __APPLE__ || MACOSX */
     va_end(argptr);
     fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
     write(fd, data, strlen(data));
@@ -374,14 +389,18 @@ Handles cursor positioning, line wrapping, etc
 */
 #define	MAXPRINTMSG	4096
 // FIXME: make a buffer size safe vsprintf?
-void Con_Printf (char *fmt, ...)
+void Con_Printf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 	static qboolean	inupdate;
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,4096,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 // also echo to debugging console
@@ -430,7 +449,11 @@ void Con_DPrintf (char *fmt, ...)
 		return;			// don't confuse non-developers with techie stuff...
 
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 	Con_Printf ("%s", msg);
@@ -451,7 +474,11 @@ void Con_SafePrintf (char *fmt, ...)
 	int			temp;
 		
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,1024,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	temp = scr_disabled_for_loading;

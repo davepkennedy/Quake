@@ -20,7 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Quake is a trademark of Id Software, Inc., (c) 1996 Id Software, Inc. All
 // rights reserved.
 
+#if !defined (__APPLE__) && !defined (MACOSX)
 #include <dpmi.h>
+#endif // !__APPLE__ && !MACOSX
+
 #include "quakedef.h"
 #include "dosisms.h"
 

@@ -934,7 +934,7 @@ void Mod_MakeHull0 (void)
 
 	for (i=0 ; i<count ; i++, out++, in++)
 	{
-		out->planenum = in->plane - loadmodel->planes;
+		out->planenum = (int) (in->plane - loadmodel->planes);
 		for (j=0 ; j<2 ; j++)
 		{
 			child = in->children[j];
@@ -1126,7 +1126,11 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		{	// duplicate the basic information
 			char	name[10];
 
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 10, "*%i", i+1);
+#else
 			sprintf (name, "*%i", i+1);
+#endif /* __APPLE__ ||ÊMACOSX */
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
 			strcpy (loadmodel->name, name);

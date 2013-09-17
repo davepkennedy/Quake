@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif
 
-#ifdef __i386__
+#if defined (__i386__) && !(defined(__APPLE__) || defined(MACOSX))
 #define id386	1
 #else
 #define id386	0
@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // !!! must be kept the same as in d_iface.h !!!
 #define TRANSPARENT_COLOR	255
 
-#ifndef NeXT
+#if !defined(NeXT) && !defined(__APPLE__) && !defined(MACOSX)
 #ifndef GLQUAKE
 	.extern C(d_zistepu)
 	.extern C(d_pzbuffer)

@@ -21,7 +21,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern qboolean gl_palettedtex;
 
+extern void	GL_Upload8_EXT (byte *, int, int, qboolean, qboolean);
+extern void	GL_BuildLightmaps (void);
+extern void	R_InitParticles (void);
+extern void	R_ClearParticles (void);
+extern qboolean VID_Is8bit (void);
+#endif /* APPLE || MACOSX */
 
 /*
 ==================
@@ -88,6 +96,9 @@ void R_InitParticleTexture (void)
 			data[y][x][3] = dottexture[x][y]*255;
 		}
 	}
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_alpha_format, 8, 8, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -106,7 +117,7 @@ Grab six views for environment mapping tests
 void R_Envmap_f (void)
 {
 	byte	buffer[256*256*4];
-	char	name[1024];
+//	char	name[1024];
 
 	glDrawBuffer  (GL_FRONT);
 	glReadBuffer  (GL_FRONT);
@@ -168,9 +179,16 @@ void R_Envmap_f (void)
 R_Init
 ===============
 */
+
+#if defined(__APPLE__) || defined(MACOSX)
+#if GLTEST
+extern void Test_Init (void);
+#endif /* GLTEST */
+#endif /* __APPLE__ || MACOSX */
+
 void R_Init (void)
 {	
-	extern byte *hunk_base;
+//	extern byte *hunk_base;
 	extern cvar_t gl_finish;
 
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
@@ -227,22 +245,29 @@ R_TranslatePlayerSkin
 Translates a skin texture by the per-player color lookup
 ===============
 */
+
+#if defined(__APPLE__) || defined(MACOSX)
+static unsigned int	pixels[512*256];
+#endif /* APPLE || MACOSX */
+
 void R_TranslatePlayerSkin (int playernum)
 {
 	int		top, bottom;
-	byte	translate[256];
+	byte		translate[256];
 	unsigned	translate32[256];
 	int		i, j, s;
-	model_t	*model;
-	aliashdr_t *paliashdr;
-	byte	*original;
-	unsigned	pixels[512*256], *out;
+	model_t		*model;
+	aliashdr_t 	*paliashdr;
+	byte		*original;
+#if !defined(__APPLE__) && !defined(MACOSX)
+	unsigned	pixels[512*256];
+#endif /* !APPLE && !MACOSX */
+        unsigned	*out;
 	unsigned	scaled_width, scaled_height;
-	int			inwidth, inheight;
+	int		inwidth, inheight;
 	byte		*inrow;
 	unsigned	frac, fracstep;
-	extern	byte		**player_8bit_texels_tbl;
-
+        
 	GL_DisableMultitexture();
 
 	top = cl.scores[playernum].colors & 0xf0;
@@ -313,7 +338,11 @@ void R_TranslatePlayerSkin (int playernum)
 	scaled_width >>= (int)gl_playermip.value;
 	scaled_height >>= (int)gl_playermip.value;
 
-	if (VID_Is8bit()) { // 8bit texture upload
+	if (VID_Is8bit()
+#if defined (__APPLE__) || defined (MACOSX)
+            && gl_palettedtex
+#endif /* __APPLE__ || MACOSX */
+        ) { // 8bit texture upload
 		byte *out2;
 
 		out2 = (byte *)pixels;
@@ -339,7 +368,6 @@ void R_TranslatePlayerSkin (int playernum)
 		GL_Upload8_EXT ((byte *)pixels, scaled_width, scaled_height, false, false);
 		return;
 	}
-
 	for (i=0 ; i<256 ; i++)
 		translate32[i] = d_8to24table[translate[i]];
 
@@ -361,13 +389,16 @@ void R_TranslatePlayerSkin (int playernum)
 			frac += fracstep;
 		}
 	}
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_solid_format, scaled_width, scaled_height, 0, 0, GL_RGBA,
+                            GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #endif
-
 }
 
 
@@ -424,11 +455,16 @@ For program optimization
 */
 void R_TimeRefresh_f (void)
 {
-	int			i;
+	int		i;
 	float		start, stop, time;
-	int			startangle;
-	vrect_t		vr;
+//	int		startangle;
+//	vrect_t		vr;
 
+#if defined (__APPLE__) || defined (MACOSX)
+    GLboolean multiSampleEnabled = glIsEnabled (GL_MULTISAMPLE);
+    
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
 	glDrawBuffer  (GL_FRONT);
 	glFinish ();
 
@@ -444,6 +480,9 @@ void R_TimeRefresh_f (void)
 	time = stop-start;
 	Con_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
+#if defined (__APPLE__) || defined (MACOSX)
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
 	glDrawBuffer  (GL_BACK);
 	GL_EndRendering ();
 }

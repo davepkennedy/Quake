@@ -111,12 +111,19 @@ void R_NetGraph (void)
 	M_DrawTextBox (x, y, NET_TIMINGS/8, NET_GRAPHHEIGHT/8 + 1);
 	y += 8;
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf(st, 80, "%3i%% packet loss", lost);
+#else
 	sprintf(st, "%3i%% packet loss", lost);
+#endif /* __APPLE__ ||ÊMACOSX */
 	Draw_String(8, y, st);
 	y += 8;
 	
     GL_Bind(netgraphtexture);
-
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_alpha_format, NET_TIMINGS, NET_GRAPHHEIGHT, 0, 0, GL_RGBA,
+                            GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 
 		NET_TIMINGS, NET_GRAPHHEIGHT, 0, GL_RGBA, 
 		GL_UNSIGNED_BYTE, ngraph_pixels);

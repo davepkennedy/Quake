@@ -54,7 +54,7 @@ lzistepx:		.long	0
 
 	.text
 
-#ifndef NeXT
+#if !defined(NeXT) && !defined(__APPLE__) && !defined(MACOSX)
 	.extern C(D_PolysetSetEdgeTable)
 	.extern C(D_RasterizeAliasPolySmooth)
 #endif

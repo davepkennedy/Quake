@@ -196,7 +196,7 @@ qboolean CL_GetDemoMessage (void)
 		// user sent input
 		i = cls.netchan.outgoing_sequence & UPDATE_MASK;
 		pcmd = &cl.frames[i].cmd;
-		r = fread (pcmd, sizeof(*pcmd), 1, cls.demofile);
+		r = (int) fread (pcmd, sizeof(*pcmd), 1, cls.demofile);
 		if (r != 1)
 		{
 			CL_StopPlayback ();
@@ -213,7 +213,7 @@ qboolean CL_GetDemoMessage (void)
 		cls.netchan.outgoing_sequence++;
 		for (i=0 ; i<3 ; i++)
 		{
-			r = fread (&f, 4, 1, cls.demofile);
+			r = (int) fread (&f, 4, 1, cls.demofile);
 			cl.viewangles[i] = LittleFloat (f);
 		}
 		break;
@@ -225,7 +225,7 @@ qboolean CL_GetDemoMessage (void)
 	//Con_Printf("read: %ld bytes\n", net_message.cursize);
 		if (net_message.cursize > MAX_MSGLEN)
 			Sys_Error ("Demo message > MAX_MSGLEN");
-		r = fread (net_message.data, net_message.cursize, 1, cls.demofile);
+		r = (int) fread (net_message.data, net_message.cursize, 1, cls.demofile);
 		if (r != 1)
 		{
 			CL_StopPlayback ();
@@ -378,7 +378,7 @@ void CL_Record_f (void)
 	int		c;
 	char	name[MAX_OSPATH];
 	sizebuf_t	buf;
-	char	buf_data[MAX_MSGLEN];
+	unsigned char	buf_data[MAX_MSGLEN];
 	int n, i, j;
 	char *s;
 	entity_t *ent;
@@ -401,8 +401,12 @@ void CL_Record_f (void)
 
 	if (cls.demorecording)
 		CL_Stop_f();
-  
+
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s", com_gamedir, Cmd_Argv(1));
+#else
 	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+#endif /* __APPLE__ || MACOSX */
 
 //
 // open the demo file
@@ -687,8 +691,12 @@ void CL_ReRecord_f (void)
 
 	if (cls.demorecording)
 		CL_Stop_f();
-  
+
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s", com_gamedir, Cmd_Argv(1));
+#else
 	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+#endif /* __APPLE__ || MACOSX */
 
 //
 // open the demo file

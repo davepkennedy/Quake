@@ -30,6 +30,9 @@ typedef unsigned short int UINT2;
 /* UINT4 defines a four byte word */
 #ifdef __alpha__
 typedef unsigned int UINT4;
+#elif defined (__APPLE__) || defined (MACOSX)
+#include <stdint.h>
+typedef uint32_t UINT4;
 #else
 typedef unsigned long int UINT4;
 #endif
@@ -193,16 +196,16 @@ static void MD4Transform (UINT4 state[4], unsigned char block[64])
 	Decode (x, block, 64);
 
 /* Round 1 */
-FF (a, b, c, d, x[ 0], S11); 				/* 1 */
-FF (d, a, b, c, x[ 1], S12); 				/* 2 */
-FF (c, d, a, b, x[ 2], S13); 				/* 3 */
-FF (b, c, d, a, x[ 3], S14); 				/* 4 */
-FF (a, b, c, d, x[ 4], S11); 				/* 5 */
-FF (d, a, b, c, x[ 5], S12); 				/* 6 */
-FF (c, d, a, b, x[ 6], S13); 				/* 7 */
-FF (b, c, d, a, x[ 7], S14); 				/* 8 */
-FF (a, b, c, d, x[ 8], S11); 				/* 9 */
-FF (d, a, b, c, x[ 9], S12); 				/* 10 */
+FF (a, b, c, d, x[ 0], S11); 			/* 1 */
+FF (d, a, b, c, x[ 1], S12); 			/* 2 */
+FF (c, d, a, b, x[ 2], S13); 			/* 3 */
+FF (b, c, d, a, x[ 3], S14); 			/* 4 */
+FF (a, b, c, d, x[ 4], S11); 			/* 5 */
+FF (d, a, b, c, x[ 5], S12); 			/* 6 */
+FF (c, d, a, b, x[ 6], S13); 			/* 7 */
+FF (b, c, d, a, x[ 7], S14); 			/* 8 */
+FF (a, b, c, d, x[ 8], S11); 			/* 9 */
+FF (d, a, b, c, x[ 9], S12); 			/* 10 */
 FF (c, d, a, b, x[10], S13); 			/* 11 */
 FF (b, c, d, a, x[11], S14); 			/* 12 */
 FF (a, b, c, d, x[12], S11); 			/* 13 */
@@ -229,7 +232,7 @@ GG (c, d, a, b, x[11], S23); 			/* 31 */
 GG (b, c, d, a, x[15], S24); 			/* 32 */
 
 /* Round 3 */
-HH (a, b, c, d, x[ 0], S31);				/* 33 */
+HH (a, b, c, d, x[ 0], S31);			/* 33 */
 HH (d, a, b, c, x[ 8], S32); 			/* 34 */
 HH (c, d, a, b, x[ 4], S33); 			/* 35 */
 HH (b, c, d, a, x[12], S34); 			/* 36 */
@@ -259,24 +262,28 @@ state[3] += d;
 /* Encodes input (UINT4) into output (unsigned char). Assumes len is a multiple of 4. */
 static void Encode (unsigned char *output, UINT4 *input, unsigned int len)
 {
-	unsigned int i, j;
+    unsigned int i, j;
 
-	for (i = 0, j = 0; j < len; i++, j += 4) {
- 		output[j] = (unsigned char)(input[i] & 0xff);
- 		output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
- 		output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
- 		output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
-	}
+    for (i = 0, j = 0; j < len; i++, j += 4)
+    {
+ 	output[j] = (unsigned char)(input[i] & 0xff);
+ 	output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
+ 	output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
+ 	output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
+    }
 }
 
 
 /* Decodes input (unsigned char) into output (UINT4). Assumes len is a multiple of 4. */
 static void Decode (UINT4 *output, unsigned char *input, unsigned int len)
 {
-unsigned int i, j;
+    unsigned int i, j;
 
-for (i = 0, j = 0; j < len; i++, j += 4)
- 	output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) | (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
+    for (i = 0, j = 0; j < len; i++, j += 4)
+        output[i] = ((UINT4)input[j]) |
+                    (((UINT4)input[j+1]) << 8) |
+                    (((UINT4)input[j+2]) << 16) |
+                    (((UINT4)input[j+3]) << 24);
 }
 
 //===================================================================
@@ -284,14 +291,23 @@ for (i = 0, j = 0; j < len; i++, j += 4)
 unsigned Com_BlockChecksum (void *buffer, int length)
 {
 	int			digest[4];
-	unsigned	val;
-	MD4_CTX		ctx;
+        unsigned		val;
+	MD4_CTX			ctx;
 
 	MD4Init (&ctx);
 	MD4Update (&ctx, (unsigned char *)buffer, length);
 	MD4Final ( (unsigned char *)digest, &ctx);
 	
 	val = digest[0] ^ digest[1] ^ digest[2] ^ digest[3];
+
+#if defined(__BIG_ENDIAN__) && !defined(SERVERONLY)
+
+	val =	((val & 0xFF000000) >> 24) |
+			((val & 0x00FF0000) >> 8)  |
+			((val & 0x0000FF00) << 8)  |
+			((val & 0x000000FF) << 24);
+
+#endif /* __BIG_ENDIAN__ && !SERVERONLY */
 
 	return val;
 }

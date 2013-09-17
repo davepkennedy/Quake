@@ -75,7 +75,11 @@ float		xscaleinv, yscaleinv;
 float		xscaleshrink, yscaleshrink;
 float		aliasxscale, aliasyscale, aliasxcenter, aliasycenter;
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern	int	screenwidth;
+#else
 int		screenwidth;
+#endif /* APPLE || MACOSX */
 
 float	pixelAspect;
 float	screenAspect;
@@ -1070,7 +1074,7 @@ void R_RenderView (void)
 	int		dummy;
 	int		delta;
 	
-	delta = (byte *)&dummy - r_stack_start;
+	delta = (int) ((byte *)&dummy - r_stack_start);
 	if (delta < -10000 || delta > 10000)
 		Sys_Error ("R_RenderView: called without enough stack");
 

@@ -154,7 +154,7 @@ void PR_PrintStatement (dstatement_t *s)
 	if ( (unsigned)s->op < sizeof(pr_opnames)/sizeof(pr_opnames[0]))
 	{
 		Con_Printf ("%s ",  pr_opnames[s->op]);
-		i = strlen(pr_opnames[s->op]);
+		i = (int) strlen(pr_opnames[s->op]);
 		for ( ; i<10 ; i++)
 			Con_Printf (" ");
 	}
@@ -264,7 +264,11 @@ void PR_RunError (char *error, ...)
 	char		string[1024];
 
 	va_start (argptr,error);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string,1024,error,argptr);
+#else
 	vsprintf (string,error,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
 	PR_PrintStatement (pr_statements + pr_xstatement);
@@ -565,7 +569,7 @@ while (1)
 #endif
 		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 			PR_RunError ("assignment to world entity");
-		c->_int = (byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts;
+		c->_int = (int) ((byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts);
 		break;
 		
 	case OP_LOAD_F:

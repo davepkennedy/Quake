@@ -17,6 +17,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+#include <ctype.h>
+
+#endif /* __APPLE__ || MACOSX */
+
 #include "quakedef.h"
 
 /*
@@ -27,7 +34,7 @@ key up events are sent even if in console mode
 
 
 #define		MAXCMDLINE	256
-char	key_lines[32][MAXCMDLINE];
+char		key_lines[32][MAXCMDLINE];
 int		key_linepos;
 int		shift_down=false;
 int		key_lastpress;
@@ -37,11 +44,11 @@ int		history_line=0;
 
 keydest_t	key_dest;
 
-int		key_count;			// incremented every key event
+int		key_count;		// incremented every key event
 
-char	*keybindings[256];
+char		*keybindings[256];
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
-qboolean	menubound[256];	// if true, can't be rebound while in menu
+qboolean	menubound[256];		// if true, can't be rebound while in menu
 int		keyshift[256];		// key to map to if shift held down in console
 int		key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
@@ -49,7 +56,7 @@ qboolean	keydown[256];
 typedef struct
 {
 	char	*name;
-	int		keynum;
+	int	keynum;
 } keyname_t;
 
 keyname_t keynames[] =
@@ -64,7 +71,12 @@ keyname_t keynames[] =
 	{"LEFTARROW", K_LEFTARROW},
 	{"RIGHTARROW", K_RIGHTARROW},
 
+#if defined(__APPLE__) || defined(MACOSX)
+	{"OPTION", K_ALT},
+#else
 	{"ALT", K_ALT},
+#endif /* APPLE || MACOSX */
+
 	{"CTRL", K_CTRL},
 	{"SHIFT", K_SHIFT},
 	
@@ -91,6 +103,38 @@ keyname_t keynames[] =
 	{"MOUSE1", K_MOUSE1},
 	{"MOUSE2", K_MOUSE2},
 	{"MOUSE3", K_MOUSE3},
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+	{"MOUSE4", K_MOUSE4},
+	{"MOUSE5", K_MOUSE5},
+
+	{"CAPSLOCK", K_CAPSLOCK},
+	{"COMMAND",  K_COMMAND},
+	{"NUMLOCK",  K_NUMLOCK},
+	{"F13",      K_F13},
+	{"F14",      K_F14},
+	{"F15",      K_F15},
+
+	{"EQUAL_PAD",     K_EQUAL_PAD},
+	{"SLASH_PAD",     K_SLASH_PAD},
+	{"ASTERISK_PAD",  K_ASTERISK_PAD},
+	{"MINUS_PAD",     K_MINUS_PAD},
+	{"PLUS_PAD",      K_PLUS_PAD},
+	{"ENTER_PAD",     K_ENTER_PAD},
+	{"PERIOD_PAD",    K_PERIOD_PAD},
+	{"NUM_0",         K_0_PAD},
+	{"NUM_1",         K_1_PAD},
+	{"NUM_2",         K_2_PAD},
+	{"NUM_3",         K_3_PAD},
+	{"NUM_4",         K_4_PAD},
+	{"NUM_5",         K_5_PAD},
+	{"NUM_6",         K_6_PAD},
+	{"NUM_7",         K_7_PAD},
+	{"NUM_8",         K_8_PAD},
+	{"NUM_9",         K_9_PAD},
+
+#endif /* __APPLE__ || MACOSX */
 
 	{"JOY1", K_JOY1},
 	{"JOY2", K_JOY2},
@@ -159,6 +203,97 @@ Interactive line editing and console scrollback
 void Key_Console (int key)
 {
 	char	*cmd;
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+	switch ( key )
+	{
+            case K_SLASH_PAD:
+                    key = '/';
+                    break;
+            case K_MINUS_PAD:
+                    key = '-';
+                    break;
+            case K_PLUS_PAD:
+                    key = '+';
+                    break;
+            case K_0_PAD:
+                    key = '0';
+                    break;
+            case K_1_PAD:
+                    key = '1';
+                    break;
+            case K_2_PAD:
+                    key = '2';
+                    break;
+            case K_3_PAD:
+                    key = '3';
+                    break;
+            case K_4_PAD:
+                    key = '4';
+                    break;
+            case K_5_PAD:
+                    key = '5';
+                    break;
+            case K_6_PAD:
+                    key = '6';
+                    break;
+            case K_7_PAD:
+                    key = '7';
+                    break;
+            case K_8_PAD:
+                    key = '8';
+                    break;
+            case K_9_PAD:
+                    key = '9';
+                    break;
+            case K_PERIOD_PAD:
+                    key = '.';
+                    break;
+            case K_ENTER_PAD:
+                    key = K_ENTER;
+                    break;
+            case K_ASTERISK_PAD:
+                    key = '*';
+                    break;
+            case K_EQUAL_PAD:
+                    key = '=';
+                    break;
+	}
+     
+	if ((toupper (key) == 'V' && keydown[K_COMMAND]) || ((key == K_INS) && keydown[K_SHIFT]))
+	{
+        extern char *	Sys_GetClipboardData (void);
+		char *          cbd;
+		
+		if ((cbd = Sys_GetClipboardData ()) != 0)
+		{
+			size_t i;
+
+			strtok (cbd, "\n\r\b");
+
+			i = strlen (cbd);
+            
+			if (i + key_linepos >= MAXCMDLINE)
+            {
+                i = MAXCMDLINE - key_linepos;
+            }
+
+			if (i > 0)
+			{
+                cbd[i]=0;
+                strcat (key_lines[edit_line], cbd);
+                key_linepos += i;
+			}
+            
+			free (cbd);
+		}
+
+		return;
+	}
+
+
+#endif /* __APPLE__ || MACOSX */
 	
 	if (key == K_ENTER)
 	{
@@ -347,6 +482,19 @@ int Key_StringToKeynum (char *str)
 	if (!str[1])
 		return str[0];
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+        if(!Q_strcasecmp(str, "ALT"))
+        {
+            for(kn=keynames ; kn->name ; kn++)
+            {
+                if(!Q_strcasecmp("OPTION", kn->name))
+                    return(kn->keynum);
+            }
+        }
+
+#endif /* APPLE || MACOSX */
+
 	for (kn=keynames ; kn->name ; kn++)
 	{
 		if (!Q_strcasecmp(str,kn->name))
@@ -411,7 +559,7 @@ void Key_SetBinding (int keynum, char *binding)
 	new = Z_Malloc (l+1);
 	Q_strcpy (new, binding);
 	new[l] = 0;
-	keybindings[keynum] = new;	
+	keybindings[keynum] = new;
 }
 
 /*
@@ -547,6 +695,28 @@ void Key_Init (void)
 	consolekeys[K_MWHEELDOWN] = true;
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
+        
+#if defined (__APPLE__) || defined (MACOSX)
+
+        consolekeys[K_EQUAL_PAD] = true;
+        consolekeys[K_SLASH_PAD] = true;
+	consolekeys[K_ASTERISK_PAD] = true;
+	consolekeys[K_MINUS_PAD] = true;
+	consolekeys[K_PLUS_PAD] = true;
+	consolekeys[K_ENTER_PAD] = true;
+	consolekeys[K_PERIOD_PAD] = true;
+	consolekeys[K_0_PAD] = true;
+	consolekeys[K_1_PAD] = true;
+	consolekeys[K_2_PAD] = true;
+	consolekeys[K_3_PAD] = true;
+	consolekeys[K_4_PAD] = true;
+	consolekeys[K_5_PAD] = true;
+	consolekeys[K_6_PAD] = true;
+	consolekeys[K_7_PAD] = true;
+	consolekeys[K_8_PAD] = true;
+	consolekeys[K_9_PAD] = true;
+
+#endif /* __APPLE__ ||ÊMACOSX */
 
 	for (i=0 ; i<256 ; i++)
 		keyshift[i] = i;
@@ -616,6 +786,24 @@ void Key_Event (int key, qboolean down)
 // update auto-repeat status
 	if (down)
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+        if (keydown[K_COMMAND] == true)
+        {
+            key = toupper (key);
+            
+            // ignore certain command-key combinations
+            switch (key)
+            {
+                case K_TAB:
+                case 'H':
+                case 'M':
+                case 'Q':
+                case '?':
+                    break;
+            }
+        }
+#endif /* __APPLE__ || MACOSX */
+
 		key_repeats[key]++;
 		if (key != K_BACKSPACE && key != K_PAUSE && key_repeats[key] > 1)
 		{
@@ -666,7 +854,11 @@ void Key_Event (int key, qboolean down)
 		kb = keybindings[key];
 		if (kb && kb[0] == '+')
 		{
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (cmd, 1024, "-%s %i\n", kb+1, key);
+#else
 			sprintf (cmd, "-%s %i\n", kb+1, key);
+#endif /* __APPLE__ || MACOSX */
 			Cbuf_AddText (cmd);
 		}
 		if (keyshift[key] != key)
@@ -674,7 +866,11 @@ void Key_Event (int key, qboolean down)
 			kb = keybindings[keyshift[key]];
 			if (kb && kb[0] == '+')
 			{
+#if defined (__APPLE__) || defined (MACOSX)
+				snprintf (cmd, 1024, "-%s %i\n", kb+1, key);
+#else
 				sprintf (cmd, "-%s %i\n", kb+1, key);
+#endif /* __APPLE__ || MACOSX */
 				Cbuf_AddText (cmd);
 			}
 		}
@@ -702,7 +898,11 @@ void Key_Event (int key, qboolean down)
 		{
 			if (kb[0] == '+')
 			{	// button commands add keynum as a parm
+#if defined (__APPLE__) || defined (MACOSX)
+				snprintf (cmd, 1024, "%s %i\n", kb, key);
+#else
 				sprintf (cmd, "%s %i\n", kb, key);
+#endif /* __APPLE__ || MACOSX */
 				Cbuf_AddText (cmd);
 			}
 			else

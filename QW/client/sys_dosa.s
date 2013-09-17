@@ -5,6 +5,7 @@
 #include "asm_i386.h"
 #include "quakeasm.h"
 
+#if id386
 
 	.data
 
@@ -92,4 +93,6 @@ C(Sys_SetFPCW):
 	movl	%eax,ceil_cw
 
 	ret
+
+#endif // id386
 

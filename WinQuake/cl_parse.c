@@ -315,7 +315,6 @@ void CL_ParseServerInfo (void)
 	noclip_anglehack = false;		// noclip is turned off at start	
 }
 
-
 /*
 ==================
 CL_ParseUpdate
@@ -335,7 +334,9 @@ void CL_ParseUpdate (int bits)
 	qboolean	forcelink;
 	entity_t	*ent;
 	int			num;
+#ifdef GLQUAKE
 	int			skin;
+#endif /* GLQUAKE */
 
 	if (cls.signon == SIGNONS - 1)
 	{	// first update is the final signon stage
@@ -392,8 +393,10 @@ if (bits&(1<<i))
 		else
 			forcelink = true;	// hack to make null model players work
 #ifdef GLQUAKE
+
 		if (num > 0 && num <= cl.maxclients)
 			R_TranslatePlayerSkin (num - 1);
+
 #endif
 	}
 	
@@ -627,6 +630,7 @@ void CL_ParseClientdata (int bits)
 CL_NewTranslation
 =====================
 */
+
 void CL_NewTranslation (int slot)
 {
 	int		i, j;
@@ -641,7 +645,9 @@ void CL_NewTranslation (int slot)
 	top = cl.scores[slot].colors & 0xf0;
 	bottom = (cl.scores[slot].colors &15)<<4;
 #ifdef GLQUAKE
+
 	R_TranslatePlayerSkin (slot);
+        
 #endif
 
 	for (i=0 ; i<VID_GRADES ; i++, dest += 256, source+=256)
@@ -735,7 +741,6 @@ void CL_ParseServerMessage (void)
 // parse the message
 //
 	MSG_BeginReading ();
-	
 	while (1)
 	{
 		if (msg_badread)

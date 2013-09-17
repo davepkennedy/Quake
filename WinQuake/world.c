@@ -299,8 +299,8 @@ void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 		old_self = pr_global_struct->self;
 		old_other = pr_global_struct->other;
 
-		pr_global_struct->self = EDICT_TO_PROG(touch);
-		pr_global_struct->other = EDICT_TO_PROG(ent);
+		pr_global_struct->self = (int) EDICT_TO_PROG(touch);
+		pr_global_struct->other = (int) EDICT_TO_PROG(ent);
 		pr_global_struct->time = sv.time;
 		PR_ExecuteProgram (touch->v.touch);
 
@@ -343,7 +343,7 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 			return;
 
 		leaf = (mleaf_t *)node;
-		leafnum = leaf - sv.worldmodel->leafs - 1;
+		leafnum = ((int) (leaf - sv.worldmodel->leafs)) - 1;
 
 		ent->leafnums[ent->num_leafs] = leafnum;
 		ent->num_leafs++;			

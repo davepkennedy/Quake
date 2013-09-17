@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
+#define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = (int) EDICT_TO_PROG(e))
 
 /*
 ===============================================================================
@@ -250,7 +250,7 @@ void PF_setmodel (void)
 		PR_RunError ("no precache: %s\n", m);
 		
 
-	e->v.model = m - pr_strings;
+	e->v.model = (string_t) (m - pr_strings);
 	e->v.modelindex = i; //SV_ModelIndex (m);
 
 	mod = sv.models[ (int)e->v.modelindex];  // Mod_ForName (m, true);
@@ -629,9 +629,9 @@ void PF_traceline (void)
 	VectorCopy (trace.plane.normal, pr_global_struct->trace_plane_normal);
 	pr_global_struct->trace_plane_dist =  trace.plane.dist;	
 	if (trace.ent)
-		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
+		pr_global_struct->trace_ent = (int) EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+		pr_global_struct->trace_ent = (int) EDICT_TO_PROG(sv.edicts);
 }
 
 
@@ -776,7 +776,7 @@ void PF_checkclient (void)
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v.origin, self->v.view_ofs, view);
 	leaf = Mod_PointInLeaf (view, sv.worldmodel);
-	l = (leaf - sv.worldmodel->leafs) - 1;
+	l = ((int) (leaf - sv.worldmodel->leafs)) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 c_notvis++;
@@ -902,7 +902,7 @@ void PF_findradius (void)
 		if (Length(eorg) > rad)
 			continue;
 			
-		ent->v.chain = EDICT_TO_PROG(chain);
+		ent->v.chain = (int) EDICT_TO_PROG(chain);
 		chain = ent;
 	}
 
@@ -928,10 +928,18 @@ void PF_ftos (void)
 	v = G_FLOAT(OFS_PARM0);
 	
 	if (v == (int)v)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (pr_string_temp, 128, "%d",(int)v);
+#else
 		sprintf (pr_string_temp, "%d",(int)v);
+#endif /* __APPLE__ || MACOSX */
 	else
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (pr_string_temp, 128, "%5.1f",v);
+#else
 		sprintf (pr_string_temp, "%5.1f",v);
-	G_INT(OFS_RETURN) = pr_string_temp - pr_strings;
+#endif /* __APPLE__ || MACOSX */
+	G_INT(OFS_RETURN) = (int) (pr_string_temp - pr_strings);
 }
 
 void PF_fabs (void)
@@ -943,14 +951,22 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (pr_string_temp, 128, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+#else
 	sprintf (pr_string_temp, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
-	G_INT(OFS_RETURN) = pr_string_temp - pr_strings;
+#endif /* __APPLE__ ||ÊMACOSX */
+	G_INT(OFS_RETURN) = (int) (pr_string_temp - pr_strings);
 }
 
 #ifdef QUAKE2
 void PF_etos (void)
 {
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (pr_string_temp, 128, "entity %i", G_EDICTNUM(OFS_PARM0));
+#else
 	sprintf (pr_string_temp, "entity %i", G_EDICTNUM(OFS_PARM0));
+#endif /* __APPLE__ ||ÊMACOSX */
 	G_INT(OFS_RETURN) = pr_string_temp - pr_strings;
 }
 #endif
@@ -1206,7 +1222,7 @@ void PF_droptofloor (void)
 		VectorCopy (trace.endpos, ent->v.origin);
 		SV_LinkEdict (ent, false);
 		ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
-		ent->v.groundentity = EDICT_TO_PROG(trace.ent);
+		ent->v.groundentity = (int) EDICT_TO_PROG(trace.ent);
 		G_FLOAT(OFS_RETURN) = 1;
 	}
 }

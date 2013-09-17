@@ -120,7 +120,7 @@ reciprocal_table_16:	.long	0x40000000, 0x2aaaaaaa, 0x20000000
 						.long	0x10000000, 0xe38e38e, 0xccccccc, 0xba2e8ba
 						.long	0xaaaaaaa, 0x9d89d89, 0x9249249, 0x8888888
 
-#ifndef NeXT
+#if !defined(NeXT) && !defined(__APPLE__) && !defined(MACOSX)
 	.extern Entry2_16
 	.extern Entry3_16
 	.extern Entry4_16
@@ -155,7 +155,7 @@ DP_Color:		.long	0
 DP_Pix:			.long	0
 
 
-#ifndef NeXT
+#if !defined(NeXT) && !defined(__APPLE__) && !defined(MACOSX)
 	.extern DP_1x1
 	.extern DP_2x2
 	.extern DP_3x3
@@ -182,7 +182,7 @@ jumptemp:		.long	0
 reciprocal_table:	.long	0x40000000, 0x2aaaaaaa, 0x20000000
 					.long	0x19999999, 0x15555555, 0x12492492
 
-#ifndef NeXT
+#if !defined(NeXT) && !defined(__APPLE__) && !defined(MACOSX)
 	.extern Entry2_8
 	.extern Entry3_8
 	.extern Entry4_8
@@ -195,7 +195,7 @@ reciprocal_table:	.long	0x40000000, 0x2aaaaaaa, 0x20000000
 entryvec_table:	.long	0, Entry2_8, Entry3_8, Entry4_8
 				.long	Entry5_8, Entry6_8, Entry7_8, Entry8_8
 
-#ifndef NeXT
+#if !defined(NeXT) && !defined(__APPLE__) && !defined(MACOSX)
 	.extern Spr8Entry2_8
 	.extern Spr8Entry3_8
 	.extern Spr8Entry4_8

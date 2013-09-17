@@ -48,6 +48,12 @@ int			mirrortexturenum;	// quake texturenum, not gltexturenum
 qboolean	mirror;
 mplane_t	*mirror_plane;
 
+
+#if defined (__APPLE__) || defined (MACOSX)
+GLfloat				gldepthmin,
+                                gldepthmax;
+#endif /* __APPLE__ || MACOSX */
+
 //
 // view origin
 //
@@ -95,11 +101,36 @@ cvar_t	gl_polyblend = {"gl_polyblend","1"};
 cvar_t	gl_flashblend = {"gl_flashblend","1"};
 cvar_t	gl_playermip = {"gl_playermip","0"};
 cvar_t	gl_nocolors = {"gl_nocolors","0"};
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","1"};
+
+#else
+
 cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
+
+#endif /* __APPLE__ ||ÊMACOSX */
+
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 cvar_t	gl_doubleeyes = {"gl_doubleeys", "1"};
 
 extern	cvar_t	gl_ztrick;
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern int	R_LightPoint (vec3_t);
+extern void	R_DrawBrushModel (entity_t *);
+extern void	R_AnimateLight (void);
+extern void 	R_DrawWorld (void);
+extern void	R_RenderDlights (void);
+extern void	R_DrawParticles (void);
+extern void	R_DrawWaterSurfaces (void);
+extern void 	R_RenderBrushPoly (msurface_t *);
+extern void	RotatePointAroundVector(vec3_t, const vec3_t, const vec3_t, float);
+extern void	V_CalcBlend (void);
+
+#endif /* APPLE || MACOSX */
 
 /*
 =================
@@ -288,15 +319,15 @@ GL_DrawAliasFrame
 */
 void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
-	float	s, t;
-	float 	l;
-	int		i, j;
-	int		index;
-	trivertx_t	*v, *verts;
-	int		list;
+//	float		s, t;
+	float 		l;
+//	int		i, j;
+//	int		index;
+	trivertx_t	/* *v,*/ *verts;
+//	int		list;
 	int		*order;
-	vec3_t	point;
-	float	*normal;
+//	vec3_t		point;
+//	float		*normal;
 	int		count;
 
 lastposenum = posenum;
@@ -346,15 +377,15 @@ extern	vec3_t			lightspot;
 
 void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 {
-	float	s, t, l;
-	int		i, j;
-	int		index;
-	trivertx_t	*v, *verts;
-	int		list;
+//	float		s, t, l;
+//	int		i, j;
+//	int		index;
+	trivertx_t	/* *v,*/ *verts;
+//	int		list;
 	int		*order;
-	vec3_t	point;
-	float	*normal;
-	float	height, lheight;
+	vec3_t		point;
+//	float		*normal;
+	float		height, lheight;
 	int		count;
 
 	lheight = currententity->origin[2] - lightspot[2];
@@ -445,17 +476,17 @@ R_DrawAliasModel
 */
 void R_DrawAliasModel (entity_t *e)
 {
-	int			i, j;
-	int			lnum;
+	int		i; //, j;
+	int		lnum;
 	vec3_t		dist;
 	float		add;
 	model_t		*clmodel;
 	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
-	trivertx_t	*verts, *v;
-	int			index;
-	float		s, t, an;
-	int			anim;
+//	trivertx_t	*verts, *v;
+//	int		index;
+	float		/*s, t,*/ an;
+	int		anim;
 
 	clmodel = currententity->model;
 
@@ -503,7 +534,7 @@ void R_DrawAliasModel (entity_t *e)
 		shadelight = 192 - ambientlight;
 
 	// ZOID: never allow players to go totally black
-	i = currententity - cl_entities;
+	i = (int) (currententity - cl_entities);
 	if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
@@ -554,7 +585,7 @@ void R_DrawAliasModel (entity_t *e)
 	// seperately for the players.  Heads are just uncolored.
 	if (currententity->colormap != vid.colormap && !gl_nocolors.value)
 	{
-		i = currententity - cl_entities;
+		i = (int) (currententity - cl_entities);
 		if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
 		    GL_Bind(playertextures - 1 + i);
 	}
@@ -632,9 +663,11 @@ void R_DrawEntitiesOnList (void)
 
 		switch (currententity->model->type)
 		{
-		case mod_sprite:
+                    case mod_sprite:
 			R_DrawSpriteModel (currententity);
 			break;
+                    default:
+                        break;
 		}
 	}
 }
@@ -809,9 +842,9 @@ R_SetupFrame
 */
 void R_SetupFrame (void)
 {
-	int				edgecount;
-	vrect_t			vrect;
-	float			w, h;
+//	int			edgecount;
+//	vrect_t			vrect;
+//	float			w, h;
 
 // don't allow cheats in multiplayer
 	if (cl.maxclients > 1)
@@ -863,10 +896,10 @@ R_SetupGL
 */
 void R_SetupGL (void)
 {
-	float	screenaspect;
-	float	yfov;
-	int		i;
-	extern	int glwidth, glheight;
+	float		screenaspect;
+//	float		yfov;
+//	int		i;
+	extern	int 	glwidth, glheight;
 	int		x, x2, y2, y, w, h;
 
 	//
@@ -946,6 +979,13 @@ R_RenderScene
 r_refdef must be set before the first call
 ================
 */
+
+#if defined(__APPLE__) || defined(MACOSX)
+#if GLTEST
+extern void Test_Draw (void);
+#endif /* GLTEST */
+#endif /* __APPLE__ || MACOSX */
+
 void R_RenderScene (void)
 {
 	R_SetupFrame ();
@@ -1103,8 +1143,12 @@ r_refdef must be set before the first call
 */
 void R_RenderView (void)
 {
+#if defined (__APPLE__) || defined (MACOSX)
+	double	time1 = 0.0, time2;
+#else
 	double	time1, time2;
-	GLfloat colors[4] = {(GLfloat) 0.0, (GLfloat) 0.0, (GLfloat) 1, (GLfloat) 0.20};
+#endif /* __APPLE__ ||ÊMACOSX */
+//	GLfloat colors[4] = {(GLfloat) 0.0, (GLfloat) 0.0, (GLfloat) 1, (GLfloat) 0.20};
 
 	if (r_norefresh.value)
 		return;

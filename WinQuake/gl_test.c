@@ -66,7 +66,9 @@ void Test_Spawn (vec3_t origin)
 	int		i;
 	puff_t	*p;
 	vec3_t	temp;
+#if !defined(__APPLE__) && !defined(MACOSX)
 	vec3_t	normal;
+#endif /* !__APPLE__ && !MACOSX */
 	vec3_t	incoming;
 	plane_t	*plane;
 	float	d;
@@ -165,7 +167,6 @@ void DrawPuff (puff_t *p)
 
 	p->length -= host_frametime*2;
 }
-
 
 void Test_Draw (void)
 {

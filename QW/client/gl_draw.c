@@ -23,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#ifndef GL_COLOR_INDEX8_EXT
+#define GL_COLOR_INDEX8_EXT     0x80E5
+#endif /* GL_COLOR_INDEX8_EXT */
+
 extern unsigned char d_15to8table[65536];
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor;
 
@@ -83,6 +87,10 @@ int			numgltextures;
 
 void GL_Bind (int texnum)
 {
+#if defined (__APPLE__) || defined (MACOSX)
+        extern qboolean		gl_texturefilteranisotropic;
+#endif /* __APPLE__ || MACOSX */
+
 	if (gl_nobind.value)
 		texnum = char_texture;
 	if (currenttexture == texnum)
@@ -92,6 +100,16 @@ void GL_Bind (int texnum)
 	bindTexFunc (GL_TEXTURE_2D, texnum);
 #else
 	glBindTexture (GL_TEXTURE_2D, texnum);
+
+#if defined (__APPLE__) || defined (MACOSX)
+        if (gl_texturefilteranisotropic)
+        {
+            extern GLfloat	gl_texureanisotropylevel;
+            
+            glTexParameterfv (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &gl_texureanisotropylevel);
+        }
+#endif /* __APPLE__ || MACOSX */  
+
 #endif
 }
 
@@ -414,7 +432,11 @@ void Draw_Init (void)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (ver, 40, "%4.2f", VERSION);
+#else
 	sprintf (ver, "%4.2f", VERSION);
+#endif /* __APPLE__ || MACOSX */
 	dest = cb->data + 320 + 320*186 - 11 - 8*strlen(ver);
 	for (x=0 ; x<strlen(ver) ; x++)
 		Draw_CharToConback (ver[x], dest+(x<<3));
@@ -747,6 +769,9 @@ void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 		}
 	}
 
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -772,11 +797,19 @@ Draw_ConsoleBackground
 
 ================
 */
+
 void Draw_ConsoleBackground (int lines)
 {
 	char ver[80];
 	int x, i;
 	int y;
+
+#if defined(__APPLE__) || defined (MACOSX)
+
+	conback->width	= vid.width;
+	conback->height	= vid.height;
+	
+#endif // __APPLE__ || MACOSX
 
 	y = (vid.height * 3) >> 2;
 	if (lines > y)
@@ -790,10 +823,12 @@ void Draw_ConsoleBackground (int lines)
 	if (!cls.download) {
 #ifdef __linux__
 		sprintf (ver, "LinuxGL (%4.2f) QuakeWorld", LINUX_VERSION);
+#elif defined (__APPLE__) || defined (MACOSX)
+		snprintf (ver, 80, "MacOS X GL (%4.2f) QuakeWorld", MACOSX_VERSION);
 #else
 		sprintf (ver, "GL (%4.2f) QuakeWorld", GLQUAKE_VERSION);
 #endif
-		x = vid.conwidth - (strlen(ver)*8 + 11) - (vid.conwidth*8/320)*7;
+		x = vid.conwidth - (((int)strlen(ver))*8 + 11) - (vid.conwidth*8/320)*7;
 		for (i=0 ; i<strlen(ver) ; i++)
 			Draw_Character (x + i * 8, y, ver[i] | 0x80);
 	}
@@ -892,9 +927,24 @@ void Draw_BeginDisc (void)
 {
 	if (!draw_disc)
 		return;
-	glDrawBuffer  (GL_FRONT);
+    
+#if defined (__APPLE__) || defined (MACOSX)
+    GLboolean multiSampleEnabled = glIsEnabled (GL_MULTISAMPLE);
+    
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
+    {
+        glDrawBuffer  (GL_FRONT);
+    }
+    
 	Draw_Pic (vid.width - 24, 0, draw_disc);
-	glDrawBuffer  (GL_BACK);
+
+#if defined (__APPLE__) || defined (MACOSX)
+    if (multiSampleEnabled == GL_FALSE)
+#endif /* __APPLE__ || MACOSX */
+    {
+        glDrawBuffer  (GL_BACK);
+    }
 }
 
 
@@ -917,6 +967,7 @@ GL_Set2D
 Setup as if the screen was 320*200
 ================
 */
+
 void GL_Set2D (void)
 {
 	glViewport (glx, gly, glwidth, glheight);
@@ -1108,15 +1159,29 @@ static	unsigned	scaled[1024*512];	// [512*256];
 
 #if 0
 	if (mipmap)
+        {
 		gluBuild2DMipmaps (GL_TEXTURE_2D, samples, width, height, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-	else if (scaled_width == width && scaled_height == height)
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+        }
 	else
-	{
-		gluScaleImage (GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
-			scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled);
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-	}
+        {
+            if (scaled_width == width && scaled_height == height)
+            {
+#if defined (__APPLE__) || defined (MACOSX)
+                GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, width, height, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+		glTexImage2D (GL_TEXTURE_2D, 0, samples, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
+            }
+            else
+            {
+                    gluScaleImage (GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
+                            scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled);
+#if defined (__APPLE__) || defined (MACOSX)
+                    GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, 0, GL_RGBA,
+                                        GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
+                    glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+            }
+        }
 #else
 texels += scaled_width * scaled_height;
 
@@ -1124,6 +1189,10 @@ texels += scaled_width * scaled_height;
 	{
 		if (!mipmap)
 		{
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, 0,
+                                            GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 			glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			goto done;
 		}
@@ -1132,6 +1201,10 @@ texels += scaled_width * scaled_height;
 	else
 		GL_ResampleTexture (data, width, height, scaled, scaled_width, scaled_height);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, 0,GL_RGBA,
+                            GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 	if (mipmap)
 	{
@@ -1148,6 +1221,10 @@ texels += scaled_width * scaled_height;
 			if (scaled_height < 1)
 				scaled_height = 1;
 			miplevel++;
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0,
+                                            0,GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 			glTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 		}
 	}
@@ -1214,6 +1291,10 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 	{
 		if (!mipmap)
 		{
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height,
+                                            0, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 			glTexImage2D (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX , GL_UNSIGNED_BYTE, data);
 			goto done;
 		}
@@ -1222,6 +1303,10 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 	else
 		GL_Resample8BitTexture (data, width, height, scaled, scaled_width, scaled_height);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, 0,
+                            GL_COLOR_INDEX, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
 	if (mipmap)
 	{
@@ -1238,6 +1323,10 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 			if (scaled_height < 1)
 				scaled_height = 1;
 			miplevel++;
+#if defined (__APPLE__) || defined (MACOSX)
+                        GL_CheckTextureRAM (GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width,
+                                            scaled_height, 0, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 			glTexImage2D (GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
 		}
 	}

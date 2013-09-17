@@ -91,8 +91,12 @@ qboolean	NET_CompareAdr (netadr_t a, netadr_t b)
 char	*NET_AdrToString (netadr_t a)
 {
 	static	char	s[64];
-	
+
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (s, 64, "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
+#else	
 	sprintf (s, "%i.%i.%i.%i:%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs(a.port));
+#endif /* __APPLE__ || MACOSX */
 
 	return s;
 }
@@ -100,8 +104,12 @@ char	*NET_AdrToString (netadr_t a)
 char	*NET_BaseAdrToString (netadr_t a)
 {
 	static	char	s[64];
-	
+
+#if defined (__APPLE__) || defined (MACOSX)	
+	snprintf (s, 64, "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
+#else
 	sprintf (s, "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
+#endif /* __APPLE__ || MACOSX */
 
 	return s;
 }
@@ -158,10 +166,10 @@ qboolean	NET_StringToAdr (char *s, netadr_t *a)
 // the IP is NOT one of our interfaces.
 qboolean NET_IsClientLegal(netadr_t *adr)
 {
+#if 0
 	struct sockaddr_in sadr;
 	int newsocket;
 
-#if 0
 	if (adr->ip[0] == 127)
 		return false; // no local connections period
 
@@ -190,12 +198,12 @@ qboolean NET_IsClientLegal(netadr_t *adr)
 
 qboolean NET_GetPacket (void)
 {
-	int 	ret;
+	int					ret;
 	struct sockaddr_in	from;
-	int		fromlen;
+	unsigned int		fromlen;
 
 	fromlen = sizeof(from);
-	ret = recvfrom (net_socket, net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, &fromlen);
+	ret = (int) recvfrom (net_socket, net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, &fromlen);
 	if (ret == -1) {
 		if (errno == EWOULDBLOCK)
 			return false;
@@ -220,7 +228,7 @@ void NET_SendPacket (int length, void *data, netadr_t to)
 
 	NetadrToSockadr (&to, &addr);
 
-	ret = sendto (net_socket, data, length, 0, (struct sockaddr *)&addr, sizeof(addr) );
+	ret = (int) sendto (net_socket, data, length, 0, (struct sockaddr *)&addr, sizeof(addr) );
 	if (ret == -1) {
 		if (errno == EWOULDBLOCK)
 			return;
@@ -263,11 +271,24 @@ int UDP_OpenSocket (int port)
 
 void NET_GetLocalAddress (void)
 {
-	char	buff[MAXHOSTNAMELEN];
+	char				buff[MAXHOSTNAMELEN];
 	struct sockaddr_in	address;
-	int		namelen;
+	unsigned int		namelen;
 
-	gethostname(buff, MAXHOSTNAMELEN);
+#if defined (__APPLE__) || defined (MACOSX)
+
+	if (gethostname(buff, MAXHOSTNAMELEN) != 0)
+        {
+            Con_Printf ("UDP init failed. Disabling UDP...\n");
+            return;
+        }
+
+#else
+
+        gethostname(buff, MAXHOSTNAMELEN);
+
+#endif /* __APPLE__ || MACOSX */
+
 	buff[MAXHOSTNAMELEN-1] = 0;
 
 	NET_StringToAdr (buff, &net_local_adr);
@@ -278,6 +299,12 @@ void NET_GetLocalAddress (void)
 	net_local_adr.port = address.sin_port;
 
 	Con_Printf("IP address %s\n", NET_AdrToString (net_local_adr) );
+
+#if defined (__APPLE__) || defined (MACOSX)
+
+	Con_Printf ("UDP Initialized\n");
+        
+#endif /* __APPLE__ ||ÊMACOSX */
 }
 
 /*
@@ -303,7 +330,11 @@ void NET_Init (int port)
 	//
 	NET_GetLocalAddress ();
 
+#if !defined (__APPLE__) && !defined (MACOSX)
+
 	Con_Printf("UDP Initialized\n");
+        
+#endif /* !__APPLE__ &&Ê!MACOSX */
 }
 
 /*

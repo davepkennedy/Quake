@@ -66,8 +66,13 @@ extern float	d_sdivzstepu, d_tdivzstepu, d_zistepu;
 extern float	d_sdivzstepv, d_tdivzstepv, d_zistepv;
 extern float	d_sdivzorigin, d_tdivzorigin, d_ziorigin;
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern fixed16_t	sadjust, tadjust;
+extern fixed16_t	bbextents, bbextentt;
+#else
 fixed16_t	sadjust, tadjust;
 fixed16_t	bbextents, bbextentt;
+#endif /* APPLE || MACOSX */
 
 
 void D_DrawSpans8 (espan_t *pspans);
@@ -80,7 +85,13 @@ void D_DrawSkyScans8 (espan_t *pspan);
 void D_DrawSkyScans16 (espan_t *pspan);
 
 void R_ShowSubDiv (void);
+
+#if defined(__APPLE__) || defined(MACOSX)
+extern	void (*prealspandrawer)(void);
+#else
 void (*prealspandrawer)(void);
+#endif /* APPLE || MACOSX */
+
 surfcache_t	*D_CacheSurface (msurface_t *surface, int miplevel);
 
 extern int D_MipLevelForScale (float scale);

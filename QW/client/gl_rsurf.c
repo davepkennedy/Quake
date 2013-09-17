@@ -21,7 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern int		skytexturenum;
+#else
 int			skytexturenum;
+#endif /* APPLE || MACOSX */
 
 #ifndef GL_RGBA4
 #define	GL_RGBA4	0
@@ -275,10 +279,8 @@ extern	float	speedscale;		// for top sky and bottom sky
 void DrawGLWaterPoly (glpoly_t *p);
 void DrawGLWaterPolyLightmap (glpoly_t *p);
 
-#ifdef _WIN32
 lpMTexFUNC qglMTexCoord2fSGIS = NULL;
 lpSelTexFUNC qglSelectTextureSGIS = NULL;
-#endif
 
 qboolean mtexenabled = false;
 
@@ -1618,7 +1620,20 @@ void GL_BuildLightmaps (void)
 		texture_extension_number += MAX_LIGHTMAPS;
 	}
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+        // <AWE> MacOS X v10.1, GLQuake v1.0.2:
+        // Using GL_LUMINACE causes frame drops in rooms with many lightmap textures.
+        // Since GL_INTENSITY, GL_ALPHA result in totaly dark surfaces, we have to use GL_RGBA as default.
+        
+        gl_lightmap_format = GL_RGBA;
+
+#else
+
 	gl_lightmap_format = GL_LUMINANCE;
+
+#endif /* __APPLE__ || MACOSX */
+
 	if (COM_CheckParm ("-lm_1"))
 		gl_lightmap_format = GL_LUMINANCE;
 	if (COM_CheckParm ("-lm_a"))
@@ -1685,6 +1700,10 @@ void GL_BuildLightmaps (void)
 		GL_Bind(lightmap_textures + i);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#if defined (__APPLE__) || defined (MACOSX)
+                GL_CheckTextureRAM (GL_TEXTURE_2D, 0, lightmap_bytes, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 0,
+                                    gl_lightmap_format, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 		glTexImage2D (GL_TEXTURE_2D, 0, lightmap_bytes
 		, BLOCK_WIDTH, BLOCK_HEIGHT, 0, 
 		gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps+i*BLOCK_WIDTH*BLOCK_HEIGHT*lightmap_bytes);

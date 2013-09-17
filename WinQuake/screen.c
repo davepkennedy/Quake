@@ -390,7 +390,6 @@ void SCR_DrawNet (void)
 		return;
 	if (cls.demoplayback)
 		return;
-
 	Draw_Pic (scr_vrect.x+64, scr_vrect.y, scr_net);
 }
 
@@ -539,6 +538,8 @@ typedef struct
     unsigned char	data;			// unbounded
 } pcx_t;
 
+#if !defined (__APPLE__) && !defined (MACOSX)
+
 /* 
 ============== 
 WritePCXfile 
@@ -602,8 +603,49 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 	length = pack - (byte *)pcx;
 	COM_WriteFile (filename, pcx, length);
 } 
- 
 
+#else
+
+/* 
+============== 
+WritePNGFile 
+============== 
+*/ 
+qboolean WritePNGFile (char *theFileName, byte *theData, int theWidth, int theHeight, int theRowBytes, byte *thePalette) 
+{
+    extern qboolean	VID_Screenshot (char *, unsigned char *, unsigned int, unsigned int, unsigned int);
+    unsigned int	mySize = theWidth * theHeight,
+                        myColorIndex,
+                        i, j;
+    unsigned char	*myRawRGBData = NULL,
+                        *myRGBPixel = NULL;
+    
+    // get some temp memory for the RGB data:
+    myRGBPixel = myRawRGBData = Hunk_TempAlloc (mySize * 3);
+    if (myRawRGBData == NULL)
+    {
+        Con_Printf ("SCR_ScreenShot_f: not enough memory\n");
+        return (false);
+    } 
+
+    // convert the indexed color data to RGB raw data:
+    for (i = 0; i < theHeight; i++)
+    {
+        for (j = 0; j < theWidth; j++)
+        {
+            myColorIndex = *(theData++) * 3;
+            *(myRGBPixel++) = thePalette[myColorIndex++];
+            *(myRGBPixel++) = thePalette[myColorIndex++];
+            *(myRGBPixel++) = thePalette[myColorIndex];
+        }
+        theData += theRowBytes - theWidth;
+    }
+
+    // finally write the PNG file:
+    return (VID_Screenshot (theFileName, myRawRGBData, theWidth, theHeight, theWidth * 3));    
+} 
+
+#endif /* !__APPLE__ && !MACOSX */
 
 /* 
 ================== 
@@ -619,19 +661,33 @@ void SCR_ScreenShot_f (void)
 // 
 // find a file name to save it to 
 // 
+#if defined (__APPLE__) || defined (MACOSX)
+        qboolean	success = false;
+        
+	strcpy(pcxname,"quake00.png");
+#else
 	strcpy(pcxname,"quake00.pcx");
+#endif /* __APPLE__ || MACOSX */
 		
 	for (i=0 ; i<=99 ; i++) 
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (checkname, MAX_OSPATH, "%s/%s", com_gamedir, pcxname);
+#else
 		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
+#endif /* __APPLE__ || MACOSX */
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 
 	if (i==100) 
 	{
-		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n"); 
+#if defined (__APPLE__) || defined (MACOSX)
+		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PNG file\n");
+#else
+		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n");
+#endif /* __APPLE__ || MACOSX */
 		return;
  	}
 
@@ -641,13 +697,21 @@ void SCR_ScreenShot_f (void)
 	D_EnableBackBufferAccess ();	// enable direct drawing of console to back
 									//  buffer
 
-	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
-				  host_basepal);
-
+#if defined (__APPLE__) || defined (MACOSX)
+        success = WritePNGFile (checkname, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
-									//  for linear writes all the time
-
+                                        //  for linear writes all the time
+        if (success == true)
+        {
+            Con_Printf ("Wrote %s\n", pcxname);
+        }
+#else
+	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
+	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
+                                        //  for linear writes all the time
 	Con_Printf ("Wrote %s\n", pcxname);
+#endif /* __APPLE__ ||ÊMACOSX */
+
 } 
 
 
@@ -754,7 +818,9 @@ int SCR_ModalMessage (char *text)
 	scr_fullupdate = 0;
 	scr_drawdialog = true;
 	SCR_UpdateScreen ();
-	scr_drawdialog = false;
+#if !defined (__APPLE__) && !defined (MACOSX)
+        scr_drawdialog = false;
+#endif /* !__APPLE__ && !MACOSX */
 	
 	S_ClearBuffer ();		// so dma doesn't loop current sound
 
@@ -764,6 +830,9 @@ int SCR_ModalMessage (char *text)
 		Sys_SendKeyEvents ();
 	} while (key_lastpress != 'y' && key_lastpress != 'n' && key_lastpress != K_ESCAPE);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        scr_drawdialog = false;
+#endif /* __APPLE__ || MACOSX */
 	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 

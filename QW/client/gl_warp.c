@@ -643,7 +643,11 @@ void R_LoadSkys (void)
 	for (i=0 ; i<6 ; i++)
 	{
 		GL_Bind (SKY_TEX + i);
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (name, 64, "gfx/env/bkgtst%s.tga", suf[i]);
+#else
 		sprintf (name, "gfx/env/bkgtst%s.tga", suf[i]);
+#endif /* __APPLE__ || MACOSX */
 		COM_FOpenFile (name, &f);
 		if (!f)
 		{
@@ -653,6 +657,10 @@ void R_LoadSkys (void)
 		LoadTGA (f);
 //		LoadPCX (f);
 
+#if defined (__APPLE__) || defined (MACOSX)
+                GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_solid_format, 256, 256, 0, 0, GL_RGBA,
+                                    GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 		glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, targa_rgba);
 //		glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, pcx_rgb);
 
@@ -1034,7 +1042,6 @@ void R_InitSky (texture_t *mt)
 	unsigned	transpix;
 	int			r, g, b;
 	unsigned	*rgba;
-	extern	int			skytexturenum;
 
 	src = (byte *)mt + mt->offsets[0];
 
@@ -1062,6 +1069,9 @@ void R_InitSky (texture_t *mt)
 	if (!solidskytexture)
 		solidskytexture = texture_extension_number++;
 	GL_Bind (solidskytexture );
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1080,6 +1090,9 @@ void R_InitSky (texture_t *mt)
 	if (!alphaskytexture)
 		alphaskytexture = texture_extension_number++;
 	GL_Bind(alphaskytexture);
+#if defined (__APPLE__) || defined (MACOSX)
+        GL_CheckTextureRAM (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+#endif /* __APPLE__ || MACOSX */
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

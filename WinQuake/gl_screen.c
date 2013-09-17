@@ -103,7 +103,15 @@ int			scr_fullupdate;
 int			clearconsole;
 int			clearnotify;
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern int		sb_lines;
+
+#else
+
 int			sb_lines;
+
+#endif /* APPLE || MACOSX */
 
 viddef_t	vid;				// global video state
 
@@ -114,6 +122,12 @@ qboolean	scr_drawloading;
 float		scr_disabled_time;
 
 qboolean	block_drawing;
+
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void GL_Set2D (void);
+
+#endif /* APPLE || MACOSX */
 
 void SCR_ScreenShot_f (void);
 
@@ -254,10 +268,10 @@ Internal use only
 */
 static void SCR_CalcRefdef (void)
 {
-	vrect_t		vrect;
+//	vrect_t		vrect;
 	float		size;
 	int		h;
-	qboolean		full = false;
+	qboolean	full = false;
 
 
 	scr_fullupdate = 0;		// force a background redraw
@@ -591,53 +605,75 @@ SCR_ScreenShot_f
 */  
 void SCR_ScreenShot_f (void) 
 {
-	byte		*buffer;
 	char		pcxname[80]; 
 	char		checkname[MAX_OSPATH];
-	int			i, c, temp;
-// 
-// find a file name to save it to 
-// 
+	int		i;
+#if defined (__APPLE__) || defined (MACOSX)
+        extern qboolean	GL_SaveScreenshot (const char *);
+
+	strcpy(pcxname,"quake00.png");
+#else
+	byte		*buffer;
+        int		c, temp;
+
 	strcpy(pcxname,"quake00.tga");
+#endif /* __APPLE__ || MACOSX */
 		
 	for (i=0 ; i<=99 ; i++) 
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (checkname, MAX_OSPATH, "%s/%s", com_gamedir, pcxname);
+#else
 		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
+#endif /* __APPLE__ ||ÊMACOSX */
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
 	} 
 	if (i==100) 
 	{
+#if defined (__APPLE__) || defined (MACOSX)
+		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PNG file\n"); 
+#else
 		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n"); 
+#endif /* __APPLE__ || MACOSX */
 		return;
  	}
 
+#if !defined (__APPLE__) && !defined (MACOSX)
 
 	buffer = malloc(glwidth*glheight*3 + 18);
-	memset (buffer, 0, 18);
-	buffer[2] = 2;		// uncompressed type
-	buffer[12] = glwidth&255;
-	buffer[13] = glwidth>>8;
-	buffer[14] = glheight&255;
-	buffer[15] = glheight>>8;
-	buffer[16] = 24;	// pixel size
-
-	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer+18 ); 
-
-	// swap rgb to bgr
-	c = 18+glwidth*glheight*3;
-	for (i=18 ; i<c ; i+=3)
-	{
-		temp = buffer[i];
-		buffer[i] = buffer[i+2];
-		buffer[i+2] = temp;
-	}
-	COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
-
-	free (buffer);
-	Con_Printf ("Wrote %s\n", pcxname);
+        if (buffer != NULL)
+        {
+            memset (buffer, 0, 18);
+            buffer[2] = 2;		// uncompressed type
+            buffer[12] = glwidth&255;
+            buffer[13] = glwidth>>8;
+            buffer[14] = glheight&255;
+            buffer[15] = glheight>>8;
+            buffer[16] = 24;	// pixel size
+    
+            glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer+18 ); 
+            // swap rgb to bgr
+            c = 18+glwidth*glheight*3;
+            for (i=18 ; i<c ; i+=3)
+            {
+                    temp = buffer[i];
+                    buffer[i] = buffer[i+2];
+                    buffer[i+2] = temp;
+            }
+            COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
+            free (buffer);
+            Con_Printf ("Wrote %s\n", pcxname);
+        }
+        else
+#else
+        if (GL_SaveScreenshot (checkname) == true)
+            Con_Printf ("Wrote %s\n", pcxname);
+        else
+#endif /* !__APPLE__ &&Ê!MACOSX */
+            Con_Printf ("Failed to write %s\n", pcxname);
 } 
 
 
@@ -744,7 +780,9 @@ int SCR_ModalMessage (char *text)
 	scr_fullupdate = 0;
 	scr_drawdialog = true;
 	SCR_UpdateScreen ();
-	scr_drawdialog = false;
+#if !defined (__APPLE__) && !defined (MACOSX)
+        scr_drawdialog = false;
+#endif /* !__APPLE__ && !MACOSX */
 	
 	S_ClearBuffer ();		// so dma doesn't loop current sound
 
@@ -754,6 +792,9 @@ int SCR_ModalMessage (char *text)
 		Sys_SendKeyEvents ();
 	} while (key_lastpress != 'y' && key_lastpress != 'n' && key_lastpress != K_ESCAPE);
 
+#if defined (__APPLE__) || defined (MACOSX)
+        scr_drawdialog = false;
+#endif /* __APPLE__ || MACOSX */
 	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 
@@ -820,8 +861,8 @@ needs almost the entire 256k of stack space!
 */
 void SCR_UpdateScreen (void)
 {
-	static float	oldscr_viewsize;
-	vrect_t		vrect;
+//	static float	oldscr_viewsize;
+//	vrect_t		vrect;
 
 	if (block_drawing)
 		return;

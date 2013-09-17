@@ -118,14 +118,14 @@ int CL_GetMessage (void)
 		VectorCopy (cl.mviewangles[0], cl.mviewangles[1]);
 		for (i=0 ; i<3 ; i++)
 		{
-			r = fread (&f, 4, 1, cls.demofile);
+			r = (int) fread (&f, 4, 1, cls.demofile);
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
 		
 		net_message.cursize = LittleLong (net_message.cursize);
 		if (net_message.cursize > MAX_MSGLEN)
 			Sys_Error ("Demo message > MAX_MSGLEN");
-		r = fread (net_message.data, net_message.cursize, 1, cls.demofile);
+		r = (int) fread (net_message.data, net_message.cursize, 1, cls.demofile);
 		if (r != 1)
 		{
 			CL_StopPlayback ();
@@ -230,7 +230,11 @@ void CL_Record_f (void)
 	else
 		track = -1;	
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, MAX_OSPATH, "%s/%s", com_gamedir, Cmd_Argv(1));
+#else
 	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+#endif /* __APPLE__ ||ÊMACOSX */
 	
 //
 // start the map up

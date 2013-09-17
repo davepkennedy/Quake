@@ -27,8 +27,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #endif
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+#include 	<OpenGL/gl.h>
+#include 	<OpenGL/glu.h>
+#include	<OpenGL/glext.h>
+#include	<math.h>
+
+#else
+
 #include <GL/gl.h>
 #include <GL/glu.h>
+
+#endif /* __APPLE__ || MACOSX */
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
@@ -154,8 +165,8 @@ extern	entity_t	r_worldentity;
 extern	qboolean	r_cache_thrash;		// compatability
 extern	vec3_t		modelorg, r_entorigin;
 extern	entity_t	*currententity;
-extern	int			r_visframecount;	// ??? what difs?
-extern	int			r_framecount;
+extern	int		r_visframecount;	// ??? what difs?
+extern	int		r_framecount;
 extern	mplane_t	frustum[4];
 extern	int		c_brush_polys, c_alias_polys;
 
@@ -229,12 +240,29 @@ extern	const char *gl_renderer;
 extern	const char *gl_version;
 extern	const char *gl_extensions;
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern void R_TranslatePlayerSkin (int playernum);
+extern void GL_Bind (int texnum);
+extern void GL_CheckTextureRAM (GLenum theTarget, GLint theLevel, GLint theInternalFormat, GLsizei theWidth,
+                                GLsizei theHeight, GLsizei theDepth , GLint theBorder, GLenum theFormat,
+                                GLenum theType);
+#else
 void R_TranslatePlayerSkin (int playernum);
 void GL_Bind (int texnum);
+#endif /* APPLE || MACOSX */
 
 // Multitexture
+#if defined(__APPLE__) || defined(MACOSX)
+
+#define    TEXTURE0_SGIS				GL_TEXTURE0_ARB
+#define    TEXTURE1_SGIS				GL_TEXTURE1_ARB
+
+#else
+
 #define    TEXTURE0_SGIS				0x835E
 #define    TEXTURE1_SGIS				0x835F
+
+#endif /* APPLE || MACOSX */
 
 #ifndef _WIN32
 #define APIENTRY /* */

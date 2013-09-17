@@ -27,6 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
 
+#if defined(__APPLE__) || defined(MACOSX)
+
+extern void GL_SubdivideSurface (msurface_t *);
+extern void GL_MakeAliasModelDisplayLists (model_t *, aliashdr_t *);
+
+#endif /* APPLE || MACOSX */
+
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer);
 void Mod_LoadAliasModel (model_t *mod, void *buffer);
@@ -39,6 +46,10 @@ model_t	mod_known[MAX_MOD_KNOWN];
 int		mod_numknown;
 
 cvar_t gl_subdivide_size = {"gl_subdivide_size", "128", true};
+
+#if defined (__APPLE__) || defined (MACOSX)
+int	texture_mode = GL_LINEAR;
+#endif /* __APPLE__ || MACOSX */
 
 /*
 ===============
@@ -1018,7 +1029,7 @@ void Mod_MakeHull0 (void)
 
 	for (i=0 ; i<count ; i++, out++, in++)
 	{
-		out->planenum = in->plane - loadmodel->planes;
+		out->planenum = (int) (in->plane - loadmodel->planes);
 		for (j=0 ; j<2 ; j++)
 		{
 			child = in->children[j];
@@ -1214,7 +1225,11 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		{	// duplicate the basic information
 			char	name[10];
 
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 10, "*%i", i+1);
+#else
 			sprintf (name, "*%i", i+1);
+#endif /* __APPLE__ || MACOSX */
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
 			strcpy (loadmodel->name, name);
@@ -1251,9 +1266,9 @@ Mod_LoadAliasFrame
 */
 void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 {
-	trivertx_t		*pframe, *pinframe;
-	int				i, j;
-	daliasframe_t	*pdaliasframe;
+	trivertx_t		/* *pframe, */ *pinframe;
+	int			i;//, j;
+	daliasframe_t		*pdaliasframe;
 	
 	pdaliasframe = (daliasframe_t *)pin;
 
@@ -1276,7 +1291,7 @@ void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 
 	pinframe += pheader->numverts;
 
-	return (void *)pinframe;
+	return((void *)pinframe);
 }
 
 
@@ -1410,14 +1425,14 @@ Mod_LoadAllSkins
 */
 void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 {
-	int		i, j, k;
-	char	name[32];
-	int		s;
-	byte	*copy;
-	byte	*skin;
-	byte	*texels;
-	daliasskingroup_t		*pinskingroup;
-	int		groupskins;
+	int			i, j, k;
+	char			name[32];
+	int			s;
+//	byte			*copy;
+	byte			*skin;
+	byte			*texels;
+	daliasskingroup_t	*pinskingroup;
+	int			groupskins;
 	daliasskininterval_t	*pinskinintervals;
 	
 	skin = (byte *)(pskintype + 1);
@@ -1435,10 +1450,14 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 			// save 8 bit texels for the player model to remap
 	//		if (!strcmp(loadmodel->name,"progs/player.mdl")) {
 				texels = Hunk_AllocName(s, loadname);
-				pheader->texels[i] = texels - (byte *)pheader;
+				pheader->texels[i] = (int) (texels - (byte *)pheader);
 				memcpy (texels, (byte *)(pskintype + 1), s);
 	//		}
+#if defined (__APPLE__) || defined (MACOSX)
+			snprintf (name, 32, "%s_%i", loadmodel->name, i);
+#else
 			sprintf (name, "%s_%i", loadmodel->name, i);
+#endif /* __APPLE__ || MACOSX */
 			pheader->gl_texturenum[i][0] =
 			pheader->gl_texturenum[i][1] =
 			pheader->gl_texturenum[i][2] =
@@ -1460,10 +1479,14 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 					Mod_FloodFillSkin( skin, pheader->skinwidth, pheader->skinheight );
 					if (j == 0) {
 						texels = Hunk_AllocName(s, loadname);
-						pheader->texels[i] = texels - (byte *)pheader;
+						pheader->texels[i] = (int) (texels - (byte *)pheader);
 						memcpy (texels, (byte *)(pskintype), s);
 					}
+#if defined (__APPLE__) || defined (MACOSX)
+					snprintf (name, 32, "%s_%i_%i", loadmodel->name, i,j);
+#else
 					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
+#endif /* __APPLE__ ||ÊMACOSX */
 					pheader->gl_texturenum[i][j&3] = 
 						GL_LoadTexture (name, pheader->skinwidth, 
 						pheader->skinheight, (byte *)(pskintype), true, false);
@@ -1488,15 +1511,15 @@ Mod_LoadAliasModel
 */
 void Mod_LoadAliasModel (model_t *mod, void *buffer)
 {
-	int					i, j;
-	mdl_t				*pinmodel;
-	stvert_t			*pinstverts;
-	dtriangle_t			*pintriangles;
-	int					version, numframes, numskins;
-	int					size;
+	int			i, j;
+	mdl_t			*pinmodel;
+	stvert_t		*pinstverts;
+	dtriangle_t		*pintriangles;
+	int			version, numframes;//, numskins;
+	int			size;
 	daliasframetype_t	*pframetype;
 	daliasskintype_t	*pskintype;
-	int					start, end, total;
+	int			start, end, total;
 	
 	start = Hunk_LowMark ();
 
@@ -1656,10 +1679,10 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 {
 	dspriteframe_t		*pinframe;
 	mspriteframe_t		*pspriteframe;
-	int					i, width, height, size, origin[2];
-	unsigned short		*ppixout;
-	byte				*ppixin;
-	char				name[64];
+	int			/* i,*/ width, height, size, origin[2];
+//	unsigned short		*ppixout;
+//	byte			*ppixin;
+	char			name[64];
 
 	pinframe = (dspriteframe_t *)pin;
 
@@ -1683,7 +1706,11 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
+#if defined (__APPLE__) || defined (MACOSX)
+	snprintf (name, 64, "%s_%i", loadmodel->name, framenum);
+#else
 	sprintf (name, "%s_%i", loadmodel->name, framenum);
+#endif /* __APPLE__ || MACOSX */
 	pspriteframe->gl_texturenum = GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), true, true);
 
 	return (void *)((byte *)pinframe + sizeof (dspriteframe_t) + size);

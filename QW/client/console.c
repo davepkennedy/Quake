@@ -280,6 +280,13 @@ void Con_Print (char *txt)
 	static int	cr;
 	int		mask;
 
+#if defined (__APPLE__) || defined (MACOSX)
+        if (con_initialized == false)
+        {
+            return;
+        }
+#endif /* __APPLE__ || MACOSX */
+
 	if (txt[0] == 1 || txt[0] == 2)
 	{
 		mask = 128;		// go to colored text
@@ -350,14 +357,18 @@ Handles cursor positioning, line wrapping, etc
 */
 #define	MAXPRINTMSG	4096
 // FIXME: make a buffer size safe vsprintf?
-void Con_Printf (char *fmt, ...)
+void Con_Printf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 	static qboolean	inupdate;
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 // also echo to debugging console
@@ -403,7 +414,11 @@ void Con_DPrintf (char *fmt, ...)
 		return;			// don't confuse non-developers with techie stuff...
 
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,MAXPRINTMSG,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ ||ÊMACOSX */
 	va_end (argptr);
 	
 	Con_Printf ("%s", msg);
@@ -544,7 +559,9 @@ void Con_DrawConsole (int lines)
 	char			*text;
 	int				row;
 	char			dlbar[1024];
-	
+#if defined (__APPLE__) || defined (MACOSX)
+        int			dlbarlen;
+#endif /* __APPLE__ ||ÊMACOSX */	
 	if (lines <= 0)
 		return;
 
@@ -593,7 +610,7 @@ void Con_DrawConsole (int lines)
 			text = cls.downloadname;
 
 		x = con_linewidth - ((con_linewidth * 7) / 40);
-		y = x - strlen(text) - 8;
+		y = x - ((int) strlen(text)) - 8;
 		i = con_linewidth/3;
 		if (strlen(text) > i) {
 			y = x - i - 11;
@@ -603,7 +620,7 @@ void Con_DrawConsole (int lines)
 		} else
 			strcpy(dlbar, text);
 		strcat(dlbar, ": ");
-		i = strlen(dlbar);
+		i = (int) strlen(dlbar);
 		dlbar[i++] = '\x80';
 		// where's the dot go?
 		if (cls.downloadpercent == 0)
@@ -619,7 +636,12 @@ void Con_DrawConsole (int lines)
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
+#if defined (__APPLE__) || defined (MACOSX)
+                dlbarlen = (int) strlen(dlbar);
+		snprintf(dlbar + dlbarlen, 1024 - dlbarlen, " %02d%%", cls.downloadpercent);
+#else
 		sprintf(dlbar + strlen(dlbar), " %02d%%", cls.downloadpercent);
+#endif /* __APPLE__ || MACOSX */
 
 		// draw it
 		y = con_vislines-22 + 8;
@@ -682,7 +704,11 @@ void Con_SafePrintf (char *fmt, ...)
 	int			temp;
 		
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (msg,1024,fmt,argptr);
+#else
 	vsprintf (msg,fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 	temp = scr_disabled_for_loading;

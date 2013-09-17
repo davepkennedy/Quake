@@ -25,6 +25,10 @@ cvar_t	cl_pushlatency = {"pushlatency","-999"};
 
 extern	frame_t		*view_frame;
 
+#if defined (__APPLE__) || defined (MACOSX)
+extern void	VID_SetWindowTitle (char *theTitle);
+#endif /* __APPLE__ ||ÊMACOSX */
+
 /*
 =================
 CL_NudgePosition
@@ -146,9 +150,19 @@ void CL_PredictMove (void)
 		char		text[1024];
 
 		cls.state = ca_active;
+#if defined (__APPLE__) || defined (MACOSX)
+#if defined (GLQUAKE)
+		snprintf (text, 1024, "GLQuakeWorld (%s)", cls.servername);
+#else
+		snprintf (text, 1024, "QuakeWorld (%s)", cls.servername);
+#endif /* GLQUAKE */
+#else
 		sprintf (text, "QuakeWorld: %s", cls.servername);
+#endif /* __APPLE__ || MACOSX */
 #ifdef _WIN32
 		SetWindowText (mainwindow, text);
+#elif defined (__APPLE__) || defined (MACOSX)
+                VID_SetWindowTitle (text);
 #endif
 	}
 

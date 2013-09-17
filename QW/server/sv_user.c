@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qwsvdef.h"
 
+#if defined(__APPLE__) || defined(MACOSX)
+extern void SV_FullClientUpdateToClient(client_t *client, client_t *cl);
+#endif /* APPLE || MACOSX */
+
 edict_t	*sv_player;
 
 usercmd_t	cmd;
@@ -243,7 +247,7 @@ void SV_PreSpawn_f (void)
 	if (buf >= sv.num_signon_buffers)
 		buf = 0;
 
-	if (!buf) {
+        if (!buf) {
 		// should be three numbers following containing checksums
 		check = atoi(Cmd_Argv(3));
 
@@ -252,7 +256,7 @@ void SV_PreSpawn_f (void)
 		if (sv_mapcheck.value && check != sv.worldmodel->checksum &&
 			check != sv.worldmodel->checksum2) {
 			SV_ClientPrintf (host_client, PRINT_HIGH, 
-				"Map model file does not match (%s), %i != %i/%i.\n"
+				"Map model file does not match (%s), %X != %X/%X.\n"
 				"You may need a new version of the map, or the proper install files.\n",
 				sv.modelname, check, sv.worldmodel->checksum, sv.worldmodel->checksum2);
 			SV_DropClient (host_client); 
@@ -340,7 +344,7 @@ void SV_Spawn_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		ClientReliableWrite_Begin (host_client, svc_lightstyle, 
-			3 + (sv.lightstyles[i] ? strlen(sv.lightstyles[i]) : 1));
+			3 + (sv.lightstyles[i] ? ((int) strlen(sv.lightstyles[i])) : 1));
 		ClientReliableWrite_Byte (host_client, (char)i);
 		ClientReliableWrite_String (host_client, sv.lightstyles[i]);
 	}
@@ -451,7 +455,7 @@ void SV_Begin_f (void)
 	
 			// call the spawn function
 			pr_global_struct->time = sv.time;
-			pr_global_struct->self = EDICT_TO_PROG(sv_player);
+			pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 			PR_ExecuteProgram (SpectatorConnect);
 		}
 	}
@@ -463,12 +467,12 @@ void SV_Begin_f (void)
 
 		// call the spawn function
 		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (pr_global_struct->ClientConnect);
 
 		// actually spawn the player
 		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (pr_global_struct->PutClientInServer);	
 	}
 
@@ -529,7 +533,7 @@ void SV_NextDownload_f (void)
 	r = host_client->downloadsize - host_client->downloadcount;
 	if (r > 768)
 		r = 768;
-	r = fread (buffer, 1, r, host_client->download);
+	r = (int) fread (buffer, 1, r, host_client->download);
 	ClientReliableWrite_Begin (host_client, svc_download, 6+r);
 	ClientReliableWrite_Short (host_client, r);
 
@@ -560,10 +564,14 @@ void OutofBandPrintf(netadr_t where, char *fmt, ...)
 	send[3] = 0xff;
 	send[4] = A2C_PRINT;
 	va_start (argptr, fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (send+5, 1019, fmt, argptr);
+#else
 	vsprintf (send+5, fmt, argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 
-	NET_SendPacket (strlen(send)+1, send, where);
+	NET_SendPacket ((int) strlen(send)+1, send, where);
 }
 
 /*
@@ -573,11 +581,11 @@ SV_NextUpload
 */
 void SV_NextUpload (void)
 {
-	byte	buffer[1024];
-	int		r;
+//	byte	buffer[1024];
+//	int		r;
 	int		percent;
 	int		size;
-	client_t *client;
+//	client_t *client;
 
 	if (!*host_client->uploadfn) {
 		SV_ClientPrintf(host_client, PRINT_HIGH, "Upload denied\n");
@@ -739,11 +747,23 @@ void SV_Say (qboolean team)
 	}
 
 	if (host_client->spectator && (!sv_spectalk.value || team))
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (text, 2048, "[SPEC] %s: ", host_client->name);
+#else
 		sprintf (text, "[SPEC] %s: ", host_client->name);
+#endif /* __APPPLE__ || MACOSX */
 	else if (team)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (text, 2048, "(%s): ", host_client->name);
+#else
 		sprintf (text, "(%s): ", host_client->name);
+#endif /* __APPPLE__ || MACOSX */
 	else {
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (text, 2048, "%s: ", host_client->name);
+#else
 		sprintf (text, "%s: ", host_client->name);
+#endif /* __APPPLE__ || MACOSX */
 	}
 
 	if (fp_messages) {
@@ -877,7 +897,7 @@ void SV_Kill_f (void)
 	}
 	
 	pr_global_struct->time = sv.time;
-	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 	PR_ExecuteProgram (pr_global_struct->ClientKill);
 }
 
@@ -914,8 +934,8 @@ SV_Pause_f
 */
 void SV_Pause_f (void)
 {
-	int i;
-	client_t *cl;
+//	int i;
+//	client_t *cl;
 	char st[sizeof(host_client->name) + 32];
 
 	if (!pausable.value) {
@@ -929,9 +949,17 @@ void SV_Pause_f (void)
 	}
 
 	if (sv.paused)
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (st, sizeof(host_client->name) + 32, "%s paused the game\n", host_client->name);
+#else
 		sprintf (st, "%s paused the game\n", host_client->name);
+#endif /* __APPLE__ || MACOSX */
 	else
+#if defined (__APPLE__) || defined (MACOSX)
+		snprintf (st, sizeof(host_client->name) + 32, "%s unpaused the game\n", host_client->name);
+#else
 		sprintf (st, "%s unpaused the game\n", host_client->name);
+#endif /* __APPLE__ || MACOSX */
 
 	SV_TogglePause(st);
 }
@@ -971,9 +999,9 @@ void SV_PTrack_f (void)
 	{
 		// turn off tracking
 		host_client->spec_track = 0;
-		ent = EDICT_NUM(host_client - svs.clients + 1);
+		ent = EDICT_NUM(((int) (host_client - svs.clients)) + 1);
 		tent = EDICT_NUM(0);
-		ent->v.goalentity = EDICT_TO_PROG(tent);
+		ent->v.goalentity = (int) EDICT_TO_PROG(tent);
 		return;
 	}
 	
@@ -982,16 +1010,16 @@ void SV_PTrack_f (void)
 		svs.clients[i].spectator) {
 		SV_ClientPrintf (host_client, PRINT_HIGH, "Invalid client to track\n");
 		host_client->spec_track = 0;
-		ent = EDICT_NUM(host_client - svs.clients + 1);
+		ent = EDICT_NUM(((int) (host_client - svs.clients)) + 1);
 		tent = EDICT_NUM(0);
-		ent->v.goalentity = EDICT_TO_PROG(tent);
+		ent->v.goalentity = (int) EDICT_TO_PROG(tent);
 		return;
 	}
 	host_client->spec_track = i + 1; // now tracking
 
-	ent = EDICT_NUM(host_client - svs.clients + 1);
+	ent = EDICT_NUM(((int) (host_client - svs.clients)) + 1);
 	tent = EDICT_NUM(i + 1);
-	ent->v.goalentity = EDICT_TO_PROG(tent);
+	ent->v.goalentity = (int) EDICT_TO_PROG(tent);
 }
 
 
@@ -1089,7 +1117,7 @@ void SV_SetInfo_f (void)
 	// process any changed values
 	SV_ExtractFromUserinfo (host_client);
 
-	i = host_client - svs.clients;
+	i = (int) (host_client - svs.clients);
 	MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
 	MSG_WriteByte (&sv.reliable_datagram, i);
 	MSG_WriteString (&sv.reliable_datagram, Cmd_Argv(1));
@@ -1243,7 +1271,7 @@ void AddLinksToPmove ( areanode_t *node )
 	int			i;
 	physent_t	*pe;
 
-	pl = EDICT_TO_PROG(sv_player);
+	pl = (int) EDICT_TO_PROG(sv_player);
 
 	// touch linked edicts
 	for (l = node->solid_edicts.next ; l != &node->solid_edicts ; l = next)
@@ -1310,7 +1338,7 @@ void AddAllEntsToPmove (void)
 	physent_t	*pe;
 	int			pl;
 
-	pl = EDICT_TO_PROG(sv_player);
+	pl = (int) EDICT_TO_PROG(sv_player);
 	check = NEXT_EDICT(sv.edicts);
 	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
 	{
@@ -1419,7 +1447,7 @@ void SV_RunCmd (usercmd_t *ucmd)
 		pr_global_struct->frametime = host_frametime;
 
 		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (pr_global_struct->PlayerPreThink);
 
 		SV_RunThink (sv_player);
@@ -1474,7 +1502,7 @@ if (sv_player->v.health > 0 && before && !after )
 	if (onground != -1)
 	{
 		sv_player->v.flags = (int)sv_player->v.flags | FL_ONGROUND;
-		sv_player->v.groundentity = EDICT_TO_PROG(EDICT_NUM(pmove.physents[onground].info));
+		sv_player->v.groundentity = (int) EDICT_TO_PROG(EDICT_NUM(pmove.physents[onground].info));
 	}
 	else
 		sv_player->v.flags = (int)sv_player->v.flags & ~FL_ONGROUND;
@@ -1503,8 +1531,8 @@ if (sv_player->v.health > 0 && before && !after )
 			ent = EDICT_NUM(n);
 			if (!ent->v.touch || (playertouch[n/8]&(1<<(n%8))))
 				continue;
-			pr_global_struct->self = EDICT_TO_PROG(ent);
-			pr_global_struct->other = EDICT_TO_PROG(sv_player);
+			pr_global_struct->self = (int) EDICT_TO_PROG(ent);
+			pr_global_struct->other = (int) EDICT_TO_PROG(sv_player);
 			PR_ExecuteProgram (ent->v.touch);
 			playertouch[n/8] |= 1 << (n%8);
 		}
@@ -1523,12 +1551,12 @@ void SV_PostRunCmd(void)
 
 	if (!host_client->spectator) {
 		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (pr_global_struct->PlayerPostThink);
 		SV_RunNewmis ();
 	} else if (SpectatorThink) {
 		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		pr_global_struct->self = (int) EDICT_TO_PROG(sv_player);
 		PR_ExecuteProgram (SpectatorThink);
 	}
 }

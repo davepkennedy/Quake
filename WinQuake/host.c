@@ -93,7 +93,11 @@ void Host_EndGame (char *message, ...)
 	char		string[1024];
 	
 	va_start (argptr,message);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string,1024,message,argptr);
+#else
 	vsprintf (string,message,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	Con_DPrintf ("Host_EndGame: %s\n",string);
 	
@@ -131,7 +135,11 @@ void Host_Error (char *error, ...)
 	SCR_EndLoadingPlaque ();		// reenable screen updates
 
 	va_start (argptr,error);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string,1024,error,argptr);
+#else
 	vsprintf (string,error,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	Con_Printf ("Host_Error: %s\n",string);
 	
@@ -160,6 +168,7 @@ void	Host_FindMaxClients (void)
 
 	svs.maxclients = 1;
 		
+#if !defined (GLQUAKE)
 	i = COM_CheckParm ("-dedicated");
 	if (i)
 	{
@@ -172,6 +181,7 @@ void	Host_FindMaxClients (void)
 			svs.maxclients = 8;
 	}
 	else
+#endif /* GLQUAKE */
 		cls.state = ca_disconnected;
 
 	i = COM_CheckParm ("-listen");
@@ -274,13 +284,17 @@ Sends text across to be displayed
 FIXME: make this just a stuffed echo?
 =================
 */
-void SV_ClientPrintf (char *fmt, ...)
+void SV_ClientPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
 	char		string[1024];
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, fmt,argptr);
+#else
 	vsprintf (string, fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 	MSG_WriteByte (&host_client->message, svc_print);
@@ -301,7 +315,11 @@ void SV_BroadcastPrintf (char *fmt, ...)
 	int			i;
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, fmt,argptr);
+#else
 	vsprintf (string, fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 	for (i=0 ; i<svs.maxclients ; i++)
@@ -325,7 +343,11 @@ void Host_ClientCommands (char *fmt, ...)
 	char		string[1024];
 	
 	va_start (argptr,fmt);
+#if defined (__APPLE__) || defined (MACOSX)
+	vsnprintf (string, 1024, fmt,argptr);
+#else
 	vsprintf (string, fmt,argptr);
+#endif /* __APPLE__ || MACOSX */
 	va_end (argptr);
 	
 	MSG_WriteByte (&host_client->message, svc_stufftext);
@@ -360,7 +382,7 @@ void SV_DropClient (qboolean crash)
 		// call the prog function for removing a client
 		// this will set the body to a dead frame, among other things
 			saveSelf = pr_global_struct->self;
-			pr_global_struct->self = EDICT_TO_PROG(host_client->edict);
+			pr_global_struct->self = (int) EDICT_TO_PROG(host_client->edict);
 			PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
 			pr_global_struct->self = saveSelf;
 		}
@@ -384,13 +406,13 @@ void SV_DropClient (qboolean crash)
 		if (!client->active)
 			continue;
 		MSG_WriteByte (&client->message, svc_updatename);
-		MSG_WriteByte (&client->message, host_client - svs.clients);
+		MSG_WriteByte (&client->message, (int) (host_client - svs.clients));
 		MSG_WriteString (&client->message, "");
 		MSG_WriteByte (&client->message, svc_updatefrags);
-		MSG_WriteByte (&client->message, host_client - svs.clients);
+		MSG_WriteByte (&client->message, (int) (host_client - svs.clients));
 		MSG_WriteShort (&client->message, 0);
 		MSG_WriteByte (&client->message, svc_updatecolors);
-		MSG_WriteByte (&client->message, host_client - svs.clients);
+		MSG_WriteByte (&client->message, (int) (host_client - svs.clients));
 		MSG_WriteByte (&client->message, 0);
 	}
 }
@@ -404,11 +426,11 @@ This only happens at the end of a game, not between levels
 */
 void Host_ShutdownServer(qboolean crash)
 {
-	int		i;
-	int		count;
-	sizebuf_t	buf;
-	char		message[4];
-	double	start;
+	int				i;
+	int				count;
+	sizebuf_t		buf;
+	unsigned char	message[4];
+	double			start;
 
 	if (!sv.active)
 		return;
@@ -646,9 +668,17 @@ void _Host_Frame (float time)
 // decide the simulation time
 	if (!Host_FilterTime (time))
 		return;			// don't run too fast, or packets will flood out
-		
+
 // get new key events
+#if !defined (__APPLE__) && !defined (MACOSX)
 	Sys_SendKeyEvents ();
+#else
+    {
+        void IN_SendKeyEvents (void);
+        
+        IN_SendKeyEvents ();
+    }
+#endif // !__APPLE__ && !MACOSX
 
 // allow mice or other external controllers to add commands
 	IN_Commands ();
@@ -690,18 +720,18 @@ void _Host_Frame (float time)
 // fetch results from server
 	if (cls.state == ca_connected)
 	{
-		CL_ReadFromServer ();
+                CL_ReadFromServer ();
 	}
 
 // update video
 	if (host_speeds.value)
 		time1 = Sys_FloatTime ();
-		
+
 	SCR_UpdateScreen ();
 
 	if (host_speeds.value)
 		time2 = Sys_FloatTime ();
-		
+
 // update audio
 	if (cls.signon == SIGNONS)
 	{
