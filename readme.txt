@@ -1,7 +1,7 @@
-This is the MacOS X port of Quake. It is based on the Quake source code that
-was released on December 21, 1999. The port was originally released on
-MacOS X 10.0. The goal was to create a carbon-less native port that would not
-rely on any legacy APIs.
+This is the source code for the MacOS X port of Quake. It is based on the
+Quake source code that was released on December 21, 1999. The port was
+originally released on MacOS X 10.0. The goal was to create a carbon-less
+native port that would not rely on any legacy APIs.
 
 Axel Wefers
 Fruitz Of Dojo
