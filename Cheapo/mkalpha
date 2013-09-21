@@ -1,1 +1,0 @@
-cc -ocheapo -DUNIXALPHA -lm -w1 -fast main.c proxy.c cmd.c misc.c compress.c
