@@ -3,9 +3,6 @@ was released on December 21, 1999. The port was originally released on
 MacOS X 10.0. The goal was to create a carbon-less native port that would not
 rely on any legacy APIs.
 
-I have added as well the source code for the tools “cheapo” and “vispatch”.
-Credits go to their respective developers. 
-
 Axel Wefers
 Fruitz Of Dojo
 
