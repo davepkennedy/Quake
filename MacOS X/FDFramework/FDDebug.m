@@ -9,6 +9,7 @@
 
 #import "FDDebug.h"
 #import "FDDefines.h"
+#import "FDAlertPanel.h"
 
 #import <Cocoa/Cocoa.h>
 #import <stdarg.h>
@@ -137,7 +138,8 @@ static NSString*        sFDDebugDefaultName = @"";
     else
     {
         NSLog (@"%@An error has occured: %@\n", mLogPrefix, msg);
-        NSRunCriticalAlertPanel (@"An error has occured:", msg, nil, nil, nil);
+        /// NSRunCriticalAlertPanel (@"An error has occured:", msg, nil, nil, nil);
+        FDRunCriticalAlertPanel(@"An error has ocurred:", nil, @"%@", msg);
     }
     
     [msg release];
@@ -158,7 +160,8 @@ static NSString*        sFDDebugDefaultName = @"";
     else
     {
         NSLog (@"%@An exception has occured: %@\n", mLogPrefix, msg);
-        NSRunCriticalAlertPanel (@"An exception has occured:", msg, nil, nil, nil);
+        /// NSRunCriticalAlertPanel (@"An exception has occured:", msg, nil, nil, nil);
+        FDRunCriticalAlertPanel(@"An exception has occured:", nil, @"%@", msg);
     }
 }
 
@@ -184,7 +187,8 @@ static NSString*        sFDDebugDefaultName = @"";
             
             NSLog (@"%@%@ (%d): Assertion failed: %@", mLogPrefix, file, (unsigned int) line, msg);
             
-            resume = (NSRunCriticalAlertPanel (@"Assertion failed:", dlg, @"Resume", @"Crash", nil) == NSAlertDefaultReturn);
+            /// resume = (NSRunCriticalAlertPanel (@"Assertion failed:", dlg, @"Resume", @"Crash", nil) == NSAlertDefaultReturn);
+            resume = (FDRunCriticalAlertPanel(@"Assertion failed:", @[@"Resume", @"Crash"], @"%@", dlg) == NSAlertFirstButtonReturn);
             
             [dlg release];
         }

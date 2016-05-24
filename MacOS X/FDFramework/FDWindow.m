@@ -443,7 +443,7 @@
     NSGraphicsContext*	graphicsContext	= nil;
     NSImage*            miniImage = [[NSImage alloc] initWithSize: size];
 	
-	[miniImage setFlipped: YES];
+	/// [miniImage setFlipped: YES];
     [miniImage lockFocus];
     
     graphicsContext = [NSGraphicsContext currentContext];
@@ -646,7 +646,7 @@
 {
     [self doesNotRecognizeSelector: _cmd];
     
-    return NO;[self doesNotRecognizeSelector: _cmd];
+    return NO;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

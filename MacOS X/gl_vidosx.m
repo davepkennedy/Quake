@@ -165,7 +165,7 @@ qboolean            GL_SaveScreenshot (const char *theFilename);
 static	void		GL_Init (void);
 static	BOOL		GL_ExtensionSupported (const char *theExtension);
 static	void		GL_CheckMultiTextureExtensions (void);
-static	void		GL_CheckPalettedTexture (void);
+/// static	void		GL_CheckPalettedTexture (void);
 static  void        GL_CheckPNTrianglesExtension (const char* pExtensionName, const char* pFunctionName);
 static	void		GL_CheckPNTrianglesExtensions (void);
 static	void		GL_CheckSwitchFSAAOnTheFly (void);
@@ -1073,7 +1073,7 @@ void	GL_CheckMultiTextureExtensions (void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
-
+/**
 void	GL_CheckPalettedTexture (void)
 {
     gl_palettedtex = GL_ExtensionSupported ("GL_EXT_paletted_texture");
@@ -1083,6 +1083,7 @@ void	GL_CheckPalettedTexture (void)
         Con_Printf ("Found GL_EXT_paletted_texture...\n");
     }
 }
+**/
 
 //----------------------------------------------------------------------------------------------------------------------------
 
