@@ -22,6 +22,9 @@
 - (void) start;
 - (void) stop;
 
+- (void) applicationWillHide: (NSNotification*) notification;
+- (void) applicationWillUnhide: (NSNotification*) notification;
+
 @end
 
 //----------------------------------------------------------------------------------------------------------------------------

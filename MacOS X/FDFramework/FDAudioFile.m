@@ -32,8 +32,21 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDAudioFile : FDAudioFile
+void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFileRegion, OSStatus result)
 {
+    FD_UNUSED (pFileRegion, result);
+    
+    NSUInteger*  pStatus = (NSUInteger*) pUserData;
+    
+    if (pStatus != nil)
+    {
+        *pStatus = eFDAudioFileStatusFinished;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+@implementation FDAudioFile {
 @private
     FDAudioMixer*       mMixer;
     AudioUnitElement    mBusNumber;
@@ -46,16 +59,6 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
     
     BOOL                mIsLooping;
 }
-
-- (OSStatus) startAtFrame: (SInt64) startFrame loop: (BOOL) loop;
-- (void) applicationWillHide: (NSNotification*) notification;
-- (void) applicationWillUnhide: (NSNotification*) notification;
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation _FDAudioFile
 
 - (id) init
 {
@@ -156,7 +159,7 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
         Boolean     graphWasRunning = false;
         
         [self stop];
-
+        
         AUGraphIsRunning (audioGraph, &graphWasRunning);
         
         if (graphWasRunning)
@@ -176,7 +179,7 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
         [mMixer deallocateBus: mBusNumber];
         [mMixer release];
     }
-
+    
     [super dealloc];
 }
 
@@ -193,7 +196,7 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
 {
     return [mMixer volumeForBus: mBusNumber];
 }
- 
+
 //----------------------------------------------------------------------------------------------------------------------------
 
 - (OSStatus) startAtFrame: (SInt64) startFrame loop: (BOOL) loop
@@ -256,7 +259,7 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
     
     if (err == noErr)
     {
-       mStatus = eFDAudioFileStatusPlaying;
+        mStatus = eFDAudioFileStatusPlaying;
     }
     
     return err;
@@ -405,127 +408,6 @@ static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegio
         
         [self resume];
     }
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFileRegion, OSStatus result)
-{
-    FD_UNUSED (pFileRegion, result);
-    
-    NSUInteger*  pStatus = (NSUInteger*) pUserData;
-    
-    if (pStatus != nil)
-    {
-        *pStatus = eFDAudioFileStatusFinished;
-    }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDAudioFile
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDAudioFile class], 0, zone);
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (id) initWithMixer: (FDAudioMixer*) mixer
-{
-    FD_UNUSED (mixer);
-    
-    self = [super init];
-    
-    if (self != nil)
-    {
-        [self doesNotRecognizeSelector: _cmd];
-        [self release];
-    }
-    
-    return nil;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (void) setVolume: (float) volume
-{
-    FD_UNUSED (volume);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (float) volume
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return 0.0f;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) startFile: (NSURL*) url loop: (BOOL) loop
-{
-    FD_UNUSED (url, loop)
-    
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) stop
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (void) pause
-{
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (void) resume
-{
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) isPlaying
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) isFinished
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) loops
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
 }
 
 @end

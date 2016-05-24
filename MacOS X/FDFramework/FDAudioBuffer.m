@@ -12,7 +12,6 @@
 #import "FDDefines.h"
 
 #import <Cocoa/Cocoa.h>
-#import <CoreAudio/CoreAudio.h>
 #import <AudioToolbox/AudioToolbox.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +21,32 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDAudioBuffer : FDAudioBuffer
+static OSStatus FDAudioBuffer_AudioUnitCallback (void* pContext, AudioUnitRenderActionFlags* flags,
+                                                 const AudioTimeStamp* pTime, UInt32 bus, UInt32 numFrames,
+                                                 AudioBufferList* pIoData)
+{
+    FDAudioBuffer*  pSound          = (FDAudioBuffer*) pContext;
+    AudioBuffer*    pAudioBuffer    = &pIoData->mBuffers[0];
+    NSUInteger      bytesToWrite    = pAudioBuffer->mDataByteSize;
+    
+    if (pSound)
+    {
+        bytesToWrite = [pSound fillBuffer: pAudioBuffer];
+    }
+    
+    if (bytesToWrite != 0)
+    {
+        UInt8* pData = (UInt8*) pAudioBuffer->mData;
+        
+        FD_MEMSET (pData + pAudioBuffer->mDataByteSize - bytesToWrite, 0, bytesToWrite);
+    }
+    
+    return noErr;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+@implementation FDAudioBuffer
 {
 @private
     FDAudioMixer*           mMixer;
@@ -31,14 +55,6 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
     AUNode                  mConverterNode;
     AudioUnitElement        mBusNumber;
 }
-
-- (NSUInteger) fillBuffer: (AudioBuffer*) pIoData;
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation _FDAudioBuffer
 
 - (id) init
 {
@@ -92,7 +108,7 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
             converterDesc.componentType         = kAudioUnitType_FormatConverter;
             converterDesc.componentSubType      = kAudioUnitSubType_AUConverter;
             converterDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
-        
+            
             err = AUGraphAddNode (audioGraph, &converterDesc, &mConverterNode);
         }
         
@@ -100,14 +116,14 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
         {
             err = AUGraphNodeInfo (audioGraph, mConverterNode, 0, &converterUnit);
         }
-
+        
         if (err == noErr)
         {
             AURenderCallbackStruct  inCallback = { 0 };
             
             inCallback.inputProc            = FDAudioBuffer_AudioUnitCallback;
             inCallback.inputProcRefCon      = self;
-        
+            
             err = AudioUnitSetProperty (converterUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0,
                                         &inCallback, sizeof (inCallback));
         }
@@ -132,7 +148,7 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
                 streamDesc.mFormatFlags |= kLinearPCMFormatFlagIsSignedInteger;
             }
             
-            err = AudioUnitSetProperty (converterUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, 
+            err = AudioUnitSetProperty (converterUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0,
                                         &streamDesc, sizeof (streamDesc));
         }
         
@@ -148,11 +164,11 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
             mpCallback  = pCallback;
             mpContext   = pContext;
         }
-
+        
         if ((err == noErr) && graphWasRunning)
         {
             err = AUGraphStart (audioGraph);
-        }        
+        }
         
         if (err != noErr)
         {
@@ -221,84 +237,8 @@ static OSStatus FDAudioBuffer_AudioUnitCallback (void*, AudioUnitRenderActionFla
     {
         bytesToWrite = (*mpCallback) (pIoData->mData, pIoData->mDataByteSize, mpContext);
     }
-
+    
     return bytesToWrite;
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-static OSStatus FDAudioBuffer_AudioUnitCallback (void* pContext, AudioUnitRenderActionFlags* flags,
-                                                 const AudioTimeStamp* pTime, UInt32 bus, UInt32 numFrames,
-                                                 AudioBufferList* pIoData)
-{
-    _FDAudioBuffer* pSound          = (_FDAudioBuffer*) pContext;
-    AudioBuffer*    pAudioBuffer    = &pIoData->mBuffers[0];
-    NSUInteger      bytesToWrite    = pAudioBuffer->mDataByteSize;
-    
-    if (pSound)
-    {
-        bytesToWrite = [pSound fillBuffer: pAudioBuffer];
-    }
-    
-    if (bytesToWrite != 0)
-    {
-        UInt8* pData = (UInt8*) pAudioBuffer->mData;
-        
-        FD_MEMSET (pData + pAudioBuffer->mDataByteSize - bytesToWrite, 0, bytesToWrite);
-    }
-    
-    return noErr;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDAudioBuffer
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDAudioBuffer class], 0, zone);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initWithMixer: (FDAudioMixer*) mixer
-           frequency: (NSUInteger) frequency
-      bitsPerChannel: (NSUInteger) bitsPerChannel
-            channels: (NSUInteger) channels
-            callback: (FDAudioBufferCallback) pCallback
-             context: (void*) pContext
-{
-    FD_UNUSED (mixer, frequency, bitsPerChannel, channels, pCallback, pContext);
-
-    self = [super init];
-    
-    if (self != nil)
-    {
-        [self doesNotRecognizeSelector: _cmd];
-        [self release];
-    }
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setVolume: (float) volume
-{
-    FD_UNUSED (volume);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (float) volume
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return 0.0f;
 }
 
 @end

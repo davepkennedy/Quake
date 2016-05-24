@@ -10,6 +10,7 @@
 #import "FDAudioMixer.h"
 
 #import <Cocoa/Cocoa.h>
+#import <CoreAudio/CoreAudio.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
@@ -28,6 +29,7 @@ typedef NSUInteger (*FDAudioBufferCallback) (void* pDst, NSUInteger numBytes, vo
             callback: (FDAudioBufferCallback) pCallback
              context: (void*) pContext;
 
+- (NSUInteger) fillBuffer: (AudioBuffer*) pIoData;
 - (void) setVolume: (float) volume;
 - (float) volume;
 

@@ -32,6 +32,10 @@
 - (BOOL) isFinished;
 - (BOOL) loops;
 
+- (OSStatus) startAtFrame: (SInt64) startFrame loop: (BOOL) loop;
+- (void) applicationWillHide: (NSNotification*) notification;
+- (void) applicationWillUnhide: (NSNotification*) notification;
+
 @end
 
 //----------------------------------------------------------------------------------------------------------------------------
