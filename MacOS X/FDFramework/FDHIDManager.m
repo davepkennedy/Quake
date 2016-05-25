@@ -52,7 +52,7 @@ static void             FDHIDManager_DeviceMatchingCallback (void*, IOReturn, vo
 static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, void*, IOHIDDeviceRef);
 
 //----------------------------------------------------------------------------------------------------------------------------
-
+/**
 @interface _FDHIDManager : FDHIDManager
 {
 @private
@@ -310,23 +310,269 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 }
 
 @end
-
+**/
 //----------------------------------------------------------------------------------------------------------------------------
 
 @implementation FDHIDManager
+{
+@private
+    IOHIDManagerRef     mpIOHIDManager;
+    NSMutableArray*     mDevices;
+    
+    FDHIDEvent*         mpEvents;
+    NSUInteger          mReadEvent;
+    NSUInteger          mWriteEvent;
+    NSUInteger          mMaxEvents;
+}
 
+/**
 + (id) allocWithZone: (NSZone*) zone
 {
     return NSAllocateObject ([_FDHIDManager class], 0, zone);
 }
-
+**/
 //----------------------------------------------------------------------------------------------------------------------------
 
 + (FDHIDManager*) sharedHIDManager
 {
-    dispatch_once (&sFDHIDManagerPredicate, ^{ sFDHIDManagerInstance = [[_FDHIDManager alloc] initSharedHIDManager]; });
+    /// dispatch_once (&sFDHIDManagerPredicate, ^{ sFDHIDManagerInstance = [[_FDHIDManager alloc] initSharedHIDManager]; });
+    dispatch_once (&sFDHIDManagerPredicate, ^{ sFDHIDManagerInstance = [[FDHIDManager alloc] initSharedHIDManager]; });
     
     return sFDHIDManagerInstance;
+}
+
+
+- (id) init
+{
+    self = [super init];
+    
+    if (self != nil)
+    {
+        [self doesNotRecognizeSelector: _cmd];
+        [self release];
+    }
+    
+    return nil;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (id) initSharedHIDManager
+{
+    self = [super init];
+    
+    if (self != nil)
+    {
+        BOOL success = YES;
+        
+        if (success)
+        {
+            mpIOHIDManager  = IOHIDManagerCreate (kCFAllocatorDefault, kIOHIDManagerOptionNone);
+            success         = (mpIOHIDManager != NULL);
+        }
+        
+        if (success)
+        {
+            success = (IOHIDManagerOpen (mpIOHIDManager, kIOHIDManagerOptionNone) == kIOReturnSuccess);
+        }
+        
+        if (success)
+        {
+            mDevices = [[NSMutableArray alloc] initWithCapacity: 3];
+            success  = (mDevices != nil);
+        }
+        
+        if (success)
+        {
+            NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+            
+            [notificationCenter addObserver: self
+                                   selector: @selector (applicationWillResignActive:)
+                                       name: NSApplicationWillResignActiveNotification
+                                     object: nil];
+        }
+        
+        if (!success)
+        {
+            [self release];
+            self = nil;
+        }
+    }
+    
+    return self;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (void) dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver: self];
+    [mDevices release];
+    
+    if (mpIOHIDManager)
+    {
+        IOHIDManagerRegisterDeviceMatchingCallback (mpIOHIDManager, NULL, NULL);
+        IOHIDManagerRegisterDeviceRemovalCallback (mpIOHIDManager, NULL, NULL);
+        IOHIDManagerUnscheduleFromRunLoop (mpIOHIDManager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+        IOHIDManagerClose (mpIOHIDManager, kIOHIDManagerOptionNone);
+    }
+    
+    if (mpEvents)
+    {
+        free (mpEvents);
+    }
+    
+    sFDHIDManagerInstance = nil;
+    
+    [super dealloc];
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (void) applicationWillResignActive: (NSNotification*) notification
+{
+    FD_UNUSED (notification);
+    
+    for (_FDHIDDevice* device in mDevices)
+    {
+        [device flush];
+    }
+    
+    mReadEvent  = 0;
+    mWriteEvent = 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (void) setDeviceFilter: (NSArray*) devices
+{
+    NSMutableArray* matchingArray = nil;
+    
+    if (devices != nil)
+    {
+        matchingArray = [NSMutableArray array];
+        
+        for (NSString* deviceName in devices)
+        {
+            Class   device = NSClassFromString (deviceName);
+            
+            if (device != nil)
+            {
+                NSArray* dicts = [device matchingDictionaries];
+                
+                if (dicts != nil)
+                {
+                    [matchingArray addObjectsFromArray: dicts];
+                }
+            }
+        }
+        
+        if ([matchingArray count] == 0)
+        {
+            matchingArray = nil;
+        }
+    }
+    
+    IOHIDManagerSetDeviceMatchingMultiple (mpIOHIDManager, (CFMutableArrayRef) matchingArray);
+    IOHIDManagerRegisterDeviceMatchingCallback (mpIOHIDManager, FDHIDManager_DeviceMatchingCallback, self);
+    IOHIDManagerRegisterDeviceRemovalCallback (mpIOHIDManager, FDHIDManager_DeviceRemovalCallback, self);
+    IOHIDManagerScheduleWithRunLoop (mpIOHIDManager, CFRunLoopGetCurrent (), kCFRunLoopDefaultMode);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (NSArray*) devices
+{
+    return mDevices;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (const FDHIDEvent*) nextEvent
+{
+    const FDHIDEvent* pEvent = nil;
+    
+    if (mReadEvent < mWriteEvent)
+    {
+        pEvent = &(mpEvents[mReadEvent++]);
+    }
+    else
+    {
+        mReadEvent  = 0;
+        mWriteEvent = 0;
+    }
+    
+    return pEvent;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (void) pushEvent: (const FDHIDEvent*) pEvent
+{
+    if ([NSApp isActive] == YES)
+    {
+        if (mWriteEvent == mMaxEvents)
+        {
+            mMaxEvents   = (mMaxEvents + 1) << 1;
+            mpEvents     = realloc (mpEvents, mMaxEvents * sizeof (FDHIDEvent));
+            
+            if (mpEvents == NULL)
+            {
+                mReadEvent  = 0;
+                mWriteEvent = 0;
+                mMaxEvents  = 0;
+            }
+        }
+        
+        if (mWriteEvent < mMaxEvents)
+        {
+            mpEvents[mWriteEvent++] = *pEvent;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (void) registerDevice: (IOHIDDeviceRef) pDevice
+{
+    for (NSUInteger i = 0; i < FD_SIZE_OF_ARRAY (sDeviceFactories); ++i)
+    {
+        Class factory = NSClassFromString (sDeviceFactories[i]);
+        
+        if (factory != nil)
+        {
+            FD_ASSERT ([factory isSubclassOfClass: [_FDHIDDevice class]]);
+            FD_ASSERT ([factory respondsToSelector: @selector (deviceWithDevice:)]);
+            
+            id device = [factory deviceWithDevice: pDevice];
+            
+            if (device != nil)
+            {
+                [device setDelegate: self];
+                [mDevices addObject: device];
+                
+                IOHIDDeviceRegisterInputValueCallback (pDevice, &FDHIDManager_InputHandler, device);
+                
+                break;
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (void) unregisterDevice: (IOHIDDeviceRef) pDevice
+{
+    IOHIDDeviceRegisterInputValueCallback (pDevice, NULL, NULL);
+    
+    for (_FDHIDDevice* device in mDevices)
+    {
+        if ([device iohidDeviceRef] == pDevice)
+        {
+            [mDevices removeObject: device];
+            break;
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -366,7 +612,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
-
+/**
 - (void) setDeviceFilter: (NSArray*) devices
 {
     FD_UNUSED (devices);
@@ -400,7 +646,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
     
     [self doesNotRecognizeSelector: _cmd];
 }
-
+*/
 @end
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -427,7 +673,8 @@ void FDHIDManager_DeviceMatchingCallback (void* pContext, IOReturn result, void*
     FD_ASSERT (pContext == sFDHIDManagerInstance);
     FD_ASSERT (pDevice != nil);
 
-    [((_FDHIDManager*) pContext) registerDevice: pDevice];
+    /// [((_FDHIDManager*) pContext) registerDevice: pDevice];
+    [((FDHIDManager*) pContext) registerDevice: pDevice];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -438,7 +685,8 @@ void FDHIDManager_DeviceRemovalCallback (void* pContext, IOReturn result, void* 
     FD_ASSERT (pContext == sFDHIDManagerInstance);
     FD_ASSERT (pDevice != nil);
     
-    [((_FDHIDManager*) pContext) unregisterDevice: pDevice];
+    /// [((_FDHIDManager*) pContext) unregisterDevice: pDevice];
+    [((FDHIDManager*) pContext) unregisterDevice: pDevice];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
