@@ -23,8 +23,7 @@ static NSString*        sFDDebugDefaultName = @"";
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDDebug : FDDebug
-{
+@implementation FDDebug {
 @private
     NSString*               mName;
     NSString*               mLogPrefix;
@@ -34,11 +33,59 @@ static NSString*        sFDDebugDefaultName = @"";
     FDDebugLogHandler       mpLogHandler;
 }
 
-@end
+//----------------------------------------------------------------------------------------------------------------------------
+
++ (BOOL) isDebuggerAttached
+{
+    BOOL                isAttached  = NO;
+    int                 mib[4]      = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
+    struct kinfo_proc   info        = { 0 };
+    size_t              size        = sizeof (info);
+    
+    if (sysctl (mib, FD_SIZE_OF_ARRAY (mib), &info, &size, NULL, 0) == 0)
+    {
+        isAttached = ((info.kp_proc.p_flag & P_TRACED) != 0);
+    }
+    
+    return isAttached;
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation _FDDebug
++ (FDDebug*) sharedDebug
+{
+    dispatch_once (&sFDDebugPredicate, ^{ sFDDebugInstance = [[FDDebug alloc] initWithName: sFDDebugDefaultName]; });
+    
+    return sFDDebugInstance;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (id) init
+{
+    self = [super init];
+    
+    if (self !=  nil)
+    {
+        [self setName: sFDDebugDefaultName];
+    }
+    
+    return self;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+- (id) initWithName: (NSString*) name
+{
+    self = [super init];
+    
+    if (self !=  nil)
+    {
+        [self setName: name];
+    }
+    
+    return self;   
+}
 
 - (void) dealloc
 {
@@ -112,7 +159,7 @@ static NSString*        sFDDebugDefaultName = @"";
 - (void) logWithFormat: (NSString*) format arguments: (va_list) argList
 {
     NSString* msg = [[NSString alloc] initWithFormat: format arguments: argList];
-     
+    
     if (mpLogHandler)
     {
         mpLogHandler ([msg cStringUsingEncoding: NSUTF8StringEncoding]);
@@ -130,7 +177,7 @@ static NSString*        sFDDebugDefaultName = @"";
 - (void) errorWithFormat: (NSString*) format arguments: (va_list) argList
 {
     NSString* msg = [[NSString alloc] initWithFormat: format arguments: argList];
-
+    
     if (mpErrorHandler)
     {
         mpErrorHandler ([msg cStringUsingEncoding: NSUTF8StringEncoding]);
@@ -160,7 +207,6 @@ static NSString*        sFDDebugDefaultName = @"";
     else
     {
         NSLog (@"%@An exception has occured: %@\n", mLogPrefix, msg);
-        /// NSRunCriticalAlertPanel (@"An exception has occured:", msg, nil, nil, nil);
         FDRunCriticalAlertPanel(@"An exception has occured:", nil, @"%@", msg);
     }
 }
@@ -187,7 +233,6 @@ static NSString*        sFDDebugDefaultName = @"";
             
             NSLog (@"%@%@ (%d): Assertion failed: %@", mLogPrefix, file, (unsigned int) line, msg);
             
-            /// resume = (NSRunCriticalAlertPanel (@"Assertion failed:", dlg, @"Resume", @"Crash", nil) == NSAlertDefaultReturn);
             resume = (FDRunCriticalAlertPanel(@"Assertion failed:", @[@"Resume", @"Crash"], @"%@", dlg) == NSAlertFirstButtonReturn);
             
             [dlg release];
@@ -197,125 +242,6 @@ static NSString*        sFDDebugDefaultName = @"";
     [msg release];
     
     return resume;
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDDebug
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDDebug class], 0, zone);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-+ (BOOL) isDebuggerAttached
-{
-    BOOL                isAttached  = NO;
-    int                 mib[4]      = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
-    struct kinfo_proc   info        = { 0 };
-    size_t              size        = sizeof (info);
-    
-    if (sysctl (mib, FD_SIZE_OF_ARRAY (mib), &info, &size, NULL, 0) == 0)
-    {
-        isAttached = ((info.kp_proc.p_flag & P_TRACED) != 0);
-    }
-    
-    return isAttached;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-+ (FDDebug*) sharedDebug
-{
-    dispatch_once (&sFDDebugPredicate, ^{ sFDDebugInstance = [[_FDDebug alloc] initWithName: sFDDebugDefaultName]; });
-    
-    return sFDDebugInstance;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) init
-{
-    self = [super init];
-    
-    if (self !=  nil)
-    {
-        [self setName: sFDDebugDefaultName];
-    }
-    
-    return self;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initWithName: (NSString*) name
-{
-    self = [super init];
-    
-    if (self !=  nil)
-    {
-        [self setName: name];
-    }
-    
-    return self;   
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setName: (NSString*) name
-{
-    FD_UNUSED (name)
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSString*) name
-{
-    [self doesNotRecognizeSelector: _cmd];
-
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setAssertHandler: (FDDebugAssertHandler) assertHandler
-{
-    FD_UNUSED (assertHandler);
-    
-    [self doesNotRecognizeSelector: _cmd];   
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setErrorHandler: (FDDebugErrorHandler) errorHandler
-{
-    FD_UNUSED (errorHandler);
-    
-    [self doesNotRecognizeSelector: _cmd];    
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setExceptionHandler: (FDDebugExceptionHandler) exceptionHandler
-{
-    FD_UNUSED (exceptionHandler);
-    
-    [self doesNotRecognizeSelector: _cmd];   
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setLogHandler: (FDDebugLogHandler) logHandler
-{
-    FD_UNUSED (logHandler);
-    
-    [self doesNotRecognizeSelector: _cmd];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -333,15 +259,6 @@ static NSString*        sFDDebugDefaultName = @"";
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) logWithFormat: (NSString*) format arguments: (va_list) argList
-{
-    FD_UNUSED (format, argList);
-    
-    [self doesNotRecognizeSelector: _cmd];       
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
 - (void) errorWithFormat: (NSString*) format, ...
 {
     va_list argList;
@@ -351,15 +268,6 @@ static NSString*        sFDDebugDefaultName = @"";
     [self errorWithFormat: format arguments: argList];
     
     va_end (argList); 
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) errorWithFormat: (NSString*) format arguments: (va_list) argList
-{
-    FD_UNUSED (format, argList);
-    
-    [self doesNotRecognizeSelector: _cmd];       
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -391,15 +299,6 @@ static NSString*        sFDDebugDefaultName = @"";
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) exceptionWithFormat: (NSString*) format arguments: (va_list) argList
-{
-    FD_UNUSED (format, argList);
-    
-    [self doesNotRecognizeSelector: _cmd];      
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
 - (BOOL) assert: (NSString*) file line: (NSUInteger) line format: (NSString*) format, ...
 {
     BOOL resume = NO;
@@ -413,17 +312,6 @@ static NSString*        sFDDebugDefaultName = @"";
     va_end (argList); 
     
     return resume;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) assert: (NSString*) file line: (NSUInteger) line format: (NSString*) format arguments: (va_list) argList
-{
-    FD_UNUSED (file, line, format, argList);
-    
-    [self doesNotRecognizeSelector: _cmd];   
-    
-    return NO;    
 }
 
 @end
