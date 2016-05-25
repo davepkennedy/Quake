@@ -185,7 +185,6 @@ static NSString*        sFDDebugDefaultName = @"";
     else
     {
         NSLog (@"%@An error has occured: %@\n", mLogPrefix, msg);
-        /// NSRunCriticalAlertPanel (@"An error has occured:", msg, nil, nil, nil);
         FDRunCriticalAlertPanel(@"An error has ocurred:", nil, @"%@", msg);
     }
     

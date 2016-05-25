@@ -47,7 +47,6 @@
             rowbytes: (SInt32) rowbytes
 {
     NSBitmapImageRep*	imageRep    = [FDScreenshot imageFromRGB24: pImageData withSize: imageSize rowbytes: rowbytes];
-    /// NSData*             data		= [imageRep representationUsingType: fileType properties: NULL];
     NSData*             data		= [imageRep representationUsingType: fileType properties: @{NSImageCompressionFactor: @1}];
 
     return ([data writeToFile: path atomically: YES]);

@@ -33,7 +33,7 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDWindow : FDWindow
+@implementation FDWindow
 {
 @private
     NSImage*            mMiniImage;
@@ -44,22 +44,12 @@
     BOOL                mIsCursorVisible;
 }
 
-- (void) initCursor;
-- (void) updateCursor;
-- (NSOpenGLPixelFormat*) createGLPixelFormatWithBitsPerPixel: (NSUInteger) bitsPerPixel samples: (NSUInteger) samples;
-- (NSOpenGLContext*) createGLContextWithBitsPerPixel: (NSUInteger) bitsPerPixel samples: (NSUInteger) samples;
-- (NSImage*) createMiniImageWithSize: (NSSize) size;
-- (void) drawMiniImage;
-- (void) resignKeyWindow;
-- (void) becomeKeyWindow;
-- (void) screenParametersDidChange: (NSNotification*) notification;
-- (void) keyDown: (NSEvent*) event;
-
-@end
+- (id) initWithContentRect: (NSRect) rect
+{
+    return [self initWithContentRect: rect samples: 0];
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
-
-@implementation _FDWindow
 
 - (id) initForDisplay: (FDDisplay*) display samples: (NSUInteger) samples
 {
@@ -109,9 +99,9 @@
 {
     self = [super initWithContentRect: rect
                             styleMask: NSTitledWindowMask |
-                                       NSClosableWindowMask |
-                                       NSMiniaturizableWindowMask |
-                                       NSResizableWindowMask
+            NSClosableWindowMask |
+            NSMiniaturizableWindowMask |
+            NSResizableWindowMask
                               backing: NSBackingStoreBuffered
                                 defer: NO];
     
@@ -121,7 +111,7 @@
         NSOpenGLContext*    glContext       = [self createGLContextWithBitsPerPixel: bitsPerPixel samples: samples];
         
         mView = [[FDView alloc] initWithFrame: rect];
-
+        
         [self initCursor];
         [self setDocumentEdited: YES];
         [self setMinSize: rect.size];
@@ -139,7 +129,7 @@
         
         [glContext release];
         
-        mMiniImage = [self createMiniImageWithSize: NSMakeSize (FD_MINI_ICON_WIDTH, FD_MINI_ICON_HEIGHT)]; 
+        mMiniImage = [self createMiniImageWithSize: NSMakeSize (FD_MINI_ICON_WIDTH, FD_MINI_ICON_HEIGHT)];
         
         [[NSNotificationCenter defaultCenter] addObserver: self
                                                  selector: @selector (screenParametersDidChange:)
@@ -171,8 +161,8 @@
 {
     [[NSNotificationCenter defaultCenter] removeObserver: self
                                                     name: NSApplicationDidChangeScreenParametersNotification
-                                                  object: nil];    
-
+                                                  object: nil];
+    
     [self setCursorVisible: YES];
     [mMiniImage release];
     [mView release];
@@ -321,7 +311,7 @@
 
 - (BOOL) canBecomeMainWindow
 {
-	return YES;
+    return YES;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -387,7 +377,7 @@
     
     attributes[i++] = NSOpenGLPFAColorSize;
     attributes[i++] = (NSOpenGLPixelFormatAttribute) bitsPerPixel;
-
+    
     if (samples > 0)
     {
         switch (samples)
@@ -406,7 +396,7 @@
         attributes[i++] = NSOpenGLPFASamples;
         attributes[i++] = (NSOpenGLPixelFormatAttribute) samples;
     }
-
+    
     attributes[i++] = 0;
     
     pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes: attributes];
@@ -430,7 +420,7 @@
     {
         FDError (@"Unable to create an OpenGL context. Please try other displaymode(s).");
     }
-
+    
     [pixelFormat release];
     
     return context;
@@ -442,8 +432,7 @@
 {
     NSGraphicsContext*	graphicsContext	= nil;
     NSImage*            miniImage = [[NSImage alloc] initWithSize: size];
-	
-	/// [miniImage setFlipped: YES];
+    
     [miniImage lockFocus];
     
     graphicsContext = [NSGraphicsContext currentContext];
@@ -502,7 +491,7 @@
 {
     mForceCusorVisible = YES;
     
-    [self updateCursor];    
+    [self updateCursor];
     [super resignKeyWindow];
 }
 
@@ -531,147 +520,6 @@
 - (void) keyDown: (NSEvent*) event
 {
     // Already handled by FDHIDInput, implementation avoids the NSBeep() caused by unhandled key events.
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDWindow
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDWindow class], 0, zone);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) init
-{
-    self = [super init];
-    
-    if (self != nil)
-    {
-        [self doesNotRecognizeSelector: _cmd];
-        [self release];
-    }
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initForDisplay: (FDDisplay*) display samples: (NSUInteger) samples
-{
-    FD_UNUSED (display, samples);
-    
-    self = [super init];
-    
-    return self;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initForDisplay: (FDDisplay*) display
-{
-    return [self initForDisplay: display samples: 0];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initWithContentRect: (NSRect) rect samples: (NSUInteger) samples
-{
-    FD_UNUSED (rect, samples);
-    
-    self = [super init];
-    
-    return self;    
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initWithContentRect: (NSRect) rect
-{
-    return [self initWithContentRect: rect samples: 0];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setResizeHandler: (FDResizeHandler) pResizeHandler forContext: (void*) pContext
-{
-    FD_UNUSED (pResizeHandler, pContext);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) centerForDisplay: (FDDisplay*) display
-{
-    FD_UNUSED (display);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setCursorVisible: (BOOL) state
-{
-    FD_UNUSED (state);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) isCursorVisible
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setVsync: (BOOL) enabled
-{
-    FD_UNUSED (enabled);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) vsync
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSOpenGLContext*) openGLContext
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) isFullscreen
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) endFrame
-{
-    [self doesNotRecognizeSelector: _cmd];
 }
 
 @end

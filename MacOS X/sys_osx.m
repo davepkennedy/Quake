@@ -304,7 +304,6 @@ void	Sys_Error (const char* pFormat, ...)
     
     NSString* msg = [NSString stringWithCString: buffer encoding: NSASCIIStringEncoding];
     
-    /// NSRunCriticalAlertPanel (@"An error has occured:", msg, nil, nil, nil);
     FDRunCriticalAlertPanel(@"An error has occured:", nil, @"%@", msg);
     NSLog (@"An error has occured: %@\n", msg);
 
