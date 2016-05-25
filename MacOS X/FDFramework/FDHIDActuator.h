@@ -10,11 +10,13 @@
 #import <Cocoa/Cocoa.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
+@class FDHIDDevice;
 
 @interface FDHIDActuator : NSObject
 {
 }
 
+- (id) initWithDevice: (FDHIDDevice*) device;
 - (void) setIntensity: (float) intensity;
 - (float) intensity;
 

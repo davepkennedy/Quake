@@ -86,23 +86,5 @@ typedef struct
 
 @end
 
-//----------------------------------------------------------------------------------------------------------------------------
-
-@interface _FDHIDActuator : FDHIDActuator
-{
-    io_service_t            mIoService;
-    FFDeviceObjectReference mpDevice;
-    FFEffectObjectReference mpEffect;
-    FFEFFECT                mEffectParams;
-    FFENVELOPE              mEffectEnvelope;
-    FFPERIODIC              mEffectPeriodic;
-    DWORD                   mEffectAxes[32];
-    LONG                    mEffectDirection[2];
-
-}
-
-- (id) initWithDevice: (_FDHIDDevice*) device;
-
-@end
 
 //----------------------------------------------------------------------------------------------------------------------------

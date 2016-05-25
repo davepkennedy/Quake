@@ -128,7 +128,7 @@
             }
             
             mpDeviceDesc    = pDeviceDesc;            
-            mActuator       = [[_FDHIDActuator alloc] initWithDevice: self];
+            mActuator       = [[FDHIDActuator alloc] initWithDevice: self];
         }
         else
         {

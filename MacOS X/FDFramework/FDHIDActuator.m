@@ -34,7 +34,18 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation _FDHIDActuator
+@implementation FDHIDActuator
+{
+    io_service_t            mIoService;
+    FFDeviceObjectReference mpDevice;
+    FFEffectObjectReference mpEffect;
+    FFEFFECT                mEffectParams;
+    FFENVELOPE              mEffectEnvelope;
+    FFPERIODIC              mEffectPeriodic;
+    DWORD                   mEffectAxes[32];
+    LONG                    mEffectDirection[2];
+    
+}
 
 - (id) init
 {
@@ -75,7 +86,7 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
             cfType = IOHIDDeviceGetProperty (pDevice, CFSTR (kIOHIDLocationIDKey));
             success = (cfType != nil);
         }
-
+        
         if (success)
         {
             CFDictionaryAddValue (matchingDict, CFSTR (kIOHIDLocationIDKey), cfType);
@@ -104,7 +115,7 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
         {
             success = ((features.supportedEffects & FFCAP_ET_SINE) == FFCAP_ET_SINE);
         }
-
+        
         if (success)
         {
             success = (features.subType == FFCAP_ST_VIBRATION);
@@ -157,12 +168,12 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
             mEffectPeriodic.dwPhase                 = 0;
             mEffectPeriodic.dwPeriod                = sFDHIDActuatorDuration;
             
-            mEffectEnvelope.dwSize                  = sizeof (FFENVELOPE); 
+            mEffectEnvelope.dwSize                  = sizeof (FFENVELOPE);
             mEffectEnvelope.dwAttackLevel           = 8 * FF_FFNOMINALMAX / 10;
             mEffectEnvelope.dwAttackTime            = 0 * FF_SECONDS;
             mEffectEnvelope.dwFadeLevel             = 8 * FF_FFNOMINALMAX / 10;
             mEffectEnvelope.dwFadeTime              = 0 * FF_SECONDS;
-
+            
             mEffectDirection[0]                     = 270 * FF_DEGREES;
             mEffectDirection[1]                     = 0 * FF_DEGREES;
             
@@ -279,7 +290,7 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
 
 - (BOOL) isActive
 {
-    FFEffectStatusFlag flag = FFEGES_NOTPLAYING;  
+    FFEffectStatusFlag flag = FFEGES_NOTPLAYING;
     
     FFEffectGetEffectStatus (mpEffect, &flag);
     
@@ -298,76 +309,6 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
 - (void) stop
 {
     FFEffectStop (mpEffect);
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDHIDActuator
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDHIDActuator class], 0, zone);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setIntensity: (float) intensity;
-{
-    FD_UNUSED (intensity);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (float) intensity
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return 0.0f;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setDuration: (float) duration
-{
-    FD_UNUSED (duration);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (float) duration
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return 0.0f;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) isActive
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) start
-{
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) stop
-{
-    [self doesNotRecognizeSelector: _cmd];
 }
 
 @end
