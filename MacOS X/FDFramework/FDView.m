@@ -19,7 +19,9 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDView : FDView
+//----------------------------------------------------------------------------------------------------------------------------
+
+@implementation FDView
 {
 @private
     NSCursor*           mCursor;
@@ -31,22 +33,6 @@
     GLuint              mGrowBoxTexture;
     BOOL                mGrowBoxIsInitialized;
 }
-
-- (void) initGrowBoxTexture;
-- (void) drawGrowbox;
-
-- (void) setOpenGLContext: (NSOpenGLContext*) openGLContext;
-
-- (void) setResizeHandler: (FDResizeHandler) pResizeHandler forContext: (void*) pContext;
-- (void) onResizeView: (NSNotification*) notification;
-
-- (NSBitmapImageRep*) bitmapRepresentation;
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation _FDView
 
 - (id)initWithFrame:(NSRect) frameRect
 {
@@ -71,7 +57,7 @@
 {
     [[NSNotificationCenter defaultCenter] removeObserver: self
                                                     name: NSViewGlobalFrameDidChangeNotification
-                                                  object: self];    
+                                                  object: self];
     
     [self setOpenGLContext: nil];
     [mBitmapRep release];
@@ -97,7 +83,7 @@
         glPixelStorei (GL_UNPACK_ROW_LENGTH, (GLint) skFDGrowBoxWidth);
         
         glGenTextures (1, &mGrowBoxTexture);
-        glBindTexture (GL_TEXTURE_2D, mGrowBoxTexture);	
+        glBindTexture (GL_TEXTURE_2D, mGrowBoxTexture);
         glTexImage2D  (GL_TEXTURE_2D, 0, GL_RGBA, skFDGrowBoxWidth, skFDGrowBoxHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                        &(skFDGrowBoxBitmap[0]));
         
@@ -211,7 +197,7 @@
         [mOpenGLContext release];
         
         mOpenGLContext = nil;
-    }    
+    }
     
     if (openGLContext != nil)
     {
@@ -260,15 +246,15 @@
         [mBitmapRep release];
         
         mBitmapRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: NULL
-                                                              pixelsWide: width
-                                                              pixelsHigh: height
-                                                           bitsPerSample: 8
-                                                         samplesPerPixel: 4
-                                                                hasAlpha: YES
-                                                                isPlanar: NO
-                                                          colorSpaceName: NSDeviceRGBColorSpace
-                                                             bytesPerRow: width << 2
-                                                            bitsPerPixel: 32];
+                                                             pixelsWide: width
+                                                             pixelsHigh: height
+                                                          bitsPerSample: 8
+                                                        samplesPerPixel: 4
+                                                               hasAlpha: YES
+                                                               isPlanar: NO
+                                                         colorSpaceName: NSDeviceRGBColorSpace
+                                                            bytesPerRow: width << 2
+                                                           bitsPerPixel: 32];
     }
     
     if ((mBitmapRep != nil) && (mOpenGLContext != nil))
@@ -316,7 +302,7 @@
         glPushMatrix ();
         
         glMatrixMode (GL_PROJECTION);
-        glPushMatrix ();	
+        glPushMatrix ();
         glLoadIdentity ();
         glOrtho (0.0,  width, 0.0, height, -1.0, 1.0);
         
@@ -325,27 +311,27 @@
         
         glMatrixMode (GL_MODELVIEW);
         glLoadIdentity ();
-
+        
         glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable (GL_BLEND);
-
+        
         glBindTexture (GL_TEXTURE_2D, mGrowBoxTexture);
         glEnable (GL_TEXTURE_2D);
         
         glColor4f (1.0f, 1.0f, 1.0f, 1.0f);
         
         glBegin (GL_TRIANGLE_STRIP);
-            glTexCoord2f (0.0f, 0.0f);
-            glVertex2i (((GLint) width) - skFDGrowBoxWidth, 0);
-            
-            glTexCoord2f (1.0f, 0.0f);
-            glVertex2i ((GLint) width, 0);
-            
-            glTexCoord2f (0.0f, 1.0f);
-            glVertex2i (((GLint) width) - skFDGrowBoxWidth, skFDGrowBoxHeight);
-            
-            glTexCoord2f (1.0f, 1.0f);
-            glVertex2i ((GLint) width, skFDGrowBoxHeight);
+        glTexCoord2f (0.0f, 0.0f);
+        glVertex2i (((GLint) width) - skFDGrowBoxWidth, 0);
+        
+        glTexCoord2f (1.0f, 0.0f);
+        glVertex2i ((GLint) width, 0);
+        
+        glTexCoord2f (0.0f, 1.0f);
+        glVertex2i (((GLint) width) - skFDGrowBoxWidth, skFDGrowBoxHeight);
+        
+        glTexCoord2f (1.0f, 1.0f);
+        glVertex2i ((GLint) width, skFDGrowBoxHeight);
         glEnd ();
         
         glDisable (GL_BLEND);
@@ -365,95 +351,6 @@
 
 - (void) drawRect: (NSRect) theRect
 {
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDView
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDView class], 0, zone);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) init
-{
-    self = [super init];
-    
-    if (self != nil)
-    {
-        [self doesNotRecognizeSelector: _cmd];
-        [self release];
-    }
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (id) initWithFrame: (NSRect) frameRect
-{
-    self = [super initWithFrame: frameRect];
-    
-    return self;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setCursor: (NSCursor*) cursor
-{
-    FD_UNUSED (cursor);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSCursor*) cursor
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setVsync: (BOOL) enabled
-{
-    FD_UNUSED (enabled);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) vsync
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return NO;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setResizeHandler: (FDResizeHandler) pResizeHandler forContext: (void*) pContext
-{
-    FD_UNUSED (pResizeHandler, pContext);
-    
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSOpenGLContext*) openGLContext
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;
 }
 
 @end

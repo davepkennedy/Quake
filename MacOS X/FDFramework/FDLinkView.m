@@ -11,7 +11,7 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDLinkView : FDLinkView
+@implementation FDLinkView
 {
 @private
     NSString*       mDisplayString;
@@ -21,21 +21,12 @@
     BOOL			mMouseIsDown;
 }
 
-- (void) initFontAttributes;
-- (NSDictionary*) fontAttributesWithColor: (NSColor*) color;
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation _FDLinkView
-
 //----------------------------------------------------------------------------------------------------------------------------
 
 - (id) initWithFrame: (NSRect) frameRect
 {
     self = [super initWithFrame: frameRect];
-	
+    
     if (self != nil)
     {
         [self initFontAttributes];
@@ -78,7 +69,7 @@
     [mURL release];
     [mFontAttributesRed release];
     [mFontAttributesBlue release];
-
+    
     [super dealloc];
 }
 
@@ -93,7 +84,7 @@
     {
         displayString = [url absoluteString];
     }
-
+    
     mDisplayString  = [displayString retain];
     mURL            = [url retain];
 }
@@ -134,7 +125,7 @@
         mMouseIsDown = YES;
         
         [self setNeedsDisplay:YES];
-
+        
         nextEvent = [NSApp nextEventMatchingMask: NSLeftMouseUpMask
                                        untilDate: [NSDate distantFuture]
                                           inMode: NSEventTrackingRunLoopMode
@@ -165,32 +156,6 @@
         [self addCursorRect: [self bounds] cursor: cursor];
     }
 }
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDLinkView
-
-+ (id) allocWithZone: (NSZone*) zone
-{
-    return NSAllocateObject ([_FDLinkView class], 0, zone);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setURL: (NSURL*) url
-{
-    [self doesNotRecognizeSelector: _cmd];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (void) setURL: (NSURL*) url displayString: (NSString*) displayString
-{
-    [self doesNotRecognizeSelector: _cmd];
-}
-
 @end
 
 //----------------------------------------------------------------------------------------------------------------------------
