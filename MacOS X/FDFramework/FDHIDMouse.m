@@ -8,9 +8,9 @@
 //----------------------------------------------------------------------------------------------------------------------------
 
 #import "FDHIDManager.h"
-#import "FDHIDInternal.h"
 #import "FDDebug.h"
 #import "FDDefines.h"
+#import "FDHIDDevice.h"
 
 #import <Cocoa/Cocoa.h>
 #import <IOKit/hidsystem/IOHIDLib.h>
@@ -72,7 +72,7 @@ FDHIDUsageToDevice gFDHIDMouseUsageMap[] =
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDHIDDeviceMouse : _FDHIDDevice
+@interface _FDHIDDeviceMouse : FDHIDDevice
 {
 }
 

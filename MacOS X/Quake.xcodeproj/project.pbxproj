@@ -552,7 +552,6 @@
 		D2C25B2214D1DB8F00E275A0 /* FDGLScreenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FDGLScreenshot.h; path = FDFramework/FDGLScreenshot.h; sourceTree = SOURCE_ROOT; };
 		D2C25B2314D1DB9000E275A0 /* FDGLScreenshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FDGLScreenshot.m; path = FDFramework/FDGLScreenshot.m; sourceTree = SOURCE_ROOT; };
 		D2C25B2514D1DB9000E275A0 /* FDHIDGamePad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FDHIDGamePad.m; path = FDFramework/FDHIDGamePad.m; sourceTree = SOURCE_ROOT; };
-		D2C25B2814D1DB9000E275A0 /* FDHIDInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FDHIDInternal.h; path = FDFramework/FDHIDInternal.h; sourceTree = SOURCE_ROOT; };
 		D2C25B2A14D1DB9000E275A0 /* FDHIDKeyboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FDHIDKeyboard.m; path = FDFramework/FDHIDKeyboard.m; sourceTree = SOURCE_ROOT; };
 		D2C25B2C14D1DB9000E275A0 /* FDHIDMouse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FDHIDMouse.m; path = FDFramework/FDHIDMouse.m; sourceTree = SOURCE_ROOT; };
 		D2C25B2D14D1DB9000E275A0 /* FDLinkView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FDLinkView.h; path = FDFramework/FDLinkView.h; sourceTree = SOURCE_ROOT; };
@@ -794,7 +793,6 @@
 			isa = PBXGroup;
 			children = (
 				D2C6A29314EE19B200CDC3D1 /* FDAudioInternal.h */,
-				D2C25B2814D1DB9000E275A0 /* FDHIDInternal.h */,
 				D2C49EBE14F0653C00E07CC4 /* FDViewInternal.h */,
 				D2C25B1714D1DB8F00E275A0 /* FDAudioBuffer.m */,
 				D2C25B1914D1DB8F00E275A0 /* FDAudioFile.m */,

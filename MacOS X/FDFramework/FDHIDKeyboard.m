@@ -9,7 +9,6 @@
 
 #import "FDHIDManager.h"
 #import "FDHIDDevice.h"
-#import "FDHIDInternal.h"
 #import "FDDebug.h"
 #import "FDDefines.h"
 
@@ -370,7 +369,7 @@ const UInt8     gInNumPadKey[] =
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDHIDDeviceKeyboard : _FDHIDDevice
+@interface _FDHIDDeviceKeyboard : FDHIDDevice
 {
     BOOL    mFnKeyIsDown;
 }

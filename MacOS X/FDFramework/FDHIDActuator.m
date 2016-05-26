@@ -18,7 +18,6 @@
 
 #import "FDHIDActuator.h"
 #import "FDHIDDevice.h"
-#import "FDHIDInternal.h"
 #import "FDDebug.h"
 #import "FDDefines.h"
 
@@ -61,7 +60,7 @@ static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) initWithDevice: (_FDHIDDevice*) device
+- (id) initWithDevice: (FDHIDDevice*) device
 {
     self = [super init];
     

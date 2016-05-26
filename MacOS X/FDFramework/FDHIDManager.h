@@ -8,7 +8,7 @@
 //----------------------------------------------------------------------------------------------------------------------------
 
 #import "FDDefines.h"
-#import "FDHIDDevice.h"
+// #import "FDHIDDevice.h"
 
 #import <Cocoa/Cocoa.h>
 #import <IOKit/hid/IOHIDLib.h>
@@ -114,6 +114,7 @@ enum FDHIDGamePadAxis
 };
 
 //----------------------------------------------------------------------------------------------------------------------------
+@class FDHIDDevice;
 
 typedef struct
 {

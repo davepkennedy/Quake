@@ -8,7 +8,6 @@
 //----------------------------------------------------------------------------------------------------------------------------
 
 #import "FDHIDManager.h"
-#import "FDHIDInternal.h"
 #import "FDDebug.h"
 #import "FDDefines.h"
 #import "FDPreferences.h"
@@ -168,7 +167,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 {
     FD_UNUSED (notification);
     
-    for (_FDHIDDevice* device in mDevices)
+    for (FDHIDDevice* device in mDevices)
     {
         [device flush];
     }
@@ -276,7 +275,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
         
         if (factory != nil)
         {
-            FD_ASSERT ([factory isSubclassOfClass: [_FDHIDDevice class]]);
+            FD_ASSERT ([factory isSubclassOfClass: [FDHIDDevice class]]);
             FD_ASSERT ([factory respondsToSelector: @selector (deviceWithDevice:)]);
             
             id device = [factory deviceWithDevice: pDevice];
@@ -300,7 +299,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 {
     IOHIDDeviceRegisterInputValueCallback (pDevice, NULL, NULL);
     
-    for (_FDHIDDevice* device in mDevices)
+    for (FDHIDDevice* device in mDevices)
     {
         if ([device iohidDeviceRef] == pDevice)
         {
@@ -358,7 +357,7 @@ void FDHIDManager_InputHandler (void* pContext, IOReturn result, void* pSender, 
     
     if ([NSApp isActive] == YES)
     {
-        _FDHIDDevice* device = (_FDHIDDevice*) pContext;
+        FDHIDDevice* device = (FDHIDDevice*) pContext;
         
         [device handleInput: pValue];
     }

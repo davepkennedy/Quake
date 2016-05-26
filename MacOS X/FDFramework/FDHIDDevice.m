@@ -9,7 +9,6 @@
 
 #import "FDHIDDevice.h"
 #import "FDHIDActuator.h"
-#import "FDHIDInternal.h"
 #import "FDDebug.h"
 #import "FDDefines.h"
 
@@ -27,18 +26,24 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface _FDHIDDevice ()
-
-+ (NSDictionary*) matchingDictionarForUsageMap: (const FDHIDUsageToDevice*) pUsageMap;
-
-- (uint32_t) getDevicePropertyForKey: (CFStringRef) pKey;
-- (NSString*) getDevicePropertyStringForKey: (CFStringRef) pKey;
-
-@end
+@implementation FDHIDDevice
+{
+    IOHIDDeviceRef          mpIOHIDDevice;
+    NSString*               mVendorName;
+    NSString*               mProductName;
+    FDHIDActuator*          mActuator;
+    const FDHIDDeviceDesc*  mpDeviceDesc;
+    FDHIDManager*           mDelegate;
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation _FDHIDDevice
+- (BOOL) hasActuator;
+{
+    return [self actuator] != nil;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
 
 + (NSDictionary*) matchingDictionarForUsageMap: (const FDHIDUsageToDevice*) pUsageMap
 {
@@ -62,7 +67,7 @@
     
     for (NSUInteger i = 0; i < numUsages; ++i)
     {
-        [dictionaries addObject: [_FDHIDDevice matchingDictionarForUsageMap: &(pUsageMap[i])]];
+        [dictionaries addObject: [FDHIDDevice matchingDictionarForUsageMap: &(pUsageMap[i])]];
     }
     
     return dictionaries;
@@ -127,7 +132,7 @@
                 ++pDeviceDesc;
             }
             
-            mpDeviceDesc    = pDeviceDesc;            
+            mpDeviceDesc    = pDeviceDesc;
             mActuator       = [[FDHIDActuator alloc] initWithDevice: self];
         }
         else
@@ -217,8 +222,8 @@
 - (uint32_t) getDevicePropertyForKey: (CFStringRef) pKey
 {
     IOHIDDeviceRef  pDevice     = [self iohidDeviceRef];
-	BOOL            success     = (pDevice != nil);
-	CFTypeRef       pProperty   = NULL;
+    BOOL            success     = (pDevice != nil);
+    CFTypeRef       pProperty   = NULL;
     SInt32          value       = -1;
     
     if (success)
@@ -241,7 +246,7 @@
         value = -1;
     }
     
-	return value;
+    return value;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -258,7 +263,7 @@
         pProperty   = IOHIDDeviceGetProperty (pDevice, pKey);
         success     = (pProperty != NULL);
     }
-        
+    
     if (success)
     {
         success = (CFStringGetTypeID() == CFGetTypeID (pProperty));
@@ -268,7 +273,7 @@
     {
         string = (NSString*) pProperty;
     }
-            
+    
     return string;
 }
 
@@ -280,7 +285,7 @@
     const uint32_t          type        = IOHIDElementGetType (pElement);
     const FDHIDElementMap*  pElements   = [self elementMap];
     const uint32_t          typeOffset  = type - pElements[0].mType;
-
+    
     if (typeOffset < [self elementCount])
     {
         pElements = &(pElements[typeOffset]);
@@ -332,71 +337,6 @@
 - (FDHIDActuator*)  actuator
 {
     return mActuator;
-}
-
-@end
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-@implementation FDHIDDevice
-
-- (NSUInteger) vendorId
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return 0;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSUInteger) productId
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return 0;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSString*) vendorName
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;    
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSString*) productName
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSString*) deviceType
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (BOOL) hasActuator;
-{
-    return [self actuator] != nil;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (FDHIDActuator*)  actuator
-{
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;
 }
 
 @end
