@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		55470E821CF4F5A8008E7289 /* FDAlertPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 55470E811CF4F5A8008E7289 /* FDAlertPanel.m */; };
+		55F15E021CF8E33600683071 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F15E011CF8E33600683071 /* OpenGL.framework */; };
+		55F15E041CF8E35000683071 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F15E031CF8E35000683071 /* IOKit.framework */; };
+		55F15E061CF8E36100683071 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F15E051CF8E36100683071 /* ApplicationServices.framework */; };
+		55F15E081CF8E36F00683071 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F15E071CF8E36F00683071 /* AudioToolbox.framework */; };
+		55F15E0A1CF8E37B00683071 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F15E091CF8E37B00683071 /* AudioUnit.framework */; };
+		55F15E0C1CF8E38700683071 /* ForceFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F15E0B1CF8E38700683071 /* ForceFeedback.framework */; };
 		D25B225C14D5C5A500C4F4B6 /* QArguments.m in Sources */ = {isa = PBXBuildFile; fileRef = D25B225A14D5C5A400C4F4B6 /* QArguments.m */; };
 		D25B226414D604EE00C4F4B6 /* QArgumentEdit.m in Sources */ = {isa = PBXBuildFile; fileRef = D25B226214D604EC00C4F4B6 /* QArgumentEdit.m */; };
 		D25C71B214F1A7D900E1BC4F /* qwfwd.c in Sources */ = {isa = PBXBuildFile; fileRef = D25C71AF14F1A79900E1BC4F /* qwfwd.c */; };
@@ -55,10 +61,6 @@
 		D26BDE99149EE9710018D5AE /* snd_mix.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDC1149B24DA0018D5AE /* snd_mix.c */; };
 		D26BDE9A149EE9710018D5AE /* r_part.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDC9149B25170018D5AE /* r_part.c */; };
 		D26BDEBA149EE9710018D5AE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D246F5A1149B07FE003433EB /* Cocoa.framework */; };
-		D26BDEBB149EE9710018D5AE /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDE54149B2B0F0018D5AE /* ApplicationServices.framework */; };
-		D26BDEBC149EE9710018D5AE /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDE56149B2B270018D5AE /* IOKit.framework */; };
-		D26BDEBD149EE9710018D5AE /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDE5B149D442B0018D5AE /* AudioUnit.framework */; };
-		D26BDEBE149EE9710018D5AE /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDE5D149D443C0018D5AE /* AudioToolbox.framework */; };
 		D26BDED5149EEAF60018D5AE /* gl_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDD5149B25A30018D5AE /* gl_draw.c */; };
 		D26BDED6149EEAFB0018D5AE /* gl_mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDD6149B25A30018D5AE /* gl_mesh.c */; };
 		D26BDED7149EEB010018D5AE /* gl_model.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDD7149B25A30018D5AE /* gl_model.c */; };
@@ -71,7 +73,6 @@
 		D26BDEDE149EEB390018D5AE /* gl_test.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDDF149B25A30018D5AE /* gl_test.c */; };
 		D26BDEDF149EEB3C0018D5AE /* gl_warp.c in Sources */ = {isa = PBXBuildFile; fileRef = D26BDDE0149B25A30018D5AE /* gl_warp.c */; };
 		D26BDEE0149EEB500018D5AE /* gl_vidosx.m in Sources */ = {isa = PBXBuildFile; fileRef = D246F5CC149B089C003433EB /* gl_vidosx.m */; };
-		D26BDEE4149EEC080018D5AE /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDEE2149EEBE30018D5AE /* OpenGL.framework */; };
 		D26CD2A914DA6EF600270FD9 /* cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = D26CD29F14DA6EF600270FD9 /* cmd.c */; };
 		D26CD2AB14DA6EF600270FD9 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = D26CD2A014DA6EF600270FD9 /* common.c */; };
 		D26CD2AD14DA6EF600270FD9 /* crc.c in Sources */ = {isa = PBXBuildFile; fileRef = D26CD2A114DA6EF600270FD9 /* crc.c */; };
@@ -248,7 +249,6 @@
 		D2CAF48B14DA6771006CAA0D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D246F5A1149B07FE003433EB /* Cocoa.framework */; };
 		D2CAF48C14DA6771006CAA0D /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDE56149B2B270018D5AE /* IOKit.framework */; };
 		D2CAF48D14DA6771006CAA0D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D26BDEE2149EEBE30018D5AE /* OpenGL.framework */; };
-		D2E123C014DC44980041A7AB /* ForceFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2E123BD14DC44980041A7AB /* ForceFeedback.framework */; };
 		D2E123C114DC44980041A7AB /* ForceFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D2E123BD14DC44980041A7AB /* ForceFeedback.framework */; };
 		D2E123C714DDA72B0041A7AB /* FDHIDManager.m in Sources */ = {isa = PBXBuildFile; fileRef = D2E123C414DDA72A0041A7AB /* FDHIDManager.m */; };
 		D2E123C814DDA72B0041A7AB /* FDHIDManager.m in Sources */ = {isa = PBXBuildFile; fileRef = D2E123C414DDA72A0041A7AB /* FDHIDManager.m */; };
@@ -283,6 +283,12 @@
 /* Begin PBXFileReference section */
 		55470E811CF4F5A8008E7289 /* FDAlertPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FDAlertPanel.m; sourceTree = SOURCE_ROOT; };
 		55470E831CF4F5E3008E7289 /* FDAlertPanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FDAlertPanel.h; sourceTree = SOURCE_ROOT; };
+		55F15E011CF8E33600683071 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		55F15E031CF8E35000683071 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		55F15E051CF8E36100683071 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		55F15E071CF8E36F00683071 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		55F15E091CF8E37B00683071 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		55F15E0B1CF8E38700683071 /* ForceFeedback.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ForceFeedback.framework; path = System/Library/Frameworks/ForceFeedback.framework; sourceTree = SDKROOT; };
 		D246F5A1149B07FE003433EB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		D246F5A4149B07FE003433EB /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		D246F5A6149B07FE003433EB /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -640,13 +646,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D26BDEBB149EE9710018D5AE /* ApplicationServices.framework in Frameworks */,
-				D26BDEBE149EE9710018D5AE /* AudioToolbox.framework in Frameworks */,
-				D26BDEBD149EE9710018D5AE /* AudioUnit.framework in Frameworks */,
+				55F15E0C1CF8E38700683071 /* ForceFeedback.framework in Frameworks */,
+				55F15E0A1CF8E37B00683071 /* AudioUnit.framework in Frameworks */,
+				55F15E081CF8E36F00683071 /* AudioToolbox.framework in Frameworks */,
+				55F15E061CF8E36100683071 /* ApplicationServices.framework in Frameworks */,
+				55F15E041CF8E35000683071 /* IOKit.framework in Frameworks */,
+				55F15E021CF8E33600683071 /* OpenGL.framework in Frameworks */,
 				D26BDEBA149EE9710018D5AE /* Cocoa.framework in Frameworks */,
-				D2E123C014DC44980041A7AB /* ForceFeedback.framework in Frameworks */,
-				D26BDEBC149EE9710018D5AE /* IOKit.framework in Frameworks */,
-				D26BDEE4149EEC080018D5AE /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -719,6 +725,12 @@
 		D246F5A0149B07FE003433EB /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				55F15E0B1CF8E38700683071 /* ForceFeedback.framework */,
+				55F15E091CF8E37B00683071 /* AudioUnit.framework */,
+				55F15E071CF8E36F00683071 /* AudioToolbox.framework */,
+				55F15E051CF8E36100683071 /* ApplicationServices.framework */,
+				55F15E031CF8E35000683071 /* IOKit.framework */,
+				55F15E011CF8E33600683071 /* OpenGL.framework */,
 				D246F5A1149B07FE003433EB /* Cocoa.framework */,
 				D246F5A3149B07FE003433EB /* Other Frameworks */,
 			);
