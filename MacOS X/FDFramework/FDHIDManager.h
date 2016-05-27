@@ -116,22 +116,26 @@ enum FDHIDGamePadAxis
 //----------------------------------------------------------------------------------------------------------------------------
 @class FDHIDDevice;
 
-typedef struct
-{
-    FDHIDDevice*        mDevice;
-    enum FDHIDEventType mType;
-    unsigned int        mButton;
-    
-    union
-    {
-        float           mFloatVal;
-        signed int      mIntVal;
-        BOOL            mBoolVal;
-    };
-    
-    unsigned int        mPadding;
-} FDHIDEvent;
+typedef union {
+    float           mFloatVal;
+    signed int      mIntVal;
+    BOOL            mBoolVal;
+} qvariant_t;
 
+qvariant_t VARIANT_FLOAT(float f);
+qvariant_t VARIANT_INT(int i);
+qvariant_t VARIANT_BOOL(BOOL b);
+
+@interface FDHIDEvent : NSObject
+
+@property FDHIDDevice*          mDevice;
+@property enum FDHIDEventType   mType;
+@property unsigned int          mButton;
+
+@property qvariant_t            mValue;
+@property unsigned int          mPadding;
+
+@end
 //----------------------------------------------------------------------------------------------------------------------------
 
 @interface FDHIDManager : NSObject

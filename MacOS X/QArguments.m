@@ -55,15 +55,6 @@ static QArguments*      sQArgumentsShared       = nil;
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) dealloc
-{
-    [mArguments release];
-    
-    [super dealloc];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
 - (void) setEditable: (BOOL) editable
 {
     mIsEditable = editable;
@@ -80,7 +71,6 @@ static QArguments*      sQArgumentsShared       = nil;
 
 - (void) setArguments: (NSArray*) arguments
 {
-    [mArguments release];
     mArguments = [arguments mutableCopy];
 }
 
@@ -97,7 +87,7 @@ static QArguments*      sQArgumentsShared       = nil;
 {
     NSCharacterSet* quote   = [NSCharacterSet characterSetWithCharactersInString: @"\""];
     NSArray*        split   = [string componentsSeparatedByCharactersInSet: [NSCharacterSet whitespaceCharacterSet]];
-    NSMutableArray* tokens  = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* tokens  = [[NSMutableArray alloc] init];
     
     for (NSUInteger i = 0; i < [split count]; ++i)
     {
@@ -137,7 +127,7 @@ static QArguments*      sQArgumentsShared       = nil;
 
 - (NSMutableArray*) tokenizeArguments: (NSArray*) arguments fromIndex: (NSInteger) startIndex
 {
-    NSMutableArray* dicts       = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* dicts       = [[NSMutableArray alloc] init];
     NSNumber*       onState     = [NSNumber numberWithBool: YES];
     
     for (NSUInteger i = startIndex; i < [arguments count]; ++i)

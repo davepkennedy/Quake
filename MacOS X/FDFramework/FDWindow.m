@@ -65,7 +65,7 @@
         NSOpenGLContext*    glContext       = [self createGLContextWithBitsPerPixel: bitsPerPixel samples: samples];
         
         mView       = [[FDView alloc] initWithFrame: frameRect];
-        mDisplay    = [display retain];
+        mDisplay    = display;
         
         [self initCursor];
         [self setContentView: mView];
@@ -79,8 +79,6 @@
         
         [mView setOpenGLContext: glContext];
         [mView setNeedsDisplay: YES];
-        
-        [glContext release];
     }
     
     return self;
@@ -127,8 +125,6 @@
         
         [mView setOpenGLContext: glContext];
         
-        [glContext release];
-        
         mMiniImage = [self createMiniImageWithSize: NSMakeSize (FD_MINI_ICON_WIDTH, FD_MINI_ICON_HEIGHT)];
         
         [[NSNotificationCenter defaultCenter] addObserver: self
@@ -149,7 +145,6 @@
     mInvisibleCursor = [[NSCursor alloc] initWithImage: image hotSpot: NSMakePoint (8.0f, 8.0f)];
     
     [mInvisibleCursor setOnMouseEntered: YES];
-    [image release];
     
     mIsCursorVisible    = YES;
     mForceCusorVisible  = NO;
@@ -164,12 +159,6 @@
                                                   object: nil];
     
     [self setCursorVisible: YES];
-    [mMiniImage release];
-    [mView release];
-    [mInvisibleCursor release];
-    [mDisplay release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -198,20 +187,6 @@
     origin.y = NSMidY (displayRect) - NSHeight (windowRect) * 0.5f;
     
     [self setFrameOrigin: origin];
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-
-- (NSCursor *) initCursorWithImage: (NSImage *) image
-{
-    NSCursor*  cursor = [[NSCursor alloc] initWithImage: image hotSpot: NSMakePoint( 8.0, 8.0 ) ];
-    
-    if( cursor != nil )
-    {
-        [cursor setOnMouseEntered: YES];
-    }
-    
-    return cursor;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -420,8 +395,6 @@
     {
         FDError (@"Unable to create an OpenGL context. Please try other displaymode(s).");
     }
-    
-    [pixelFormat release];
     
     return context;
 }

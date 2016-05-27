@@ -452,7 +452,7 @@ const UInt8     gInNumPadKey[] =
 - (void) evaluateEvent: (NSEvent*) event
 {
     const NSEventType   eventType = [event type];
-    FDHIDEvent          keyEvent = { 0 };
+    FDHIDEvent* keyEvent = [[FDHIDEvent alloc] init];
     
     keyEvent.mDevice    = self;
     keyEvent.mType      = eFDHIDEventTypeKeyboard;
@@ -465,7 +465,7 @@ const UInt8     gInNumPadKey[] =
                 NSString*           characters      = [event charactersIgnoringModifiers];
                 const NSUInteger    numCharacters   = [characters length];
                 
-                keyEvent.mBoolVal = (eventType == NSKeyDown);
+                keyEvent.mValue = VARIANT_BOOL(eventType == NSKeyDown);
                 
                 for (NSUInteger i = 0; i < numCharacters; ++i)
                 {
@@ -487,7 +487,7 @@ const UInt8     gInNumPadKey[] =
                                 keyEvent.mButton = gInSpecialKey[character];
                             }
                             
-                            [self pushEvent: &keyEvent];
+                            [self pushEvent: keyEvent];
                         }
                     }
                     else
@@ -502,7 +502,7 @@ const UInt8     gInNumPadKey[] =
                                 {
                                     keyEvent.mButton = gInNumPadKey[keyPad];
                                     
-                                    [self pushEvent: &keyEvent];
+                                    [self pushEvent: keyEvent];
                                     break;
                                 }
                             }
@@ -517,7 +517,7 @@ const UInt8     gInNumPadKey[] =
                             
                             keyEvent.mButton = character;
                             
-                            [self pushEvent: &keyEvent];
+                            [self pushEvent: keyEvent];
                         }
                     }
                 }
@@ -535,49 +535,49 @@ const UInt8     gInNumPadKey[] =
                 if (filteredFlags & NSAlphaShiftKeyMask)
                 {
                     keyEvent.mButton = eFDHIDKeyCapsLock;
-                    keyEvent.mBoolVal = (flags & NSAlphaShiftKeyMask) ? YES : NO;
+                    keyEvent.mValue = VARIANT_BOOL((flags & NSAlphaShiftKeyMask) ? YES : NO);
                     
-                    [self pushEvent: &keyEvent];
+                    [self pushEvent: keyEvent];
                 }
                 
                 if (filteredFlags & NSShiftKeyMask)
                 {
                     keyEvent.mButton = eFDHIDKeyShift;
-                    keyEvent.mBoolVal = (flags & NSShiftKeyMask) ? YES : NO;
+                    keyEvent.mValue = VARIANT_BOOL((flags & NSShiftKeyMask) ? YES : NO);
                     
-                    [self pushEvent: &keyEvent];
+                    [self pushEvent: keyEvent];
                 }
                 
                 if (filteredFlags & NSControlKeyMask)
                 {
                     keyEvent.mButton = eFDHIDKeyControl;
-                    keyEvent.mBoolVal = (flags & NSControlKeyMask) ? YES : NO;
+                    keyEvent.mValue = VARIANT_BOOL((flags & NSControlKeyMask) ? YES : NO);
                     
-                    [self pushEvent: &keyEvent];
+                    [self pushEvent: keyEvent];
                 }
                 
                 if (filteredFlags & NSAlternateKeyMask)
                 {
                     keyEvent.mButton = eFDHIDKeyOption;
-                    keyEvent.mBoolVal = (flags & NSAlternateKeyMask) ? YES : NO;
+                    keyEvent.mValue = VARIANT_BOOL((flags & NSAlternateKeyMask) ? YES : NO);
                     
-                    [self pushEvent: &keyEvent];
+                    [self pushEvent: keyEvent];
                 }
                 
                 if (filteredFlags & NSCommandKeyMask)
                 {
                     keyEvent.mButton = eFDHIDKeyCommand;
-                    keyEvent.mBoolVal = (flags & NSCommandKeyMask) ? YES : NO;
+                    keyEvent.mValue = VARIANT_BOOL((flags & NSCommandKeyMask) ? YES : NO);
                     
-                    [self pushEvent: &keyEvent];
+                    [self pushEvent: keyEvent];
                 }
                 
                 if (filteredFlags & NSNumericPadKeyMask)
                 {
                     keyEvent.mButton = eFDHIDKeyNumLock;
-                    keyEvent.mBoolVal = (flags & NSNumericPadKeyMask) ? YES : NO;
+                    keyEvent.mValue = VARIANT_BOOL((flags & NSNumericPadKeyMask) ? YES : NO);
                     
-                    [self pushEvent: &keyEvent];
+                    [self pushEvent: keyEvent];
                 }
             }
             break;
@@ -612,11 +612,11 @@ void FDHIDKeyboard_FnHandler (id device, unsigned int keycode, IOHIDValueRef pVa
     FD_UNUSED (keycode, pElement);
     FD_ASSERT (pValue != nil);
     
-    FDHIDEvent  keyEvent = { 0 };
+    FDHIDEvent* keyEvent;
     
     keyEvent.mDevice    = device;
     keyEvent.mType      = eFDHIDEventTypeKeyboard;
-    keyEvent.mBoolVal   = NO;
+    keyEvent.mValue     = VARIANT_BOOL(NO);
     
     [device setFnKeyState: (IOHIDValueGetIntegerValue (pValue) != 0)];
     
@@ -626,7 +626,7 @@ void FDHIDKeyboard_FnHandler (id device, unsigned int keycode, IOHIDValueRef pVa
         {
             keyEvent.mButton = gInSpecialKey[i];
             
-            [device pushEvent: &keyEvent];
+            [device pushEvent: keyEvent];
         }
     }
     
@@ -636,7 +636,7 @@ void FDHIDKeyboard_FnHandler (id device, unsigned int keycode, IOHIDValueRef pVa
         {
             keyEvent.mButton = gInSpecialKeyFn[i];
             
-            [device pushEvent: &keyEvent];
+            [device pushEvent: keyEvent];
         }
     }
 }

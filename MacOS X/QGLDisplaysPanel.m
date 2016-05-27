@@ -93,11 +93,10 @@
         NSMenuItem* item = [[NSMenuItem alloc] initWithTitle: [display description] action: nil keyEquivalent: key];
         
         [item setRepresentedObject: display];
-        [[mDisplayPopUp menu] addItem: [item autorelease]];
+        [[mDisplayPopUp menu] addItem: item];
     }
     
     [mDisplayPopUp selectItemAtIndex: 0];
-    [key release];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -105,7 +104,7 @@
 - (void) buildDisplayModeList
 {
     const NSInteger     bitsPerPixel    = [mColorsPopUp selectedTag];
-    NSString*           key             = [[[NSString alloc] init] autorelease];
+    NSString*           key             = [[NSString alloc] init];
     FDDisplay*          display         = [[FDDisplay displays] objectAtIndex: [mDisplayPopUp indexOfSelectedItem]];
     FDDisplayMode*      displayModeOld  = [[mModePopUp itemAtIndex: [mModePopUp indexOfSelectedItem]] representedObject];
     
@@ -119,7 +118,7 @@
             NSMenuItem* item        = [[NSMenuItem alloc] initWithTitle: description action: nil keyEquivalent: key];
             
             [item setRepresentedObject: displayMode];
-            [[mModePopUp menu] addItem: [item autorelease]];
+            [[mModePopUp menu] addItem: item];
             
             if ([[displayModeOld description] isEqualToString: description])
             {

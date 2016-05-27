@@ -44,7 +44,6 @@
     
 	if (self != nil)
 	{
-        [self release];
         self = nil;
     }
     
@@ -60,7 +59,7 @@
 	if (self != nil)
 	{
         mStopConditionLock  = [[NSConditionLock alloc] initWithCondition: 0];
-        mFolder             = [folder retain];
+        mFolder             = folder;
         mObserver           = observer;
         mSelector           = selector;
         
@@ -109,10 +108,6 @@
 {
     [[NSDistributedNotificationCenter defaultCenter] removeObserver: self];
     
-    [mFolder release];
-    [mStopConditionLock release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -134,8 +129,7 @@
     {
         [mObserver performSelector: mSelector withObject: nil];
     }
-    
-    [self autorelease];
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

@@ -40,7 +40,7 @@
     
     if (self != nil)
     {
-        mCursor = [[NSCursor crosshairCursor] retain];
+        mCursor = [NSCursor crosshairCursor];
         
         [[NSNotificationCenter defaultCenter] addObserver: self
                                                  selector: @selector (onResizeView:)
@@ -60,9 +60,6 @@
                                                   object: self];
     
     [self setOpenGLContext: nil];
-    [mBitmapRep release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -113,14 +110,12 @@
 {
     if (mCursor != cursor)
     {
-        [mCursor release];
-        
         if (cursor == nil)
         {
             cursor = [NSCursor arrowCursor];
         }
         
-        mCursor = [cursor retain];
+        mCursor = cursor;
         
         [[self window] invalidateCursorRectsForView: self];
     }
@@ -194,7 +189,6 @@
         
         [NSOpenGLContext clearCurrentContext];
         [mOpenGLContext clearDrawable];
-        [mOpenGLContext release];
         
         mOpenGLContext = nil;
     }
@@ -203,7 +197,7 @@
     {
         [openGLContext setView: self];
         
-        mOpenGLContext = [openGLContext retain];
+        mOpenGLContext = openGLContext;
     }
 }
 
@@ -243,8 +237,6 @@
     
     if ((mBitmapRep == nil) || ([mBitmapRep pixelsWide] != width) || ([mBitmapRep pixelsHigh] != height))
     {
-        [mBitmapRep release];
-        
         mBitmapRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: NULL
                                                              pixelsWide: width
                                                              pixelsHigh: height

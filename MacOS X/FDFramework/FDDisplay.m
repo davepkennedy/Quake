@@ -88,7 +88,7 @@ typedef struct
             
             for (uint32_t i = 0; i < numDisplays; ++i)
             {
-                [displayList addObject: [[[FDDisplay alloc] initWithCGDisplayID: pDisplays[i]] autorelease]];
+                [displayList addObject: [[FDDisplay alloc] initWithCGDisplayID: pDisplays[i]]];
             }
         }
         
@@ -221,7 +221,6 @@ typedef struct
     if (self != nil)
     {
         [self doesNotRecognizeSelector: _cmd];
-        [self release];
     }
     
     return nil;
@@ -290,11 +289,7 @@ typedef struct
                     
                     if (isValid == YES)
                     {
-                        [modeList addObject: [displayMode autorelease]];
-                    }
-                    else
-                    {
-                        [displayMode release];
+                        [modeList addObject: displayMode];
                     }
                 }
             }
@@ -306,7 +301,7 @@ typedef struct
             mDisplayModes = modeList;
         }
         
-        mDisplayName    = [displayName retain];
+        mDisplayName    = displayName;
         mCGDisplayId    = displayId;
         mCGGamma        = 1.0f;
         mCanSetGamma    = [self readGammaTable: &mGammaTable];
@@ -321,12 +316,6 @@ typedef struct
 {
     [self setGamma: 1.0f update: YES];
     [self setDisplayMode: mDisplayModeOriginal];
-    
-    [mDisplayName release];
-    [mDisplayModes release];
-    [mDisplayModeOriginal release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -338,7 +327,7 @@ typedef struct
     
     if (cgDisplayMode != NULL)
     {
-        currentMode = [[[FDDisplayMode alloc] initWithCGDisplayMode: cgDisplayMode] autorelease];
+        currentMode = [[FDDisplayMode alloc] initWithCGDisplayMode: cgDisplayMode];
         
         CGDisplayModeRelease (cgDisplayMode);
     }

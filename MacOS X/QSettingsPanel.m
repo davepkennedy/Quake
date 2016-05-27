@@ -36,7 +36,7 @@
 
 - (NSToolbarItem*) toolbarItem
 {
-    NSToolbarItem* item = [[[NSToolbarItem alloc] initWithItemIdentifier: [self toolbarIdentifier]] autorelease];
+    NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier: [self toolbarIdentifier]];
     
     [item setTarget: self];
     [item setAction: @selector (showPanel:)];

@@ -153,12 +153,8 @@ const char*	Sys_FixFileNameCase (const char* pPath)
 int	Sys_FileOpenRead (char* pPath, int* pHandle)
 {
     struct stat fileStat = { 0 };
-
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     
     *pHandle = open (Sys_FixFileNameCase (pPath), O_RDONLY, 0666);
-    
-    [pool release];
     
     if (*pHandle == -1)
     {
@@ -526,14 +522,12 @@ char*	Sys_GetClipboardData (void)
 void	Sys_SendKeyEvents (void)
 {
     // will only be called if in modal loop
-    NSAutoreleasePool*  pool    = [[NSAutoreleasePool alloc] init];
     NSEvent*            event   = [NSApp nextEventMatchingMask: NSAnyEventMask
                                                      untilDate: [NSDate distantPast]
                                                         inMode: NSDefaultRunLoopMode
                                                        dequeue: YES];
     
     [NSApp sendEvent: event];
-    [pool release];
 
     IN_SendKeyEvents();
 }
@@ -621,12 +615,10 @@ int	main (int argc, const char** pArgv)
 
 #else
 
-    NSAutoreleasePool *	pool        = [[NSAutoreleasePool alloc] init];
     NSUserDefaults *	defaults    = [NSUserDefaults standardUserDefaults];
 
     [defaults registerDefaults: [NSDictionary dictionaryWithObject: @"YES" forKey: @"AppleDockIconEnabled"]];
-    [pool release];
-
+    
     return NSApplicationMain (argc, pArgv);
 
 #endif // SERVERONLY

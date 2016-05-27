@@ -93,7 +93,7 @@
     {
         if (IOHIDDeviceConformsTo (pDevice, pUsageMap[i].mUsagePage, pUsageMap[i].mUsage))
         {
-            device = [[[[self class] alloc] initWithDevice: pDevice deviceDescriptors: pUsageMap[i].mDeviceDesc] autorelease];
+            device = [[[self class] alloc] initWithDevice: pDevice deviceDescriptors: pUsageMap[i].mDeviceDesc];
             
             break;
         }
@@ -114,8 +114,8 @@
         {
             mpIOHIDDevice   = pDevice;
             
-            mVendorName     = [[self getDevicePropertyStringForKey: CFSTR (kIOHIDManufacturerKey)] retain];
-            mProductName    = [[self getDevicePropertyStringForKey: CFSTR (kIOHIDProductKey)] retain];
+            mVendorName     = [self getDevicePropertyStringForKey: CFSTR (kIOHIDManufacturerKey)];
+            mProductName    = [self getDevicePropertyStringForKey: CFSTR (kIOHIDProductKey)];
             
             FDLog (@"Found %@ by %@\n", mProductName, mVendorName);
             
@@ -142,7 +142,6 @@
         }
         else
         {
-            [self release];
             self = nil;
         }
     }
@@ -155,12 +154,6 @@
 - (void) dealloc
 {
     FDLog (@"Lost %@ by %@\n", [self productName], [self vendorName]);
-    
-    [mActuator release];
-    [mVendorName release];
-    [mProductName release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -276,7 +269,8 @@
     
     if (success)
     {
-        string = (NSString*) pProperty;
+        string = (__bridge NSString*) pProperty;
+        string = [string copy];
     }
     
     return string;

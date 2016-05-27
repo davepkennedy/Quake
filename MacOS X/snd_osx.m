@@ -111,7 +111,6 @@ qboolean SNDDMA_Init (void)
 
 void	SNDDMA_Shutdown (void)
 {
-    [sSndAudioBuffer release];
     sSndAudioBuffer = nil;
 }
 

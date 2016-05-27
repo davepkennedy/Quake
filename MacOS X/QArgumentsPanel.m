@@ -35,10 +35,6 @@
 - (void) dealloc
 {
     [self synchronize];
-    
-    [mArgumentEdit release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +45,7 @@
     
     for (NSDictionary* argument in [[QArguments sharedArguments] arguments])
     {
-       [mArguments addObject: [[argument mutableCopy] autorelease]];
+        [mArguments addObject: [argument mutableCopy]];
     }
     
     mArgumentEdit = [[QArgumentEdit alloc] init];

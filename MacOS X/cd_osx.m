@@ -76,10 +76,6 @@ int	CDAudio_Init (void)
 
 void	CDAudio_Shutdown (void)
 {
-    [sCDAudio release];
-    [sCDAudioMountPath release];
-    [sCDAudioTrackList release];
-
     sCDAudio            = nil;
     sCDAudioMountPath   = nil;
     sCDAudioTrackList   = nil;
@@ -134,11 +130,6 @@ void	CDAudio_AddTracks2List (NSString* mountPath, NSArray* extensions, NSConditi
 
 BOOL	CDAudio_ScanForMedia (NSString* mediaFolder, NSConditionLock* stopConditionLock)
 {
-    NSAutoreleasePool*  pool = [[NSAutoreleasePool alloc] init];
-    
-    [sCDAudioMountPath release];
-    [sCDAudioTrackList release];
-    
     sCDAudioMountPath   = nil;
     sCDAudioTrackList   = [[NSMutableArray alloc] init];
     sCDAudioTrack       = 0;
@@ -186,12 +177,9 @@ BOOL	CDAudio_ScanForMedia (NSString* mediaFolder, NSConditionLock* stopCondition
             break;
         }
     }
-
-    [pool release];
     
     if ([sCDAudioTrackList count] == 0)
     {
-        [sCDAudioTrackList release];
         sCDAudioTrackList = nil;
         
         Con_Print ("CDAudio: No audio tracks found!\n");
@@ -307,7 +295,6 @@ void	CD_f (void)
     // turn CD playback off:
     if (Q_strcasecmp (arg, "off") == 0)
     {
-        [sCDAudio release];
         sCDAudio = nil;
         
 		return;

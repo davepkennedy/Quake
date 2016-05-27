@@ -26,16 +26,16 @@
 {
     UInt8*  bitmapPlanes[5] = {(UInt8*) pImageData, nil, nil, nil, nil};
     
-    return [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes: bitmapPlanes
-                                                    pixelsWide: imageSize.width
-                                                    pixelsHigh: imageSize.height
-                                                 bitsPerSample: 8
-                                               samplesPerPixel: 3
-                                                      hasAlpha: NO
-                                                      isPlanar: NO
-                                                colorSpaceName: NSDeviceRGBColorSpace
-                                                   bytesPerRow: rowBytes
-                                                  bitsPerPixel: 24] autorelease];
+    return [[NSBitmapImageRep alloc] initWithBitmapDataPlanes: bitmapPlanes
+                                                   pixelsWide: imageSize.width
+                                                   pixelsHigh: imageSize.height
+                                                bitsPerSample: 8
+                                              samplesPerPixel: 3
+                                                     hasAlpha: NO
+                                                     isPlanar: NO
+                                               colorSpaceName: NSDeviceRGBColorSpace
+                                                  bytesPerRow: rowBytes
+                                                 bitsPerPixel: 24];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -131,7 +131,6 @@
     if (self != nil)
     {
         [self doesNotRecognizeSelector: _cmd];
-        [self release];
     }
     
     return nil;

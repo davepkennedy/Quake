@@ -63,23 +63,20 @@ static NSString*    sQSettingsNewGameToolbarItem = @"Quake Start ToolbarItem";
 - (void) dealloc
 {    
     [self close];
-    [mPanels release];
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
 - (void) awakeFromNib
 {
-    mPanels = [[NSArray alloc] initWithObjects: [[[QAboutPanel alloc] init] autorelease],
-                                                [[[Q_DISPLAYS_PANEL alloc] init] autorelease],
-                                                [[[QSoundPanel alloc] init] autorelease],
-                                                [[[QArgumentsPanel alloc] init] autorelease],
-                                                nil];
+    mPanels = [[NSArray alloc] initWithObjects: [[QAboutPanel alloc] init],
+               [[Q_DISPLAYS_PANEL alloc] init],
+               [[QSoundPanel alloc] init],
+               [[QArgumentsPanel alloc] init],
+               nil];
     
-    mEmptyView      = [[[self window] contentView] retain];
-    mToolbarItems   = [[NSMutableDictionary dictionary] retain];
+    mEmptyView      = [[self window] contentView];
+    mToolbarItems   = [NSMutableDictionary dictionary];
   
     for (QSettingsPanel* panel in mPanels)
     {
@@ -87,7 +84,7 @@ static NSString*    sQSettingsNewGameToolbarItem = @"Quake Start ToolbarItem";
         [mToolbarItems setObject: [panel toolbarItem] forKey: [panel toolbarIdentifier]];
     }
 
-    NSToolbarItem* item = [[[NSToolbarItem alloc] initWithItemIdentifier: sQSettingsNewGameToolbarItem] autorelease];
+    NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier: sQSettingsNewGameToolbarItem];
     
     [item setLabel: @"Play"];
     [item setPaletteLabel: @"Play"];
@@ -98,7 +95,7 @@ static NSString*    sQSettingsNewGameToolbarItem = @"Quake Start ToolbarItem";
     
     [mToolbarItems setObject: item forKey: sQSettingsNewGameToolbarItem];
     
-    NSToolbar*  toolbar = [[[NSToolbar alloc] initWithIdentifier: @"Quake Toolbar"] autorelease];
+    NSToolbar*  toolbar = [[NSToolbar alloc] initWithIdentifier: @"Quake Toolbar"];
     
     [toolbar setDelegate: self];    
     [toolbar setAllowsUserCustomization: NO];
@@ -127,7 +124,7 @@ static NSString*    sQSettingsNewGameToolbarItem = @"Quake Start ToolbarItem";
 {
     FD_UNUSED (toolbar, flag);
     
-    return [[[mToolbarItems objectForKey: identifier] copy] autorelease];
+    return [[mToolbarItems objectForKey: identifier] copy];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -204,7 +201,6 @@ static NSString*    sQSettingsNewGameToolbarItem = @"Quake Start ToolbarItem";
         
         [mStartGameTarget performSelector: mStartGameSelector withObject: nil];
         
-        [self autorelease];
     }
 }
 

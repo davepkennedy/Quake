@@ -67,7 +67,6 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
     if (self != nil)
     {
         [self doesNotRecognizeSelector: _cmd];
-        [self release];
     }
     
     return nil;
@@ -87,7 +86,7 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
         
         if (mixer != nil)
         {
-            mMixer      = [mixer retain];
+            mMixer      = mixer ;
             mBusNumber  = [mixer allocateBus];
             audioGraph  = [mixer audioGraph];
             
@@ -140,7 +139,6 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
         
         if (err != noErr)
         {
-            [self release];
             self = nil;
         }
     }
@@ -177,10 +175,8 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
         
         [mMixer removeObserver: self];
         [mMixer deallocateBus: mBusNumber];
-        [mMixer release];
     }
     
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

@@ -109,14 +109,14 @@ void FDHIDMouse_AxisHandler (id device, unsigned int axis, IOHIDValueRef pValue,
     FD_UNUSED (pElement);
     FD_ASSERT (pValue != nil);
     
-    FDHIDEvent event = { 0 };
+    FDHIDEvent* event = [[FDHIDEvent alloc] init];
     
     event.mDevice   = device;
     event.mType     = eFDHIDEventTypeMouseAxis;
     event.mButton   = axis;
-    event.mIntVal   = (signed int) IOHIDValueGetIntegerValue (pValue);
+    event.mValue   = VARIANT_INT((signed int) IOHIDValueGetIntegerValue (pValue));
     
-    [device pushEvent: &event];
+    [device pushEvent: event];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -126,14 +126,14 @@ void FDHIDMouse_ButtonHandler (id device, unsigned int button, IOHIDValueRef pVa
     FD_UNUSED (pElement);
     FD_ASSERT (pValue != nil);
     
-    FDHIDEvent      event = { 0 };
+    FDHIDEvent* event = [[FDHIDEvent alloc] init];
     
     event.mDevice   = device;
     event.mType     = eFDHIDEventTypeMouseButton;
     event.mButton   = button;
-    event.mIntVal   = (IOHIDValueGetIntegerValue (pValue) != 0);
+    event.mValue    = VARIANT_INT((IOHIDValueGetIntegerValue (pValue) != 0));
     
-    [device pushEvent: &event];
+    [device pushEvent: event];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

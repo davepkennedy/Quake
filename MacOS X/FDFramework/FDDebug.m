@@ -89,23 +89,17 @@ static NSString*        sFDDebugDefaultName = @"";
 
 - (void) dealloc
 {
-    [mName release];
-    [mLogPrefix release];
     
     if (self == sFDDebugInstance)
     {
         sFDDebugInstance = nil;
     }
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
 - (void) setName: (NSString*) name
 {
-    [mName release];
-    [mLogPrefix release];
     
     mName = [[NSString alloc] initWithString: name];
     
@@ -168,8 +162,7 @@ static NSString*        sFDDebugDefaultName = @"";
     {
         NSLog (@"%@%@", mLogPrefix, msg);
     }
-    
-    [msg release];
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -187,8 +180,6 @@ static NSString*        sFDDebugDefaultName = @"";
         NSLog (@"%@An error has occured: %@\n", mLogPrefix, msg);
         FDRunCriticalAlertPanel(@"An error has ocurred:", nil, @"%@", msg);
     }
-    
-    [msg release];
     
     exit (EXIT_FAILURE);
 }
@@ -233,12 +224,8 @@ static NSString*        sFDDebugDefaultName = @"";
             NSLog (@"%@%@ (%d): Assertion failed: %@", mLogPrefix, file, (unsigned int) line, msg);
             
             resume = (FDRunCriticalAlertPanel(@"Assertion failed:", @[@"Resume", @"Crash"], @"%@", dlg) == NSAlertFirstButtonReturn);
-            
-            [dlg release];
         }
     }
-    
-    [msg release];
     
     return resume;
 }

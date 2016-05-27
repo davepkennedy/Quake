@@ -270,14 +270,14 @@ void FDHIDGamePad_AxisHandler (id device, unsigned int axis, IOHIDValueRef pValu
     FD_ASSERT (pValue != nil);
     FD_ASSERT (pElement != nil);
     
-    FDHIDEvent  event = { 0 };
+    FDHIDEvent* event = [[FDHIDEvent alloc] init];
     
     event.mDevice   = device;
     event.mType     = eFDHIDEventTypeGamePadAxis;
     event.mButton   = axis;
-    event.mFloatVal = (FDHIDGamePad_GetValue (pValue, pElement) - 0.5f) * 2.0f;
+    event.mValue    = VARIANT_FLOAT((FDHIDGamePad_GetValue (pValue, pElement) - 0.5f) * 2.0f);
     
-    [device pushEvent: &event];
+    [device pushEvent: event];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -287,14 +287,14 @@ void FDHIDGamePad_ButtonHandler (id device, unsigned int button, IOHIDValueRef p
     FD_ASSERT (pValue != nil);
     FD_ASSERT (pElement != nil);
     
-    FDHIDEvent  event = { 0 };
+    FDHIDEvent* event = [[FDHIDEvent alloc] init];
     
     event.mDevice   = device;
     event.mType     = eFDHIDEventTypeGamePadButton;
     event.mButton   = button;
-    event.mBoolVal  = (FDHIDGamePad_GetValue (pValue, pElement) > 0.5f);
+    event.mValue  = VARIANT_BOOL((FDHIDGamePad_GetValue (pValue, pElement) > 0.5f));
     
-    [device pushEvent: &event];
+    [device pushEvent: event];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

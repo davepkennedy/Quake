@@ -165,8 +165,7 @@ void 	IN_Shutdown (void)
             [[device actuator] stop];
         }
     }
-    
-    [[FDHIDManager sharedHIDManager] release];
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -409,14 +408,14 @@ void IN_SendKeyEvents()
     
     while ((pEvent = [[FDHIDManager sharedHIDManager] nextEvent]) != nil)
     {
-        switch (pEvent->mType)
+        switch (pEvent.mType)
         {
             case eFDHIDEventTypeGamePadAxis:
                 if (allowJoy == YES)
                 {
-                    if (pEvent->mButton < FD_SIZE_OF_ARRAY (sInJoyValues))
+                    if (pEvent.mButton < FD_SIZE_OF_ARRAY (sInJoyValues))
                     {
-                        sInJoyValues[pEvent->mButton] = pEvent->mFloatVal;
+                        sInJoyValues[pEvent.mButton] = pEvent.mValue.mFloatVal;
                     }                    
                 }
                 break;
@@ -424,37 +423,37 @@ void IN_SendKeyEvents()
             case eFDHIDEventTypeGamePadButton:
                 if (allowJoy == YES)
                 {
-                    if (pEvent->mButton <= (K_AUX32 - K_AUX1))
+                    if (pEvent.mButton <= (K_AUX32 - K_AUX1))
                     {
-                        Key_Event (K_AUX1 + pEvent->mButton, pEvent->mBoolVal);
+                        Key_Event (K_AUX1 + pEvent.mButton, pEvent.mValue.mBoolVal);
                     }
                 }
                 break;
                 
             case eFDHIDEventTypeKeyboard:
-                if (pEvent->mButton < 255)
+                if (pEvent.mButton < 255)
                 {
-                    Key_Event (pEvent->mButton, pEvent->mBoolVal);
+                    Key_Event (pEvent.mButton, pEvent.mValue.mBoolVal);
                 }
                 break;
                 
             case eFDHIDEventTypeMouseAxis:
                 if (allowMouse == YES)
                 {
-                    if (pEvent->mButton == eFDHIDMouseAxisX)
+                    if (pEvent.mButton == eFDHIDMouseAxisX)
                     {
-                        sInMouseNewPosition.X += pEvent->mIntVal;
+                        sInMouseNewPosition.X += pEvent.mValue.mIntVal;
                         
                     }
-                    else if (pEvent->mButton == eFDHIDMouseAxisY)
+                    else if (pEvent.mButton == eFDHIDMouseAxisY)
                     {
-                        sInMouseNewPosition.Y += pEvent->mIntVal;
+                        sInMouseNewPosition.Y += pEvent.mValue.mIntVal;
                     }
-                    else if (pEvent->mButton == eFDHIDMouseAxisWheel)
+                    else if (pEvent.mButton == eFDHIDMouseAxisWheel)
                     {
-                        if (pEvent->mIntVal != 0)
+                        if (pEvent.mValue.mIntVal != 0)
                         {
-                            const int wheelEvent = (pEvent->mIntVal > 0) ? K_MWHEELUP : K_MWHEELDOWN;
+                            const int wheelEvent = (pEvent.mValue.mIntVal > 0) ? K_MWHEELUP : K_MWHEELDOWN;
                             
                             Key_Event (wheelEvent, true);
                             Key_Event (wheelEvent, false);
@@ -466,9 +465,9 @@ void IN_SendKeyEvents()
             case eFDHIDEventTypeMouseButton:
                 if (allowMouse == YES)
                 {
-                    if (pEvent->mButton < 5)
+                    if (pEvent.mButton < 5)
                     {
-                        Key_Event (K_MOUSE1 + pEvent->mButton, pEvent->mBoolVal);
+                        Key_Event (K_MOUSE1 + pEvent.mButton, pEvent.mValue.mBoolVal);
                     }
                 }
                 break;

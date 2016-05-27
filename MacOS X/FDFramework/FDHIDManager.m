@@ -55,13 +55,35 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 
 //----------------------------------------------------------------------------------------------------------------------------
 
+qvariant_t VARIANT_FLOAT(float f) {
+    qvariant_t v = {.mFloatVal = f};
+    return v;
+}
+
+qvariant_t VARIANT_INT(int i) {
+    qvariant_t v = {.mIntVal = i};
+    return v;
+}
+
+qvariant_t VARIANT_BOOL(BOOL b) {
+    qvariant_t v = {.mBoolVal = b};
+    return v;
+}
+
+@implementation FDHIDEvent
+
+@synthesize mDevice, mType, mButton, mValue, mPadding;
+
+@end
+
 @implementation FDHIDManager
 {
 @private
     IOHIDManagerRef     mpIOHIDManager;
     NSMutableArray*     mDevices;
     
-    FDHIDEvent*         mpEvents;
+    // Not perfect - this is now an unbounded list…
+    NSMutableArray*     mpEvents;
     NSUInteger          mReadEvent;
     NSUInteger          mWriteEvent;
     NSUInteger          mMaxEvents;
@@ -84,7 +106,6 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
     if (self != nil)
     {
         [self doesNotRecognizeSelector: _cmd];
-        [self release];
     }
     
     return nil;
@@ -99,6 +120,8 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
     if (self != nil)
     {
         BOOL success = YES;
+        
+        mpEvents = [NSMutableArray array];
         
         if (success)
         {
@@ -129,7 +152,6 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
         
         if (!success)
         {
-            [self release];
             self = nil;
         }
     }
@@ -142,7 +164,6 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 - (void) dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver: self];
-    [mDevices release];
     
     if (mpIOHIDManager)
     {
@@ -152,14 +173,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
         IOHIDManagerClose (mpIOHIDManager, kIOHIDManagerOptionNone);
     }
     
-    if (mpEvents)
-    {
-        free (mpEvents);
-    }
-    
     sFDHIDManagerInstance = nil;
-    
-    [super dealloc];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -208,9 +222,9 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
         }
     }
     
-    IOHIDManagerSetDeviceMatchingMultiple (mpIOHIDManager, (CFMutableArrayRef) matchingArray);
-    IOHIDManagerRegisterDeviceMatchingCallback (mpIOHIDManager, FDHIDManager_DeviceMatchingCallback, self);
-    IOHIDManagerRegisterDeviceRemovalCallback (mpIOHIDManager, FDHIDManager_DeviceRemovalCallback, self);
+    IOHIDManagerSetDeviceMatchingMultiple (mpIOHIDManager, (CFMutableArrayRef) CFBridgingRetain(matchingArray));
+    IOHIDManagerRegisterDeviceMatchingCallback (mpIOHIDManager, FDHIDManager_DeviceMatchingCallback, CFBridgingRetain(self));
+    IOHIDManagerRegisterDeviceRemovalCallback (mpIOHIDManager, FDHIDManager_DeviceRemovalCallback, CFBridgingRetain(self));
     IOHIDManagerScheduleWithRunLoop (mpIOHIDManager, CFRunLoopGetCurrent (), kCFRunLoopDefaultMode);
 }
 
@@ -227,14 +241,9 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 {
     const FDHIDEvent* pEvent = nil;
     
-    if (mReadEvent < mWriteEvent)
-    {
-        pEvent = &(mpEvents[mReadEvent++]);
-    }
-    else
-    {
-        mReadEvent  = 0;
-        mWriteEvent = 0;
+    if ([mpEvents count] > 0) {
+        pEvent = [mpEvents objectAtIndex:0];
+        [mpEvents removeObjectAtIndex:0];
     }
     
     return pEvent;
@@ -246,23 +255,8 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
 {
     if ([NSApp isActive] == YES)
     {
-        if (mWriteEvent == mMaxEvents)
-        {
-            mMaxEvents   = (mMaxEvents + 1) << 1;
-            mpEvents     = realloc (mpEvents, mMaxEvents * sizeof (FDHIDEvent));
-            
-            if (mpEvents == NULL)
-            {
-                mReadEvent  = 0;
-                mWriteEvent = 0;
-                mMaxEvents  = 0;
-            }
-        }
         
-        if (mWriteEvent < mMaxEvents)
-        {
-            mpEvents[mWriteEvent++] = *pEvent;
-        }
+        [mpEvents addObject:pEvent];
     }
 }
 
@@ -286,7 +280,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
                 [device setDelegate: self];
                 [mDevices addObject: device];
                 
-                IOHIDDeviceRegisterInputValueCallback (pDevice, &FDHIDManager_InputHandler, device);
+                IOHIDDeviceRegisterInputValueCallback (pDevice, &FDHIDManager_InputHandler, CFBridgingRetain(device));
                 
                 break;
             }
@@ -321,7 +315,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
     {
         if ([[FDPreferences sharedPrefs] boolForKey: FD_HID_LCC_SUPPRESS_WARNING] == NO)
         {
-            NSAlert*    alert   = [[[NSAlert alloc] init] autorelease];
+            NSAlert*    alert   = [[NSAlert alloc] init];
             NSString*   appName = [[NSRunningApplication currentApplication] localizedName];
             NSString*   message = [NSString stringWithFormat: @"An installation of the Logitech Control Center software "
                                                               @"has been detected. This software is not compatible with %@.",
@@ -358,7 +352,7 @@ void FDHIDManager_InputHandler (void* pContext, IOReturn result, void* pSender, 
     
     if ([NSApp isActive] == YES)
     {
-        FDHIDDevice* device = (FDHIDDevice*) pContext;
+        FDHIDDevice* device = (__bridge FDHIDDevice*) pContext;
         
         [device handleInput: pValue];
     }
@@ -369,10 +363,10 @@ void FDHIDManager_InputHandler (void* pContext, IOReturn result, void* pSender, 
 void FDHIDManager_DeviceMatchingCallback (void* pContext, IOReturn result, void* pSender, IOHIDDeviceRef pDevice)
 {
     FD_UNUSED (result, pSender);
-    FD_ASSERT (pContext == sFDHIDManagerInstance);
+    FD_ASSERT (pContext == (__bridge void *)(sFDHIDManagerInstance));
     FD_ASSERT (pDevice != nil);
 
-    [((FDHIDManager*) pContext) registerDevice: pDevice];
+    [((__bridge FDHIDManager*) pContext) registerDevice: pDevice];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -380,10 +374,10 @@ void FDHIDManager_DeviceMatchingCallback (void* pContext, IOReturn result, void*
 void FDHIDManager_DeviceRemovalCallback (void* pContext, IOReturn result, void* pSender, IOHIDDeviceRef pDevice) 
 {
     FD_UNUSED (result, pSender);
-    FD_ASSERT (pContext == sFDHIDManagerInstance);
+    FD_ASSERT (pContext == (__bridge void *)(sFDHIDManagerInstance));
     FD_ASSERT (pDevice != nil);
     
-    [((FDHIDManager*) pContext) unregisterDevice: pDevice];
+    [((__bridge FDHIDManager*) pContext) unregisterDevice: pDevice];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------

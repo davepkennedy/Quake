@@ -101,7 +101,7 @@
     
     if (title != nil)
     {
-        menuItem = [[[NSMenuItem alloc] initWithTitle: title action: selector keyEquivalent: [NSString string]] autorelease];
+        menuItem = [[NSMenuItem alloc] initWithTitle: title action: selector keyEquivalent: [NSString string]];
         
         if (image != nil)
         {
@@ -145,7 +145,7 @@
     [openPanel setAllowsMultipleSelection: NO];
     [openPanel setCanChooseFiles: NO];
     [openPanel setCanChooseDirectories: YES];
-    [openPanel setAccessoryView: [mOpenPanelView retain]];
+    [openPanel setAccessoryView: mOpenPanelView];
     [openPanel setDirectoryURL: [NSURL URLWithString: [[FDPreferences sharedPrefs] stringForKey: QUAKE_PREFS_KEY_AUDIO_PATH]]];
     [openPanel setTitle: @"Select the folder with the audio files:"];
     
@@ -167,7 +167,6 @@
          [self buildMenuForPath: path];
      }];
     
-    [openPanel release];
 }
 
 @end

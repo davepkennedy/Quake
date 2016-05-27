@@ -32,7 +32,6 @@
 
 + (void) initialize;
 - (id) init;
-- (void) dealloc;
 
 - (BOOL) application: (NSApplication *) sender openFile: (NSString *) filePath;
 - (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) sender;
