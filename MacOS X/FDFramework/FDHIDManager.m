@@ -11,6 +11,7 @@
 #import "FDDebug.h"
 #import "FDDefines.h"
 #import "FDPreferences.h"
+#import "FDHIDDevice.h"
 
 #import <IOKit/IOKitLib.h>
 #import <IOKit/hidsystem/IOHIDLib.h>
@@ -278,7 +279,7 @@ static void             FDHIDManager_DeviceRemovalCallback (void*, IOReturn, voi
             FD_ASSERT ([factory isSubclassOfClass: [FDHIDDevice class]]);
             FD_ASSERT ([factory respondsToSelector: @selector (deviceWithDevice:)]);
             
-            id device = [factory deviceWithDevice: pDevice];
+            FDHIDDevice* device = [factory deviceWithDevice: pDevice];
             
             if (device != nil)
             {

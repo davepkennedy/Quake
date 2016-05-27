@@ -59,6 +59,11 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
++ (NSArray*) matchingDictionaries {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
+}
+
 + (NSArray*) matchingDictionaries: (const FDHIDUsageToDevice*) pUsageMap withCount: (NSUInteger) numUsages
 {
     FD_ASSERT (pUsageMap);
@@ -337,6 +342,11 @@
 - (FDHIDActuator*)  actuator
 {
     return mActuator;
+}
+
++ (FDHIDDevice*) deviceWithDevice: (IOHIDDeviceRef) pDevice {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
 }
 
 @end

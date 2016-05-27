@@ -71,6 +71,7 @@ typedef struct
 - (BOOL) hasActuator;
 - (FDHIDActuator*)  actuator;
 
++ (NSArray*) matchingDictionaries;
 + (NSArray*) matchingDictionaries: (const FDHIDUsageToDevice*) usageMap withCount: (NSUInteger) numUsages;
 + (FDHIDDevice*) deviceWithDevice: (IOHIDDeviceRef) pDevice
                          usageMap: (const FDHIDUsageToDevice*) pUsageMap
@@ -86,6 +87,7 @@ typedef struct
 - (FDHIDElementMap*) elementMap;
 - (NSUInteger) elementCount;
 - (void) flush;
++ (FDHIDDevice*) deviceWithDevice: (IOHIDDeviceRef) pDevice;
 
 @end
 
