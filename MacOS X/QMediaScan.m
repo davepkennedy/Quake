@@ -19,9 +19,6 @@
 
 @interface QMediaScan ()
 
-- (id) init;
-- (id) initWithFolder: (NSString*) folder observer: (id) observer selector: (SEL) selector;
-
 - (void) scanComplete: (NSNotification*) notification;
 - (void) scanThread: (id) sender;
 
@@ -29,11 +26,12 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation QMediaScan
+@implementation QMediaScan {
+    void (^mCallback)();
+}
 
-+ (BOOL) scanFolder: (NSString*) folder observer: (id) observer selector: (SEL) selector
-{
-    return [[QMediaScan alloc] initWithFolder: (NSString*) folder observer: (id) observer selector: selector] != nil;
++ (BOOL) scanFolder: (NSString*) folder callback:(void(^)(void)) callback {
+    return [[QMediaScan alloc] initWithFolder:folder callback:callback] != nil;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -52,16 +50,14 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) initWithFolder: (NSString*) folder observer: (id) observer selector: (SEL) selector
-{
+- (instancetype) initWithFolder: (NSString*) folder callback:(void(^)(void)) callback {
     self = [super init];
     
-	if (self != nil)
-	{
+    if (self != nil)
+    {
         mStopConditionLock  = [[NSConditionLock alloc] initWithCondition: 0];
         mFolder             = folder;
-        mObserver           = observer;
-        mSelector           = selector;
+        mCallback           = callback;
         
         [self showWindow: nil];
         [mProgressIndicator startAnimation: nil];
@@ -125,10 +121,7 @@
     [mProgressIndicator stopAnimation: nil];
     [self close];
     
-    if ([mObserver respondsToSelector: mSelector] == YES)
-    {
-        [mObserver performSelector: mSelector withObject: nil];
-    }
+    mCallback();
 
 }
 

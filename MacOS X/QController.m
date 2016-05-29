@@ -486,7 +486,9 @@ extern void     M_Menu_Quit_f (void);
         
         mSettingsWindow = nil;
         
-        [QMediaScan scanFolder: [self mediaFolder] observer: self selector: @selector (initGame:)];
+        [QMediaScan scanFolder:[self mediaFolder] callback:^{
+            [self initGame:nil];
+        }];
     }
     FD_HANDLER;
 }

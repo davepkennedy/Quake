@@ -19,11 +19,9 @@
     
     NSConditionLock*                mStopConditionLock;
     NSString*                       mFolder;
-    id                              mObserver;
-    SEL                             mSelector;
 }
 
-+ (BOOL) scanFolder: (NSString*) folder observer: (id) observer selector: (SEL) selector;
++ (BOOL) scanFolder: (NSString*) folder callback:(void(^)(void)) callback;
 
 - (IBAction) stop: (id) sender;
 
