@@ -11,27 +11,26 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QArguments : NSObject
-{
+@interface QArguments : NSObject {
     NSMutableArray* mArguments;
-    BOOL            mIsEditable;
+    BOOL mIsEditable;
 }
 
-+ (QArguments*) sharedArguments;
++ (QArguments*)sharedArguments;
 
-- (void) setEditable: (BOOL) canEdit;
-- (BOOL) isEditable;
+- (void)setEditable:(BOOL)canEdit;
+- (BOOL)isEditable;
 
-- (void) setArgumentsFromString: (NSString*) string;
-- (void) setArgumentsFromArray: (NSArray*) array;
-- (void) setArgumentsFromProccessInfo;
+- (void)setArgumentsFromString:(NSString*)string;
+- (void)setArgumentsFromArray:(NSArray*)array;
+- (void)setArgumentsFromProccessInfo;
 
-- (void) setArguments: (NSArray*) arguments;
-- (NSMutableArray*) arguments;
+- (void)setArguments:(NSArray*)arguments;
+- (NSMutableArray*)arguments;
 
-- (BOOL) validateWithBasePath: (NSString*) basePath;
+- (BOOL)validateWithBasePath:(NSString*)basePath;
 
-- (char**) cArguments: (int*) count;
+- (char**)cArguments:(int*)count;
 
 @end
 

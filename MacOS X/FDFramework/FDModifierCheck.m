@@ -13,7 +13,7 @@
 
 @interface FDModifierCheck ()
 
-- (id) init;
+- (id)init;
 
 @end
 
@@ -23,80 +23,75 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-+ (BOOL) checkForModifier: (NSUInteger) modifierKeyMask
++ (BOOL)checkForModifier:(NSUInteger)modifierKeyMask
 {
-    BOOL        modifierWasPressed  = NO;    
-    CGEventRef  shiftDown           = CGEventCreateKeyboardEvent (NULL, (CGKeyCode) 56, true);
-    CGEventRef  shiftUp             = CGEventCreateKeyboardEvent (NULL, (CGKeyCode) 56, false);
-    
-    CGEventPost (kCGHIDEventTap, shiftDown); 
-    CGEventPost (kCGHIDEventTap, shiftUp); 
-    
-    CFRelease (shiftDown);
-    CFRelease (shiftUp);
-    
-    while (1)
-    {
-        NSEvent*            event = [NSApp nextEventMatchingMask: NSFlagsChangedMask
-                                                       untilDate: [NSDate distantPast]
-                                                          inMode: NSDefaultRunLoopMode
-                                                         dequeue: YES];
-        
+    BOOL modifierWasPressed = NO;
+    CGEventRef shiftDown = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, true);
+    CGEventRef shiftUp = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, false);
+
+    CGEventPost(kCGHIDEventTap, shiftDown);
+    CGEventPost(kCGHIDEventTap, shiftUp);
+
+    CFRelease(shiftDown);
+    CFRelease(shiftUp);
+
+    while (1) {
+        NSEvent* event = [NSApp nextEventMatchingMask:NSFlagsChangedMask
+                                            untilDate:[NSDate distantPast]
+                                               inMode:NSDefaultRunLoopMode
+                                              dequeue:YES];
+
         modifierWasPressed = ([event modifierFlags] & modifierKeyMask) != 0;
-        
-        if ((event == nil) || (modifierWasPressed == YES))
-        {
+
+        if ((event == nil) || (modifierWasPressed == YES)) {
             break;
         }
-        else
-        {
-            [NSApp sendEvent: event];
+        else {
+            [NSApp sendEvent:event];
         }
     }
 
-    
     return modifierWasPressed;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-+ (BOOL) checkForAlternateKey
++ (BOOL)checkForAlternateKey
 {
-    return ([FDModifierCheck checkForModifier: NSAlternateKeyMask]);
+    return ([FDModifierCheck checkForModifier:NSAlternateKeyMask]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-+ (BOOL) checkForCommandKey
++ (BOOL)checkForCommandKey
 {
-    return ([FDModifierCheck checkForModifier: NSCommandKeyMask]);
+    return ([FDModifierCheck checkForModifier:NSCommandKeyMask]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-+ (BOOL) checkForControlKey
++ (BOOL)checkForControlKey
 {
-    return ([FDModifierCheck checkForModifier: NSControlKeyMask]);
+    return ([FDModifierCheck checkForModifier:NSControlKeyMask]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-+ (BOOL) checkForOptionKey
++ (BOOL)checkForOptionKey
 {
     return ([FDModifierCheck checkForAlternateKey]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) init
+- (id)init
 {
     self = [super init];
-    
-    if (self != nil)
-    {
-        [self doesNotRecognizeSelector: _cmd];
+
+    if (self != nil) {
+        [self doesNotRecognizeSelector:_cmd];
     }
-    
+
     return nil;
 }
 

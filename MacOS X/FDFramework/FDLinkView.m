@@ -11,135 +11,126 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation FDLinkView
-{
+@implementation FDLinkView {
 @private
-    NSString*       mDisplayString;
-    NSURL*          mURL;
-    NSDictionary* 	mFontAttributesBlue;
-    NSDictionary* 	mFontAttributesRed;
-    BOOL			mMouseIsDown;
+    NSString* mDisplayString;
+    NSURL* mURL;
+    NSDictionary* mFontAttributesBlue;
+    NSDictionary* mFontAttributesRed;
+    BOOL mMouseIsDown;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) initWithFrame: (NSRect) frameRect
+- (id)initWithFrame:(NSRect)frameRect
 {
-    self = [super initWithFrame: frameRect];
-    
-    if (self != nil)
-    {
+    self = [super initWithFrame:frameRect];
+
+    if (self != nil) {
         [self initFontAttributes];
         [self resetCursorRects];
     }
-    
+
     return self;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) initFontAttributes
+- (void)initFontAttributes
 {
-    mFontAttributesRed  = [self fontAttributesWithColor: [NSColor redColor]];
-    mFontAttributesBlue = [self fontAttributesWithColor: [NSColor blueColor]];
+    mFontAttributesRed = [self fontAttributesWithColor:[NSColor redColor]];
+    mFontAttributesBlue = [self fontAttributesWithColor:[NSColor blueColor]];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSDictionary *) fontAttributesWithColor: (NSColor *) color
+- (NSDictionary*)fontAttributesWithColor:(NSColor*)color
 {
-    NSArray* keys = [NSArray arrayWithObjects: NSFontAttributeName,
-                     NSForegroundColorAttributeName,
-                     NSUnderlineStyleAttributeName,
-                     nil];
-    
-    NSArray* objects = [NSArray arrayWithObjects: [NSFont systemFontOfSize: [NSFont systemFontSize]],
-                        color,
-                        [NSNumber numberWithInt: NSSingleUnderlineStyle],
-                        nil];
-    
-    return [[NSDictionary alloc] initWithObjects: objects forKeys: keys];
+    NSArray* keys = [NSArray arrayWithObjects:NSFontAttributeName,
+                             NSForegroundColorAttributeName,
+                             NSUnderlineStyleAttributeName,
+                             nil];
+
+    NSArray* objects = [NSArray arrayWithObjects:[NSFont systemFontOfSize:[NSFont systemFontSize]],
+                                color,
+                                [NSNumber numberWithInt:NSSingleUnderlineStyle],
+                                nil];
+
+    return [[NSDictionary alloc] initWithObjects:objects forKeys:keys];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setURL: (NSURL*) url displayString: (NSString*) displayString
+- (void)setURL:(NSURL*)url displayString:(NSString*)displayString
 {
-    
-    if (displayString == nil)
-    {
+
+    if (displayString == nil) {
         displayString = [url absoluteString];
     }
-    
-    mDisplayString  = displayString;
-    mURL            = url;
+
+    mDisplayString = displayString;
+    mURL = url;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setURL: (NSURL*) url
+- (void)setURL:(NSURL*)url
 {
-    [self setURL: url displayString: nil];
+    [self setURL:url displayString:nil];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) drawRect: (NSRect) rect
+- (void)drawRect:(NSRect)rect
 {
-    if (mDisplayString != nil)
-    {
-        if (mMouseIsDown == YES)
-        {
-            [mDisplayString drawAtPoint: NSZeroPoint withAttributes: mFontAttributesRed];
+    if (mDisplayString != nil) {
+        if (mMouseIsDown == YES) {
+            [mDisplayString drawAtPoint:NSZeroPoint withAttributes:mFontAttributesRed];
         }
-        else
-        {
-            [mDisplayString drawAtPoint: NSZeroPoint withAttributes: mFontAttributesBlue];
+        else {
+            [mDisplayString drawAtPoint:NSZeroPoint withAttributes:mFontAttributesBlue];
         }
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) mouseDown: (NSEvent*) event;
+- (void)mouseDown:(NSEvent*)event;
 {
-    if (mDisplayString != nil)
-    {
-        NSEvent*    nextEvent = nil;
-        NSPoint 	location;
-        
+    if (mDisplayString != nil) {
+        NSEvent* nextEvent = nil;
+        NSPoint location;
+
         mMouseIsDown = YES;
-        
+
         [self setNeedsDisplay:YES];
-        
-        nextEvent = [NSApp nextEventMatchingMask: NSLeftMouseUpMask
-                                       untilDate: [NSDate distantFuture]
-                                          inMode: NSEventTrackingRunLoopMode
-                                         dequeue: YES];
-        location = [self convertPoint: [nextEvent locationInWindow] fromView: nil];
-        
-        if (NSMouseInRect (location, [self bounds], NO))
-        {
-            [[NSWorkspace sharedWorkspace] openURL: mURL];
+
+        nextEvent = [NSApp nextEventMatchingMask:NSLeftMouseUpMask
+                                       untilDate:[NSDate distantFuture]
+                                          inMode:NSEventTrackingRunLoopMode
+                                         dequeue:YES];
+        location = [self convertPoint:[nextEvent locationInWindow] fromView:nil];
+
+        if (NSMouseInRect(location, [self bounds], NO)) {
+            [[NSWorkspace sharedWorkspace] openURL:mURL];
         }
-        
+
         mMouseIsDown = NO;
-        
+
         [self setNeedsDisplay:YES];
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) resetCursorRects
+- (void)resetCursorRects
 {
-    if (mDisplayString != nil)
-    {
+    if (mDisplayString != nil) {
         NSCursor* cursor = [NSCursor pointingHandCursor];
-        
-        [cursor setOnMouseEntered: YES];
-        
-        [self addCursorRect: [self bounds] cursor: cursor];
+
+        [cursor setOnMouseEntered:YES];
+
+        [self addCursorRect:[self bounds] cursor:cursor];
     }
 }
 @end

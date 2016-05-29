@@ -7,45 +7,44 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-#import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDScreenshot : NSObject
-{
+@interface FDScreenshot : NSObject {
 }
 
-+ (BOOL) writeToFile: (NSString*) path
-              ofType: (NSBitmapImageFileType) fileType
-           fromRGB24: (void*) imageData
-            withSize: (NSSize) imageSize
-            rowbytes: (SInt32) rowbytes;
++ (BOOL)writeToFile:(NSString*)path
+             ofType:(NSBitmapImageFileType)fileType
+          fromRGB24:(void*)imageData
+           withSize:(NSSize)imageSize
+           rowbytes:(SInt32)rowbytes;
 
-+ (BOOL) writeToBMP: (NSString*) path
-          fromRGB24: (void*) imageData
-           withSize: (NSSize) imageSize
-           rowbytes: (SInt32) rowbytes;
++ (BOOL)writeToBMP:(NSString*)path
+         fromRGB24:(void*)imageData
+          withSize:(NSSize)imageSize
+          rowbytes:(SInt32)rowbytes;
 
-+ (BOOL) writeToGIF: (NSString*) path
-          fromRGB24: (void*) imageData
-           withSize: (NSSize) imageSize
-           rowbytes: (SInt32) rowbytes;
++ (BOOL)writeToGIF:(NSString*)path
+         fromRGB24:(void*)imageData
+          withSize:(NSSize)imageSize
+          rowbytes:(SInt32)rowbytes;
 
-+ (BOOL) writeToJPEG: (NSString*) path
-           fromRGB24: (void*) imageData
-            withSize: (NSSize) imageSize
-            rowbytes: (SInt32) rowbytes;
++ (BOOL)writeToJPEG:(NSString*)path
+          fromRGB24:(void*)imageData
+           withSize:(NSSize)imageSize
+           rowbytes:(SInt32)rowbytes;
 
-+ (BOOL) writeToPNG: (NSString*) path
-          fromRGB24: (void*) imageData
-           withSize: (NSSize) imageSize
-           rowbytes: (SInt32) rowbytes;
++ (BOOL)writeToPNG:(NSString*)path
+         fromRGB24:(void*)imageData
+          withSize:(NSSize)imageSize
+          rowbytes:(SInt32)rowbytes;
 
-+ (BOOL) writeToTIFF: (NSString*) path
-           fromRGB24: (void*) imageData
-            withSize: (NSSize) imageSize
-            rowbytes: (SInt32) rowbytes;
++ (BOOL)writeToTIFF:(NSString*)path
+          fromRGB24:(void*)imageData
+           withSize:(NSSize)imageSize
+           rowbytes:(SInt32)rowbytes;
 
 @end
 

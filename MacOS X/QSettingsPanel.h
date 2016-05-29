@@ -11,18 +11,17 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QSettingsPanel : NSViewController
-{
-    id      mDelegate;
+@interface QSettingsPanel : NSViewController {
+    id mDelegate;
 }
 
-- (NSString*) toolbarIdentifier;
-- (NSToolbarItem*) toolbarItem;
+- (NSString*)toolbarIdentifier;
+- (NSToolbarItem*)toolbarItem;
 
-- (void) setDelegate: (id) delegate;
-- (id) delegate;
+- (void)setDelegate:(id)delegate;
+- (id)delegate;
 
-- (void) synchronize;
+- (void)synchronize;
 
 @end
 

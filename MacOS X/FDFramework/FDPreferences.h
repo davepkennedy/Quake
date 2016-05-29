@@ -11,23 +11,22 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDPreferences : NSObject
-{
+@interface FDPreferences : NSObject {
 }
 
-+ (FDPreferences*) sharedPrefs;
++ (FDPreferences*)sharedPrefs;
 
-- (void) registerDefaults: (NSDictionary*) dictionary;
-- (void) registerDefaultObject: (NSObject*) object forKey: (NSString*) key;
+- (void)registerDefaults:(NSDictionary*)dictionary;
+- (void)registerDefaultObject:(NSObject*)object forKey:(NSString*)key;
 
-- (void) setObject: (id) object forKey: (NSString*) key;
+- (void)setObject:(id)object forKey:(NSString*)key;
 
-- (BOOL) boolForKey: (NSString*) key;
-- (NSInteger) integerForKey: (NSString*) key;
-- (NSString*) stringForKey: (NSString*) key;
-- (NSArray*) arrayForKey: (NSString*) key;
+- (BOOL)boolForKey:(NSString*)key;
+- (NSInteger)integerForKey:(NSString*)key;
+- (NSString*)stringForKey:(NSString*)key;
+- (NSArray*)arrayForKey:(NSString*)key;
 
-- (BOOL) synchronize;
+- (BOOL)synchronize;
 
 @end
 

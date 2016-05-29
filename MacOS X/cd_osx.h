@@ -13,6 +13,6 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-BOOL    CDAudio_ScanForMedia (NSString* folder, NSConditionLock* stopConditionLock);
+BOOL CDAudio_ScanForMedia(NSString* folder, NSConditionLock* stopConditionLock);
 
 //----------------------------------------------------------------------------------------------------------------------------

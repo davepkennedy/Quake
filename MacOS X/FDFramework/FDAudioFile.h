@@ -13,28 +13,27 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDAudioFile : NSObject
-{
+@interface FDAudioFile : NSObject {
 }
 
-- (id) initWithMixer: (FDAudioMixer*) mixer;
+- (id)initWithMixer:(FDAudioMixer*)mixer;
 
-- (void) setVolume: (float) volume;
-- (float) volume;
+- (void)setVolume:(float)volume;
+- (float)volume;
 
-- (BOOL) startFile: (NSURL*) url loop: (BOOL) loop;
-- (BOOL) stop;
+- (BOOL)startFile:(NSURL*)url loop:(BOOL)loop;
+- (BOOL)stop;
 
-- (void) pause;
-- (void) resume;
+- (void)pause;
+- (void)resume;
 
-- (BOOL) isPlaying;
-- (BOOL) isFinished;
-- (BOOL) loops;
+- (BOOL)isPlaying;
+- (BOOL)isFinished;
+- (BOOL)loops;
 
-- (OSStatus) startAtFrame: (SInt64) startFrame loop: (BOOL) loop;
-- (void) applicationWillHide: (NSNotification*) notification;
-- (void) applicationWillUnhide: (NSNotification*) notification;
+- (OSStatus)startAtFrame:(SInt64)startFrame loop:(BOOL)loop;
+- (void)applicationWillHide:(NSNotification*)notification;
+- (void)applicationWillUnhide:(NSNotification*)notification;
 
 @end
 

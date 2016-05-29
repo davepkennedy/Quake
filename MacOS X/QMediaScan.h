@@ -11,19 +11,18 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QMediaScan : NSWindowController
-{
+@interface QMediaScan : NSWindowController {
 @private
-    IBOutlet NSTextField*           mTextField;
-    IBOutlet NSProgressIndicator*   mProgressIndicator;
-    
-    NSConditionLock*                mStopConditionLock;
-    NSString*                       mFolder;
+    IBOutlet NSTextField* mTextField;
+    IBOutlet NSProgressIndicator* mProgressIndicator;
+
+    NSConditionLock* mStopConditionLock;
+    NSString* mFolder;
 }
 
-+ (BOOL) scanFolder: (NSString*) folder callback:(void(^)(void)) callback;
++ (BOOL)scanFolder:(NSString*)folder callback:(void (^)(void))callback;
 
-- (IBAction) stop: (id) sender;
+- (IBAction)stop:(id)sender;
 
 @end
 

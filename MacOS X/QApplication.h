@@ -15,8 +15,8 @@
 
 @interface QApplication : NSApplication
 
-- (void) handleRunCommand: (NSScriptCommand *) theCommand;
-- (void) handleConsoleCommand: (NSScriptCommand *) theCommand;
+- (void)handleRunCommand:(NSScriptCommand*)theCommand;
+- (void)handleConsoleCommand:(NSScriptCommand*)theCommand;
 
 @end
 

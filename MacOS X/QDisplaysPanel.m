@@ -16,88 +16,83 @@
 
 @implementation QDisplaysPanel
 
-- (NSString *) nibName
+- (NSString*)nibName
 {
-	return @"DisplaysPanel";
+    return @"DisplaysPanel";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) awakeFromNib
+- (void)awakeFromNib
 {
     [self buildDisplayList];
-    
-    [self selectDisplayFromDescription: [[FDPreferences sharedPrefs] stringForKey: QUAKE_PREFS_KEY_SW_DISPLAY]];
-    
-    [mFadeAllCheckBox setState: [[FDPreferences sharedPrefs] boolForKey: QUAKE_PREFS_KEY_SW_FADE_ALL]];
-    
-    if ([mDisplayPopUp numberOfItems] <= 1)
-    {
-        [mDisplayPopUp setEnabled: NO];
-        [mFadeAllCheckBox setEnabled: NO];
+
+    [self selectDisplayFromDescription:[[FDPreferences sharedPrefs] stringForKey:QUAKE_PREFS_KEY_SW_DISPLAY]];
+
+    [mFadeAllCheckBox setState:[[FDPreferences sharedPrefs] boolForKey:QUAKE_PREFS_KEY_SW_FADE_ALL]];
+
+    if ([mDisplayPopUp numberOfItems] <= 1) {
+        [mDisplayPopUp setEnabled:NO];
+        [mFadeAllCheckBox setEnabled:NO];
     }
-    else
-    {
-        [mDisplayPopUp setEnabled: YES];
-        [mFadeAllCheckBox setEnabled: YES];
+    else {
+        [mDisplayPopUp setEnabled:YES];
+        [mFadeAllCheckBox setEnabled:YES];
     }
-    
-    [self setTitle: @"Displays"];
+
+    [self setTitle:@"Displays"];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSString*) toolbarIdentifier
+- (NSString*)toolbarIdentifier
 {
     return @"Quake Displays ToolbarItem";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSToolbarItem*) toolbarItem
+- (NSToolbarItem*)toolbarItem
 {
     NSToolbarItem* item = [super toolbarItem];
-    
-    [item setLabel: @"Displays"];
-    [item setPaletteLabel: @"Displays"];
-    [item setToolTip: @"Change display settings."];
-    [item setImage: [NSImage imageNamed: @"Displays.icns"]];
-    
+
+    [item setLabel:@"Displays"];
+    [item setPaletteLabel:@"Displays"];
+    [item setToolTip:@"Change display settings."];
+    [item setImage:[NSImage imageNamed:@"Displays.icns"]];
+
     return item;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) buildDisplayList
+- (void)buildDisplayList
 {
     NSString* key = [[NSString alloc] init];
-    
+
     [mDisplayPopUp removeAllItems];
-    
-    for (FDDisplay* display in [FDDisplay displays])
-    {
-        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle: [display description] action: nil keyEquivalent: key];
-        
-        [item setRepresentedObject: display];
-        [[mDisplayPopUp menu] addItem: [item autorelease]];        
+
+    for (FDDisplay* display in [FDDisplay displays]) {
+        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:[display description] action:nil keyEquivalent:key];
+
+        [item setRepresentedObject:display];
+        [[mDisplayPopUp menu] addItem:[item autorelease]];
     }
-    
-    [mDisplayPopUp selectItemAtIndex: 0];
+
+    [mDisplayPopUp selectItemAtIndex:0];
     [key release];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) selectDisplayFromDescription: (NSString*) description
+- (void)selectDisplayFromDescription:(NSString*)description
 {
     const NSInteger numItems = [mDisplayPopUp numberOfItems];
-    
-    for (NSInteger i = 0; i < numItems; ++i)
-    {
-        if ([[[[mDisplayPopUp itemAtIndex: i] representedObject] description] isEqualToString: description] == YES)
-        {
-            [mDisplayPopUp selectItemAtIndex: i];
-            
+
+    for (NSInteger i = 0; i < numItems; ++i) {
+        if ([[[[mDisplayPopUp itemAtIndex:i] representedObject] description] isEqualToString:description] == YES) {
+            [mDisplayPopUp selectItemAtIndex:i];
+
             break;
         }
     }
@@ -105,16 +100,16 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) displayChanged: (id) sender
+- (IBAction)displayChanged:(id)sender
 {
-    [[FDPreferences sharedPrefs] setObject: mDisplayPopUp forKey: QUAKE_PREFS_KEY_SW_DISPLAY];
+    [[FDPreferences sharedPrefs] setObject:mDisplayPopUp forKey:QUAKE_PREFS_KEY_SW_DISPLAY];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) fadeChanged: (id) sender
+- (IBAction)fadeChanged:(id)sender
 {
-    [[FDPreferences sharedPrefs] setObject: mFadeAllCheckBox forKey: QUAKE_PREFS_KEY_SW_FADE_ALL];
+    [[FDPreferences sharedPrefs] setObject:mFadeAllCheckBox forKey:QUAKE_PREFS_KEY_SW_FADE_ALL];
 }
 
 @end

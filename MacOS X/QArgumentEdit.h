@@ -11,18 +11,17 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QArgumentEdit : NSWindowController
-{
+@interface QArgumentEdit : NSWindowController {
     IBOutlet NSPopUpButton* mCommandPopup;
-    IBOutlet NSTextField*   mArgumentTextField;
-    IBOutlet NSTextField*   mDescriptionTextField;
+    IBOutlet NSTextField* mArgumentTextField;
+    IBOutlet NSTextField* mDescriptionTextField;
 }
 
-- (NSInteger) edit: (NSMutableDictionary*) item modalForWindow: (NSWindow*) window;
+- (NSInteger)edit:(NSMutableDictionary*)item modalForWindow:(NSWindow*)window;
 
-- (IBAction) done: (id) cancel;
-- (IBAction) cancel: (id) sender;
-- (void) selectedArgument: (id) sender;
+- (IBAction)done:(id)cancel;
+- (IBAction)cancel:(id)sender;
+- (void)selectedArgument:(id)sender;
 
 @end
 

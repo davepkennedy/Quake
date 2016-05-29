@@ -8,7 +8,8 @@
 
 #import "FDAlertPanel.h"
 
-static NSInteger FDRunAlertPanel (NSAlertStyle alertStyle, NSString* title, NSString* message, NSArray<NSString*>* buttons) {
+static NSInteger FDRunAlertPanel(NSAlertStyle alertStyle, NSString* title, NSString* message, NSArray<NSString*>* buttons)
+{
     NSAlert* alert = [[NSAlert alloc] init];
     alert.alertStyle = alertStyle;
     alert.messageText = title;
@@ -19,7 +20,8 @@ static NSInteger FDRunAlertPanel (NSAlertStyle alertStyle, NSString* title, NSSt
     return [alert runModal];
 }
 
-NSInteger FDRunCriticalAlertPanel (NSString* title, NSArray<NSString*>* buttons, NSString* format, ...) {
+NSInteger FDRunCriticalAlertPanel(NSString* title, NSArray<NSString*>* buttons, NSString* format, ...)
+{
     va_list args;
     va_start(args, format);
     NSString* message = [[NSString alloc] initWithFormat:format arguments:args];

@@ -16,151 +16,137 @@
 
 @implementation QGLDisplaysPanel
 
-- (NSString *) nibName
+- (NSString*)nibName
 {
-	return @"GLDisplaysPanel";
+    return @"GLDisplaysPanel";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) awakeFromNib
+- (void)awakeFromNib
 {
-    if (![mColorsPopUp selectItemWithTag: [[FDPreferences sharedPrefs] integerForKey: QUAKE_PREFS_KEY_GL_COLORS]])
-    {
-        [mColorsPopUp selectItemAtIndex: 0];
-    }
-    
-    if (![mSamplesPopUp selectItemWithTag: [[FDPreferences sharedPrefs] integerForKey: QUAKE_PREFS_KEY_GL_SAMPLES]])
-    {
-        [mSamplesPopUp selectItemAtIndex: 0];
+    if (![mColorsPopUp selectItemWithTag:[[FDPreferences sharedPrefs] integerForKey:QUAKE_PREFS_KEY_GL_COLORS]]) {
+        [mColorsPopUp selectItemAtIndex:0];
     }
 
-    [mFullscreenCheckBox setState: [[FDPreferences sharedPrefs] boolForKey: QUAKE_PREFS_KEY_GL_FULLSCREEN]];
-    [mFadeAllCheckBox setState: [[FDPreferences sharedPrefs] boolForKey: QUAKE_PREFS_KEY_GL_FADE_ALL]];
-    [mColorsPopUp setEnabled: ([mFullscreenCheckBox state] == NSOnState)];
-    
+    if (![mSamplesPopUp selectItemWithTag:[[FDPreferences sharedPrefs] integerForKey:QUAKE_PREFS_KEY_GL_SAMPLES]]) {
+        [mSamplesPopUp selectItemAtIndex:0];
+    }
+
+    [mFullscreenCheckBox setState:[[FDPreferences sharedPrefs] boolForKey:QUAKE_PREFS_KEY_GL_FULLSCREEN]];
+    [mFadeAllCheckBox setState:[[FDPreferences sharedPrefs] boolForKey:QUAKE_PREFS_KEY_GL_FADE_ALL]];
+    [mColorsPopUp setEnabled:([mFullscreenCheckBox state] == NSOnState)];
+
     [self buildDisplayList];
-    [self selectDisplayFromDescription: [[FDPreferences sharedPrefs] stringForKey: QUAKE_PREFS_KEY_GL_DISPLAY]];
-    
+    [self selectDisplayFromDescription:[[FDPreferences sharedPrefs] stringForKey:QUAKE_PREFS_KEY_GL_DISPLAY]];
+
     [self buildDisplayModeList];
     [self selectDisplayModeFromDescription:[[FDPreferences sharedPrefs] stringForKey:QUAKE_PREFS_KEY_GL_DISPLAY_MODE]];
-    
-    if ([mDisplayPopUp numberOfItems] <= 1)
-    {
-        [mDisplayPopUp setEnabled: NO];
-        [mFadeAllCheckBox setEnabled: NO];
+
+    if ([mDisplayPopUp numberOfItems] <= 1) {
+        [mDisplayPopUp setEnabled:NO];
+        [mFadeAllCheckBox setEnabled:NO];
     }
-    else
-    {
-        [mDisplayPopUp setEnabled: YES];
-        [mFadeAllCheckBox setEnabled: YES];
+    else {
+        [mDisplayPopUp setEnabled:YES];
+        [mFadeAllCheckBox setEnabled:YES];
     }
-    
-    [self setTitle: @"Displays"];
+
+    [self setTitle:@"Displays"];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSString*) toolbarIdentifier
+- (NSString*)toolbarIdentifier
 {
     return @"Quake Displays ToolbarItem";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSToolbarItem*) toolbarItem
+- (NSToolbarItem*)toolbarItem
 {
     NSToolbarItem* item = [super toolbarItem];
-    
-    [item setLabel: @"Displays"];
-    [item setPaletteLabel: @"Displays"];
-    [item setToolTip: @"Change display settings."];
-    [item setImage: [NSImage imageNamed: @"Displays.icns"]];
-    
+
+    [item setLabel:@"Displays"];
+    [item setPaletteLabel:@"Displays"];
+    [item setToolTip:@"Change display settings."];
+    [item setImage:[NSImage imageNamed:@"Displays.icns"]];
+
     return item;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) buildDisplayList
+- (void)buildDisplayList
 {
-    NSString*   key = [[NSString alloc] init];
+    NSString* key = [[NSString alloc] init];
 
     [mDisplayPopUp removeAllItems];
-    
-    for (FDDisplay* display in [FDDisplay displays])
-    {
-        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle: [display description] action: nil keyEquivalent: key];
-        
-        [item setRepresentedObject: display];
-        [[mDisplayPopUp menu] addItem: item];
+
+    for (FDDisplay* display in [FDDisplay displays]) {
+        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:[display description] action:nil keyEquivalent:key];
+
+        [item setRepresentedObject:display];
+        [[mDisplayPopUp menu] addItem:item];
     }
-    
-    [mDisplayPopUp selectItemAtIndex: 0];
+
+    [mDisplayPopUp selectItemAtIndex:0];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) buildDisplayModeList
+- (void)buildDisplayModeList
 {
-    const NSInteger     bitsPerPixel    = [mColorsPopUp selectedTag];
-    NSString*           key             = [[NSString alloc] init];
-    FDDisplay*          display         = [[FDDisplay displays] objectAtIndex: [mDisplayPopUp indexOfSelectedItem]];
-    FDDisplayMode*      displayModeOld  = [[mModePopUp itemAtIndex: [mModePopUp indexOfSelectedItem]] representedObject];
-    
+    const NSInteger bitsPerPixel = [mColorsPopUp selectedTag];
+    NSString* key = [[NSString alloc] init];
+    FDDisplay* display = [[FDDisplay displays] objectAtIndex:[mDisplayPopUp indexOfSelectedItem]];
+    FDDisplayMode* displayModeOld = [[mModePopUp itemAtIndex:[mModePopUp indexOfSelectedItem]] representedObject];
+
     [mModePopUp removeAllItems];
-    
-    for (FDDisplayMode* displayMode in [display displayModes])
-    {
-        if ([displayMode bitsPerPixel] == bitsPerPixel)
-        {
-            NSString*   description = [displayMode description];
-            NSMenuItem* item        = [[NSMenuItem alloc] initWithTitle: description action: nil keyEquivalent: key];
-            
-            [item setRepresentedObject: displayMode];
-            [[mModePopUp menu] addItem: item];
-            
-            if ([[displayModeOld description] isEqualToString: description])
-            {
-                [mModePopUp selectItem: item];
+
+    for (FDDisplayMode* displayMode in [display displayModes]) {
+        if ([displayMode bitsPerPixel] == bitsPerPixel) {
+            NSString* description = [displayMode description];
+            NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:description action:nil keyEquivalent:key];
+
+            [item setRepresentedObject:displayMode];
+            [[mModePopUp menu] addItem:item];
+
+            if ([[displayModeOld description] isEqualToString:description]) {
+                [mModePopUp selectItem:item];
             }
         }
     }
-    
-    if ([mModePopUp numberOfItems] <= 1)
-    {
-        [mModePopUp addItemWithTitle: @"not available!"];
-        [mModePopUp selectItemAtIndex: 0];
-        [mModePopUp setEnabled: NO];
+
+    if ([mModePopUp numberOfItems] <= 1) {
+        [mModePopUp addItemWithTitle:@"not available!"];
+        [mModePopUp selectItemAtIndex:0];
+        [mModePopUp setEnabled:NO];
     }
-    else
-    {
-        [mModePopUp setEnabled: YES];
+    else {
+        [mModePopUp setEnabled:YES];
     }
 
-    if ([display hasFSAA] == YES)
-    {
-        [mSamplesPopUp setEnabled: YES];
+    if ([display hasFSAA] == YES) {
+        [mSamplesPopUp setEnabled:YES];
     }
-    else
-    {
-        [mSamplesPopUp setEnabled: NO];
-        [mSamplesPopUp selectItemAtIndex: 0];
+    else {
+        [mSamplesPopUp setEnabled:NO];
+        [mSamplesPopUp selectItemAtIndex:0];
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) selectDisplayFromDescription: (NSString*) description
+- (void)selectDisplayFromDescription:(NSString*)description
 {
     const NSInteger numItems = [mDisplayPopUp numberOfItems];
-    
-    for (NSInteger i = 0; i < numItems; ++i)
-    {
-        if ([[[[mDisplayPopUp itemAtIndex: i] representedObject] description] isEqualToString: description] == YES)
-        {
-            [mDisplayPopUp selectItemAtIndex: i];
-            
+
+    for (NSInteger i = 0; i < numItems; ++i) {
+        if ([[[[mDisplayPopUp itemAtIndex:i] representedObject] description] isEqualToString:description] == YES) {
+            [mDisplayPopUp selectItemAtIndex:i];
+
             break;
         }
     }
@@ -168,80 +154,78 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) selectDisplayModeFromDescription: (NSString*) description
+- (void)selectDisplayModeFromDescription:(NSString*)description
 {
     const NSInteger numItems = [mModePopUp numberOfItems];
-    
-    for (NSInteger i = 0; i < numItems; ++i)
-    {
-        if ([[[[mModePopUp itemAtIndex: i] representedObject] description] isEqualToString: description] == YES)
-        {
-            [mModePopUp selectItemAtIndex: i];
-            
+
+    for (NSInteger i = 0; i < numItems; ++i) {
+        if ([[[[mModePopUp itemAtIndex:i] representedObject] description] isEqualToString:description] == YES) {
+            [mModePopUp selectItemAtIndex:i];
+
             break;
         }
-    }    
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) displayChanged: (id) sender
+- (IBAction)displayChanged:(id)sender
 {
-    FD_UNUSED (sender);
-    
+    FD_UNUSED(sender);
+
     [self buildDisplayModeList];
-    
-    [[FDPreferences sharedPrefs] setObject: mDisplayPopUp forKey: QUAKE_PREFS_KEY_GL_DISPLAY];
-    [[FDPreferences sharedPrefs] setObject: mModePopUp forKey: QUAKE_PREFS_KEY_GL_DISPLAY_MODE];
+
+    [[FDPreferences sharedPrefs] setObject:mDisplayPopUp forKey:QUAKE_PREFS_KEY_GL_DISPLAY];
+    [[FDPreferences sharedPrefs] setObject:mModePopUp forKey:QUAKE_PREFS_KEY_GL_DISPLAY_MODE];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) fadeChanged: (id) sender
+- (IBAction)fadeChanged:(id)sender
 {
-    FD_UNUSED (sender);
-    
-    [[FDPreferences sharedPrefs] setObject: mFadeAllCheckBox forKey: QUAKE_PREFS_KEY_GL_FADE_ALL];
+    FD_UNUSED(sender);
+
+    [[FDPreferences sharedPrefs] setObject:mFadeAllCheckBox forKey:QUAKE_PREFS_KEY_GL_FADE_ALL];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) modeChanged: (id) sender
+- (IBAction)modeChanged:(id)sender
 {
-    FD_UNUSED (sender);
-    
-    [[FDPreferences sharedPrefs] setObject: mModePopUp forKey: QUAKE_PREFS_KEY_GL_DISPLAY_MODE];
+    FD_UNUSED(sender);
+
+    [[FDPreferences sharedPrefs] setObject:mModePopUp forKey:QUAKE_PREFS_KEY_GL_DISPLAY_MODE];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) colorsChanged: (id) sender
+- (IBAction)colorsChanged:(id)sender
 {
-    FD_UNUSED (sender);
-    
+    FD_UNUSED(sender);
+
     [self buildDisplayModeList];
-    
-    [[FDPreferences sharedPrefs] setObject: mColorsPopUp forKey: QUAKE_PREFS_KEY_GL_COLORS];
-    [[FDPreferences sharedPrefs] setObject: mModePopUp forKey: QUAKE_PREFS_KEY_GL_DISPLAY_MODE];
+
+    [[FDPreferences sharedPrefs] setObject:mColorsPopUp forKey:QUAKE_PREFS_KEY_GL_COLORS];
+    [[FDPreferences sharedPrefs] setObject:mModePopUp forKey:QUAKE_PREFS_KEY_GL_DISPLAY_MODE];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) samplesChanged: (id) sender
+- (IBAction)samplesChanged:(id)sender
 {
-    FD_UNUSED (sender);
-    
-    [[FDPreferences sharedPrefs] setObject: mSamplesPopUp forKey: QUAKE_PREFS_KEY_GL_SAMPLES];
+    FD_UNUSED(sender);
+
+    [[FDPreferences sharedPrefs] setObject:mSamplesPopUp forKey:QUAKE_PREFS_KEY_GL_SAMPLES];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) fullscreenChanged: (id) sender
+- (IBAction)fullscreenChanged:(id)sender
 {
-    FD_UNUSED (sender);
-    
-    [[FDPreferences sharedPrefs] setObject: mFullscreenCheckBox forKey: QUAKE_PREFS_KEY_GL_FULLSCREEN];
-    [mColorsPopUp setEnabled: ([mFullscreenCheckBox state] == NSOnState)];
+    FD_UNUSED(sender);
+
+    [[FDPreferences sharedPrefs] setObject:mFullscreenCheckBox forKey:QUAKE_PREFS_KEY_GL_FULLSCREEN];
+    [mColorsPopUp setEnabled:([mFullscreenCheckBox state] == NSOnState)];
 }
 
 @end

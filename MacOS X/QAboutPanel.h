@@ -7,27 +7,26 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-#import "QSettingsPanel.h"
 #import "FDFramework/FDLinkView.h"
+#import "QSettingsPanel.h"
 #import <Cocoa/Cocoa.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QAboutPanel : QSettingsPanel
-{
+@interface QAboutPanel : QSettingsPanel {
 @private
-    IBOutlet NSTextField*   mTitle;
-    IBOutlet FDLinkView*    mLinkView;
-    IBOutlet NSButton*      mOptionCheckBox;
+    IBOutlet NSTextField* mTitle;
+    IBOutlet FDLinkView* mLinkView;
+    IBOutlet NSButton* mOptionCheckBox;
 }
 
-- (NSString*) nibName;
-- (void) awakeFromNib;
+- (NSString*)nibName;
+- (void)awakeFromNib;
 
-- (NSString*) toolbarIdentifier;
-- (NSToolbarItem*) toolbarItem;
+- (NSString*)toolbarIdentifier;
+- (NSToolbarItem*)toolbarItem;
 
-- (IBAction) toggleOptionCheckbox: (id) sender;
+- (IBAction)toggleOptionCheckbox:(id)sender;
 
 @end
 

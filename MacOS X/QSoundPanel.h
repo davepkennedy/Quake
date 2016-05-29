@@ -12,18 +12,17 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QSoundPanel : QSettingsPanel
-{
+@interface QSoundPanel : QSettingsPanel {
 @private
-    IBOutlet NSView*        mOpenPanelView;
+    IBOutlet NSView* mOpenPanelView;
     IBOutlet NSPopUpButton* mAudioPopup;
 }
 
-- (NSString*) nibName;
-- (void) awakeFromNib;
+- (NSString*)nibName;
+- (void)awakeFromNib;
 
-- (NSString*) toolbarIdentifier;
-- (NSToolbarItem*) toolbarItem;
+- (NSString*)toolbarIdentifier;
+- (NSToolbarItem*)toolbarItem;
 
 @end
 

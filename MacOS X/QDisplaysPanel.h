@@ -12,24 +12,23 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QDisplaysPanel : QSettingsPanel
-{
+@interface QDisplaysPanel : QSettingsPanel {
 @private
-    IBOutlet NSPopUpButton*     mDisplayPopUp;
-    IBOutlet NSButton*          mFadeAllCheckBox;
+    IBOutlet NSPopUpButton* mDisplayPopUp;
+    IBOutlet NSButton* mFadeAllCheckBox;
 }
 
-- (NSString*) nibName;
-- (void) awakeFromNib;
+- (NSString*)nibName;
+- (void)awakeFromNib;
 
-- (NSString*) toolbarIdentifier;
-- (NSToolbarItem*) toolbarItem;
+- (NSString*)toolbarIdentifier;
+- (NSToolbarItem*)toolbarItem;
 
-- (void) buildDisplayList;
-- (void) selectDisplayFromDescription: (NSString*) description;
+- (void)buildDisplayList;
+- (void)selectDisplayFromDescription:(NSString*)description;
 
-- (IBAction) displayChanged: (id) sender;
-- (IBAction) fadeChanged: (id) sender;
+- (IBAction)displayChanged:(id)sender;
+- (IBAction)fadeChanged:(id)sender;
 
 @end
 

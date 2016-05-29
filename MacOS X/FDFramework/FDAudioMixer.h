@@ -11,19 +11,18 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDAudioMixer : NSObject
-{
+@interface FDAudioMixer : NSObject {
 }
 
-+ (FDAudioMixer*) sharedAudioMixer;
++ (FDAudioMixer*)sharedAudioMixer;
 
-- (id) init;
+- (id)init;
 
-- (void) start;
-- (void) stop;
+- (void)start;
+- (void)stop;
 
-- (void) applicationWillHide: (NSNotification*) notification;
-- (void) applicationWillUnhide: (NSNotification*) notification;
+- (void)applicationWillHide:(NSNotification*)notification;
+- (void)applicationWillUnhide:(NSNotification*)notification;
 
 @end
 

@@ -9,24 +9,24 @@
 
 #import "FDAudioMixer.h"
 
-#import <Cocoa/Cocoa.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <Cocoa/Cocoa.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
 @interface FDAudioMixer ()
 
-- (void) setVolume: (float) volume forBus: (AudioUnitElement) busNumber;
-- (float) volumeForBus: (AudioUnitElement) busNumber;
+- (void)setVolume:(float)volume forBus:(AudioUnitElement)busNumber;
+- (float)volumeForBus:(AudioUnitElement)busNumber;
 
-- (AUGraph) audioGraph;
-- (AUNode) mixerNode;
+- (AUGraph)audioGraph;
+- (AUNode)mixerNode;
 
-- (AudioUnitElement) allocateBus;
-- (void) deallocateBus: (AudioUnitElement) busNumber;
+- (AudioUnitElement)allocateBus;
+- (void)deallocateBus:(AudioUnitElement)busNumber;
 
-- (void) addObserver: (id) object;
-- (void) removeObserver: (id) object;
+- (void)addObserver:(id)object;
+- (void)removeObserver:(id)object;
 
 @end
 

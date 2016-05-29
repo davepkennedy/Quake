@@ -13,45 +13,44 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDDisplay : NSObject
-{
+@interface FDDisplay : NSObject {
 }
 
-+ (NSArray*) displays;
-+ (FDDisplay*) mainDisplay;
++ (NSArray*)displays;
++ (FDDisplay*)mainDisplay;
 
-- (NSRect) frame;
+- (NSRect)frame;
 
-- (NSString*) description;
+- (NSString*)description;
 
-- (FDDisplayMode*) displayMode;
-- (FDDisplayMode*) originalMode;
+- (FDDisplayMode*)displayMode;
+- (FDDisplayMode*)originalMode;
 
-- (NSArray*) displayModes;
+- (NSArray*)displayModes;
 
-- (BOOL) setDisplayMode: (FDDisplayMode*) displayMode;
+- (BOOL)setDisplayMode:(FDDisplayMode*)displayMode;
 
-- (BOOL) isMainDisplay;
-- (BOOL) isBuiltinDisplay;
-- (BOOL) isCaptured;
+- (BOOL)isMainDisplay;
+- (BOOL)isBuiltinDisplay;
+- (BOOL)isCaptured;
 
-- (BOOL) hasFSAA;
+- (BOOL)hasFSAA;
 
-- (float) gamma; 
-- (void) setGamma: (float) gamma update: (BOOL) doUpdate;
+- (float)gamma;
+- (void)setGamma:(float)gamma update:(BOOL)doUpdate;
 
-- (void) fadeOutDisplay: (float) seconds;
-- (void) fadeInDisplay: (float) seconds;
+- (void)fadeOutDisplay:(float)seconds;
+- (void)fadeInDisplay:(float)seconds;
 
-+ (void) fadeOutAllDisplays: (float) seconds;
-+ (void) fadeInAllDisplays: (float) seconds;
++ (void)fadeOutAllDisplays:(float)seconds;
++ (void)fadeInAllDisplays:(float)seconds;
 
-- (void) captureDisplay;
-- (void) releaseDisplay;
+- (void)captureDisplay;
+- (void)releaseDisplay;
 
-+ (void) captureAllDisplays;
-+ (void) releaseAllDisplays;
-+ (BOOL) isAnyDisplayCaptured;
++ (void)captureAllDisplays;
++ (void)releaseAllDisplays;
++ (BOOL)isAnyDisplayCaptured;
 
 @end
 

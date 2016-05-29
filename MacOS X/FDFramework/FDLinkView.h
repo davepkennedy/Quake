@@ -11,12 +11,11 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDLinkView : NSView
-{
+@interface FDLinkView : NSView {
 }
 
-- (void) setURL: (NSURL*) url;
-- (void) setURL: (NSURL*) url displayString: (NSString*) displayString;
+- (void)setURL:(NSURL*)url;
+- (void)setURL:(NSURL*)url displayString:(NSString*)displayString;
 
 @end
 

@@ -11,6 +11,6 @@
 #ifndef FDAlertPanel_h
 #define FDAlertPanel_h
 
-NSInteger FDRunCriticalAlertPanel (NSString* title, NSArray<NSString*>* buttons, NSString* format, ...);
+NSInteger FDRunCriticalAlertPanel(NSString* title, NSArray<NSString*>* buttons, NSString* format, ...);
 
 #endif /* FDAlertPanel_h */

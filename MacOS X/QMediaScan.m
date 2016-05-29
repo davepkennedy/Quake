@@ -7,8 +7,8 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-#import "QMediaScan.h"
 #import "QController.h"
+#import "QMediaScan.h"
 #import "QSoundPanel.h"
 
 #import "cd_osx.h"
@@ -19,8 +19,8 @@
 
 @interface QMediaScan ()
 
-- (void) scanComplete: (NSNotification*) notification;
-- (void) scanThread: (id) sender;
+- (void)scanComplete:(NSNotification*)notification;
+- (void)scanThread:(id)sender;
 
 @end
 
@@ -30,113 +30,108 @@
     void (^mCallback)();
 }
 
-+ (BOOL) scanFolder: (NSString*) folder callback:(void(^)(void)) callback {
++ (BOOL)scanFolder:(NSString*)folder callback:(void (^)(void))callback
+{
     return [[QMediaScan alloc] initWithFolder:folder callback:callback] != nil;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) init;
+- (id)init;
 {
     self = [super init];
-    
-	if (self != nil)
-	{
+
+    if (self != nil) {
         self = nil;
     }
-    
+
     return self;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (instancetype) initWithFolder: (NSString*) folder callback:(void(^)(void)) callback {
+- (instancetype)initWithFolder:(NSString*)folder callback:(void (^)(void))callback
+{
     self = [super init];
-    
-    if (self != nil)
-    {
-        mStopConditionLock  = [[NSConditionLock alloc] initWithCondition: 0];
-        mFolder             = folder;
-        mCallback           = callback;
-        
-        [self showWindow: nil];
-        [mProgressIndicator startAnimation: nil];
-        
-        [[NSDistributedNotificationCenter defaultCenter] addObserver: self
-                                                            selector: @selector (scanComplete:)
-                                                                name: @"QMediaScanIsComplete"
-                                                              object: NULL];
-        
-        [NSThread detachNewThreadSelector: @selector (scanThread:) toTarget: self withObject: self];
+
+    if (self != nil) {
+        mStopConditionLock = [[NSConditionLock alloc] initWithCondition:0];
+        mFolder = folder;
+        mCallback = callback;
+
+        [self showWindow:nil];
+        [mProgressIndicator startAnimation:nil];
+
+        [[NSDistributedNotificationCenter defaultCenter] addObserver:self
+                                                            selector:@selector(scanComplete:)
+                                                                name:@"QMediaScanIsComplete"
+                                                              object:NULL];
+
+        [NSThread detachNewThreadSelector:@selector(scanThread:) toTarget:self withObject:self];
     }
-    
+
     return self;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSString*) windowNibName
+- (NSString*)windowNibName
 {
-	return @"MediaScan";
+    return @"MediaScan";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) awakeFromNib
+- (void)awakeFromNib
 {
-    if (mFolder != nil)
-    {
-        [mTextField setStringValue: @"Scanning folder for audio files..."];
+    if (mFolder != nil) {
+        [mTextField setStringValue:@"Scanning folder for audio files..."];
     }
-    else
-    {
-        [mTextField setStringValue: @"Scanning AudioCDs..."];
+    else {
+        [mTextField setStringValue:@"Scanning AudioCDs..."];
     }
-    
-    [[self window] setTitle: [[NSRunningApplication currentApplication] localizedName]];
+
+    [[self window] setTitle:[[NSRunningApplication currentApplication] localizedName]];
     [[self window] center];
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) dealloc
+- (void)dealloc
 {
-    [[NSDistributedNotificationCenter defaultCenter] removeObserver: self];
-    
+    [[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) stop: (id) sender
+- (IBAction)stop:(id)sender
 {
     [mStopConditionLock lock];
-    [mStopConditionLock unlockWithCondition: 1];
+    [mStopConditionLock unlockWithCondition:1];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) scanComplete: (NSNotification*) notification
+- (void)scanComplete:(NSNotification*)notification
 {
-    [mProgressIndicator stopAnimation: nil];
+    [mProgressIndicator stopAnimation:nil];
     [self close];
-    
-    mCallback();
 
+    mCallback();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) scanThread: (id) sender
+- (void)scanThread:(id)sender
 {
-    FD_UNUSED (sender);
-    
+    FD_UNUSED(sender);
+
     FD_DURING
     {
-        CDAudio_ScanForMedia (mFolder, mStopConditionLock);
-        
-        [[NSDistributedNotificationCenter defaultCenter] postNotificationName: @"QMediaScanIsComplete" object: nil];
-        
+        CDAudio_ScanForMedia(mFolder, mStopConditionLock);
+
+        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"QMediaScanIsComplete" object:nil];
+
         [NSThread exit];
     }
     FD_HANDLER;

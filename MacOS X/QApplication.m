@@ -19,45 +19,40 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) handleRunCommand: (NSScriptCommand*) command
+- (void)handleRunCommand:(NSScriptCommand*)command
 {
     QArguments* arguments = [QArguments sharedArguments];
-    
-    if ([arguments isEditable] == YES)
-    {
-        NSDictionary*   args = [command evaluatedArguments];
-    
-        if (args != nil)
-        {
-            NSString*   params = [args objectForKey: @"QuakeParameters"];
-            
-            if (params == nil)
-            {
+
+    if ([arguments isEditable] == YES) {
+        NSDictionary* args = [command evaluatedArguments];
+
+        if (args != nil) {
+            NSString* params = [args objectForKey:@"QuakeParameters"];
+
+            if (params == nil) {
                 params = [NSString string];
             }
 
-            [[QArguments sharedArguments] setArgumentsFromString: [args objectForKey: @"QuakeParameters"]];
+            [[QArguments sharedArguments] setArgumentsFromString:[args objectForKey:@"QuakeParameters"]];
         }
-        
-        [[QArguments sharedArguments] setEditable: NO];
+
+        [[QArguments sharedArguments] setEditable:NO];
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) handleConsoleCommand: (NSScriptCommand*) command
+- (void)handleConsoleCommand:(NSScriptCommand*)command
 {
-    NSDictionary*   args = [command evaluatedArguments];
+    NSDictionary* args = [command evaluatedArguments];
 
-    if (args != nil)
-    {
-        NSString*   commandList= [args objectForKey: @"QuakeCommandlist"];
-        
-        if (commandList != nil && [commandList isEqualToString:@""] == NO)
-        {
-            QController*    controller = [self delegate];
-            
-            [controller requestCommand: commandList];
+    if (args != nil) {
+        NSString* commandList = [args objectForKey:@"QuakeCommandlist"];
+
+        if (commandList != nil && [commandList isEqualToString:@""] == NO) {
+            QController* controller = [self delegate];
+
+            [controller requestCommand:commandList];
         }
     }
 }

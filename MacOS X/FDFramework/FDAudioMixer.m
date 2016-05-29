@@ -7,271 +7,253 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-#import "FDAudioMixer.h"
 #import "FDAudioInternal.h"
+#import "FDAudioMixer.h"
 #import "FDDefines.h"
 
+#import <AudioToolbox/AudioToolbox.h>
 #import <Cocoa/Cocoa.h>
 #import <CoreAudio/CoreAudio.h>
-#import <AudioToolbox/AudioToolbox.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-static dispatch_once_t  sFDAudioMixerPredicate  = 0;
-static FDAudioMixer*    sFDAudioMixerShared     = nil;
+static dispatch_once_t sFDAudioMixerPredicate = 0;
+static FDAudioMixer* sFDAudioMixerShared = nil;
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation FDAudioMixer
-{
+@implementation FDAudioMixer {
 @private
-    AUGraph             mAudioGraph;
-    AudioUnit           mMixerUnit;
-    AUNode              mMixerNode;
-    NSMutableSet*       mBusNumbers;
-    NSMutableArray*     mObservers;
+    AUGraph mAudioGraph;
+    AudioUnit mMixerUnit;
+    AUNode mMixerNode;
+    NSMutableSet* mBusNumbers;
+    NSMutableArray* mObservers;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-+ (FDAudioMixer*) sharedAudioMixer
++ (FDAudioMixer*)sharedAudioMixer
 {
-    dispatch_once (&sFDAudioMixerPredicate, ^{ sFDAudioMixerShared = [[FDAudioMixer alloc] init]; });
-    
+    dispatch_once(&sFDAudioMixerPredicate, ^{
+        sFDAudioMixerShared = [[FDAudioMixer alloc] init];
+    });
+
     return sFDAudioMixerShared;
 }
 
-- (id) init
+- (id)init
 {
     self = [super init];
-    
-    if (self)
-    {
-        AUNode      outputNode  = 0;
-        OSStatus    err         = NewAUGraph (&mAudioGraph);
-        
-        if (err == noErr)
-        {
-            AudioComponentDescription	outputDesc = { 0 };
-            
-            outputDesc.componentType          = kAudioUnitType_Output;
-            outputDesc.componentSubType       = kAudioUnitSubType_DefaultOutput;
-            outputDesc.componentManufacturer  = kAudioUnitManufacturer_Apple;
-            
-            err = AUGraphAddNode (mAudioGraph, &outputDesc, &outputNode);
+
+    if (self) {
+        AUNode outputNode = 0;
+        OSStatus err = NewAUGraph(&mAudioGraph);
+
+        if (err == noErr) {
+            AudioComponentDescription outputDesc = { 0 };
+
+            outputDesc.componentType = kAudioUnitType_Output;
+            outputDesc.componentSubType = kAudioUnitSubType_DefaultOutput;
+            outputDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+            err = AUGraphAddNode(mAudioGraph, &outputDesc, &outputNode);
         }
-        
-        if (err == noErr)
-        {
-            AudioComponentDescription	mixerDesc = { 0 };
-            
-            mixerDesc.componentType             = kAudioUnitType_Mixer;
-            mixerDesc.componentSubType          = kAudioUnitSubType_StereoMixer;
-            mixerDesc.componentManufacturer     = kAudioUnitManufacturer_Apple;
-            
-            err = AUGraphAddNode (mAudioGraph, &mixerDesc, &mMixerNode);
+
+        if (err == noErr) {
+            AudioComponentDescription mixerDesc = { 0 };
+
+            mixerDesc.componentType = kAudioUnitType_Mixer;
+            mixerDesc.componentSubType = kAudioUnitSubType_StereoMixer;
+            mixerDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+            err = AUGraphAddNode(mAudioGraph, &mixerDesc, &mMixerNode);
         }
-        
-        if (err == noErr)
-        {
-            err = AUGraphConnectNodeInput (mAudioGraph, mMixerNode, 0, outputNode, 0);
+
+        if (err == noErr) {
+            err = AUGraphConnectNodeInput(mAudioGraph, mMixerNode, 0, outputNode, 0);
         }
-        
-        if (err == noErr)
-        {
-            err = AUGraphOpen (mAudioGraph);
+
+        if (err == noErr) {
+            err = AUGraphOpen(mAudioGraph);
         }
-        
-        if (err == noErr)
-        {
-            err = AUGraphInitialize (mAudioGraph);
+
+        if (err == noErr) {
+            err = AUGraphInitialize(mAudioGraph);
         }
-        
-        if (err == noErr)
-        {
-            err = AUGraphNodeInfo (mAudioGraph, mMixerNode, 0, &mMixerUnit);
+
+        if (err == noErr) {
+            err = AUGraphNodeInfo(mAudioGraph, mMixerNode, 0, &mMixerUnit);
         }
-        
-        if (err == noErr)
-        {
+
+        if (err == noErr) {
             mBusNumbers = [[NSMutableSet alloc] init];
-            mObservers  = [[NSMutableArray alloc] init];
+            mObservers = [[NSMutableArray alloc] init];
         }
-        
-        if (err == noErr)
-        {
+
+        if (err == noErr) {
             NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
-            
-            [notificationCenter addObserver: self
-                                   selector: @selector (applicationWillHide:)
-                                       name: NSApplicationWillHideNotification
-                                     object: nil];
-            
-            [notificationCenter addObserver: self
-                                   selector: @selector (applicationWillUnhide:)
-                                       name: NSApplicationWillUnhideNotification
-                                     object: nil];
+
+            [notificationCenter addObserver:self
+                                   selector:@selector(applicationWillHide:)
+                                       name:NSApplicationWillHideNotification
+                                     object:nil];
+
+            [notificationCenter addObserver:self
+                                   selector:@selector(applicationWillUnhide:)
+                                       name:NSApplicationWillUnhideNotification
+                                     object:nil];
         }
-        
-        if (err != noErr)
-        {
+
+        if (err != noErr) {
             self = nil;
         }
     }
-    
+
     return self;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) dealloc
+- (void)dealloc
 {
-    [[NSNotificationCenter defaultCenter] removeObserver: self];
-    
-    if (mAudioGraph != nil)
-    {
-        AUGraphStop (mAudioGraph);
-        DisposeAUGraph (mAudioGraph);
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    if (mAudioGraph != nil) {
+        AUGraphStop(mAudioGraph);
+        DisposeAUGraph(mAudioGraph);
     }
-    
-    if (self == sFDAudioMixerShared)
-    {
+
+    if (self == sFDAudioMixerShared) {
         sFDAudioMixerShared = nil;
     }
-    
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setVolume: (float) volume forBus: (AudioUnitElement) busNumber
+- (void)setVolume:(float)volume forBus:(AudioUnitElement)busNumber
 {
-    if (mMixerUnit != 0)
-    {
-        if( volume < 0.0f )
-        {
+    if (mMixerUnit != 0) {
+        if (volume < 0.0f) {
             volume = 0.0f;
         }
-        else if( volume > 1.0f )
-        {
+        else if (volume > 1.0f) {
             volume = 1.0f;
         }
-        
-        AudioUnitSetParameter (mMixerUnit, kStereoMixerParam_Volume, kAudioUnitScope_Input, busNumber, volume, 0);
+
+        AudioUnitSetParameter(mMixerUnit, kStereoMixerParam_Volume, kAudioUnitScope_Input, busNumber, volume, 0);
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (float) volumeForBus: (AudioUnitElement) busNumber
+- (float)volumeForBus:(AudioUnitElement)busNumber
 {
     AudioUnitParameterValue volume = 0.0f;
-    
-    AudioUnitGetParameter (mMixerUnit, kStereoMixerParam_Volume, kAudioUnitScope_Input, busNumber, &volume);
-    
+
+    AudioUnitGetParameter(mMixerUnit, kStereoMixerParam_Volume, kAudioUnitScope_Input, busNumber, &volume);
+
     return volume;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (AUGraph) audioGraph
+- (AUGraph)audioGraph
 {
     return mAudioGraph;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (AUNode) mixerNode
+- (AUNode)mixerNode
 {
     return mMixerNode;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) start
+- (void)start
 {
-    AUGraphStart (mAudioGraph);
+    AUGraphStart(mAudioGraph);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) stop
+- (void)stop
 {
-    AUGraphStop (mAudioGraph);
+    AUGraphStop(mAudioGraph);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) isRunning
+- (BOOL)isRunning
 {
     Boolean isRunning = false;
-    
-    if (mAudioGraph != nil)
-    {
-        AUGraphIsRunning (mAudioGraph, &isRunning);
+
+    if (mAudioGraph != nil) {
+        AUGraphIsRunning(mAudioGraph, &isRunning);
     }
-    
+
     return isRunning;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (AudioUnitElement) allocateBus
+- (AudioUnitElement)allocateBus
 {
     AudioUnitElement i = 0;
-    
-    while (1)
-    {
-        NSNumber* busNumber = [[NSNumber alloc] initWithInt: i];
-        
-        if ([mBusNumbers containsObject: busNumber] == NO)
-        {
-            [mBusNumbers addObject: busNumber];
+
+    while (1) {
+        NSNumber* busNumber = [[NSNumber alloc] initWithInt:i];
+
+        if ([mBusNumbers containsObject:busNumber] == NO) {
+            [mBusNumbers addObject:busNumber];
             break;
         }
-        
+
         ++i;
     }
-    
+
     return i;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) deallocateBus: (AudioUnitElement) busNumber
+- (void)deallocateBus:(AudioUnitElement)busNumber
 {
-    [mBusNumbers removeObject: [NSNumber numberWithInt: busNumber]];
+    [mBusNumbers removeObject:[NSNumber numberWithInt:busNumber]];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) addObserver: (id) object
+- (void)addObserver:(id)object
 {
-    [mObservers addObject: object];
+    [mObservers addObject:object];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) removeObserver: (id) object
+- (void)removeObserver:(id)object
 {
-    [mObservers removeObject: object];
+    [mObservers removeObject:object];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) applicationWillHide: (NSNotification*) notification
+- (void)applicationWillHide:(NSNotification*)notification
 {
-    [mObservers makeObjectsPerformSelector: @selector(applicationWillHide:) withObject: notification];
-    
-    AUGraphStop (mAudioGraph);
+    [mObservers makeObjectsPerformSelector:@selector(applicationWillHide:) withObject:notification];
+
+    AUGraphStop(mAudioGraph);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) applicationWillUnhide: (NSNotification*) notification
+- (void)applicationWillUnhide:(NSNotification*)notification
 {
-    [mObservers makeObjectsPerformSelector: @selector(applicationWillUnhide:) withObject: notification];
-    
-    AUGraphStart (mAudioGraph);
+    [mObservers makeObjectsPerformSelector:@selector(applicationWillUnhide:) withObject:notification];
+
+    AUGraphStart(mAudioGraph);
 }
 
 @end

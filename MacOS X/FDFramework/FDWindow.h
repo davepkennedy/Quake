@@ -13,35 +13,34 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-typedef void (*FDResizeHandler) (id fdView, void* pContext);
+typedef void (*FDResizeHandler)(id fdView, void* pContext);
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDWindow : NSWindow
-{
+@interface FDWindow : NSWindow {
 }
 
-- (id) initForDisplay: (FDDisplay*) display;
-- (id) initForDisplay: (FDDisplay*) display samples: (NSUInteger) samples;
+- (id)initForDisplay:(FDDisplay*)display;
+- (id)initForDisplay:(FDDisplay*)display samples:(NSUInteger)samples;
 
-- (id) initWithContentRect: (NSRect) rect;
-- (id) initWithContentRect: (NSRect) rect samples: (NSUInteger) samples;
+- (id)initWithContentRect:(NSRect)rect;
+- (id)initWithContentRect:(NSRect)rect samples:(NSUInteger)samples;
 
-- (void) setResizeHandler: (FDResizeHandler) pResizeHandler forContext: (void*) pContext;
+- (void)setResizeHandler:(FDResizeHandler)pResizeHandler forContext:(void*)pContext;
 
-- (void) centerForDisplay: (FDDisplay*) display;
+- (void)centerForDisplay:(FDDisplay*)display;
 
-- (void) setCursorVisible: (BOOL) state;
-- (BOOL) isCursorVisible;
+- (void)setCursorVisible:(BOOL)state;
+- (BOOL)isCursorVisible;
 
-- (void) setVsync: (BOOL) enabled;
-- (BOOL) vsync;
+- (void)setVsync:(BOOL)enabled;
+- (BOOL)vsync;
 
-- (NSOpenGLContext*) openGLContext;
+- (NSOpenGLContext*)openGLContext;
 
-- (BOOL) isFullscreen;
+- (BOOL)isFullscreen;
 
-- (void) endFrame;
+- (void)endFrame;
 
 @end
 

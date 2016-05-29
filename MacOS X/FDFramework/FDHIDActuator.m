@@ -16,291 +16,261 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-#import "FDHIDActuator.h"
-#import "FDHIDDevice.h"
 #import "FDDebug.h"
 #import "FDDefines.h"
+#import "FDHIDActuator.h"
+#import "FDHIDDevice.h"
 
 #import <Cocoa/Cocoa.h>
 #import <ForceFeedback/ForceFeedback.h>
 
-#import <IOKit/hidsystem/IOHIDLib.h>
 #import <IOKit/hid/IOHIDLib.h>
+#import <IOKit/hidsystem/IOHIDLib.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-static const DWORD  sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
+static const DWORD sFDHIDActuatorDuration = 2 * FF_SECONDS / 100;
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@implementation FDHIDActuator
-{
-    io_service_t            mIoService;
+@implementation FDHIDActuator {
+    io_service_t mIoService;
     FFDeviceObjectReference mpDevice;
     FFEffectObjectReference mpEffect;
-    FFEFFECT                mEffectParams;
-    FFENVELOPE              mEffectEnvelope;
-    FFPERIODIC              mEffectPeriodic;
-    DWORD                   mEffectAxes[32];
-    LONG                    mEffectDirection[2];
-    
+    FFEFFECT mEffectParams;
+    FFENVELOPE mEffectEnvelope;
+    FFPERIODIC mEffectPeriodic;
+    DWORD mEffectAxes[32];
+    LONG mEffectDirection[2];
 }
 
-- (id) init
+- (id)init
 {
     self = [super init];
-    
+
     return nil;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) initWithDevice: (FDHIDDevice*) device
+- (id)initWithDevice:(FDHIDDevice*)device
 {
     self = [super init];
-    
-    if (self != nil)
-    {
-        FFCAPABILITIES          features        = { 0 };
-        UInt32                  autocenter      = 0;
-        UInt32                  gain            = FF_FFNOMINALMAX;
-        IOHIDDeviceRef          pDevice         = [device iohidDeviceRef];
-        CFMutableDictionaryRef  matchingDict    = nil;
-        CFTypeRef               cfType          = nil;
-        bool                    success         = (pDevice != nil);
-        
-        if (success)
-        {
-            matchingDict    = IOServiceMatching (kIOHIDDeviceKey);
-            success         = matchingDict != nil;
+
+    if (self != nil) {
+        FFCAPABILITIES features = { 0 };
+        UInt32 autocenter = 0;
+        UInt32 gain = FF_FFNOMINALMAX;
+        IOHIDDeviceRef pDevice = [device iohidDeviceRef];
+        CFMutableDictionaryRef matchingDict = nil;
+        CFTypeRef cfType = nil;
+        bool success = (pDevice != nil);
+
+        if (success) {
+            matchingDict = IOServiceMatching(kIOHIDDeviceKey);
+            success = matchingDict != nil;
         }
-        
-        if (success)
-        {
-            cfType = IOHIDDeviceGetProperty (pDevice, CFSTR (kIOHIDLocationIDKey));
+
+        if (success) {
+            cfType = IOHIDDeviceGetProperty(pDevice, CFSTR(kIOHIDLocationIDKey));
             success = (cfType != nil);
         }
-        
-        if (success)
-        {
-            CFDictionaryAddValue (matchingDict, CFSTR (kIOHIDLocationIDKey), cfType);
-            CFRelease (cfType);
-            
-            mIoService = IOServiceGetMatchingService (kIOMasterPortDefault, matchingDict);
-            success    = (mIoService != 0);
+
+        if (success) {
+            CFDictionaryAddValue(matchingDict, CFSTR(kIOHIDLocationIDKey), cfType);
+            CFRelease(cfType);
+
+            mIoService = IOServiceGetMatchingService(kIOMasterPortDefault, matchingDict);
+            success = (mIoService != 0);
         }
-        
-        if (success)
-        {
-            success = (FFIsForceFeedback (mIoService) == FF_OK);
+
+        if (success) {
+            success = (FFIsForceFeedback(mIoService) == FF_OK);
         }
-        
-        if (success)
-        {
-            success = (FFCreateDevice (mIoService, &mpDevice) == FF_OK);
+
+        if (success) {
+            success = (FFCreateDevice(mIoService, &mpDevice) == FF_OK);
         }
-        
-        if (success)
-        {
+
+        if (success) {
             success = (FFDeviceGetForceFeedbackCapabilities(mpDevice, &features) == FF_OK);
         }
-        
-        if (success)
-        {
+
+        if (success) {
             success = ((features.supportedEffects & FFCAP_ET_SINE) == FFCAP_ET_SINE);
         }
-        
-        if (success)
-        {
+
+        if (success) {
             success = (features.subType == FFCAP_ST_VIBRATION);
         }
-        
-        if (success)
-        {
-            success = (FFDeviceSendForceFeedbackCommand (mpDevice, FFSFFC_RESET) == FF_OK);
+
+        if (success) {
+            success = (FFDeviceSendForceFeedbackCommand(mpDevice, FFSFFC_RESET) == FF_OK);
         }
-        
-        if (success)
-        {
-            success = (FFDeviceSendForceFeedbackCommand  (mpDevice, FFSFFC_SETACTUATORSON) == FF_OK);
+
+        if (success) {
+            success = (FFDeviceSendForceFeedbackCommand(mpDevice, FFSFFC_SETACTUATORSON) == FF_OK);
         }
-        
-        if (success)
-        {
-            FFDeviceSetForceFeedbackProperty (mpDevice, FFPROP_AUTOCENTER, &autocenter);
+
+        if (success) {
+            FFDeviceSetForceFeedbackProperty(mpDevice, FFPROP_AUTOCENTER, &autocenter);
         }
-        
-        if (success)
-        {
-            success = (FFDeviceSetForceFeedbackProperty (mpDevice, FFPROP_FFGAIN, &gain) == FF_OK);
+
+        if (success) {
+            success = (FFDeviceSetForceFeedbackProperty(mpDevice, FFPROP_FFGAIN, &gain) == FF_OK);
         }
-        
-        if (success)
-        {
-            for (NSUInteger i = 0; i < FD_SIZE_OF_ARRAY (features.ffAxes); ++i)
-            {
+
+        if (success) {
+            for (NSUInteger i = 0; i < FD_SIZE_OF_ARRAY(features.ffAxes); ++i) {
                 mEffectAxes[i] = features.ffAxes[i];
             }
-            
-            mEffectParams.dwSize                    = sizeof (FFEFFECT);
-            mEffectParams.dwFlags                   = FFEFF_OBJECTOFFSETS | FFEFF_SPHERICAL;
-            mEffectParams.dwDuration                = FF_INFINITE;
-            mEffectParams.dwSamplePeriod            = 0;
-            mEffectParams.dwGain                    = FF_FFNOMINALMAX;
-            mEffectParams.dwTriggerButton           = FFEB_NOTRIGGER;
-            mEffectParams.dwTriggerRepeatInterval   = 0;
-            mEffectParams.cAxes                     = features.numFfAxes;
-            mEffectParams.rgdwAxes                  = &(mEffectAxes[0]);
-            mEffectParams.rglDirection              = &(mEffectDirection[0]);
-            mEffectParams.lpEnvelope                = &mEffectEnvelope;
-            mEffectParams.cbTypeSpecificParams      = sizeof (FFPERIODIC);
-            mEffectParams.lpvTypeSpecificParams     = &mEffectPeriodic;
-            mEffectParams.dwStartDelay              = 0;
-            
-            mEffectPeriodic.dwMagnitude             = 8 * FF_FFNOMINALMAX / 10;
-            mEffectPeriodic.lOffset                 = 0;
-            mEffectPeriodic.dwPhase                 = 0;
-            mEffectPeriodic.dwPeriod                = sFDHIDActuatorDuration;
-            
-            mEffectEnvelope.dwSize                  = sizeof (FFENVELOPE);
-            mEffectEnvelope.dwAttackLevel           = 8 * FF_FFNOMINALMAX / 10;
-            mEffectEnvelope.dwAttackTime            = 0 * FF_SECONDS;
-            mEffectEnvelope.dwFadeLevel             = 8 * FF_FFNOMINALMAX / 10;
-            mEffectEnvelope.dwFadeTime              = 0 * FF_SECONDS;
-            
-            mEffectDirection[0]                     = 270 * FF_DEGREES;
-            mEffectDirection[1]                     = 0 * FF_DEGREES;
-            
-            success = (FFDeviceCreateEffect (mpDevice, kFFEffectType_Sine_ID, &mEffectParams, &mpEffect) == FF_OK);
+
+            mEffectParams.dwSize = sizeof(FFEFFECT);
+            mEffectParams.dwFlags = FFEFF_OBJECTOFFSETS | FFEFF_SPHERICAL;
+            mEffectParams.dwDuration = FF_INFINITE;
+            mEffectParams.dwSamplePeriod = 0;
+            mEffectParams.dwGain = FF_FFNOMINALMAX;
+            mEffectParams.dwTriggerButton = FFEB_NOTRIGGER;
+            mEffectParams.dwTriggerRepeatInterval = 0;
+            mEffectParams.cAxes = features.numFfAxes;
+            mEffectParams.rgdwAxes = &(mEffectAxes[0]);
+            mEffectParams.rglDirection = &(mEffectDirection[0]);
+            mEffectParams.lpEnvelope = &mEffectEnvelope;
+            mEffectParams.cbTypeSpecificParams = sizeof(FFPERIODIC);
+            mEffectParams.lpvTypeSpecificParams = &mEffectPeriodic;
+            mEffectParams.dwStartDelay = 0;
+
+            mEffectPeriodic.dwMagnitude = 8 * FF_FFNOMINALMAX / 10;
+            mEffectPeriodic.lOffset = 0;
+            mEffectPeriodic.dwPhase = 0;
+            mEffectPeriodic.dwPeriod = sFDHIDActuatorDuration;
+
+            mEffectEnvelope.dwSize = sizeof(FFENVELOPE);
+            mEffectEnvelope.dwAttackLevel = 8 * FF_FFNOMINALMAX / 10;
+            mEffectEnvelope.dwAttackTime = 0 * FF_SECONDS;
+            mEffectEnvelope.dwFadeLevel = 8 * FF_FFNOMINALMAX / 10;
+            mEffectEnvelope.dwFadeTime = 0 * FF_SECONDS;
+
+            mEffectDirection[0] = 270 * FF_DEGREES;
+            mEffectDirection[1] = 0 * FF_DEGREES;
+
+            success = (FFDeviceCreateEffect(mpDevice, kFFEffectType_Sine_ID, &mEffectParams, &mpEffect) == FF_OK);
         }
-        
-        if (success)
-        {
+
+        if (success) {
             success = (mpEffect != NULL);
         }
-        
-        if (success)
-        {
-            const HRESULT result = FFEffectDownload (mpEffect);
-            
+
+        if (success) {
+            const HRESULT result = FFEffectDownload(mpEffect);
+
             success = ((result == FF_OK) || (result == S_FALSE));
         }
-        
-        if (success)
-        {
-            FDLog (@"%@ has an actuator!\n", [device productName]);
+
+        if (success) {
+            FDLog(@"%@ has an actuator!\n", [device productName]);
         }
-        
-        if (!success)
-        {
+
+        if (!success) {
             self = nil;
         }
     }
-    
+
     return self;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) dealloc
+- (void)dealloc
 {
-    if (mpDevice)
-    {
-        if (mpEffect)
-        {
-            FFDeviceReleaseEffect (mpDevice, mpEffect);
+    if (mpDevice) {
+        if (mpEffect) {
+            FFDeviceReleaseEffect(mpDevice, mpEffect);
         }
-        
-        FFReleaseDevice (mpDevice);
-    }
-    
-    if (mIoService)
-    {
-        IOObjectRelease (mIoService);
+
+        FFReleaseDevice(mpDevice);
     }
 
+    if (mIoService) {
+        IOObjectRelease(mIoService);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setIntensity: (float) intensity
+- (void)setIntensity:(float)intensity
 {
-    if (intensity < 0.0f)
-    {
+    if (intensity < 0.0f) {
         intensity = 0.0f;
     }
-    else if (intensity > 1.0f)
-    {
+    else if (intensity > 1.0f) {
         intensity = 1.0f;
     }
-    
-    const DWORD newGain = (DWORD) (intensity * ((float) FF_FFNOMINALMAX));
-    
-    if (newGain != mEffectParams.dwGain)
-    {
+
+    const DWORD newGain = (DWORD)(intensity * ((float)FF_FFNOMINALMAX));
+
+    if (newGain != mEffectParams.dwGain) {
         mEffectParams.dwGain = newGain;
-        
-        FFEffectSetParameters (mpEffect, &mEffectParams, FFEP_GAIN);
+
+        FFEffectSetParameters(mpEffect, &mEffectParams, FFEP_GAIN);
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (float) intensity
+- (float)intensity
 {
-    return ((float) mEffectParams.dwGain) / ((float) FF_FFNOMINALMAX);
+    return ((float)mEffectParams.dwGain) / ((float)FF_FFNOMINALMAX);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setDuration: (float) duration
+- (void)setDuration:(float)duration
 {
-    if (duration < 0.0f)
-    {
+    if (duration < 0.0f) {
         duration = 0.0f;
     }
-    
-    const DWORD newDuration = ((DWORD) (0.1f * duration * ((float) FF_SECONDS)));
-    
-    if (newDuration != mEffectParams.dwDuration)
-    {
+
+    const DWORD newDuration = ((DWORD)(0.1f * duration * ((float)FF_SECONDS)));
+
+    if (newDuration != mEffectParams.dwDuration) {
         mEffectParams.dwDuration = newDuration;
         mEffectPeriodic.dwPeriod = newDuration;
-        
-        FFEffectSetParameters (mpEffect, &mEffectParams, FFEP_DURATION | FFEP_TYPESPECIFICPARAMS);
+
+        FFEffectSetParameters(mpEffect, &mEffectParams, FFEP_DURATION | FFEP_TYPESPECIFICPARAMS);
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (float) duration
+- (float)duration
 {
-    return ((float) mEffectPeriodic.dwPeriod) / ((float) FF_SECONDS);
+    return ((float)mEffectPeriodic.dwPeriod) / ((float)FF_SECONDS);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) isActive
+- (BOOL)isActive
 {
     FFEffectStatusFlag flag = FFEGES_NOTPLAYING;
-    
-    FFEffectGetEffectStatus (mpEffect, &flag);
-    
+
+    FFEffectGetEffectStatus(mpEffect, &flag);
+
     return flag == FFEGES_PLAYING;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) start
+- (void)start
 {
-    FFEffectStart (mpEffect, 1 /* FF_INFINITE */, 0 /* FFES_SOLO */);
+    FFEffectStart(mpEffect, 1 /* FF_INFINITE */, 0 /* FFES_SOLO */);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) stop
+- (void)stop
 {
-    FFEffectStop (mpEffect);
+    FFEffectStop(mpEffect);
 }
 
 @end

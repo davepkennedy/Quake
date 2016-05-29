@@ -12,35 +12,34 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QGLDisplaysPanel : QSettingsPanel
-{
+@interface QGLDisplaysPanel : QSettingsPanel {
 @private
-    IBOutlet NSPopUpButton*     mDisplayPopUp;
-    IBOutlet NSPopUpButton*     mModePopUp;
-    IBOutlet NSPopUpButton*     mColorsPopUp;
-    IBOutlet NSPopUpButton*     mSamplesPopUp;
-    IBOutlet NSButton*          mFullscreenCheckBox;
-    IBOutlet NSButton*          mFadeAllCheckBox;
+    IBOutlet NSPopUpButton* mDisplayPopUp;
+    IBOutlet NSPopUpButton* mModePopUp;
+    IBOutlet NSPopUpButton* mColorsPopUp;
+    IBOutlet NSPopUpButton* mSamplesPopUp;
+    IBOutlet NSButton* mFullscreenCheckBox;
+    IBOutlet NSButton* mFadeAllCheckBox;
 }
 
-- (NSString*) nibName;
-- (void) awakeFromNib;
+- (NSString*)nibName;
+- (void)awakeFromNib;
 
-- (NSString*) toolbarIdentifier;
-- (NSToolbarItem*) toolbarItem;
+- (NSString*)toolbarIdentifier;
+- (NSToolbarItem*)toolbarItem;
 
-- (void) buildDisplayList;
-- (void) buildDisplayModeList;
+- (void)buildDisplayList;
+- (void)buildDisplayModeList;
 
-- (void) selectDisplayFromDescription: (NSString*) description;
-- (void) selectDisplayModeFromDescription: (NSString*) description;
+- (void)selectDisplayFromDescription:(NSString*)description;
+- (void)selectDisplayModeFromDescription:(NSString*)description;
 
-- (IBAction) displayChanged: (id) sender;
-- (IBAction) modeChanged: (id) sender;
-- (IBAction) colorsChanged: (id) sender;
-- (IBAction) samplesChanged: (id) sender;
-- (IBAction) fullscreenChanged: (id) sender;
-- (IBAction) fadeChanged: (id) sender;
+- (IBAction)displayChanged:(id)sender;
+- (IBAction)modeChanged:(id)sender;
+- (IBAction)colorsChanged:(id)sender;
+- (IBAction)samplesChanged:(id)sender;
+- (IBAction)fullscreenChanged:(id)sender;
+- (IBAction)fadeChanged:(id)sender;
 
 @end
 

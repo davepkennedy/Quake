@@ -11,14 +11,13 @@
 #import "FDAudioInternal.h"
 #import "FDDebug.h"
 
+#import <AudioToolbox/AudioToolbox.h>
 #import <Cocoa/Cocoa.h>
 #import <CoreAudio/CoreAudio.h>
-#import <AudioToolbox/AudioToolbox.h>
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-typedef enum
-{
+typedef enum {
     eFDAudioFileStatusIdle,
     eFDAudioFileStatusPlaying,
     eFDAudioFileStatusPaused,
@@ -28,18 +27,17 @@ typedef enum
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-static void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFileRegion, OSStatus result);
+static void FDAudioFile_CompletionProc(void* pUserData, ScheduledAudioFileRegion* pFileRegion, OSStatus result);
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFileRegion, OSStatus result)
+void FDAudioFile_CompletionProc(void* pUserData, ScheduledAudioFileRegion* pFileRegion, OSStatus result)
 {
-    FD_UNUSED (pFileRegion, result);
-    
-    NSUInteger*  pStatus = (NSUInteger*) pUserData;
-    
-    if (pStatus != nil)
-    {
+    FD_UNUSED(pFileRegion, result);
+
+    NSUInteger* pStatus = (NSUInteger*)pUserData;
+
+    if (pStatus != nil) {
         *pStatus = eFDAudioFileStatusFinished;
     }
 }
@@ -48,297 +46,266 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
 
 @implementation FDAudioFile {
 @private
-    FDAudioMixer*       mMixer;
-    AudioUnitElement    mBusNumber;
-    AUNode              mAudioNode;
-    AudioUnit           mAudioUnit;
-    AudioFileID         mFileId;
-    
-    SInt64              mPosition;
-    FDAudioFileStatus   mStatus;
-    
-    BOOL                mIsLooping;
+    FDAudioMixer* mMixer;
+    AudioUnitElement mBusNumber;
+    AUNode mAudioNode;
+    AudioUnit mAudioUnit;
+    AudioFileID mFileId;
+
+    SInt64 mPosition;
+    FDAudioFileStatus mStatus;
+
+    BOOL mIsLooping;
 }
 
-- (id) init
+- (id)init
 {
     self = [super init];
-    
-    if (self != nil)
-    {
-        [self doesNotRecognizeSelector: _cmd];
+
+    if (self != nil) {
+        [self doesNotRecognizeSelector:_cmd];
     }
-    
+
     return nil;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) initWithMixer: (FDAudioMixer*) mixer
+- (id)initWithMixer:(FDAudioMixer*)mixer
 {
     self = [super init];
-    
-    if (self)
-    {
-        AUGraph     audioGraph      = 0;
-        Boolean     graphWasRunning = false;
-        OSStatus    err             = noErr - 1;
-        
-        if (mixer != nil)
-        {
-            mMixer      = mixer ;
-            mBusNumber  = [mixer allocateBus];
-            audioGraph  = [mixer audioGraph];
-            
-            err = AUGraphIsRunning (audioGraph, &graphWasRunning);
-            
+
+    if (self) {
+        AUGraph audioGraph = 0;
+        Boolean graphWasRunning = false;
+        OSStatus err = noErr - 1;
+
+        if (mixer != nil) {
+            mMixer = mixer;
+            mBusNumber = [mixer allocateBus];
+            audioGraph = [mixer audioGraph];
+
+            err = AUGraphIsRunning(audioGraph, &graphWasRunning);
         }
-        
-        if ((err == noErr) && graphWasRunning)
-        {
-            err = AUGraphStop (audioGraph);
+
+        if ((err == noErr) && graphWasRunning) {
+            err = AUGraphStop(audioGraph);
         }
-        
-        if (err == noErr)
-        {
-            AudioComponentDescription	compDesc    = { 0 };
-            
-            compDesc.componentType          = kAudioUnitType_Generator;
-            compDesc.componentSubType       = kAudioUnitSubType_AudioFilePlayer;
-            compDesc.componentManufacturer  = kAudioUnitManufacturer_Apple;
-            
-            err = AUGraphAddNode (audioGraph, &compDesc, &mAudioNode);
+
+        if (err == noErr) {
+            AudioComponentDescription compDesc = { 0 };
+
+            compDesc.componentType = kAudioUnitType_Generator;
+            compDesc.componentSubType = kAudioUnitSubType_AudioFilePlayer;
+            compDesc.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+            err = AUGraphAddNode(audioGraph, &compDesc, &mAudioNode);
         }
-        
-        if (err == noErr)
-        {
-            err = AUGraphNodeInfo (audioGraph, mAudioNode, 0, &mAudioUnit);
+
+        if (err == noErr) {
+            err = AUGraphNodeInfo(audioGraph, mAudioNode, 0, &mAudioUnit);
         }
-        
-        if (err == noErr)
-        {
-            AUNode  mixerNode = [mixer mixerNode];
-            
-            err = AUGraphConnectNodeInput (audioGraph, mAudioNode, 0, mixerNode, mBusNumber);
+
+        if (err == noErr) {
+            AUNode mixerNode = [mixer mixerNode];
+
+            err = AUGraphConnectNodeInput(audioGraph, mAudioNode, 0, mixerNode, mBusNumber);
         }
-        
-        if ((err == noErr) && graphWasRunning)
-        {
-            err = AUGraphStart (audioGraph);
+
+        if ((err == noErr) && graphWasRunning) {
+            err = AUGraphStart(audioGraph);
         }
-        
-        if (err == noErr)
-        {
-            [mixer addObserver: self];
+
+        if (err == noErr) {
+            [mixer addObserver:self];
         }
-        
-        if (err == noErr)
-        {
+
+        if (err == noErr) {
             mStatus = eFDAudioFileStatusIdle;
         }
-        
-        if (err != noErr)
-        {
+
+        if (err != noErr) {
             self = nil;
         }
     }
-    
+
     return self;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (void) dealloc
+- (void)dealloc
 {
-    if (mMixer != nil)
-    {
-        AUGraph     audioGraph      = [mMixer audioGraph];
-        AUNode      mixerNode       = [mMixer mixerNode];
-        Boolean     graphWasRunning = false;
-        
+    if (mMixer != nil) {
+        AUGraph audioGraph = [mMixer audioGraph];
+        AUNode mixerNode = [mMixer mixerNode];
+        Boolean graphWasRunning = false;
+
         [self stop];
-        
-        AUGraphIsRunning (audioGraph, &graphWasRunning);
-        
-        if (graphWasRunning)
-        {
-            AUGraphStop (audioGraph);
+
+        AUGraphIsRunning(audioGraph, &graphWasRunning);
+
+        if (graphWasRunning) {
+            AUGraphStop(audioGraph);
         }
-        
-        AUGraphDisconnectNodeInput (audioGraph, mixerNode, mBusNumber);
-        AUGraphRemoveNode (audioGraph, mAudioNode);
-        
-        if (graphWasRunning)
-        {
-            AUGraphStart (audioGraph);
+
+        AUGraphDisconnectNodeInput(audioGraph, mixerNode, mBusNumber);
+        AUGraphRemoveNode(audioGraph, mAudioNode);
+
+        if (graphWasRunning) {
+            AUGraphStart(audioGraph);
         }
-        
-        [mMixer removeObserver: self];
-        [mMixer deallocateBus: mBusNumber];
+
+        [mMixer removeObserver:self];
+        [mMixer deallocateBus:mBusNumber];
     }
-    
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setVolume: (float) volume
+- (void)setVolume:(float)volume
 {
-    [mMixer setVolume: volume forBus: mBusNumber];
+    [mMixer setVolume:volume forBus:mBusNumber];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (float) volume
+- (float)volume
 {
-    return [mMixer volumeForBus: mBusNumber];
+    return [mMixer volumeForBus:mBusNumber];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (OSStatus) startAtFrame: (SInt64) startFrame loop: (BOOL) loop
+- (OSStatus)startAtFrame:(SInt64)startFrame loop:(BOOL)loop
 {
-    AudioStreamBasicDescription fileFormat  = { 0 };
-    UInt64                      numPackets  = 0;
-    OSStatus                    err         = noErr;
-    
-    if (err == noErr)
-    {
-        UInt32 propSize = sizeof (numPackets);
-        
-        err = AudioFileGetProperty (mFileId, kAudioFilePropertyAudioDataPacketCount, &propSize, &numPackets);
+    AudioStreamBasicDescription fileFormat = { 0 };
+    UInt64 numPackets = 0;
+    OSStatus err = noErr;
+
+    if (err == noErr) {
+        UInt32 propSize = sizeof(numPackets);
+
+        err = AudioFileGetProperty(mFileId, kAudioFilePropertyAudioDataPacketCount, &propSize, &numPackets);
     }
-    
-    if (err == noErr)
-    {
-        UInt32 propSize = sizeof (AudioStreamBasicDescription);
-        
-        err = AudioFileGetProperty (mFileId, kAudioFilePropertyDataFormat, &propSize, &fileFormat);
+
+    if (err == noErr) {
+        UInt32 propSize = sizeof(AudioStreamBasicDescription);
+
+        err = AudioFileGetProperty(mFileId, kAudioFilePropertyDataFormat, &propSize, &fileFormat);
     }
-    
-    if (err == noErr)
-    {
+
+    if (err == noErr) {
         ScheduledAudioFileRegion region = { 0 };
-        
-        region.mTimeStamp.mFlags        = kAudioTimeStampSampleTimeValid;
-        region.mTimeStamp.mSampleTime   = 0;
-        region.mCompletionProc          = &FDAudioFile_CompletionProc;
-        region.mCompletionProcUserData  = &mStatus;
-        region.mAudioFile               = mFileId;
-        region.mLoopCount               = (loop == YES) ? -1 : 0;
-        region.mStartFrame              = startFrame;
-        region.mFramesToPlay            = (UInt32)(numPackets * fileFormat.mFramesPerPacket);
-        
-        mIsLooping                      = loop;
-        
-        err = AudioUnitSetProperty (mAudioUnit, kAudioUnitProperty_ScheduledFileRegion, kAudioUnitScope_Global, 0,
-                                    &region, sizeof (region));
+
+        region.mTimeStamp.mFlags = kAudioTimeStampSampleTimeValid;
+        region.mTimeStamp.mSampleTime = 0;
+        region.mCompletionProc = &FDAudioFile_CompletionProc;
+        region.mCompletionProcUserData = &mStatus;
+        region.mAudioFile = mFileId;
+        region.mLoopCount = (loop == YES) ? -1 : 0;
+        region.mStartFrame = startFrame;
+        region.mFramesToPlay = (UInt32)(numPackets * fileFormat.mFramesPerPacket);
+
+        mIsLooping = loop;
+
+        err = AudioUnitSetProperty(mAudioUnit, kAudioUnitProperty_ScheduledFileRegion, kAudioUnitScope_Global, 0,
+            &region, sizeof(region));
     }
-    
-    if (err == noErr)
-    {
+
+    if (err == noErr) {
         UInt32 defaultVal = 0;
-        
-        err = AudioUnitSetProperty (mAudioUnit, kAudioUnitProperty_ScheduledFilePrime,  kAudioUnitScope_Global, 0,
-                                    &defaultVal, sizeof (defaultVal));
+
+        err = AudioUnitSetProperty(mAudioUnit, kAudioUnitProperty_ScheduledFilePrime, kAudioUnitScope_Global, 0,
+            &defaultVal, sizeof(defaultVal));
     }
-    
-    if (err == noErr)
-    {
+
+    if (err == noErr) {
         AudioTimeStamp startTime = { 0 };
-        
-        startTime.mFlags        = kAudioTimeStampSampleTimeValid;
-        startTime.mSampleTime   = -1;
-        
-        err = AudioUnitSetProperty (mAudioUnit, kAudioUnitProperty_ScheduleStartTimeStamp, kAudioUnitScope_Global, 0,
-                                    &startTime, sizeof (startTime));
+
+        startTime.mFlags = kAudioTimeStampSampleTimeValid;
+        startTime.mSampleTime = -1;
+
+        err = AudioUnitSetProperty(mAudioUnit, kAudioUnitProperty_ScheduleStartTimeStamp, kAudioUnitScope_Global, 0,
+            &startTime, sizeof(startTime));
     }
-    
-    if (err == noErr)
-    {
+
+    if (err == noErr) {
         mStatus = eFDAudioFileStatusPlaying;
     }
-    
+
     return err;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) startFile: (NSURL*) url loop: (BOOL) loop
+- (BOOL)startFile:(NSURL*)url loop:(BOOL)loop
 {
     [self stop];
-    
-    const char* path    = [[url path] fileSystemRepresentation];
-    CFIndex     pathLen = strlen (path);
-    CFURLRef    cfPath  = CFURLCreateFromFileSystemRepresentation (kCFAllocatorDefault, (const UInt8*) path, pathLen, false);
-    OSStatus    err     = AudioFileOpenURL (cfPath, kAudioFileReadPermission, 0, &mFileId);
-    
-    CFRelease (cfPath);
-    
-    if (err == noErr)
-    {
-        err = AudioUnitSetProperty (mAudioUnit, kAudioUnitProperty_ScheduledFileIDs, kAudioUnitScope_Global, 0,
-                                    &mFileId, sizeof (mFileId));
+
+    const char* path = [[url path] fileSystemRepresentation];
+    CFIndex pathLen = strlen(path);
+    CFURLRef cfPath = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (const UInt8*)path, pathLen, false);
+    OSStatus err = AudioFileOpenURL(cfPath, kAudioFileReadPermission, 0, &mFileId);
+
+    CFRelease(cfPath);
+
+    if (err == noErr) {
+        err = AudioUnitSetProperty(mAudioUnit, kAudioUnitProperty_ScheduledFileIDs, kAudioUnitScope_Global, 0,
+            &mFileId, sizeof(mFileId));
     }
-    
-    if (err == noErr)
-    {
-        err = [self startAtFrame: 0 loop: loop];
+
+    if (err == noErr) {
+        err = [self startAtFrame:0 loop:loop];
     }
-    
+
     return err == noErr;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) stop
+- (BOOL)stop
 {
-    OSStatus err = AudioUnitReset (mAudioUnit, kAudioUnitScope_Global, 0);
-    
-    if (err == noErr)
-    {
+    OSStatus err = AudioUnitReset(mAudioUnit, kAudioUnitScope_Global, 0);
+
+    if (err == noErr) {
         mStatus = eFDAudioFileStatusIdle;
     }
-    else
-    {
-        FDLog (@"FDAudioFile: Failed to stop playback!\n");
+    else {
+        FDLog(@"FDAudioFile: Failed to stop playback!\n");
     }
-    
-    if (mFileId != NULL)
-    {
-        err = AudioFileClose (mFileId);
-        
-        if ( err != noErr )
-        {
-            FDLog (@"FDAudioFile: Failed to close file!\n");
+
+    if (mFileId != NULL) {
+        err = AudioFileClose(mFileId);
+
+        if (err != noErr) {
+            FDLog(@"FDAudioFile: Failed to close file!\n");
         }
-        
+
         mFileId = NULL;
     }
-    
+
     return err == noErr;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (void) pause
+- (void)pause
 {
-    if (mStatus == eFDAudioFileStatusPlaying)
-    {
-        AudioTimeStamp  time    = { 0 };
-        UInt32          size    = sizeof (time);
-        OSStatus        err     = noErr;
-        
-        err = AudioUnitGetProperty (mAudioUnit, kAudioUnitProperty_CurrentPlayTime, kAudioUnitScope_Global, 0, &time, &size);
-        
-        if (err == noErr)
-        {
+    if (mStatus == eFDAudioFileStatusPlaying) {
+        AudioTimeStamp time = { 0 };
+        UInt32 size = sizeof(time);
+        OSStatus err = noErr;
+
+        err = AudioUnitGetProperty(mAudioUnit, kAudioUnitProperty_CurrentPlayTime, kAudioUnitScope_Global, 0, &time, &size);
+
+        if (err == noErr) {
             mPosition = time.mSampleTime;
         }
-        
-        err = AudioUnitReset (mAudioUnit, kAudioUnitScope_Global, 0);
-        
-        if (err == noErr)
-        {
+
+        err = AudioUnitReset(mAudioUnit, kAudioUnitScope_Global, 0);
+
+        if (err == noErr) {
             mStatus = eFDAudioFileStatusPaused;
         }
     }
@@ -346,47 +313,44 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (void) resume
+- (void)resume
 {
-    if (mStatus == eFDAudioFileStatusPaused)
-    {
-        [self startAtFrame: mPosition loop: mIsLooping];
+    if (mStatus == eFDAudioFileStatusPaused) {
+        [self startAtFrame:mPosition loop:mIsLooping];
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) isPlaying
+- (BOOL)isPlaying
 {
     return mStatus == eFDAudioFileStatusPlaying;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) isFinished
+- (BOOL)isFinished
 {
     return mStatus == eFDAudioFileStatusFinished;
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-- (BOOL) loops
+- (BOOL)loops
 {
     return mIsLooping;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) applicationWillHide: (NSNotification*) notification
+- (void)applicationWillHide:(NSNotification*)notification
 {
-    FD_UNUSED (notification);
-    
-    if (mStatus == eFDAudioFileStatusPlaying)
-    {
+    FD_UNUSED(notification);
+
+    if (mStatus == eFDAudioFileStatusPlaying) {
         [self pause];
-        
-        if (mStatus == eFDAudioFileStatusPaused)
-        {
+
+        if (mStatus == eFDAudioFileStatusPaused) {
             mStatus = eFDAudioFileStatusSuspended;
         }
     }
@@ -394,14 +358,13 @@ void FDAudioFile_CompletionProc (void* pUserData, ScheduledAudioFileRegion* pFil
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) applicationWillUnhide: (NSNotification*) notification
+- (void)applicationWillUnhide:(NSNotification*)notification
 {
-    FD_UNUSED (notification);
-    
-    if (mStatus == eFDAudioFileStatusSuspended)
-    {
+    FD_UNUSED(notification);
+
+    if (mStatus == eFDAudioFileStatusSuspended) {
         mStatus = eFDAudioFileStatusPaused;
-        
+
         [self resume];
     }
 }

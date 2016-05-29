@@ -14,24 +14,23 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-typedef NSUInteger (*FDAudioBufferCallback) (void* pDst, NSUInteger numBytes, void* pContext);
+typedef NSUInteger (*FDAudioBufferCallback)(void* pDst, NSUInteger numBytes, void* pContext);
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDAudioBuffer : NSObject
-{
+@interface FDAudioBuffer : NSObject {
 }
 
-- (id) initWithMixer: (FDAudioMixer*) mixer
-           frequency: (NSUInteger) frequency
-      bitsPerChannel: (NSUInteger) bitsPerChannel
-            channels: (NSUInteger) channels
-            callback: (FDAudioBufferCallback) pCallback
-             context: (void*) pContext;
+- (id)initWithMixer:(FDAudioMixer*)mixer
+          frequency:(NSUInteger)frequency
+     bitsPerChannel:(NSUInteger)bitsPerChannel
+           channels:(NSUInteger)channels
+           callback:(FDAudioBufferCallback)pCallback
+            context:(void*)pContext;
 
-- (NSUInteger) fillBuffer: (AudioBuffer*) pIoData;
-- (void) setVolume: (float) volume;
-- (float) volume;
+- (NSUInteger)fillBuffer:(AudioBuffer*)pIoData;
+- (void)setVolume:(float)volume;
+- (float)volume;
 
 @end
 

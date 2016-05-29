@@ -17,53 +17,53 @@
 
 @implementation QAboutPanel
 
-- (NSString *) nibName
+- (NSString*)nibName
 {
-	return @"AboutPanel";
+    return @"AboutPanel";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) awakeFromNib
+- (void)awakeFromNib
 {
     NSString* appName = [[NSRunningApplication currentApplication] localizedName];
-    
-    [mLinkView setURL: [NSURL URLWithString: FRUITZ_OF_DOJO_URL]];
-    
-    [mTitle setStringValue: [NSString stringWithFormat: @"%@ for MacOS X", appName]];
-    [mOptionCheckBox setState: [[FDPreferences sharedPrefs] boolForKey: QUAKE_PREFS_KEY_OPTION_KEY]];
-    
-    [self setTitle: @"About"];
+
+    [mLinkView setURL:[NSURL URLWithString:FRUITZ_OF_DOJO_URL]];
+
+    [mTitle setStringValue:[NSString stringWithFormat:@"%@ for MacOS X", appName]];
+    [mOptionCheckBox setState:[[FDPreferences sharedPrefs] boolForKey:QUAKE_PREFS_KEY_OPTION_KEY]];
+
+    [self setTitle:@"About"];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSString*) toolbarIdentifier
+- (NSString*)toolbarIdentifier
 {
     return @"Quake About ToolbarItem";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSToolbarItem*) toolbarItem
+- (NSToolbarItem*)toolbarItem
 {
     NSToolbarItem* item = [super toolbarItem];
-    
-    [item setLabel: @"About"];
-    [item setPaletteLabel: @"About"];
-    [item setToolTip: @"About Quake."];
-    [item setImage: [NSImage imageNamed: @"About.icns"]];
-    
+
+    [item setLabel:@"About"];
+    [item setPaletteLabel:@"About"];
+    [item setToolTip:@"About Quake."];
+    [item setImage:[NSImage imageNamed:@"About.icns"]];
+
     return item;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) toggleOptionCheckbox: (id) sender
+- (IBAction)toggleOptionCheckbox:(id)sender
 {
-    FD_UNUSED (sender);
-    
-    [[FDPreferences sharedPrefs] setObject: mOptionCheckBox forKey: QUAKE_PREFS_KEY_OPTION_KEY];
+    FD_UNUSED(sender);
+
+    [[FDPreferences sharedPrefs] setObject:mOptionCheckBox forKey:QUAKE_PREFS_KEY_OPTION_KEY];
 }
 
 @end

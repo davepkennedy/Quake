@@ -13,32 +13,32 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#define VID_FADE_DURATION   (1.0f)
-#define VID_FONT_WIDTH      (8)
-#define	VID_FONT_HEIGHT     (8)
+#define VID_FADE_DURATION (1.0f)
+#define VID_FONT_WIDTH (8)
+#define VID_FONT_HEIGHT (8)
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-extern  cvar_t				_windowed_mouse;
+extern cvar_t _windowed_mouse;
 
-extern  qboolean			gVidDisplayFullscreen;
-extern  FDWindow *			gVidWindow;
+extern qboolean gVidDisplayFullscreen;
+extern FDWindow* gVidWindow;
 
-#if defined (GLQUAKE)
+#if defined(GLQUAKE)
 
-extern  FDDisplay*          gVidDisplay;
+extern FDDisplay* gVidDisplay;
 
 #endif /* GLQUAKE */
-        
+
 //----------------------------------------------------------------------------------------------------------------------------
 
-extern void	M_Menu_Options_f (void);
-extern void	M_Print (int, int, char *);
-extern void	M_PrintWhite (int, int, char *);
-extern void	M_DrawCharacter (int, int, int);
-extern void	M_DrawTransPic (int, int, qpic_t *);
-extern void	M_DrawPic (int, int, qpic_t *);
+extern void M_Menu_Options_f(void);
+extern void M_Print(int, int, char*);
+extern void M_PrintWhite(int, int, char*);
+extern void M_DrawCharacter(int, int, int);
+extern void M_DrawTransPic(int, int, qpic_t*);
+extern void M_DrawPic(int, int, qpic_t*);
 
-extern BOOL VID_HideFullscreen (BOOL);
+extern BOOL VID_HideFullscreen(BOOL);
 
 //----------------------------------------------------------------------------------------------------------------------------

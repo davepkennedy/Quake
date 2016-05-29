@@ -11,19 +11,18 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QSettingsWindow : NSWindowController <NSToolbarDelegate>
-{
+@interface QSettingsWindow : NSWindowController <NSToolbarDelegate> {
 @private
-    NSArray*                        mPanels;    
-    NSMutableDictionary*            mToolbarItems;
-    NSView*                         mEmptyView;
-    
-    id                              mStartGameTarget;
-    SEL                             mStartGameSelector;
+    NSArray* mPanels;
+    NSMutableDictionary* mToolbarItems;
+    NSView* mEmptyView;
+
+    id mStartGameTarget;
+    SEL mStartGameSelector;
 }
 
-- (void) setNewGameAction: (SEL) selector target: (id) target;
-- (void) synchronize;
+- (void)setNewGameAction:(SEL)selector target:(id)target;
+- (void)synchronize;
 
 @end
 

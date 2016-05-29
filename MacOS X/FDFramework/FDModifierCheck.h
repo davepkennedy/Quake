@@ -11,16 +11,15 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDModifierCheck : NSObject
-{
+@interface FDModifierCheck : NSObject {
 }
 
-+ (BOOL) checkForModifier: (NSUInteger) theModifierKeyMask;
++ (BOOL)checkForModifier:(NSUInteger)theModifierKeyMask;
 
-+ (BOOL) checkForAlternateKey;
-+ (BOOL) checkForCommandKey;
-+ (BOOL) checkForControlKey;
-+ (BOOL) checkForOptionKey;
++ (BOOL)checkForAlternateKey;
++ (BOOL)checkForCommandKey;
++ (BOOL)checkForControlKey;
++ (BOOL)checkForOptionKey;
 
 @end
 

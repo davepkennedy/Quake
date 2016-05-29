@@ -11,16 +11,15 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDGLScreenshot : FDScreenshot
-{
+@interface FDGLScreenshot : FDScreenshot {
 }
 
-+ (BOOL) writeToFile: (NSString*) path ofType: (NSBitmapImageFileType) fileType;
-+ (BOOL) writeToBMP: (NSString*) path;
-+ (BOOL) writeToGIF: (NSString*) path;
-+ (BOOL) writeToJPEG: (NSString*) path;
-+ (BOOL) writeToPNG: (NSString*) path;
-+ (BOOL) writeToTIFF: (NSString*) path;
++ (BOOL)writeToFile:(NSString*)path ofType:(NSBitmapImageFileType)fileType;
++ (BOOL)writeToBMP:(NSString*)path;
++ (BOOL)writeToGIF:(NSString*)path;
++ (BOOL)writeToJPEG:(NSString*)path;
++ (BOOL)writeToPNG:(NSString*)path;
++ (BOOL)writeToTIFF:(NSString*)path;
 
 @end
 

@@ -14,25 +14,24 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface QArgumentsPanel : QSettingsPanel <NSTableViewDelegate>
-{
+@interface QArgumentsPanel : QSettingsPanel <NSTableViewDelegate> {
 @private
-    IBOutlet NSTableView*       mTableView;
-    IBOutlet NSButton*          mAddButton;
-    IBOutlet NSButton*          mRemoveButton;
+    IBOutlet NSTableView* mTableView;
+    IBOutlet NSButton* mAddButton;
+    IBOutlet NSButton* mRemoveButton;
     IBOutlet NSArrayController* mArguments;
-    QArgumentEdit*              mArgumentEdit;
+    QArgumentEdit* mArgumentEdit;
 }
 
-- (NSString*) nibName;
-- (void) awakeFromNib;
+- (NSString*)nibName;
+- (void)awakeFromNib;
 
-- (void) synchronize;
+- (void)synchronize;
 
-- (NSString*) toolbarIdentifier;
-- (NSToolbarItem*) toolbarItem;
+- (NSString*)toolbarIdentifier;
+- (NSToolbarItem*)toolbarItem;
 
-- (IBAction) insertArgument: (id) sender;
+- (IBAction)insertArgument:(id)sender;
 
 @end
 

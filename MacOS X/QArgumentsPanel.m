@@ -7,8 +7,8 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-#import "QArgumentsPanel.h"
 #import "QArguments.h"
+#import "QArgumentsPanel.h"
 #import "QShared.h"
 
 #import "FDFramework/FDPreferences.h"
@@ -17,7 +17,7 @@
 
 @interface QArgumentsPanel ()
 
-- (NSMutableDictionary*) argumentWithState: (NSCellStateValue) state value: (NSString*) value;
+- (NSMutableDictionary*)argumentWithState:(NSCellStateValue)state value:(NSString*)value;
 
 @end
 
@@ -25,112 +25,106 @@
 
 @implementation QArgumentsPanel
 
-- (NSString *) nibName
+- (NSString*)nibName
 {
-	return @"ArgumentsPanel";
+    return @"ArgumentsPanel";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) dealloc
+- (void)dealloc
 {
     [self synchronize];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) awakeFromNib
+- (void)awakeFromNib
 {
     const BOOL isEditable = [[QArguments sharedArguments] isEditable];
-    
-    for (NSDictionary* argument in [[QArguments sharedArguments] arguments])
-    {
-        [mArguments addObject: [argument mutableCopy]];
+
+    for (NSDictionary* argument in [[QArguments sharedArguments] arguments]) {
+        [mArguments addObject:[argument mutableCopy]];
     }
-    
+
     mArgumentEdit = [[QArgumentEdit alloc] init];
-    
-    [mTableView setDelegate: self];
-    [mTableView deselectAll: nil];
-    
-    [mTableView setEnabled: isEditable];
-    [mAddButton setEnabled: isEditable];
-    [mRemoveButton setEnabled: isEditable];
-    
-    [self tableViewSelectionDidChange: nil];
-    [self setTitle: @"CLI"];
+
+    [mTableView setDelegate:self];
+    [mTableView deselectAll:nil];
+
+    [mTableView setEnabled:isEditable];
+    [mAddButton setEnabled:isEditable];
+    [mRemoveButton setEnabled:isEditable];
+
+    [self tableViewSelectionDidChange:nil];
+    [self setTitle:@"CLI"];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) synchronize
+- (void)synchronize
 {
-    if (mArguments != nil)
-    {
-        [[QArguments sharedArguments]  setArguments: [mArguments arrangedObjects]];
+    if (mArguments != nil) {
+        [[QArguments sharedArguments] setArguments:[mArguments arrangedObjects]];
 
-        if ([mTableView isEnabled] == YES)
-        {
-            [[FDPreferences sharedPrefs] setObject: [mArguments arrangedObjects] forKey: QUAKE_PREFS_KEY_ARGUMENTS];
+        if ([mTableView isEnabled] == YES) {
+            [[FDPreferences sharedPrefs] setObject:[mArguments arrangedObjects] forKey:QUAKE_PREFS_KEY_ARGUMENTS];
         }
     }
-    
+
     [super synchronize];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSString*) toolbarIdentifier
+- (NSString*)toolbarIdentifier
 {
     return @"Quake Arguments ToolbarItem";
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSToolbarItem*) toolbarItem
+- (NSToolbarItem*)toolbarItem
 {
     NSToolbarItem* item = [super toolbarItem];
-    
-    [item setLabel: @"CLI"];
-    [item setPaletteLabel: @"CLI"];
-    [item setToolTip: @"Set command-line parameters."];
-    [item setImage: [NSImage imageNamed: @"Arguments.icns"]];
-    
+
+    [item setLabel:@"CLI"];
+    [item setPaletteLabel:@"CLI"];
+    [item setToolTip:@"Set command-line parameters."];
+    [item setImage:[NSImage imageNamed:@"Arguments.icns"]];
+
     return item;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSMutableDictionary*) argumentWithState: (NSCellStateValue) state value: (NSString*) value
+- (NSMutableDictionary*)argumentWithState:(NSCellStateValue)state value:(NSString*)value
 {
-    NSNumber*   enabled = [NSNumber numberWithBool: (state == NSOnState)];
-    
-    return [NSMutableDictionary dictionaryWithObjectsAndKeys: enabled, @"state", value, @"value", nil];
+    NSNumber* enabled = [NSNumber numberWithBool:(state == NSOnState)];
+
+    return [NSMutableDictionary dictionaryWithObjectsAndKeys:enabled, @"state", value, @"value", nil];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) tableViewSelectionDidChange: (NSNotification*) notification
+- (void)tableViewSelectionDidChange:(NSNotification*)notification
 {
-    [mRemoveButton setEnabled: ([mTableView selectedRow] != -1)];
+    [mRemoveButton setEnabled:([mTableView selectedRow] != -1)];
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (IBAction) insertArgument: (id) sender
+- (IBAction)insertArgument:(id)sender
 {
-    const NSUInteger        idx = [mArguments selectionIndex];
-	NSMutableDictionary*    arg = [self argumentWithState: NSOnState value: [NSString string]];
+    const NSUInteger idx = [mArguments selectionIndex];
+    NSMutableDictionary* arg = [self argumentWithState:NSOnState value:[NSString string]];
 
-    if ([mArgumentEdit edit: arg modalForWindow: [[self view] window]] == NSOKButton)
-    {
-        if (idx == NSNotFound)
-        {
-            [mArguments addObject: arg];
+    if ([mArgumentEdit edit:arg modalForWindow:[[self view] window]] == NSOKButton) {
+        if (idx == NSNotFound) {
+            [mArguments addObject:arg];
         }
-        else
-        {
-            [mArguments insertObject: arg atArrangedObjectIndex: idx];
+        else {
+            [mArguments insertObject:arg atArrangedObjectIndex:idx];
         }
     }
 }

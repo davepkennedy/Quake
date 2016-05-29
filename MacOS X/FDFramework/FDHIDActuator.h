@@ -12,21 +12,20 @@
 //----------------------------------------------------------------------------------------------------------------------------
 @class FDHIDDevice;
 
-@interface FDHIDActuator : NSObject
-{
+@interface FDHIDActuator : NSObject {
 }
 
-- (id) initWithDevice: (FDHIDDevice*) device;
-- (void) setIntensity: (float) intensity;
-- (float) intensity;
+- (id)initWithDevice:(FDHIDDevice*)device;
+- (void)setIntensity:(float)intensity;
+- (float)intensity;
 
-- (void) setDuration: (float) duration;
-- (float) duration;
+- (void)setDuration:(float)duration;
+- (float)duration;
 
-- (BOOL) isActive;
+- (BOOL)isActive;
 
-- (void) start;
-- (void) stop;
+- (void)start;
+- (void)stop;
 
 @end
 

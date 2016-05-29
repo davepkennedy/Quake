@@ -11,21 +11,20 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-@interface FDDisplayMode : NSObject
-{
+@interface FDDisplayMode : NSObject {
 }
 
-- (NSUInteger) width;
-- (NSUInteger) height;
-- (NSUInteger) bitsPerPixel;
-- (BOOL) isStretched;
-- (BOOL) isDefault;
-- (double) refreshRate;
+- (NSUInteger)width;
+- (NSUInteger)height;
+- (NSUInteger)bitsPerPixel;
+- (BOOL)isStretched;
+- (BOOL)isDefault;
+- (double)refreshRate;
 
-- (NSString*) description;
+- (NSString*)description;
 
-- (BOOL) isEqualTo: (FDDisplayMode*) object;
-- (NSComparisonResult) compare: (FDDisplayMode*) rhs;
+- (BOOL)isEqualTo:(FDDisplayMode*)object;
+- (NSComparisonResult)compare:(FDDisplayMode*)rhs;
 
 @end
 

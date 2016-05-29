@@ -48,26 +48,26 @@
 #import <Foundation/Foundation.h>
 #import <mach/mach_time.h>
 
+#import <ctype.h>
 #import <dlfcn.h>
-#import <unistd.h>
-#import <signal.h>
-#import <stdlib.h>
-#import <limits.h>
-#import <sys/time.h>
-#import <sys/types.h>
-#import <unistd.h>
+#import <errno.h>
 #import <fcntl.h>
+#import <limits.h>
+#import <signal.h>
 #import <stdarg.h>
 #import <stdio.h>
-#import <sys/ipc.h>
-#import <sys/shm.h>
-#import <sys/stat.h>
+#import <stdlib.h>
 #import <string.h>
-#import <ctype.h>
-#import <sys/wait.h>
+#import <sys/ipc.h>
 #import <sys/mman.h>
 #import <sys/param.h>
-#import <errno.h>
+#import <sys/shm.h>
+#import <sys/stat.h>
+#import <sys/time.h>
+#import <sys/types.h>
+#import <sys/wait.h>
+#import <unistd.h>
+#import <unistd.h>
 
 #if defined(SERVERONLY)
 
@@ -75,10 +75,10 @@
 
 #else
 
-#import "quakedef.h"
 #import "QApplication.h"
 #import "QController.h"
 #import "QShared.h"
+#import "quakedef.h"
 
 #import "in_osx.h"
 #import "sys_osx.h"
@@ -86,368 +86,349 @@
 
 #endif /* SERVERONLY */
 
-#import "FDFramework/FDFramework.h"
 #import "FDAlertPanel.h"
+#import "FDFramework/FDFramework.h"
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#define SYS_QWSV_BASE_PATH			"."
-#define	SYS_STRING_SIZE				(1024)
+#define SYS_QWSV_BASE_PATH "."
+#define SYS_STRING_SIZE (1024)
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-qboolean			isDedicated;
+qboolean isDedicated;
 
-#if defined (SERVERONLY)
+#if defined(SERVERONLY)
 
-qboolean			stdin_ready;
-cvar_t				sys_nostdout   = {"sys_nostdout","0"};
-cvar_t				sys_extrasleep = {"sys_extrasleep","0"};
+qboolean stdin_ready;
+cvar_t sys_nostdout = { "sys_nostdout", "0" };
+cvar_t sys_extrasleep = { "sys_extrasleep", "0" };
 
 #endif /* SERVERONLY */
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-static const char*  Sys_FixFileNameCase (const char*);
-void                Sys_Warn (char *theWarning, ...);
-double              Sys_DoubleTime (void);
-int                 main (int, const char **);
+static const char* Sys_FixFileNameCase(const char*);
+void Sys_Warn(char* theWarning, ...);
+double Sys_DoubleTime(void);
+int main(int, const char**);
 
 //----------------------------------------------------------------------------------------------------------------------------
 
 #if defined(SERVERONLY)
 
-void	Sys_Init (void)
+void Sys_Init(void)
 {
-    Cvar_RegisterVariable (&sys_nostdout);
-    Cvar_RegisterVariable (&sys_extrasleep);
+    Cvar_RegisterVariable(&sys_nostdout);
+    Cvar_RegisterVariable(&sys_extrasleep);
 }
 
 #endif /* SERVERONLY */
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-const char*	Sys_FixFileNameCase (const char* pPath)
+const char* Sys_FixFileNameCase(const char* pPath)
 {
-    BOOL                isDirectory = NO;
-    NSFileManager*      fileManager = [NSFileManager defaultManager];
-    NSString*           path        = [fileManager stringWithFileSystemRepresentation: pPath length: strlen (pPath)];
-    BOOL                pathExists  = [fileManager fileExistsAtPath: path isDirectory: &isDirectory];
-    
-    if ((pathExists == NO) || (isDirectory == YES))
-    {        
-        NSString*   outName  = nil;
-        NSArray*    outArray = nil;
-        
-        if ([path completePathIntoString: &outName caseSensitive: NO matchesIntoArray: &outArray filterTypes: nil] > 0)
-        {
+    BOOL isDirectory = NO;
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    NSString* path = [fileManager stringWithFileSystemRepresentation:pPath length:strlen(pPath)];
+    BOOL pathExists = [fileManager fileExistsAtPath:path isDirectory:&isDirectory];
+
+    if ((pathExists == NO) || (isDirectory == YES)) {
+        NSString* outName = nil;
+        NSArray* outArray = nil;
+
+        if ([path completePathIntoString:&outName caseSensitive:NO matchesIntoArray:&outArray filterTypes:nil] > 0) {
             pPath = [outName fileSystemRepresentation];
         }
     }
-    
+
     return pPath;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	Sys_FileOpenRead (char* pPath, int* pHandle)
+int Sys_FileOpenRead(char* pPath, int* pHandle)
 {
     struct stat fileStat = { 0 };
-    
-    *pHandle = open (Sys_FixFileNameCase (pPath), O_RDONLY, 0666);
-    
-    if (*pHandle == -1)
-    {
+
+    *pHandle = open(Sys_FixFileNameCase(pPath), O_RDONLY, 0666);
+
+    if (*pHandle == -1) {
         return -1;
     }
-        
-    if (fstat (*pHandle, &fileStat) == -1)
-    {
-        Sys_Error ("Can\'t open file \"%s\", reason: \"%s\".", pPath, strerror (errno));
+
+    if (fstat(*pHandle, &fileStat) == -1) {
+        Sys_Error("Can\'t open file \"%s\", reason: \"%s\".", pPath, strerror(errno));
     }
-        
-    return (int) fileStat.st_size;
+
+    return (int)fileStat.st_size;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	Sys_FileOpenWrite (char* pPath)
+int Sys_FileOpenWrite(char* pPath)
 {
     int handle = -1;
 
-    umask (0);
-    
-    handle = open (pPath, O_RDWR | O_CREAT | O_TRUNC, 0666);
-    
-    if (handle == -1)
-    {
-        Sys_Error ("Can\'t open file \"%s\" for writing, reason: \"%s\".", pPath, strerror (errno));
+    umask(0);
+
+    handle = open(pPath, O_RDWR | O_CREAT | O_TRUNC, 0666);
+
+    if (handle == -1) {
+        Sys_Error("Can\'t open file \"%s\" for writing, reason: \"%s\".", pPath, strerror(errno));
     }
-        
+
     return handle;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_FileClose (int handle)
+void Sys_FileClose(int handle)
 {
-    close (handle);
+    close(handle);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_FileSeek (int handle, int position)
+void Sys_FileSeek(int handle, int position)
 {
-    lseek (handle, position, SEEK_SET);
+    lseek(handle, position, SEEK_SET);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	Sys_FileRead (int handle, void* pDest, SInt numBytes)
+int Sys_FileRead(int handle, void* pDest, SInt numBytes)
 {
-    return (int) read (handle, pDest, numBytes);
+    return (int)read(handle, pDest, numBytes);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	Sys_FileWrite (int handle, void* pData, SInt numBytes)
+int Sys_FileWrite(int handle, void* pData, SInt numBytes)
 {
-    return (int) write (handle, pData, numBytes);
+    return (int)write(handle, pData, numBytes);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	Sys_FileTime (char* pPath)
+int Sys_FileTime(char* pPath)
 {
     struct stat fileStat = { 0 };
-    int         result   = stat (pPath, &fileStat);
+    int result = stat(pPath, &fileStat);
 
-    if (result != -1)
-    {
-        result = (int) fileStat.st_mtime;
+    if (result != -1) {
+        result = (int)fileStat.st_mtime;
     }
-    
+
     return result;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_mkdir (char* pPath)
+void Sys_mkdir(char* pPath)
 {
-    if (mkdir (pPath, 0777) == -1)
-    {
-        if (errno != EEXIST)
-        {
-            Sys_Error ("\"mkdir %s\" failed, reason: \"%s\".", pPath, strerror (errno));
+    if (mkdir(pPath, 0777) == -1) {
+        if (errno != EEXIST) {
+            Sys_Error("\"mkdir %s\" failed, reason: \"%s\".", pPath, strerror(errno));
         }
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_MakeCodeWriteable (unsigned long startAddress, unsigned long len)
+void Sys_MakeCodeWriteable(unsigned long startAddress, unsigned long len)
 {
-    const int           pageSize    = getpagesize();
-    const unsigned long address     = (startAddress & ~(pageSize - 1)) - pageSize;
-    
-#if defined (SERVERONLY)
+    const int pageSize = getpagesize();
+    const unsigned long address = (startAddress & ~(pageSize - 1)) - pageSize;
 
-    fprintf (stderr, "writable code %lx(%lx)-%lx, length=%lx\n", startAddress, address, startAddress + len, len);
+#if defined(SERVERONLY)
+
+    fprintf(stderr, "writable code %lx(%lx)-%lx, length=%lx\n", startAddress, address, startAddress + len, len);
 
 #endif /* SERVERONLY */
 
-    if (mprotect ((char*) address, len + startAddress - address + pageSize, 7) < 0)
-    {
-        Sys_Error ("Memory protection change failed!\n");
+    if (mprotect((char*)address, len + startAddress - address + pageSize, 7) < 0) {
+        Sys_Error("Memory protection change failed!\n");
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void*	Sys_GetProcAddress (const char* pName, qboolean isSafeMode)
+void* Sys_GetProcAddress(const char* pName, qboolean isSafeMode)
 {
-    void*   pSymbol = dlsym (RTLD_DEFAULT, pName);
-    
-    if ((isSafeMode == YES) && (pSymbol == NULL))
-    {
-        Sys_Error ("Failed to import a required function!\n");
+    void* pSymbol = dlsym(RTLD_DEFAULT, pName);
+
+    if ((isSafeMode == YES) && (pSymbol == NULL)) {
+        Sys_Error("Failed to import a required function!\n");
     }
-    
+
     return pSymbol;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_Error (const char* pFormat, ...)
+void Sys_Error(const char* pFormat, ...)
 {
-    va_list     argPtr;
-    char        buffer[SYS_STRING_SIZE];
+    va_list argPtr;
+    char buffer[SYS_STRING_SIZE];
 
-    fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);
-    
-    va_start (argPtr, pFormat);
-    vsnprintf (buffer, SYS_STRING_SIZE, pFormat, argPtr);
-    va_end (argPtr);
+    fcntl(0, F_SETFL, fcntl(0, F_GETFL, 0) & ~FNDELAY);
+
+    va_start(argPtr, pFormat);
+    vsnprintf(buffer, SYS_STRING_SIZE, pFormat, argPtr);
+    va_end(argPtr);
 
 #ifdef SERVERONLY
 
-    fprintf (stderr, "Error: %s\n", buffer);
-    
+    fprintf(stderr, "Error: %s\n", buffer);
+
 #else
 
     Host_Shutdown();
-    [[NSApp delegate] setHostInitialized: NO];
-    
-    NSString* msg = [NSString stringWithCString: buffer encoding: NSASCIIStringEncoding];
-    
+    [[NSApp delegate] setHostInitialized:NO];
+
+    NSString* msg = [NSString stringWithCString:buffer encoding:NSASCIIStringEncoding];
+
     FDRunCriticalAlertPanel(@"An error has occured:", nil, @"%@", msg);
-    NSLog (@"An error has occured: %@\n", msg);
+    NSLog(@"An error has occured: %@\n", msg);
 
 #endif // SERVERONLY
-    
-    exit (EXIT_FAILURE);
+
+    exit(EXIT_FAILURE);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_Warn (char* pFormat, ...)
+void Sys_Warn(char* pFormat, ...)
 {
-    va_list     argPtr;
-    char        buffer[SYS_STRING_SIZE];
-    
-    va_start (argPtr, pFormat);
-    vsnprintf (buffer, SYS_STRING_SIZE, pFormat, argPtr);
-    va_end (argPtr);
+    va_list argPtr;
+    char buffer[SYS_STRING_SIZE];
 
-#if defined (SERVERONLY)
+    va_start(argPtr, pFormat);
+    vsnprintf(buffer, SYS_STRING_SIZE, pFormat, argPtr);
+    va_end(argPtr);
 
-    fprintf (stderr, "Warning: %s\n", buffer);
+#if defined(SERVERONLY)
+
+    fprintf(stderr, "Warning: %s\n", buffer);
 
 #else
 
-    NSLog (@"Warning: %s\n", buffer);
+    NSLog(@"Warning: %s\n", buffer);
 
 #endif // SERVERONLY
-} 
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_Printf (char* pFormat, ...)
+void Sys_Printf(char* pFormat, ...)
 {
 #if defined(SERVERONLY)
-    
-    if (sys_nostdout.value == 0.0f)
-    {
-        va_list argPtr;
-        char    buffer[SYS_STRING_SIZE * 2];
 
-        va_start (argPtr, pFormat);
-        vsnprintf (buffer, FD_SIZE_OF_ARRAY (buffer), pFormat, argPtr);
-        va_end (argPtr);
-        
-        for (unsigned char* i = (unsigned char*) &(buffer[0]); *i != '\0'; ++i)
-        {
+    if (sys_nostdout.value == 0.0f) {
+        va_list argPtr;
+        char buffer[SYS_STRING_SIZE * 2];
+
+        va_start(argPtr, pFormat);
+        vsnprintf(buffer, FD_SIZE_OF_ARRAY(buffer), pFormat, argPtr);
+        va_end(argPtr);
+
+        for (unsigned char* i = (unsigned char*)&(buffer[0]); *i != '\0'; ++i) {
             *i &= 0x7f;
-            
-            if ((*i > 128 || *i < 32) && (*i != 10) && (*i != 13) && (*i != 9))
-            {
-                fprintf (stderr, "[%02x]", *i);
+
+            if ((*i > 128 || *i < 32) && (*i != 10) && (*i != 13) && (*i != 9)) {
+                fprintf(stderr, "[%02x]", *i);
             }
-            else
-            {
-                putc (*i, stderr);
+            else {
+                putc(*i, stderr);
             }
         }
-        
-        fflush (stderr);
+
+        fflush(stderr);
     }
 
 #else
-    
-    FD_UNUSED (pFormat);
-    
+
+    FD_UNUSED(pFormat);
+
 #endif /* SERVERONLY */
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_Quit (void)
+void Sys_Quit(void)
 {
-#if !defined (SERVERONLY)
+#if !defined(SERVERONLY)
 
 #ifdef GLQUAKE
 
-    extern cvar_t	gl_fsaa;
-    int             numSamples = gl_fsaa.value;
+    extern cvar_t gl_fsaa;
+    int numSamples = gl_fsaa.value;
 
     // save the FSAA setting again [for Radeon users]:
-    if ((numSamples != 4) && (numSamples != 8))
-    {
+    if ((numSamples != 4) && (numSamples != 8)) {
         numSamples = 0;
     }
-    
-    [[FDPreferences sharedPrefs] setObject: [NSNumber numberWithInt: numSamples] forKey: QUAKE_PREFS_KEY_GL_SAMPLES];
+
+    [[FDPreferences sharedPrefs] setObject:[NSNumber numberWithInt:numSamples] forKey:QUAKE_PREFS_KEY_GL_SAMPLES];
     [[FDPreferences sharedPrefs] synchronize];
 
 #endif /* GLQUAKE */
 
     // shutdown host:
-    Host_Shutdown ();
-    [[NSApp delegate] setHostInitialized: NO];
-    fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);
-    fflush (stdout);
-    
+    Host_Shutdown();
+    [[NSApp delegate] setHostInitialized:NO];
+    fcntl(0, F_SETFL, fcntl(0, F_GETFL, 0) & ~FNDELAY);
+    fflush(stdout);
+
 #endif /* !SERVERONLY */
 
-    exit (EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-double	Sys_FloatTime (void)
+double Sys_FloatTime(void)
 {
-    static uint64_t startTime   = 0;
-    static double   scale       = 0.0;
-    const uint64_t  time        = mach_absolute_time();
-    
-    if (startTime == 0)
-    {
-        mach_timebase_info_data_t   info = { 0 };
-        
-        if (mach_timebase_info (&info) != 0)
-        {
-            Sys_Error ("Failed to read timebase!");
+    static uint64_t startTime = 0;
+    static double scale = 0.0;
+    const uint64_t time = mach_absolute_time();
+
+    if (startTime == 0) {
+        mach_timebase_info_data_t info = { 0 };
+
+        if (mach_timebase_info(&info) != 0) {
+            Sys_Error("Failed to read timebase!");
         }
-        
-        scale       = 1e-9 * ((double) info.numer) / ((double) info.denom);
-        startTime   = time;
+
+        scale = 1e-9 * ((double)info.numer) / ((double)info.denom);
+        startTime = time;
     }
 
-    return (double) (time - startTime) * scale;
+    return (double)(time - startTime) * scale;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-char*	Sys_ConsoleInput (void)
+char* Sys_ConsoleInput(void)
 {
     char* pText = NULL;
-    
-#if defined (SERVERONLY)
-    
-    if (stdin_ready != 0)
-    {
-        static char     text[256];
-        const size_t    length = read (0, text, FD_SIZE_OF_ARRAY (text));
-        
+
+#if defined(SERVERONLY)
+
+    if (stdin_ready != 0) {
+        static char text[256];
+        const size_t length = read(0, text, FD_SIZE_OF_ARRAY(text));
+
         stdin_ready = 0;
-        
-        if (length > 0)
-        {
-            text[length - 1]    = '\0';
-            pText               = &(text[0]);
+
+        if (length > 0) {
+            text[length - 1] = '\0';
+            pText = &(text[0]);
         }
     }
-    
+
 #endif /* SERVERONLY */
 
     return pText;
@@ -457,13 +438,13 @@ char*	Sys_ConsoleInput (void)
 
 #if !id386
 
-void	Sys_HighFPPrecision (void)
+void Sys_HighFPPrecision(void)
 {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_LowFPPrecision (void)
+void Sys_LowFPPrecision(void)
 {
 }
 
@@ -471,47 +452,44 @@ void	Sys_LowFPPrecision (void)
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-double	Sys_DoubleTime (void)
+double Sys_DoubleTime(void)
 {
-    return Sys_FloatTime ();
+    return Sys_FloatTime();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_DebugLog (char* pPath, char* pFormat, ...)
+void Sys_DebugLog(char* pPath, char* pFormat, ...)
 {
-    const int fileDesc = open (pPath, O_WRONLY | O_CREAT | O_APPEND, 0666);
-    
-    if (fileDesc != -1)
-    {
-        va_list args; 
-        char 	text[SYS_STRING_SIZE];
+    const int fileDesc = open(pPath, O_WRONLY | O_CREAT | O_APPEND, 0666);
 
-        va_start (args, pFormat);
-        vsnprintf (text, SYS_STRING_SIZE, pFormat, args);
-        va_end (args);
+    if (fileDesc != -1) {
+        va_list args;
+        char text[SYS_STRING_SIZE];
 
-        write (fileDesc, text, strlen (text));
-        close (fileDesc);
+        va_start(args, pFormat);
+        vsnprintf(text, SYS_STRING_SIZE, pFormat, args);
+        va_end(args);
+
+        write(fileDesc, text, strlen(text));
+        close(fileDesc);
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-#if !defined (SERVERONLY)
+#if !defined(SERVERONLY)
 
-char*	Sys_GetClipboardData (void)
+char* Sys_GetClipboardData(void)
 {
-    NSPasteboard*   pasteboard  = [NSPasteboard generalPasteboard];
-    NSArray*        types       = [pasteboard types];
-    
-    if ([types containsObject: NSStringPboardType])
-    {
-        NSString* clipboardString = [pasteboard stringForType: NSStringPboardType];
-        
-        if (clipboardString != NULL && [clipboardString length] > 0)
-        {
-            return strdup ([clipboardString cStringUsingEncoding: NSASCIIStringEncoding]);
+    NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+    NSArray* types = [pasteboard types];
+
+    if ([types containsObject:NSStringPboardType]) {
+        NSString* clipboardString = [pasteboard stringForType:NSStringPboardType];
+
+        if (clipboardString != NULL && [clipboardString length] > 0) {
+            return strdup([clipboardString cStringUsingEncoding:NSASCIIStringEncoding]);
         }
     }
     return NULL;
@@ -519,15 +497,15 @@ char*	Sys_GetClipboardData (void)
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	Sys_SendKeyEvents (void)
+void Sys_SendKeyEvents(void)
 {
     // will only be called if in modal loop
-    NSEvent*            event   = [NSApp nextEventMatchingMask: NSAnyEventMask
-                                                     untilDate: [NSDate distantPast]
-                                                        inMode: NSDefaultRunLoopMode
-                                                       dequeue: YES];
-    
-    [NSApp sendEvent: event];
+    NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+                                        untilDate:[NSDate distantPast]
+                                           inMode:NSDefaultRunLoopMode
+                                          dequeue:YES];
+
+    [NSApp sendEvent:event];
 
     IN_SendKeyEvents();
 }
@@ -536,90 +514,85 @@ void	Sys_SendKeyEvents (void)
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	main (int argc, const char** pArgv)
+int main(int argc, const char** pArgv)
 {
-#if defined (SERVERONLY)
+#if defined(SERVERONLY)
 
-    double          prevTime    = 0.0;
-    quakeparms_t	parameters  = { 0 };
-    int             customMem   = 0;
+    double prevTime = 0.0;
+    quakeparms_t parameters = { 0 };
+    int customMem = 0;
 
-    Con_Printf ("\n=============================================\n");
-    Con_Printf ("QuakeWorld Server for MacOS X -- Version %0.2f\n", MACOSX_VERSION);
-    Con_Printf ("        Ported by: awe^fruitz of dojo\n");
-    Con_Printf ("     Visit: http://www.fruitz-of-dojo.de\n");
-    Con_Printf ("\n        tiger style kung fu is strong\n");
-    Con_Printf ("       but our style is more effective!\n");
-    Con_Printf ("=============================================\n\n");
-    
-    COM_InitArgv (argc, (char **) pArgv);
+    Con_Printf("\n=============================================\n");
+    Con_Printf("QuakeWorld Server for MacOS X -- Version %0.2f\n", MACOSX_VERSION);
+    Con_Printf("        Ported by: awe^fruitz of dojo\n");
+    Con_Printf("     Visit: http://www.fruitz-of-dojo.de\n");
+    Con_Printf("\n        tiger style kung fu is strong\n");
+    Con_Printf("       but our style is more effective!\n");
+    Con_Printf("=============================================\n\n");
 
-    parameters.argc     = com_argc;
-    parameters.argv     = com_argv;
-    parameters.basedir  = SYS_QWSV_BASE_PATH;    
-    parameters.memsize  = 16 * 1024 * 1024;
-    
+    COM_InitArgv(argc, (char**)pArgv);
+
+    parameters.argc = com_argc;
+    parameters.argv = com_argv;
+    parameters.basedir = SYS_QWSV_BASE_PATH;
+    parameters.memsize = 16 * 1024 * 1024;
+
     customMem = COM_CheckParm("-mem");
-    
-    if (customMem)
-    {
-        parameters.memsize = (int) (Q_atof (com_argv[customMem+1]) * 1024 * 1024);
-    }
-    
-    parameters.membase = malloc (parameters.memsize);
-    
-    if (parameters.membase == NULL)
-    {
-        Sys_Error ("Failed to allocate %ld bytes of memory.\n", parameters.memsize);
-    }
-        
-    SV_Init (&parameters);
-    SV_Frame (0.1);
-    
-    prevTime = Sys_DoubleTime () - 0.1;
-    
-    while (1)
-    {
-        extern int		net_socket;
-        double          curTime;
-        double          deltaTime;
-        fd_set			desc;
-        struct timeval	timeout;
 
-        timeout.tv_sec    = 1;
-        timeout.tv_usec   = 0;
-        
-        FD_ZERO (&desc);
-        
-        FD_SET (0, &desc);
-        FD_SET (net_socket, &desc);
+    if (customMem) {
+        parameters.memsize = (int)(Q_atof(com_argv[customMem + 1]) * 1024 * 1024);
+    }
 
-        if (select (net_socket + 1, &desc, NULL, NULL, &timeout) == -1)
-        {
+    parameters.membase = malloc(parameters.memsize);
+
+    if (parameters.membase == NULL) {
+        Sys_Error("Failed to allocate %ld bytes of memory.\n", parameters.memsize);
+    }
+
+    SV_Init(&parameters);
+    SV_Frame(0.1);
+
+    prevTime = Sys_DoubleTime() - 0.1;
+
+    while (1) {
+        extern int net_socket;
+        double curTime;
+        double deltaTime;
+        fd_set desc;
+        struct timeval timeout;
+
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&desc);
+
+        FD_SET(0, &desc);
+        FD_SET(net_socket, &desc);
+
+        if (select(net_socket + 1, &desc, NULL, NULL, &timeout) == -1) {
             continue;
         }
-	
-        stdin_ready = FD_ISSET (0, &desc);
-        
-        curTime     = Sys_DoubleTime ();
-        deltaTime   = curTime - prevTime;
-        prevTime    = curTime;
-	
-        SV_Frame (deltaTime);
-        
-        if (sys_extrasleep.value)
-        {
-            usleep (sys_extrasleep.value);
+
+        stdin_ready = FD_ISSET(0, &desc);
+
+        curTime = Sys_DoubleTime();
+        deltaTime = curTime - prevTime;
+        prevTime = curTime;
+
+        SV_Frame(deltaTime);
+
+        if (sys_extrasleep.value) {
+            usleep(sys_extrasleep.value);
         }
-    }	
+    }
 
 #else
 
-    NSUserDefaults *	defaults    = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 
-    [defaults registerDefaults: [NSDictionary dictionaryWithObject: @"YES" forKey: @"AppleDockIconEnabled"]];
-    
-    return NSApplicationMain (argc, pArgv);
+    [defaults registerDefaults:[NSDictionary dictionaryWithObject:@"YES" forKey:@"AppleDockIconEnabled"]];
+
+    return NSApplicationMain(argc, pArgv);
 
 #endif // SERVERONLY
 }

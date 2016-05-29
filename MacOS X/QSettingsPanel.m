@@ -17,7 +17,7 @@
 
 @interface QSettingsPanel ()
 
-- (void) showPanel: (id) sender;
+- (void)showPanel:(id)sender;
 
 @end
 
@@ -25,56 +25,54 @@
 
 @implementation QSettingsPanel
 
-- (NSString*) toolbarIdentifier
+- (NSString*)toolbarIdentifier
 {
-    [self doesNotRecognizeSelector: _cmd];
-    
-    return nil;    
+    [self doesNotRecognizeSelector:_cmd];
+
+    return nil;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (NSToolbarItem*) toolbarItem
+- (NSToolbarItem*)toolbarItem
 {
-    NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier: [self toolbarIdentifier]];
-    
-    [item setTarget: self];
-    [item setAction: @selector (showPanel:)];
+    NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier:[self toolbarIdentifier]];
+
+    [item setTarget:self];
+    [item setAction:@selector(showPanel:)];
 
     return item;
 }
 
-
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) showPanel: (id) sender
+- (void)showPanel:(id)sender
 {
-    FD_UNUSED (sender);
-    
-    if ([mDelegate respondsToSelector: @selector (showPanel:)] == YES)
-    {
-        [mDelegate performSelector: @selector (showPanel:) withObject: self];
+    FD_UNUSED(sender);
+
+    if ([mDelegate respondsToSelector:@selector(showPanel:)] == YES) {
+        [mDelegate performSelector:@selector(showPanel:) withObject:self];
     }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) setDelegate: (id) delegate
+- (void)setDelegate:(id)delegate
 {
     mDelegate = delegate;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (id) delegate
+- (id)delegate
 {
     return mDelegate;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-- (void) synchronize
-{    
+- (void)synchronize
+{
 }
 
 @end

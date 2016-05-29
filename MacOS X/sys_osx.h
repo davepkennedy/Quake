@@ -9,9 +9,9 @@
 //
 //----------------------------------------------------------------------------------------------------------------------------
 
-void *      Sys_GetProcAddress (const char* pName, qboolean isSafeMode);
-char *		Sys_GetClipboardData (void);
-double      Sys_DoubleTime (void);
-double		Sys_FloatTime (void);
+void* Sys_GetProcAddress(const char* pName, qboolean isSafeMode);
+char* Sys_GetClipboardData(void);
+double Sys_DoubleTime(void);
+double Sys_FloatTime(void);
 
 //----------------------------------------------------------------------------------------------------------------------------

@@ -20,117 +20,110 @@
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-static FDAudioBuffer*   sSndAudioBuffer         = nil;
-static UInt8            sSndBuffer[64*1024]     = { 0 };
-static UInt32			sSndBufferPosition      = 0;
-static const UInt32     skSndBufferByteCount    = 4 * 1024;
+static FDAudioBuffer* sSndAudioBuffer = nil;
+static UInt8 sSndBuffer[64 * 1024] = { 0 };
+static UInt32 sSndBufferPosition = 0;
+static const UInt32 skSndBufferByteCount = 4 * 1024;
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-static NSUInteger SNDDMA_Callback (void* pDst, NSUInteger numBytes, void* pContext);
+static NSUInteger SNDDMA_Callback(void* pDst, NSUInteger numBytes, void* pContext);
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-NSUInteger SNDDMA_Callback (void* pDst, NSUInteger numBytes, void* pContext)
+NSUInteger SNDDMA_Callback(void* pDst, NSUInteger numBytes, void* pContext)
 {
-    while (numBytes)
-    {
-        if (sSndBufferPosition >= FD_SIZE_OF_ARRAY (sSndBuffer))
-        {
+    while (numBytes) {
+        if (sSndBufferPosition >= FD_SIZE_OF_ARRAY(sSndBuffer)) {
             sSndBufferPosition = 0;
         }
-        
-        NSUInteger toCopy = FD_SIZE_OF_ARRAY (sSndBuffer) - sSndBufferPosition;
-        
-        if (toCopy > numBytes)
-        {
+
+        NSUInteger toCopy = FD_SIZE_OF_ARRAY(sSndBuffer) - sSndBufferPosition;
+
+        if (toCopy > numBytes) {
             toCopy = numBytes;
         }
-        
-        FD_MEMCPY (pDst, &(sSndBuffer[sSndBufferPosition]), toCopy);
-        
-        pDst                += toCopy;
-        numBytes            -= toCopy;
-        sSndBufferPosition  += toCopy;
+
+        FD_MEMCPY(pDst, &(sSndBuffer[sSndBufferPosition]), toCopy);
+
+        pDst += toCopy;
+        numBytes -= toCopy;
+        sSndBufferPosition += toCopy;
     }
-    
+
     return 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-qboolean SNDDMA_Init (void)
+qboolean SNDDMA_Init(void)
 {
-    qboolean        success         = false;
-    const UInt32    sampleRate      = 44100;
-    const UInt32    bitsPerChannel  = 16;
-    const UInt32    numChannels     = 2;
+    qboolean success = false;
+    const UInt32 sampleRate = 44100;
+    const UInt32 bitsPerChannel = 16;
+    const UInt32 numChannels = 2;
 
-    FD_MEMSET (&(sSndBuffer[0]), 0, FD_SIZE_OF_ARRAY (sSndBuffer));
-    sSndBufferPosition  = 0;
+    FD_MEMSET(&(sSndBuffer[0]), 0, FD_SIZE_OF_ARRAY(sSndBuffer));
+    sSndBufferPosition = 0;
 
-    sSndAudioBuffer = [[FDAudioBuffer alloc] initWithMixer: [FDAudioMixer sharedAudioMixer]
-                                                 frequency: sampleRate
-                                            bitsPerChannel: bitsPerChannel
-                                                  channels: numChannels
-                                                  callback: &SNDDMA_Callback
-                                                   context: nil];
+    sSndAudioBuffer = [[FDAudioBuffer alloc] initWithMixer:[FDAudioMixer sharedAudioMixer]
+                                                 frequency:sampleRate
+                                            bitsPerChannel:bitsPerChannel
+                                                  channels:numChannels
+                                                  callback:&SNDDMA_Callback
+                                                   context:nil];
 
-    if (sSndAudioBuffer)
-    {
-        shm = Hunk_AllocName (sizeof (*shm), "shm");
-        
-        shm->splitbuffer        = 0;
-        shm->samplebits         = bitsPerChannel;
-        shm->speed              = sampleRate;
-        shm->channels           = numChannels;
-        shm->samples            = FD_SIZE_OF_ARRAY (sSndBuffer) / (bitsPerChannel >> 3);
-        shm->samplepos          = 0;
-        shm->soundalive         = true;
-        shm->gamealive          = true;
-        shm->submission_chunk   = skSndBufferByteCount;
-        shm->buffer             = &(sSndBuffer[0]);
-        
-        if (!COM_CheckParm ("-nosound"))
-        {
-            Con_Printf ("Sound Channels: %d\n", shm->channels);
-            Con_Printf ("Sound sample bits: %d\n", shm->samplebits);
+    if (sSndAudioBuffer) {
+        shm = Hunk_AllocName(sizeof(*shm), "shm");
+
+        shm->splitbuffer = 0;
+        shm->samplebits = bitsPerChannel;
+        shm->speed = sampleRate;
+        shm->channels = numChannels;
+        shm->samples = FD_SIZE_OF_ARRAY(sSndBuffer) / (bitsPerChannel >> 3);
+        shm->samplepos = 0;
+        shm->soundalive = true;
+        shm->gamealive = true;
+        shm->submission_chunk = skSndBufferByteCount;
+        shm->buffer = &(sSndBuffer[0]);
+
+        if (!COM_CheckParm("-nosound")) {
+            Con_Printf("Sound Channels: %d\n", shm->channels);
+            Con_Printf("Sound sample bits: %d\n", shm->samplebits);
         }
-        
+
         success = true;
     }
-    else
-    {
-        Con_Printf ("Audio init: Failed to initialize!\n");
+    else {
+        Con_Printf("Audio init: Failed to initialize!\n");
     }
-    
+
     return success;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	SNDDMA_Shutdown (void)
+void SNDDMA_Shutdown(void)
 {
     sSndAudioBuffer = nil;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-void	SNDDMA_Submit (void)
+void SNDDMA_Submit(void)
 {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
 
-int	SNDDMA_GetDMAPos (void)
+int SNDDMA_GetDMAPos(void)
 {
     int pos = 0;
-    
-    if (sSndAudioBuffer != nil)
-    {
+
+    if (sSndAudioBuffer != nil) {
         pos = sSndBufferPosition / (shm->samplebits >> 3);
     }
-	
+
     return pos;
 }
 
