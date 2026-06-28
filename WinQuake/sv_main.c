@@ -1049,6 +1049,7 @@ void SV_SpawnServer (char *server)
 {
 	edict_t		*ent;
 	int			i;
+	char		*tmp;
 
 	// let's not have any servers with no name
 	if (hostname.string[0] == 0)
@@ -1157,7 +1158,10 @@ void SV_SpawnServer (char *server)
 	ent = EDICT_NUM(0);
 	memset (&ent->v, 0, progs->entityfields * 4);
 	ent->free = false;
-	ent->v.model = sv.worldmodel->name - pr_strings;
+	// mod_known[] is a BSS global array; copy name to hunk so string_t offset from pr_strings fits in int on x64
+	tmp = (char *)Hunk_Alloc(strlen(sv.worldmodel->name) + 1);
+	Q_strcpy(tmp, sv.worldmodel->name);
+	ent->v.model = (int)(tmp - pr_strings);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
@@ -1167,9 +1171,14 @@ void SV_SpawnServer (char *server)
 	else
 		pr_global_struct->deathmatch = deathmatch.value;
 
-	pr_global_struct->mapname = sv.name - pr_strings;
+	// sv is a BSS global; copy sv.name to hunk so the string_t offset from pr_strings fits in int on x64
+	tmp = (char *)Hunk_Alloc(strlen(sv.name) + 1);
+	Q_strcpy(tmp, sv.name);
+	pr_global_struct->mapname = (int)(tmp - pr_strings);
 #ifdef QUAKE2
-	pr_global_struct->startspot = sv.startspot - pr_strings;
+	tmp = (char *)Hunk_Alloc(strlen(sv.startspot) + 1);
+	Q_strcpy(tmp, sv.startspot);
+	pr_global_struct->startspot = (int)(tmp - pr_strings);
 #endif
 
 // serverflags are for cross level information (sigils)

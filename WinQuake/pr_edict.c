@@ -33,7 +33,7 @@ int				pr_edict_size;	// in bytes
 
 unsigned short		pr_crc;
 
-int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
+int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,1};
 
 ddef_t *ED_FieldAtOfs (int ofs);
 qboolean	ED_ParseEpair (void *base, ddef_t *key, char *s);
@@ -739,7 +739,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, char *s)
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
 	case ev_string:
-		*(string_t *)d = ED_NewString (s) - pr_strings;
+		*(string_t *)d = (string_t)(ED_NewString(s) - pr_strings);
 		break;
 		
 	case ev_float:
@@ -1017,7 +1017,12 @@ void PR_LoadProgs (void)
 
 	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;
-	
+
+	// Allocate temp string buffer in the hunk so pr_string_temp - pr_strings fits in int on x64.
+	// On x64 a static/BSS buffer would be in a different memory region from the hunk, making the
+	// pointer difference gigabytes wide and causing truncation when stored as string_t (int).
+	pr_string_temp = (char *)Hunk_Alloc(128);
+
 	pr_edict_size = progs->entityfields * 4 + sizeof (edict_t) - sizeof(entvars_t);
 	
 // byte swap the lumps

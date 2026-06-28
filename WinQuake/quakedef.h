@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	GAMENAME	"id1"
 #endif
 
+#include <stddef.h>
 #include <math.h>
 #include <string.h>
 #include <stdarg.h>

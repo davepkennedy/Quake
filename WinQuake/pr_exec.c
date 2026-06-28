@@ -565,7 +565,7 @@ while (1)
 #endif
 		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 			PR_RunError ("assignment to world entity");
-		c->_int = (byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts;
+		c->_int = (int)((byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts);
 		break;
 		
 	case OP_LOAD_F:

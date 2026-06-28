@@ -58,6 +58,7 @@ extern	ddef_t			*pr_fielddefs;
 extern	dstatement_t	*pr_statements;
 extern	globalvars_t	*pr_global_struct;
 extern	float			*pr_globals;			// same as pr_global_struct
+extern	char			*pr_string_temp;		// temp string buffer, hunk-allocated so offset from pr_strings fits in int
 
 extern	int				pr_edict_size;	// in bytes
 
@@ -93,7 +94,7 @@ int NUM_FOR_EDICT(edict_t *e);
 
 #define	NEXT_EDICT(e) ((edict_t *)( (byte *)e + pr_edict_size))
 
-#define	EDICT_TO_PROG(e) ((byte *)e - (byte *)sv.edicts)
+#define	EDICT_TO_PROG(e) ((int)((byte *)(e) - (byte *)sv.edicts))
 #define PROG_TO_EDICT(e) ((edict_t *)((byte *)sv.edicts + e))
 
 //============================================================================
