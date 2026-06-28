@@ -275,7 +275,7 @@ typedef struct
 	int		argc;
 	char	**argv;
 	void	*membase;
-	int		memsize;
+	size_t	memsize;
 } quakeparms_t;
 
 

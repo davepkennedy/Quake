@@ -283,7 +283,7 @@ Cmd_Exec_f
 void Cmd_Exec_f (void)
 {
 	char	*f;
-	int		mark;
+	size_t	mark;
 
 	if (Cmd_Argc () != 2)
 	{

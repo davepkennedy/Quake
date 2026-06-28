@@ -33,7 +33,7 @@ static struct
 {
 	double	time;
 	int		op;
-	long	session;
+	intptr_t	session;
 }	next;
 
 int VCR_Init (void)
@@ -158,7 +158,7 @@ qsocket_t *VCR_CheckNewConnections (void)
 	}
 
 	sock = NET_NewQSocket ();
-	*(long *)(&sock->driverdata) = next.session;
+	sock->driverdata = (void *)(intptr_t)next.session;
 
 	Sys_FileRead (vcrFile, sock->address, NET_NAMELEN);
 	VCR_ReadNext ();

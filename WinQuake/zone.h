@@ -83,7 +83,7 @@ Zone block
 
 */
 
-void Memory_Init (void *buf, int size);
+void Memory_Init (void *buf, size_t size);
 
 void Z_Free (void *ptr);
 void *Z_Malloc (int size);			// returns 0 filled memory
@@ -98,11 +98,11 @@ void *Hunk_AllocName (int size, char *name);
 
 void *Hunk_HighAllocName (int size, char *name);
 
-int	Hunk_LowMark (void);
-void Hunk_FreeToLowMark (int mark);
+size_t	Hunk_LowMark (void);
+void Hunk_FreeToLowMark (size_t mark);
 
-int	Hunk_HighMark (void);
-void Hunk_FreeToHighMark (int mark);
+size_t	Hunk_HighMark (void);
+void Hunk_FreeToHighMark (size_t mark);
 
 void *Hunk_TempAlloc (int size);
 

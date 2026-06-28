@@ -120,7 +120,7 @@ modestate_t	modestate = MS_UNINIT;
 void VID_MenuDraw (void);
 void VID_MenuKey (int key);
 
-LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void AppActivate(BOOL fActive, BOOL minimize);
 char *VID_GetModeDescription (int mode);
 void ClearAllStates (void);
@@ -1013,7 +1013,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
 
 
 /* main window procedure */
-LONG WINAPI MainWndProc (
+LRESULT WINAPI MainWndProc (
     HWND    hWnd,
     UINT    uMsg,
     WPARAM  wParam,

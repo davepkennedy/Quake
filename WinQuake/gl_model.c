@@ -1496,7 +1496,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	int					size;
 	daliasframetype_t	*pframetype;
 	daliasskintype_t	*pskintype;
-	int					start, end, total;
+	size_t				start, end, total;
 	
 	start = Hunk_LowMark ();
 
@@ -1637,7 +1637,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	end = Hunk_LowMark ();
 	total = end - start;
 	
-	Cache_Alloc (&mod->cache, total, loadname);
+	Cache_Alloc (&mod->cache, (int)total, loadname);
 	if (!mod->cache.data)
 		return;
 	memcpy (mod->cache.data, pheader, total);

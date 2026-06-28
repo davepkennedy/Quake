@@ -373,7 +373,7 @@ void Draw_Init (void)
 	int		x, y;
 	char	ver[40];
 	glpic_t	*gl;
-	int		start;
+	size_t	start;
 	byte	*ncdata;
 	int		f, fstep;
 

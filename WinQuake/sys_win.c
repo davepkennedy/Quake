@@ -65,10 +65,10 @@ volatile int					sys_checksum;
 Sys_PageIn
 ================
 */
-void Sys_PageIn (void *ptr, int size)
+void Sys_PageIn (void *ptr, size_t size)
 {
 	byte	*x;
-	int		j, m, n;
+	size_t	j, m, n;
 
 // touch all the memory to make sure it's there. The 16-page skip is to
 // keep Win 95 from thinking we're trying to page ourselves in (we are
@@ -261,7 +261,7 @@ SYSTEM IO
 Sys_MakeCodeWriteable
 ================
 */
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
+void Sys_MakeCodeWriteable (size_t startaddr, size_t length)
 {
 	DWORD  flOldProtect;
 
@@ -694,7 +694,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     MSG				msg;
 	quakeparms_t	parms;
 	double			time, oldtime, newtime;
-	MEMORYSTATUS	lpBuffer;
+	MEMORYSTATUSEX	lpBuffer;
 	static	char	cwd[1024];
 	int				t;
 	RECT			rect;
@@ -706,8 +706,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	global_hInstance = hInstance;
 	global_nCmdShow = nCmdShow;
 
-	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
-	GlobalMemoryStatus (&lpBuffer);
+	lpBuffer.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx (&lpBuffer);
 
 	if (!GetCurrentDirectory (sizeof(cwd), cwd))
 		Sys_Error ("Couldn't determine current directory");
@@ -778,13 +778,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 // take the greater of all the available memory or half the total memory,
 // but at least 8 Mb and no more than 16 Mb, unless they explicitly
 // request otherwise
-	parms.memsize = lpBuffer.dwAvailPhys;
+	parms.memsize = (size_t)lpBuffer.ullAvailPhys;
 
 	if (parms.memsize < MINIMUM_WIN_MEMORY)
 		parms.memsize = MINIMUM_WIN_MEMORY;
 
-	if (parms.memsize < (lpBuffer.dwTotalPhys >> 1))
-		parms.memsize = lpBuffer.dwTotalPhys >> 1;
+	if (parms.memsize < (size_t)(lpBuffer.ullTotalPhys >> 1))
+		parms.memsize = (size_t)(lpBuffer.ullTotalPhys >> 1);
 
 	if (parms.memsize > MAXIMUM_WIN_MEMORY)
 		parms.memsize = MAXIMUM_WIN_MEMORY;
@@ -794,7 +794,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		t = COM_CheckParm("-heapsize") + 1;
 
 		if (t < com_argc)
-			parms.memsize = Q_atoi (com_argv[t]) * 1024;
+			parms.memsize = (size_t)Q_atoi (com_argv[t]) * 1024;
 	}
 
 	parms.membase = malloc (parms.memsize);
@@ -823,19 +823,19 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		if ((t = COM_CheckParm ("-HFILE")) > 0)
 		{
 			if (t < com_argc)
-				hFile = (HANDLE)Q_atoi (com_argv[t+1]);
+				hFile = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], NULL, 0);
 		}
 			
 		if ((t = COM_CheckParm ("-HPARENT")) > 0)
 		{
 			if (t < com_argc)
-				heventParent = (HANDLE)Q_atoi (com_argv[t+1]);
+				heventParent = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], NULL, 0);
 		}
 			
 		if ((t = COM_CheckParm ("-HCHILD")) > 0)
 		{
 			if (t < com_argc)
-				heventChild = (HANDLE)Q_atoi (com_argv[t+1]);
+				heventChild = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], NULL, 0);
 		}
 
 		InitConProc (hFile, heventParent, heventChild);

@@ -273,13 +273,13 @@ typedef struct
 } hunk_t;
 
 byte	*hunk_base;
-int		hunk_size;
+size_t	hunk_size;
 
-int		hunk_low_used;
-int		hunk_high_used;
+size_t	hunk_low_used;
+size_t	hunk_high_used;
 
 qboolean	hunk_tempactive;
-int		hunk_tempmark;
+size_t	hunk_tempmark;
 
 void R_FreeTextures (void);
 
@@ -298,7 +298,7 @@ void Hunk_Check (void)
 	{
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
-		if (h->size < 16 || h->size + (byte *)h - hunk_base > hunk_size)
+		if (h->size < 16 || (size_t)(h->size + (byte *)h - hunk_base) > hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 		h = (hunk_t *)((byte *)h+h->size);
 	}
@@ -356,7 +356,7 @@ void Hunk_Print (qboolean all)
 	//
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
-		if (h->size < 16 || h->size + (byte *)h - hunk_base > hunk_size)
+		if (h->size < 16 || (size_t)(h->size + (byte *)h - hunk_base) > hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 			
 		next = (hunk_t *)((byte *)h+h->size);
@@ -415,7 +415,7 @@ void *Hunk_AllocName (int size, char *name)
 	h = (hunk_t *)(hunk_base + hunk_low_used);
 	hunk_low_used += size;
 
-	Cache_FreeLow (hunk_low_used);
+	Cache_FreeLow ((int)hunk_low_used);
 
 	memset (h, 0, size);
 	
@@ -436,20 +436,20 @@ void *Hunk_Alloc (int size)
 	return Hunk_AllocName (size, "unknown");
 }
 
-int	Hunk_LowMark (void)
+size_t	Hunk_LowMark (void)
 {
 	return hunk_low_used;
 }
 
-void Hunk_FreeToLowMark (int mark)
+void Hunk_FreeToLowMark (size_t mark)
 {
-	if (mark < 0 || mark > hunk_low_used)
-		Sys_Error ("Hunk_FreeToLowMark: bad mark %i", mark);
+	if (mark > hunk_low_used)
+		Sys_Error ("Hunk_FreeToLowMark: bad mark %zu", mark);
 	memset (hunk_base + mark, 0, hunk_low_used - mark);
 	hunk_low_used = mark;
 }
 
-int	Hunk_HighMark (void)
+size_t	Hunk_HighMark (void)
 {
 	if (hunk_tempactive)
 	{
@@ -460,15 +460,15 @@ int	Hunk_HighMark (void)
 	return hunk_high_used;
 }
 
-void Hunk_FreeToHighMark (int mark)
+void Hunk_FreeToHighMark (size_t mark)
 {
 	if (hunk_tempactive)
 	{
 		hunk_tempactive = false;
 		Hunk_FreeToHighMark (hunk_tempmark);
 	}
-	if (mark < 0 || mark > hunk_high_used)
-		Sys_Error ("Hunk_FreeToHighMark: bad mark %i", mark);
+	if (mark > hunk_high_used)
+		Sys_Error ("Hunk_FreeToHighMark: bad mark %zu", mark);
 	memset (hunk_base + hunk_size - hunk_high_used, 0, hunk_high_used - mark);
 	hunk_high_used = mark;
 }
@@ -505,7 +505,7 @@ void *Hunk_HighAllocName (int size, char *name)
 	}
 
 	hunk_high_used += size;
-	Cache_FreeHigh (hunk_high_used);
+	Cache_FreeHigh ((int)hunk_high_used);
 
 	h = (hunk_t *)(hunk_base + hunk_size - hunk_high_used);
 
@@ -910,7 +910,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name)
 Memory_Init
 ========================
 */
-void Memory_Init (void *buf, int size)
+void Memory_Init (void *buf, size_t size)
 {
 	int p;
 	int zonesize = DYNAMIC_SIZE;

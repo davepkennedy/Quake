@@ -43,7 +43,7 @@ double		realtime;				// without any filtering or bounding
 double		oldrealtime;			// last frame run
 int			host_framecount;
 
-int			host_hunklevel;
+size_t		host_hunklevel;
 
 int			minimum_memory;
 
