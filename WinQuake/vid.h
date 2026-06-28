@@ -81,5 +81,7 @@ int VID_SetMode (int modenum, unsigned char *palette);
 // base mode) on memory allocation failures
 
 void VID_HandlePause (qboolean pause);
+
+qboolean VID_Is8bit (void);
 // called only on Win32, when pause happens, so the mouse can be released
 

@@ -58,8 +58,8 @@ extern	float	gldepthmin, gldepthmax;
 
 void GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean alpha);
 void GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboolean alpha);
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha);
-int GL_FindTexture (char *identifier);
+int GL_LoadTexture (const char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha);
+int GL_FindTexture (const char *identifier);
 
 typedef struct
 {
@@ -249,3 +249,43 @@ extern qboolean gl_mtexable;
 
 void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);
+
+// gl_draw.cpp
+void GL_Set2D (void);
+void GL_Upload8_EXT (byte *data, int width, int height, qboolean mipmap, qboolean alpha);
+int  GL_LoadPicTexture (qpic_t *pic);
+
+// gl_mesh.cpp
+void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+
+// gl_warp.cpp
+void GL_SubdivideSurface (msurface_t *fa);
+void EmitWaterPolys (msurface_t *fa);
+void EmitSkyPolys (msurface_t *fa);
+void EmitBothSkyLayers (msurface_t *fa);
+void R_DrawSkyChain (msurface_t *s);
+
+// gl_rsurf.cpp
+void GL_BuildLightmaps (void);
+void R_DrawWorld (void);
+void R_DrawBrushModel (entity_t *e);
+void R_DrawWaterSurfaces (void);
+void R_RenderBrushPoly (msurface_t *fa);
+
+// gl_rlight.cpp
+void R_AnimateLight (void);
+void R_RenderDlights (void);
+void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
+int  R_LightPoint (vec3_t p);
+
+// gl_rmain.cpp
+qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+void R_RotateForEntity (entity_t *e);
+
+// gl_refrag.cpp
+void R_StoreEfrags (efrag_t **ppefrag);
+
+// r_part.cpp
+void R_InitParticles (void);
+void R_ClearParticles (void);
+void R_DrawParticles (void);
