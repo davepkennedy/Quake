@@ -281,6 +281,159 @@ float	*shadedots = r_avertexnormal_dots[0];
 
 int	lastposenum;
 
+// -------------------------------------------------------------------------
+// Alias model renderer state (VAO / VBO / GLSL shader)
+//
+// Shared by the skin-textured model draw (GL_DrawAliasFrame) and the flat
+// blob-shadow draw (GL_DrawAliasShadow): both walk the same precomputed
+// triangle-strip/fan "command" stream from gl_mesh.cpp (count, then that
+// many (u,v) pairs interleaved with the pose's trivertx_t stream), just
+// with different per-vertex data and, for shadows, a flat uniform color
+// instead of the sampled+shaded skin texture.
+// -------------------------------------------------------------------------
+
+static GLuint alias_vao  = 0;
+static GLuint alias_vbo  = 0;
+static GLuint alias_prog = 0;
+static GLint  u_alias_mvp   = -1;
+static GLint  u_alias_tex   = -1;
+static GLint  u_alias_color = -1;
+static GLint  u_alias_flat  = -1;
+
+// gl_mesh.cpp's StripLength/FanLength cap any single command at 128 verts
+// (fixed-size stripverts[128]/striptris[128]); 256 leaves headroom.
+#define ALIAS_MAX_CMD_VERTS 256
+#define ALIAS_STREAM_VERTS  ((ALIAS_MAX_CMD_VERTS - 2) * 3)
+static float alias_stream[ALIAS_STREAM_VERTS * 6];  // pos3 + uv2 + intensity1
+
+static const char alias_vert_src[] =
+    "#version 450 core\n"
+    "layout(location = 0) in vec3 a_pos;\n"
+    "layout(location = 1) in vec2 a_uv;\n"
+    "layout(location = 2) in float a_intensity;\n"
+    "uniform mat4 u_mvp;\n"
+    "out vec2 v_uv;\n"
+    "out float v_intensity;\n"
+    "void main() {\n"
+    "    v_uv = a_uv;\n"
+    "    v_intensity = a_intensity;\n"
+    "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
+    "}\n";
+
+static const char alias_frag_src[] =
+    "#version 450 core\n"
+    "in vec2 v_uv;\n"
+    "in float v_intensity;\n"
+    "uniform sampler2D u_tex;\n"
+    "uniform vec4 u_color;\n"
+    "uniform int u_flat;\n"
+    "out vec4 frag_color;\n"
+    "void main() {\n"
+    "    if (u_flat != 0)\n"
+    "        frag_color = u_color;\n"
+    "    else\n"
+    "        frag_color = vec4(texture(u_tex, v_uv).rgb * v_intensity, 1.0);\n"
+    "}\n";
+
+static void Alias_InitRenderer (void)
+{
+	if (alias_prog)
+		return;
+
+	alias_prog = GL_BuildProgram (alias_vert_src, alias_frag_src);
+	if (!alias_prog)
+		Sys_Error ("Alias_InitRenderer: shader compile failed");
+
+	qglUseProgram (alias_prog);
+	u_alias_mvp   = qglGetUniformLocation (alias_prog, "u_mvp");
+	u_alias_tex   = qglGetUniformLocation (alias_prog, "u_tex");
+	u_alias_color = qglGetUniformLocation (alias_prog, "u_color");
+	u_alias_flat  = qglGetUniformLocation (alias_prog, "u_flat");
+	qglUseProgram (0);
+
+	qglGenVertexArrays (1, &alias_vao);
+	qglGenBuffers (1, &alias_vbo);
+	qglBindVertexArray (alias_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, alias_vbo);
+	qglBufferData (GL_ARRAY_BUFFER, sizeof(alias_stream), nullptr, GL_STREAM_DRAW);
+	// location 0: xyz  (3 floats, offset 0, stride 6*4=24)
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	qglEnableVertexAttribArray (0);
+	// location 1: uv  (2 floats, offset 12)
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	qglEnableVertexAttribArray (1);
+	// location 2: intensity  (1 float, offset 20)
+	qglVertexAttribPointer (2, 1, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(5*sizeof(float)));
+	qglEnableVertexAttribArray (2);
+	qglBindVertexArray (0);
+	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+static void Alias_BeginDraw (void)
+{
+	Alias_InitRenderer ();
+	GL_DisableMultitexture ();
+	qglUseProgram (alias_prog);
+	qglBindVertexArray (alias_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, alias_vbo);
+	qglUniform1i (u_alias_tex, 0);
+}
+
+static void Alias_SetMVP (void)
+{
+	float mvp[16];
+	GL_GetMVP (mvp);
+	qglUniformMatrix4fv (u_alias_mvp, 1, GL_FALSE, mvp);
+}
+
+static void Alias_EndDraw (void)
+{
+	qglBindVertexArray (0);
+	qglUseProgram (0);
+}
+
+// Triangulates one command's worth of vertices (a GL_TRIANGLE_FAN or
+// GL_TRIANGLE_STRIP, per the original fixed-function primitive type) into
+// the stream buffer and draws it. cmdverts holds n vertices of
+// (x,y,z, u,v, intensity). Mirrors the standard OpenGL strip winding rule
+// (alternating vertex order every other triangle) since we no longer have
+// glBegin(GL_TRIANGLE_STRIP) doing that for us.
+static void Alias_EmitPrimitive (const float cmdverts[][6], int n, qboolean fan)
+{
+	if (n < 3)
+		return;
+
+	int ntri = n - 2;
+	float *out = alias_stream;
+
+	for (int i = 0; i < ntri; i++)
+	{
+		int i0, i1, i2;
+		if (fan)
+		{
+			i0 = 0; i1 = i+1; i2 = i+2;
+		}
+		else if (i & 1)
+		{
+			i0 = i+1; i1 = i; i2 = i+2;
+		}
+		else
+		{
+			i0 = i; i1 = i+1; i2 = i+2;
+		}
+
+		memcpy (out, cmdverts[i0], 6*sizeof(float)); out += 6;
+		memcpy (out, cmdverts[i1], 6*sizeof(float)); out += 6;
+		memcpy (out, cmdverts[i2], 6*sizeof(float)); out += 6;
+	}
+
+	int nverts = ntri * 3;
+	qglBufferData (GL_ARRAY_BUFFER,
+	    (GLsizeiptr)(nverts * 6 * sizeof(float)),
+	    alias_stream, GL_STREAM_DRAW);
+	glDrawArrays (GL_TRIANGLES, 0, nverts);
+}
+
 /*
 =============
 GL_DrawAliasFrame
@@ -288,16 +441,10 @@ GL_DrawAliasFrame
 */
 void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
-	float	s, t;
-	float 	l;
-	int		i, j;
-	int		index;
-	trivertx_t	*v, *verts;
-	int		list;
+	trivertx_t	*verts;
 	int		*order;
-	vec3_t	point;
-	float	*normal;
 	int		count;
+	float		cmdverts[ALIAS_MAX_CMD_VERTS][6];
 
 lastposenum = posenum;
 
@@ -305,35 +452,44 @@ lastposenum = posenum;
 	verts += posenum * paliashdr->poseverts;
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
+	Alias_BeginDraw ();
+	Alias_SetMVP ();
+	qglUniform1i (u_alias_flat, 0);
+
 	while (1)
 	{
 		// get the vertex count and primitive type
 		count = *order++;
 		if (!count)
 			break;		// done
-		if (count < 0)
-		{
+		qboolean fan = count < 0;
+		if (fan)
 			count = -count;
-			glBegin (GL_TRIANGLE_FAN);
-		}
-		else
-			glBegin (GL_TRIANGLE_STRIP);
 
+		int n = 0;
 		do
 		{
-			// texture coordinates come from the draw list
-			glTexCoord2f (((float *)order)[0], ((float *)order)[1]);
-			order += 2;
+			if (n < ALIAS_MAX_CMD_VERTS)
+			{
+				// texture coordinates come from the draw list
+				cmdverts[n][3] = ((float *)order)[0];
+				cmdverts[n][4] = ((float *)order)[1];
 
-			// normals and vertexes come from the frame list
-			l = shadedots[verts->lightnormalindex] * shadelight;
-			glColor3f (l, l, l);
-			glVertex3f (verts->v[0], verts->v[1], verts->v[2]);
+				// normals and vertexes come from the frame list
+				cmdverts[n][0] = verts->v[0];
+				cmdverts[n][1] = verts->v[1];
+				cmdverts[n][2] = verts->v[2];
+				cmdverts[n][5] = shadedots[verts->lightnormalindex] * shadelight;
+				n++;
+			}
+			order += 2;
 			verts++;
 		} while (--count);
 
-		glEnd ();
+		Alias_EmitPrimitive (cmdverts, n, fan);
 	}
+
+	Alias_EndDraw ();
 }
 
 
@@ -346,25 +502,27 @@ extern	vec3_t			lightspot;
 
 void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 {
-	float	s, t, l;
-	int		i, j;
-	int		index;
-	trivertx_t	*v, *verts;
-	int		list;
+	trivertx_t	*verts;
 	int		*order;
-	vec3_t	point;
-	float	*normal;
-	float	height, lheight;
+	float		height, lheight;
 	int		count;
+	float		cmdverts[ALIAS_MAX_CMD_VERTS][6];
 
 	lheight = currententity->origin[2] - lightspot[2];
 
-	height = 0;
 	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
 	height = -lheight + 1.0;
+
+	Alias_BeginDraw ();
+	Alias_SetMVP ();
+	qglUniform1i (u_alias_flat, 1);
+	{
+		const float shadow_color[4] = {0.f, 0.f, 0.f, 0.5f};
+		qglUniform4fv (u_alias_color, 1, shadow_color);
+	}
 
 	while (1)
 	{
@@ -372,36 +530,44 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 		count = *order++;
 		if (!count)
 			break;		// done
-		if (count < 0)
-		{
+		qboolean fan = count < 0;
+		if (fan)
 			count = -count;
-			glBegin (GL_TRIANGLE_FAN);
-		}
-		else
-			glBegin (GL_TRIANGLE_STRIP);
 
+		int n = 0;
 		do
 		{
 			// texture coordinates come from the draw list
-			// (skipped for shadows) glTexCoord2fv ((float *)order);
+			// (skipped for shadows)
 			order += 2;
 
-			// normals and vertexes come from the frame list
-			point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-			point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-			point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+			if (n < ALIAS_MAX_CMD_VERTS)
+			{
+				vec3_t point;
+				point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
+				point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
+				point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
 
-			point[0] -= shadevector[0]*(point[2]+lheight);
-			point[1] -= shadevector[1]*(point[2]+lheight);
-			point[2] = height;
-//			height -= 0.001;
-			glVertex3fv (point);
+				point[0] -= shadevector[0]*(point[2]+lheight);
+				point[1] -= shadevector[1]*(point[2]+lheight);
+				point[2] = height;
+
+				cmdverts[n][0] = point[0];
+				cmdverts[n][1] = point[1];
+				cmdverts[n][2] = point[2];
+				cmdverts[n][3] = 0.f;
+				cmdverts[n][4] = 0.f;
+				cmdverts[n][5] = 0.f;
+				n++;
+			}
 
 			verts++;
 		} while (--count);
 
-		glEnd ();
-	}	
+		Alias_EmitPrimitive (cmdverts, n, fan);
+	}
+
+	Alias_EndDraw ();
 }
 
 
@@ -559,20 +725,7 @@ void R_DrawAliasModel (entity_t *e)
 		    GL_Bind(playertextures - 1 + i);
 	}
 
-	if (gl_smoothmodels.value)
-		glShadeModel (GL_SMOOTH);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	if (gl_affinemodels.value)
-		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-
 	R_SetupAliasFrame (currententity->frame, paliashdr);
-
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	glShadeModel (GL_FLAT);
-	if (gl_affinemodels.value)
-		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
 
@@ -580,13 +733,9 @@ void R_DrawAliasModel (entity_t *e)
 	{
 		glPushMatrix ();
 		R_RotateForEntity (e);
-		glDisable (GL_TEXTURE_2D);
 		glEnable (GL_BLEND);
-		glColor4f (0,0,0,0.5);
 		GL_DrawAliasShadow (paliashdr, lastposenum);
-		glEnable (GL_TEXTURE_2D);
 		glDisable (GL_BLEND);
-		glColor4f (1,1,1,1);
 		glPopMatrix ();
 	}
 
