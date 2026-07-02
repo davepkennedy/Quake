@@ -1,5 +1,25 @@
 #include "quakedef.h"
 
+static void MatMul4x4(const float *a, const float *b, float *out)
+{
+    for (int col = 0; col < 4; col++)
+        for (int row = 0; row < 4; row++)
+        {
+            float s = 0.f;
+            for (int k = 0; k < 4; k++)
+                s += a[k*4 + row] * b[col*4 + k];
+            out[col*4 + row] = s;
+        }
+}
+
+void GL_GetMVP(float *out16)
+{
+    float proj[16], mv[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, proj);
+    glGetFloatv(GL_MODELVIEW_MATRIX,  mv);
+    MatMul4x4(proj, mv, out16);
+}
+
 GLuint GL_CompileShader(GLenum type, const char *src)
 {
     GLuint s = qglCreateShader(type);

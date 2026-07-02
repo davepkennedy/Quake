@@ -184,6 +184,96 @@ float	turbsin[] =
 };
 #define TURBSCALE (256.0 / (2 * M_PI))
 
+// -------------------------------------------------------------------------
+// Warp surface renderer state (VAO / VBO / GLSL shader)
+//
+// Shared by water/lava/slime (EmitWaterPolys) and sky (EmitSkyPolys and
+// friends): both are unlit, single-texture, per-vertex-UV-warped triangle
+// fans built from pre-subdivided glpoly_t chains. Position is passed through
+// unmodified; only the texture coordinates vary per effect.
+// -------------------------------------------------------------------------
+
+static GLuint warp_vao  = 0;
+static GLuint warp_vbo  = 0;
+static GLuint warp_prog = 0;
+static GLint  u_warp_mvp = -1;
+static GLint  u_warp_tex = -1;
+
+#define WARP_STREAM_VERTS 4096
+static float  warp_stream[WARP_STREAM_VERTS * 5];
+
+static const char warp_vert_src[] =
+    "#version 450 core\n"
+    "layout(location = 0) in vec3 a_pos;\n"
+    "layout(location = 1) in vec2 a_uv;\n"
+    "uniform mat4 u_mvp;\n"
+    "out vec2 v_uv;\n"
+    "void main() {\n"
+    "    v_uv = a_uv;\n"
+    "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
+    "}\n";
+
+static const char warp_frag_src[] =
+    "#version 450 core\n"
+    "in vec2 v_uv;\n"
+    "uniform sampler2D u_tex;\n"
+    "out vec4 frag_color;\n"
+    "void main() {\n"
+    "    frag_color = texture(u_tex, v_uv);\n"
+    "}\n";
+
+static void Warp_InitRenderer (void)
+{
+	if (warp_prog)
+		return;
+
+	warp_prog = GL_BuildProgram (warp_vert_src, warp_frag_src);
+	if (!warp_prog)
+		Sys_Error ("Warp_InitRenderer: shader compile failed");
+
+	qglUseProgram (warp_prog);
+	u_warp_mvp = qglGetUniformLocation (warp_prog, "u_mvp");
+	u_warp_tex = qglGetUniformLocation (warp_prog, "u_tex");
+	qglUseProgram (0);
+
+	qglGenVertexArrays (1, &warp_vao);
+	qglGenBuffers (1, &warp_vbo);
+	qglBindVertexArray (warp_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, warp_vbo);
+	qglBufferData (GL_ARRAY_BUFFER, sizeof(warp_stream), nullptr, GL_STREAM_DRAW);
+	// location 0: xyz  (3 floats, offset 0, stride 5*4=20)
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+	qglEnableVertexAttribArray (0);
+	// location 1: uv  (2 floats, offset 12)
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+	qglEnableVertexAttribArray (1);
+	qglBindVertexArray (0);
+	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+static void Warp_BeginDraw (void)
+{
+	Warp_InitRenderer ();
+	GL_DisableMultitexture ();
+	qglUseProgram (warp_prog);
+	qglBindVertexArray (warp_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, warp_vbo);
+	qglUniform1i (u_warp_tex, 0);
+}
+
+static void Warp_SetMVP (void)
+{
+	float mvp[16];
+	GL_GetMVP (mvp);
+	qglUniformMatrix4fv (u_warp_mvp, 1, GL_FALSE, mvp);
+}
+
+static void Warp_EndDraw (void)
+{
+	qglBindVertexArray (0);
+	qglUseProgram (0);
+}
+
 /*
 =============
 EmitWaterPolys
@@ -194,30 +284,45 @@ Does a water warp on the pre-fragmented glpoly_t chain
 void EmitWaterPolys (msurface_t *fa)
 {
 	glpoly_t	*p;
-	float		*v;
-	int			i;
-	float		s, t, os, ot;
 
+	Warp_BeginDraw ();
+	Warp_SetMVP ();
 
 	for (p=fa->polys ; p ; p=p->next)
 	{
-		glBegin (GL_POLYGON);
-		for (i=0,v=p->verts[0] ; i<p->numverts ; i++, v+=VERTEXSIZE)
+		int n    = p->numverts;
+		int ntri = n - 2;
+		if (ntri < 1 || ntri * 3 > WARP_STREAM_VERTS)
+			continue;
+
+		float *out = warp_stream;
+
+		for (int i = 1; i < n - 1; i++)
 		{
-			os = v[3];
-			ot = v[4];
+			const float *verts[3] = { p->verts[0], p->verts[i], p->verts[i+1] };
+			for (int vi = 0; vi < 3; vi++)
+			{
+				const float *v = verts[vi];
+				float os = v[3], ot = v[4];
+				float s = os + turbsin[(int)((ot*0.125+realtime) * TURBSCALE) & 255];
+				s *= (1.0/64);
+				float t = ot + turbsin[(int)((os*0.125+realtime) * TURBSCALE) & 255];
+				t *= (1.0/64);
 
-			s = os + turbsin[(int)((ot*0.125+realtime) * TURBSCALE) & 255];
-			s *= (1.0/64);
-
-			t = ot + turbsin[(int)((os*0.125+realtime) * TURBSCALE) & 255];
-			t *= (1.0/64);
-
-			glTexCoord2f (s, t);
-			glVertex3fv (v);
+				out[0] = v[0]; out[1] = v[1]; out[2] = v[2];
+				out[3] = s;    out[4] = t;
+				out += 5;
+			}
 		}
-		glEnd ();
+
+		int nverts = ntri * 3;
+		qglBufferData (GL_ARRAY_BUFFER,
+		    (GLsizeiptr)(nverts * 5 * sizeof(float)),
+		    warp_stream, GL_STREAM_DRAW);
+		glDrawArrays (GL_TRIANGLES, 0, nverts);
 	}
+
+	Warp_EndDraw ();
 }
 
 
@@ -226,39 +331,58 @@ void EmitWaterPolys (msurface_t *fa)
 /*
 =============
 EmitSkyPolys
+
+Assumes the warp shader/VAO/VBO are already bound (see EmitBothSkyLayers
+and R_DrawSkyChain, which wrap calls to this with Warp_BeginDraw/EndDraw)
+and that the caller has already bound the desired sky texture.
 =============
 */
 void EmitSkyPolys (msurface_t *fa)
 {
 	glpoly_t	*p;
-	float		*v;
-	int			i;
-	float	s, t;
-	vec3_t	dir;
-	float	length;
+	vec3_t		dir;
+	float		length;
 
 	for (p=fa->polys ; p ; p=p->next)
 	{
-		glBegin (GL_POLYGON);
-		for (i=0,v=p->verts[0] ; i<p->numverts ; i++, v+=VERTEXSIZE)
+		int n    = p->numverts;
+		int ntri = n - 2;
+		if (ntri < 1 || ntri * 3 > WARP_STREAM_VERTS)
+			continue;
+
+		float *out = warp_stream;
+
+		for (int i = 1; i < n - 1; i++)
 		{
-			VectorSubtract (v, r_origin, dir);
-			dir[2] *= 3;	// flatten the sphere
+			const float *verts[3] = { p->verts[0], p->verts[i], p->verts[i+1] };
+			for (int vi = 0; vi < 3; vi++)
+			{
+				const float *v = verts[vi];
 
-			length = dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2];
-			length = sqrt (length);
-			length = 6*63/length;
+				VectorSubtract (v, r_origin, dir);
+				dir[2] *= 3;	// flatten the sphere
 
-			dir[0] *= length;
-			dir[1] *= length;
+				length = dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2];
+				length = sqrt (length);
+				length = 6*63/length;
 
-			s = (speedscale + dir[0]) * (1.0/128);
-			t = (speedscale + dir[1]) * (1.0/128);
+				dir[0] *= length;
+				dir[1] *= length;
 
-			glTexCoord2f (s, t);
-			glVertex3fv (v);
+				float s = (speedscale + dir[0]) * (1.0/128);
+				float t = (speedscale + dir[1]) * (1.0/128);
+
+				out[0] = v[0]; out[1] = v[1]; out[2] = v[2];
+				out[3] = s;    out[4] = t;
+				out += 5;
+			}
 		}
-		glEnd ();
+
+		int nverts = ntri * 3;
+		qglBufferData (GL_ARRAY_BUFFER,
+		    (GLsizeiptr)(nverts * 5 * sizeof(float)),
+		    warp_stream, GL_STREAM_DRAW);
+		glDrawArrays (GL_TRIANGLES, 0, nverts);
 	}
 }
 
@@ -273,11 +397,8 @@ will have them chained together.
 */
 void EmitBothSkyLayers (msurface_t *fa)
 {
-	int			i;
-	int			lindex;
-	float		*vec;
-
-	GL_DisableMultitexture();
+	Warp_BeginDraw ();
+	Warp_SetMVP ();
 
 	GL_Bind (solidskytexture);
 	speedscale = realtime*8;
@@ -293,6 +414,8 @@ void EmitBothSkyLayers (msurface_t *fa)
 	EmitSkyPolys (fa);
 
 	glDisable (GL_BLEND);
+
+	Warp_EndDraw ();
 }
 
 #ifndef QUAKE2
@@ -305,7 +428,8 @@ void R_DrawSkyChain (msurface_t *s)
 {
 	msurface_t	*fa;
 
-	GL_DisableMultitexture();
+	Warp_BeginDraw ();
+	Warp_SetMVP ();
 
 	// used when gl_texsort is on
 	GL_Bind(solidskytexture);
@@ -324,6 +448,8 @@ void R_DrawSkyChain (msurface_t *s)
 		EmitSkyPolys (fa);
 
 	glDisable (GL_BLEND);
+
+	Warp_EndDraw ();
 }
 
 #endif

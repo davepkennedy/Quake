@@ -697,18 +697,6 @@ void DrawGLPoly (glpoly_t *p)
 // World surface renderer helpers
 // -------------------------------------------------------------------------
 
-static void MatMul4x4 (const float *a, const float *b, float *out)
-{
-	for (int col = 0; col < 4; col++)
-		for (int row = 0; row < 4; row++)
-		{
-			float s = 0.f;
-			for (int k = 0; k < 4; k++)
-				s += a[k*4 + row] * b[col*4 + k];
-			out[col*4 + row] = s;
-		}
-}
-
 void R_World_InitRenderer (void)
 {
 	if (world_prog)
@@ -745,10 +733,8 @@ void R_World_InitRenderer (void)
 
 static void R_World_SetMVP (void)
 {
-	float proj[16], mv[16], mvp[16];
-	glGetFloatv (GL_PROJECTION_MATRIX, proj);
-	glGetFloatv (GL_MODELVIEW_MATRIX,  mv);
-	MatMul4x4 (proj, mv, mvp);
+	float mvp[16];
+	GL_GetMVP (mvp);
 	qglUniformMatrix4fv (u_world_mvp, 1, GL_FALSE, mvp);
 }
 

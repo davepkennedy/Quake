@@ -37,6 +37,150 @@ int			r_numparticles;
 
 vec3_t			r_pright, r_pup, r_ppn;
 
+#ifdef GLQUAKE
+// -------------------------------------------------------------------------
+// Particle renderer state (VAO / VBO / GLSL shader)
+//
+// Particles are unlit, camera-facing billboard triangles: one textured tri
+// per particle (org, org+up*scale, org+right*scale), vertex-colored per
+// particle, modulated with the shared dot-texture's alpha channel.
+// -------------------------------------------------------------------------
+
+static GLuint particle_vao   = 0;
+static GLuint particle_vbo   = 0;
+static GLuint particle_prog  = 0;
+static GLint  u_particle_mvp = -1;
+static GLint  u_particle_tex = -1;
+
+#define PARTICLE_STREAM_VERTS 6144   // flushed mid-frame if exceeded
+static float  particle_stream[PARTICLE_STREAM_VERTS * 8];
+static int    particle_stream_n = 0;  // verts currently buffered
+
+static const char particle_vert_src[] =
+    "#version 450 core\n"
+    "layout(location = 0) in vec3 a_pos;\n"
+    "layout(location = 1) in vec2 a_uv;\n"
+    "layout(location = 2) in vec3 a_color;\n"
+    "uniform mat4 u_mvp;\n"
+    "out vec2 v_uv;\n"
+    "out vec3 v_color;\n"
+    "void main() {\n"
+    "    v_uv = a_uv;\n"
+    "    v_color = a_color;\n"
+    "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
+    "}\n";
+
+static const char particle_frag_src[] =
+    "#version 450 core\n"
+    "in vec2 v_uv;\n"
+    "in vec3 v_color;\n"
+    "uniform sampler2D u_tex;\n"
+    "out vec4 frag_color;\n"
+    "void main() {\n"
+    "    vec4 c = texture(u_tex, v_uv);\n"
+    "    frag_color = vec4(c.rgb * v_color, c.a);\n"
+    "}\n";
+
+static void Particle_InitRenderer (void)
+{
+	if (particle_prog)
+		return;
+
+	particle_prog = GL_BuildProgram (particle_vert_src, particle_frag_src);
+	if (!particle_prog)
+		Sys_Error ("Particle_InitRenderer: shader compile failed");
+
+	qglUseProgram (particle_prog);
+	u_particle_mvp = qglGetUniformLocation (particle_prog, "u_mvp");
+	u_particle_tex = qglGetUniformLocation (particle_prog, "u_tex");
+	qglUseProgram (0);
+
+	qglGenVertexArrays (1, &particle_vao);
+	qglGenBuffers (1, &particle_vbo);
+	qglBindVertexArray (particle_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, particle_vbo);
+	qglBufferData (GL_ARRAY_BUFFER, sizeof(particle_stream), nullptr, GL_STREAM_DRAW);
+	// location 0: xyz  (3 floats, offset 0, stride 8*4=32)
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+	qglEnableVertexAttribArray (0);
+	// location 1: uv  (2 floats, offset 12)
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
+	qglEnableVertexAttribArray (1);
+	// location 2: color  (3 floats, offset 20)
+	qglVertexAttribPointer (2, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(5*sizeof(float)));
+	qglEnableVertexAttribArray (2);
+	qglBindVertexArray (0);
+	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+static void Particle_BeginDraw (void)
+{
+	Particle_InitRenderer ();
+
+	float mvp[16];
+	GL_GetMVP (mvp);
+
+	GL_Bind (particletexture);
+	glEnable (GL_BLEND);
+
+	qglUseProgram (particle_prog);
+	qglBindVertexArray (particle_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, particle_vbo);
+	qglUniform1i (u_particle_tex, 0);
+	qglUniformMatrix4fv (u_particle_mvp, 1, GL_FALSE, mvp);
+
+	particle_stream_n = 0;
+}
+
+static void Particle_Flush (void)
+{
+	if (!particle_stream_n)
+		return;
+	qglBufferData (GL_ARRAY_BUFFER,
+	    (GLsizeiptr)(particle_stream_n * 8 * sizeof(float)),
+	    particle_stream, GL_STREAM_DRAW);
+	glDrawArrays (GL_TRIANGLES, 0, particle_stream_n);
+	particle_stream_n = 0;
+}
+
+// Appends one particle's billboard triangle to the stream buffer, flushing
+// and re-issuing the draw call first if the buffer is full.
+static void Particle_AddTri (const vec3_t org, const vec3_t up, const vec3_t right, float scale, int color)
+{
+	if (particle_stream_n + 3 > PARTICLE_STREAM_VERTS)
+		Particle_Flush ();
+
+	byte *rgba = (byte *)&d_8to24table[color];
+	float col[3] = { rgba[0]/255.f, rgba[1]/255.f, rgba[2]/255.f };
+
+	float *out = particle_stream + particle_stream_n * 8;
+
+	out[0] = org[0];                  out[1] = org[1];                  out[2] = org[2];
+	out[3] = 0.f; out[4] = 0.f;
+	out[5] = col[0]; out[6] = col[1]; out[7] = col[2];
+	out += 8;
+
+	out[0] = org[0] + up[0]*scale;    out[1] = org[1] + up[1]*scale;    out[2] = org[2] + up[2]*scale;
+	out[3] = 1.f; out[4] = 0.f;
+	out[5] = col[0]; out[6] = col[1]; out[7] = col[2];
+	out += 8;
+
+	out[0] = org[0] + right[0]*scale; out[1] = org[1] + right[1]*scale; out[2] = org[2] + right[2]*scale;
+	out[3] = 0.f; out[4] = 1.f;
+	out[5] = col[0]; out[6] = col[1]; out[7] = col[2];
+
+	particle_stream_n += 3;
+}
+
+static void Particle_EndDraw (void)
+{
+	Particle_Flush ();
+	qglBindVertexArray (0);
+	qglUseProgram (0);
+	glDisable (GL_BLEND);
+}
+#endif // GLQUAKE
+
 
 /*
 ===============
@@ -660,10 +804,7 @@ void R_DrawParticles (void)
 	vec3_t			up, right;
 	float			scale;
 
-    GL_Bind(particletexture);
-	glEnable (GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glBegin (GL_TRIANGLES);
+	Particle_BeginDraw ();
 
 	VectorScale (vup, 1.5, up);
 	VectorScale (vright, 1.5, right);
@@ -717,13 +858,7 @@ void R_DrawParticles (void)
 			scale = 1;
 		else
 			scale = 1 + scale * 0.004;
-		glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
-		glTexCoord2f (0,0);
-		glVertex3fv (p->org);
-		glTexCoord2f (1,0);
-		glVertex3f (p->org[0] + up[0]*scale, p->org[1] + up[1]*scale, p->org[2] + up[2]*scale);
-		glTexCoord2f (0,1);
-		glVertex3f (p->org[0] + right[0]*scale, p->org[1] + right[1]*scale, p->org[2] + right[2]*scale);
+		Particle_AddTri (p->org, up, right, scale, (int)p->color);
 #else
 		D_DrawParticle (p);
 #endif
@@ -790,9 +925,7 @@ void R_DrawParticles (void)
 	}
 
 #ifdef GLQUAKE
-	glEnd ();
-	glDisable (GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	Particle_EndDraw ();
 #else
 	D_EndParticles ();
 #endif
