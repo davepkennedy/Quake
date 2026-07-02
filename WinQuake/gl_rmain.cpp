@@ -188,6 +188,126 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
 }
 
 
+// -------------------------------------------------------------------------
+// Billboard renderer state (VAO / VBO / GLSL shader)
+//
+// Shared by sprite entities (R_DrawSpriteModel: alpha-tested textured quad
+// — explosions, muzzleflashes, bullet marks) and the fullscreen damage/
+// underwater tint (R_PolyBlend: flat blended quad) — both are just a
+// single MVP-transformed quad, textured or not. 0.666 matches the fixed-
+// function glAlphaFunc(GL_GREATER, 0.666) set once in gl_vidnt.cpp, which
+// (being a per-fragment test, not a fixed-function coloring stage) still
+// applies to shader output in this compatibility-profile context — the
+// in-shader discard here just keeps the same cutoff once Core Profile
+// removes GL_ALPHA_TEST outright.
+// -------------------------------------------------------------------------
+
+static GLuint billboard_vao  = 0;
+static GLuint billboard_vbo  = 0;
+static GLuint billboard_prog = 0;
+static GLint  u_billboard_mvp   = -1;
+static GLint  u_billboard_tex   = -1;
+static GLint  u_billboard_color = -1;
+static GLint  u_billboard_flat  = -1;
+
+static const char billboard_vert_src[] =
+    "#version 450 core\n"
+    "layout(location = 0) in vec3 a_pos;\n"
+    "layout(location = 1) in vec2 a_uv;\n"
+    "uniform mat4 u_mvp;\n"
+    "out vec2 v_uv;\n"
+    "void main() {\n"
+    "    v_uv = a_uv;\n"
+    "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
+    "}\n";
+
+static const char billboard_frag_src[] =
+    "#version 450 core\n"
+    "in vec2 v_uv;\n"
+    "uniform sampler2D u_tex;\n"
+    "uniform vec4 u_color;\n"
+    "uniform int u_flat;\n"
+    "out vec4 frag_color;\n"
+    "void main() {\n"
+    "    if (u_flat != 0) {\n"
+    "        frag_color = u_color;\n"
+    "        return;\n"
+    "    }\n"
+    "    vec4 c = texture(u_tex, v_uv);\n"
+    "    if (c.a < 0.666)\n"
+    "        discard;\n"
+    "    frag_color = c;\n"
+    "}\n";
+
+static void Billboard_InitRenderer (void)
+{
+	if (billboard_prog)
+		return;
+
+	billboard_prog = GL_BuildProgram (billboard_vert_src, billboard_frag_src);
+	if (!billboard_prog)
+		Sys_Error ("Billboard_InitRenderer: shader compile failed");
+
+	qglUseProgram (billboard_prog);
+	u_billboard_mvp   = qglGetUniformLocation (billboard_prog, "u_mvp");
+	u_billboard_tex   = qglGetUniformLocation (billboard_prog, "u_tex");
+	u_billboard_color = qglGetUniformLocation (billboard_prog, "u_color");
+	u_billboard_flat  = qglGetUniformLocation (billboard_prog, "u_flat");
+	qglUseProgram (0);
+
+	qglGenVertexArrays (1, &billboard_vao);
+	qglGenBuffers (1, &billboard_vbo);
+	qglBindVertexArray (billboard_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, billboard_vbo);
+	qglBufferData (GL_ARRAY_BUFFER, 6 * 5 * sizeof(float), nullptr, GL_STREAM_DRAW);
+	// location 0: xyz  (3 floats, offset 0, stride 5*4=20)
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+	qglEnableVertexAttribArray (0);
+	// location 1: uv  (2 floats, offset 12)
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+	qglEnableVertexAttribArray (1);
+	qglBindVertexArray (0);
+	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+static void Billboard_BeginDraw (void)
+{
+	Billboard_InitRenderer ();
+	qglUseProgram (billboard_prog);
+	qglBindVertexArray (billboard_vao);
+	qglBindBuffer (GL_ARRAY_BUFFER, billboard_vbo);
+	qglUniform1i (u_billboard_tex, 0);
+}
+
+static void Billboard_SetMVP (void)
+{
+	float mvp[16];
+	GL_GetMVP (mvp);
+	qglUniformMatrix4fv (u_billboard_mvp, 1, GL_FALSE, mvp);
+}
+
+static void Billboard_EndDraw (void)
+{
+	qglBindVertexArray (0);
+	qglUseProgram (0);
+}
+
+// quad[4] holds the corners in original GL_QUADS order (pos3+uv2 each);
+// split into two triangles the same way GL_QUADS was always filled.
+static void Billboard_DrawQuad (const float quad[4][5])
+{
+	float tris[6][5];
+	memcpy (tris[0], quad[0], sizeof(float)*5);
+	memcpy (tris[1], quad[1], sizeof(float)*5);
+	memcpy (tris[2], quad[2], sizeof(float)*5);
+	memcpy (tris[3], quad[0], sizeof(float)*5);
+	memcpy (tris[4], quad[2], sizeof(float)*5);
+	memcpy (tris[5], quad[3], sizeof(float)*5);
+
+	qglBufferData (GL_ARRAY_BUFFER, sizeof(tris), tris, GL_STREAM_DRAW);
+	glDrawArrays (GL_TRIANGLES, 0, 6);
+}
+
 /*
 =================
 R_DrawSpriteModel
@@ -201,6 +321,7 @@ void R_DrawSpriteModel (entity_t *e)
 	float		*up, *right;
 	vec3_t		v_forward, v_right, v_up;
 	msprite_t		*psprite;
+	float		quad[4][5];
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
@@ -219,36 +340,33 @@ void R_DrawSpriteModel (entity_t *e)
 		right = vright;
 	}
 
-	glColor3f (1,1,1);
-
 	GL_DisableMultitexture();
 
     GL_Bind(frame->gl_texturenum);
 
 	glEnable (GL_ALPHA_TEST);
-	glBegin (GL_QUADS);
 
-	glTexCoord2f (0, 1);
 	VectorMA (e->origin, frame->down, up, point);
 	VectorMA (point, frame->left, right, point);
-	glVertex3fv (point);
+	quad[0][0] = point[0]; quad[0][1] = point[1]; quad[0][2] = point[2]; quad[0][3] = 0; quad[0][4] = 1;
 
-	glTexCoord2f (0, 0);
 	VectorMA (e->origin, frame->up, up, point);
 	VectorMA (point, frame->left, right, point);
-	glVertex3fv (point);
+	quad[1][0] = point[0]; quad[1][1] = point[1]; quad[1][2] = point[2]; quad[1][3] = 0; quad[1][4] = 0;
 
-	glTexCoord2f (1, 0);
 	VectorMA (e->origin, frame->up, up, point);
 	VectorMA (point, frame->right, right, point);
-	glVertex3fv (point);
+	quad[2][0] = point[0]; quad[2][1] = point[1]; quad[2][2] = point[2]; quad[2][3] = 1; quad[2][4] = 0;
 
-	glTexCoord2f (1, 1);
 	VectorMA (e->origin, frame->down, up, point);
 	VectorMA (point, frame->right, right, point);
-	glVertex3fv (point);
-	
-	glEnd ();
+	quad[3][0] = point[0]; quad[3][1] = point[1]; quad[3][2] = point[2]; quad[3][3] = 1; quad[3][4] = 1;
+
+	Billboard_BeginDraw ();
+	Billboard_SetMVP ();
+	qglUniform1i (u_billboard_flat, 0);
+	Billboard_DrawQuad (quad);
+	Billboard_EndDraw ();
 
 	glDisable (GL_ALPHA_TEST);
 }
@@ -883,15 +1001,21 @@ void R_PolyBlend (void)
     glRotatef (-90,  1, 0, 0);	    // put Z going up
     glRotatef (90,  0, 0, 1);	    // put Z going up
 
-	glColor4fv (v_blend);
+	{
+		float quad[4][5] = {
+			{ 10,  100,  100, 0, 0 },
+			{ 10, -100,  100, 0, 0 },
+			{ 10, -100, -100, 0, 0 },
+			{ 10,  100, -100, 0, 0 },
+		};
 
-	glBegin (GL_QUADS);
-
-	glVertex3f (10, 100, 100);
-	glVertex3f (10, -100, 100);
-	glVertex3f (10, -100, -100);
-	glVertex3f (10, 100, -100);
-	glEnd ();
+		Billboard_BeginDraw ();
+		Billboard_SetMVP ();
+		qglUniform1i (u_billboard_flat, 1);
+		qglUniform4fv (u_billboard_color, 1, v_blend);
+		Billboard_DrawQuad (quad);
+		Billboard_EndDraw ();
+	}
 
 	glDisable (GL_BLEND);
 	glEnable (GL_TEXTURE_2D);
