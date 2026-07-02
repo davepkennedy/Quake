@@ -168,7 +168,9 @@
        ================================================================ -->
   <ItemGroup>
     <ClCompile Include="WinQuake\gl_draw.cpp" />
+    <ClCompile Include="WinQuake\gl_ext.cpp" />
     <ClCompile Include="WinQuake\gl_mesh.cpp" />
+    <ClCompile Include="WinQuake\gl_shader.cpp" />
     <ClCompile Include="WinQuake\gl_model.cpp" />
     <ClCompile Include="WinQuake\gl_refrag.cpp" />
     <ClCompile Include="WinQuake\gl_rlight.cpp" />

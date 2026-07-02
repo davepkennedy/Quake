@@ -51,6 +51,9 @@ extern	DELTEXFUNCPTR delTexFunc;
 extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
 #endif
 
+#include "gl_ext.h"
+#include "gl_shader.h"
+
 extern	int texture_extension_number;
 extern	int		texture_mode;
 

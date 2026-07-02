@@ -134,6 +134,7 @@ PROC glColorPointerEXT;
 PROC glTexCoordPointerEXT;
 PROC glVertexPointerEXT;
 
+
 typedef void (APIENTRY *lp3DFXFUNC) (int, int, int, int, int, const void*);
 lp3DFXFUNC glColorTableEXT;
 qboolean is8bit = false;
@@ -620,6 +621,7 @@ void GL_Init (void)
 
 	CheckTextureExtensions ();
 	CheckMultiTextureExtensions ();
+	GL_LoadExtensions ();
 
 	glClearColor (1,0,0,0);
 	glCullFace(GL_FRONT);
@@ -665,6 +667,11 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*x = *y = 0;
 	*width = WindowRect.right - WindowRect.left;
 	*height = WindowRect.bottom - WindowRect.top;
+
+	// Reset 2D shader, VAO, and sampler so the 3D immediate-mode pass renders cleanly
+	if (qglUseProgram)      qglUseProgram(0);
+	if (qglBindVertexArray) qglBindVertexArray(0);
+	if (qglBindSampler)     qglBindSampler(0, 0);  // restore texture-object filter for 3D
 
 //    if (!wglMakeCurrent( maindc, baseRC ))
 //		Sys_Error ("wglMakeCurrent failed");

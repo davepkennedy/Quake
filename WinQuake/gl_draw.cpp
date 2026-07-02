@@ -47,15 +47,50 @@ typedef struct
 byte		conback_buffer[sizeof(qpic_t) + sizeof(glpic_t)];
 qpic_t		*conback = (qpic_t *)&conback_buffer;
 
-int		gl_lightmap_format = 4;
-int		gl_solid_format = 3;
-int		gl_alpha_format = 4;
+int		gl_lightmap_format = GL_RGBA;
+int		gl_solid_format = GL_RGB;
+int		gl_alpha_format = GL_RGBA;
 
-int		gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
+int		gl_filter_min = GL_LINEAR_MIPMAP_LINEAR;
 int		gl_filter_max = GL_LINEAR;
 
 
 int		texels;
+
+// -------------------------------------------------------------------------
+// 2D rendering state (VAO/VBO + shader)
+// -------------------------------------------------------------------------
+
+static GLuint draw2d_vao     = 0;
+static GLuint draw2d_vbo     = 0;
+static GLuint draw2d_prog    = 0;
+static GLuint draw2d_sampler = 0;  // GL_NEAREST sampler for all 2D draws
+
+static GLint u_proj_loc    = -1;
+static GLint u_tex_loc     = -1;
+static GLint u_color_loc   = -1;
+static GLint u_has_tex_loc = -1;
+
+static float draw2d_proj[16];
+
+// Upload 6 vertices for a textured quad and draw.
+// Expects draw2d_vao bound, draw2d_vbo bound to GL_ARRAY_BUFFER, shader active.
+static void Draw2D_Quad(float x, float y, float w, float h,
+                        float sl, float tl, float sh, float th)
+{
+    float v[24] = {
+        x,   y,   sl, tl,
+        x+w, y,   sh, tl,
+        x+w, y+h, sh, th,
+        x,   y,   sl, tl,
+        x+w, y+h, sh, th,
+        x,   y+h, sl, th,
+    };
+    qglBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STREAM_DRAW);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+// -------------------------------------------------------------------------
 
 typedef struct
 {
@@ -158,6 +193,8 @@ void Scrap_Upload (void)
 	for (texnum=0 ; texnum<MAX_SCRAPS ; texnum++) {
 		GL_Bind(scrap_texnum + texnum);
 		GL_Upload8 (scrap_texels[texnum], BLOCK_WIDTH, BLOCK_HEIGHT, false, true);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 	scrap_dirty = false;
 }
@@ -356,8 +393,84 @@ void Draw_TextureMode_f (void)
 			GL_Bind (glt->texnum);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			if (gl_max_anisotropy > 1.0f)
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_max_anisotropy);
 		}
 	}
+}
+
+static void Draw2D_Init(void)
+{
+    static const char *vert_src = R"glsl(
+#version 450 core
+layout(location = 0) in vec2 a_pos;
+layout(location = 1) in vec2 a_tc;
+uniform mat4 u_proj;
+out vec2 v_tc;
+void main()
+{
+    gl_Position = u_proj * vec4(a_pos, 0.0, 1.0);
+    v_tc = a_tc;
+}
+)glsl";
+
+    static const char *frag_src = R"glsl(
+#version 450 core
+in vec2 v_tc;
+uniform sampler2D u_tex;
+uniform vec4 u_color;
+uniform int u_has_texture;
+out vec4 frag_color;
+void main()
+{
+    vec4 c;
+    if (u_has_texture != 0)
+    {
+        c = texture(u_tex, v_tc) * u_color;
+        if (c.a < 0.1)
+            discard;
+    }
+    else
+        c = u_color;
+    frag_color = c;
+}
+)glsl";
+
+    draw2d_prog = GL_BuildProgram(vert_src, frag_src);
+    if (!draw2d_prog)
+        Sys_Error("Draw2D_Init: failed to build 2D shader");
+
+    u_proj_loc    = qglGetUniformLocation(draw2d_prog, "u_proj");
+    u_tex_loc     = qglGetUniformLocation(draw2d_prog, "u_tex");
+    u_color_loc   = qglGetUniformLocation(draw2d_prog, "u_color");
+    u_has_tex_loc = qglGetUniformLocation(draw2d_prog, "u_has_texture");
+
+    qglGenVertexArrays(1, &draw2d_vao);
+    qglBindVertexArray(draw2d_vao);
+
+    qglGenBuffers(1, &draw2d_vbo);
+    qglBindBuffer(GL_ARRAY_BUFFER, draw2d_vbo);
+    qglBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), nullptr, GL_STREAM_DRAW);
+
+    qglVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+    qglEnableVertexAttribArray(0);
+    qglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
+    qglEnableVertexAttribArray(1);
+
+    qglBindVertexArray(0);
+
+    // Set constant uniforms
+    qglUseProgram(draw2d_prog);
+    qglUniform1i(u_tex_loc, 0);
+    const float white[4] = {1.f, 1.f, 1.f, 1.f};
+    qglUniform4fv(u_color_loc, 1, white);
+    qglUniform1i(u_has_tex_loc, 1);
+    qglUseProgram(0);
+
+    // Sampler object: always GL_NEAREST for 2D — overrides per-texture filter state
+    qglGenSamplers(1, &draw2d_sampler);
+    qglSamplerParameteri(draw2d_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    qglSamplerParameteri(draw2d_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 /*
@@ -400,6 +513,10 @@ void Draw_Init (void)
 
 	// now turn them into textures
 	char_texture = GL_LoadTexture ("charset", 128, 128, draw_chars, false, true);
+	// Pixel-art font: nearest-neighbour prevents bilinear bleeding across atlas cells
+	GL_Bind(char_texture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	start = Hunk_LowMark();
 
@@ -481,6 +598,8 @@ void Draw_Init (void)
 	//
 	draw_disc = Draw_PicFromWad ("disc");
 	draw_backtile = Draw_PicFromWad ("backtile");
+
+	Draw2D_Init ();
 }
 
 
@@ -496,40 +615,23 @@ smoothly scrolled off.
 */
 void Draw_Character (int x, int y, int num)
 {
-	byte			*dest;
-	byte			*source;
-	unsigned short	*pusdest;
-	int				drawline;	
-	int				row, col;
-	float			frow, fcol, size;
-
 	if (num == 32)
-		return;		// space
-
+		return;
 	num &= 255;
-	
 	if (y <= -8)
-		return;			// totally off screen
+		return;
 
-	row = num>>4;
-	col = num&15;
+	int row = num >> 4;
+	int col = num & 15;
+	float frow = row * 0.0625f;
+	float fcol = col * 0.0625f;
+	float size = 0.0625f;
 
-	frow = row*0.0625;
-	fcol = col*0.0625;
-	size = 0.0625;
-
-	GL_Bind (char_texture);
-
-	glBegin (GL_QUADS);
-	glTexCoord2f (fcol, frow);
-	glVertex2f (x, y);
-	glTexCoord2f (fcol + size, frow);
-	glVertex2f (x+8, y);
-	glTexCoord2f (fcol + size, frow + size);
-	glVertex2f (x+8, y+8);
-	glTexCoord2f (fcol, frow + size);
-	glVertex2f (x, y+8);
-	glEnd ();
+	GL_Bind(char_texture);
+	qglUniform1i(u_has_tex_loc, 1);
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
+	Draw2D_Quad((float)x, (float)y, 8.f, 8.f, fcol, frow, fcol + size, frow + size);
 }
 
 /*
@@ -567,33 +669,21 @@ Draw_AlphaPic
 */
 void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 {
-	byte			*dest, *source;
-	unsigned short	*pusdest;
-	int				v, u;
-	glpic_t			*gl;
-
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (glpic_t *)pic->data;
-	glDisable(GL_ALPHA_TEST);
-	glEnable (GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//	glCullFace(GL_FRONT);
-	glColor4f (1,1,1,alpha);
-	GL_Bind (gl->texnum);
-	glBegin (GL_QUADS);
-	glTexCoord2f (gl->sl, gl->tl);
-	glVertex2f (x, y);
-	glTexCoord2f (gl->sh, gl->tl);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (gl->sh, gl->th);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (gl->sl, gl->th);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
-	glColor4f (1,1,1,1);
-	glEnable(GL_ALPHA_TEST);
-	glDisable (GL_BLEND);
+	glpic_t *gl = (glpic_t *)pic->data;
+
+	glEnable(GL_BLEND);
+	GL_Bind(gl->texnum);
+	qglUniform1i(u_has_tex_loc, 1);
+	const float color[4] = {1.f, 1.f, 1.f, alpha};
+	qglUniform4fv(u_color_loc, 1, color);
+	Draw2D_Quad((float)x, (float)y, (float)pic->width, (float)pic->height,
+	            gl->sl, gl->tl, gl->sh, gl->th);
+	glDisable(GL_BLEND);
+
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
 }
 
 
@@ -604,26 +694,16 @@ Draw_Pic
 */
 void Draw_Pic (int x, int y, qpic_t *pic)
 {
-	byte			*dest, *source;
-	unsigned short	*pusdest;
-	int				v, u;
-	glpic_t			*gl;
-
 	if (scrap_dirty)
 		Scrap_Upload ();
-	gl = (glpic_t *)pic->data;
-	glColor4f (1,1,1,1);
-	GL_Bind (gl->texnum);
-	glBegin (GL_QUADS);
-	glTexCoord2f (gl->sl, gl->tl);
-	glVertex2f (x, y);
-	glTexCoord2f (gl->sh, gl->tl);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (gl->sh, gl->th);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (gl->sl, gl->th);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
+	glpic_t *gl = (glpic_t *)pic->data;
+
+	GL_Bind(gl->texnum);
+	qglUniform1i(u_has_tex_loc, 1);
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
+	Draw2D_Quad((float)x, (float)y, (float)pic->width, (float)pic->height,
+	            gl->sl, gl->tl, gl->sh, gl->th);
 }
 
 
@@ -685,17 +765,11 @@ void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glColor3f (1,1,1);
-	glBegin (GL_QUADS);
-	glTexCoord2f (0, 0);
-	glVertex2f (x, y);
-	glTexCoord2f (1, 0);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (1, 1);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (0, 1);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
+	qglUniform1i(u_has_tex_loc, 1);
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
+	Draw2D_Quad((float)x, (float)y, (float)pic->width, (float)pic->height,
+	            0.f, 0.f, 1.f, 1.f);
 }
 
 
@@ -726,18 +800,13 @@ refresh window.
 */
 void Draw_TileClear (int x, int y, int w, int h)
 {
-	glColor3f (1,1,1);
-	GL_Bind (*(int *)draw_backtile->data);
-	glBegin (GL_QUADS);
-	glTexCoord2f (x/64.0, y/64.0);
-	glVertex2f (x, y);
-	glTexCoord2f ( (x+w)/64.0, y/64.0);
-	glVertex2f (x+w, y);
-	glTexCoord2f ( (x+w)/64.0, (y+h)/64.0);
-	glVertex2f (x+w, y+h);
-	glTexCoord2f ( x/64.0, (y+h)/64.0 );
-	glVertex2f (x, y+h);
-	glEnd ();
+	glpic_t *gl = (glpic_t *)draw_backtile->data;
+	GL_Bind(gl->texnum);
+	qglUniform1i(u_has_tex_loc, 1);
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
+	Draw2D_Quad((float)x, (float)y, (float)w, (float)h,
+	            x/64.f, y/64.f, (x+w)/64.f, (y+h)/64.f);
 }
 
 
@@ -750,21 +819,20 @@ Fills a box of pixels with a single color
 */
 void Draw_Fill (int x, int y, int w, int h, int c)
 {
-	glDisable (GL_TEXTURE_2D);
-	glColor3f (host_basepal[c*3]/255.0,
-		host_basepal[c*3+1]/255.0,
-		host_basepal[c*3+2]/255.0);
+	qglUniform1i(u_has_tex_loc, 0);
+	const float color[4] = {
+		host_basepal[c*3]   / 255.f,
+		host_basepal[c*3+1] / 255.f,
+		host_basepal[c*3+2] / 255.f,
+		1.f
+	};
+	qglUniform4fv(u_color_loc, 1, color);
+	Draw2D_Quad((float)x, (float)y, (float)w, (float)h, 0, 0, 1, 1);
 
-	glBegin (GL_QUADS);
-
-	glVertex2f (x,y);
-	glVertex2f (x+w, y);
-	glVertex2f (x+w, y+h);
-	glVertex2f (x, y+h);
-
-	glEnd ();
-	glColor3f (1,1,1);
-	glEnable (GL_TEXTURE_2D);
+	// Reset to textured
+	qglUniform1i(u_has_tex_loc, 1);
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
 }
 //=============================================================================
 
@@ -776,20 +844,17 @@ Draw_FadeScreen
 */
 void Draw_FadeScreen (void)
 {
-	glEnable (GL_BLEND);
-	glDisable (GL_TEXTURE_2D);
-	glColor4f (0, 0, 0, 0.8);
-	glBegin (GL_QUADS);
+	glEnable(GL_BLEND);
+	qglUniform1i(u_has_tex_loc, 0);
+	const float black[4] = {0.f, 0.f, 0.f, 0.8f};
+	qglUniform4fv(u_color_loc, 1, black);
+	Draw2D_Quad(0.f, 0.f, (float)vid.width, (float)vid.height, 0, 0, 1, 1);
+	glDisable(GL_BLEND);
 
-	glVertex2f (0,0);
-	glVertex2f (vid.width, 0);
-	glVertex2f (vid.width, vid.height);
-	glVertex2f (0, vid.height);
-
-	glEnd ();
-	glColor4f (1,1,1,1);
-	glEnable (GL_TEXTURE_2D);
-	glDisable (GL_BLEND);
+	// Reset to textured
+	qglUniform1i(u_has_tex_loc, 1);
+	const float white[4] = {1.f, 1.f, 1.f, 1.f};
+	qglUniform4fv(u_color_loc, 1, white);
 
 	Sbar_Changed();
 }
@@ -808,9 +873,10 @@ void Draw_BeginDisc (void)
 {
 	if (!draw_disc)
 		return;
-	glDrawBuffer  (GL_FRONT);
-	Draw_Pic (vid.width - 24, 0, draw_disc);
-	glDrawBuffer  (GL_BACK);
+	glDrawBuffer(GL_FRONT);
+	GL_Set2D();
+	Draw_Pic(vid.width - 24, 0, draw_disc);
+	glDrawBuffer(GL_BACK);
 }
 
 
@@ -835,22 +901,32 @@ Setup as if the screen was 320*200
 */
 void GL_Set2D (void)
 {
-	glViewport (glx, gly, glwidth, glheight);
+	glViewport(glx, gly, glwidth, glheight);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glMatrixMode(GL_PROJECTION);
-    glLoadIdentity ();
-	glOrtho  (0, vid.width, vid.height, 0, -99999, 99999);
+	// Column-major orthographic matrix: screen coords (0,0)=top-left
+	float w = (float)vid.width, h = (float)vid.height;
+	memset(draw2d_proj, 0, sizeof(draw2d_proj));
+	draw2d_proj[0]  =  2.f / w;
+	draw2d_proj[5]  = -2.f / h;
+	draw2d_proj[10] = -1.f;
+	draw2d_proj[12] = -1.f;
+	draw2d_proj[13] =  1.f;
+	draw2d_proj[15] =  1.f;
 
-	glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity ();
+	qglUseProgram(draw2d_prog);
+	qglUniformMatrix4fv(u_proj_loc, 1, GL_FALSE, draw2d_proj);
+	qglUniform1i(u_tex_loc, 0);
 
-	glDisable (GL_DEPTH_TEST);
-	glDisable (GL_CULL_FACE);
-	glDisable (GL_BLEND);
-	glEnable (GL_ALPHA_TEST);
-//	glDisable (GL_ALPHA_TEST);
+	qglBindVertexArray(draw2d_vao);
+	qglBindBuffer(GL_ARRAY_BUFFER, draw2d_vbo);
 
-	glColor4f (1,1,1,1);
+	// Force GL_NEAREST on texture unit 0 for all 2D draws, regardless of
+	// what filter the individual texture objects carry.
+	qglBindSampler(0, draw2d_sampler);
 }
 
 //====================================================================
@@ -1054,30 +1130,36 @@ texels += scaled_width * scaled_height;
 	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
 	if (mipmap)
 	{
-		int		miplevel;
-
-		miplevel = 0;
-		while (scaled_width > 1 || scaled_height > 1)
+		if (qglGenerateMipmap)
 		{
-			GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
-			scaled_width >>= 1;
-			scaled_height >>= 1;
-			if (scaled_width < 1)
-				scaled_width = 1;
-			if (scaled_height < 1)
-				scaled_height = 1;
-			miplevel++;
-			glTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			qglGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			int miplevel = 0;
+			while (scaled_width > 1 || scaled_height > 1)
+			{
+				GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
+				scaled_width >>= 1;
+				scaled_height >>= 1;
+				if (scaled_width < 1)
+					scaled_width = 1;
+				if (scaled_height < 1)
+					scaled_height = 1;
+				miplevel++;
+				glTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+			}
 		}
 	}
 done: ;
 #endif
 
-
 	if (mipmap)
 	{
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		if (gl_max_anisotropy > 1.0f)
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_max_anisotropy);
 	}
 	else
 	{
