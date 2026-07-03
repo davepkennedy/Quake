@@ -26,6 +26,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 LONG CDAudio_MessageHandler (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+// -------------------------------------------------------------------------
+// WGL_ARB_create_context -- not exposed by the Windows SDK's GL 1.1 headers,
+// so declared by hand (matches the gl_ext.cpp convention of hand-loading
+// anything past GL 1.1 via wglGetProcAddress).
+// -------------------------------------------------------------------------
+#define WGL_CONTEXT_MAJOR_VERSION_ARB     0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB     0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB      0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB  0x00000001
+
+typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int *attribList);
+
 #define MAX_MODE_LIST	30
 #define VID_ROW_SIZE	3
 #define WARP_WIDTH		320
@@ -499,46 +511,12 @@ void VID_UpdateWindowStatus (void)
 
 BINDTEXFUNCPTR bindTexFunc;
 
-#define TEXTURE_EXT_STRING "GL_EXT_texture_object"
-
-
+// glBindTexture has been core GL since 1.1 (1997) -- the GL_EXT_texture_object
+// probing this used to do (falling back to glBindTextureEXT) targeted pre-1.1
+// ICDs and is not relevant to any driver still in use.
 void CheckTextureExtensions (void)
 {
-	char		*tmp;
-	qboolean	texture_ext;
-	HINSTANCE	hInstGL;
-
-	texture_ext = FALSE;
-	/* check for texture extension */
-	tmp = (char *)glGetString(GL_EXTENSIONS);
-	while (*tmp)
-	{
-		if (strncmp((const char*)tmp, TEXTURE_EXT_STRING, strlen(TEXTURE_EXT_STRING)) == 0)
-			texture_ext = TRUE;
-		tmp++;
-	}
-
-	if (!texture_ext || COM_CheckParm ("-gl11") )
-	{
-		hInstGL = LoadLibrary("opengl32.dll");
-
-		if (hInstGL == NULL)
-			Sys_Error ("Couldn't load opengl32.dll\n");
-
-		bindTexFunc = (BINDTEXFUNCPTR)GetProcAddress(hInstGL,"glBindTexture");
-
-		if (!bindTexFunc)
-			Sys_Error ("No texture objects!");
-		return;
-	}
-
-/* load library and get procedure adresses for texture extension API */
-	if ((bindTexFunc = (BINDTEXFUNCPTR)
-		wglGetProcAddress((LPCSTR) "glBindTextureEXT")) == NULL)
-	{
-		Sys_Error ("GetProcAddress for BindTextureEXT failed");
-		return;
-	}
+	bindTexFunc = glBindTexture;
 }
 
 void CheckArrayExtensions (void)
@@ -594,6 +572,47 @@ void CheckMultiTextureExtensions(void)
 }
 #endif
 
+#define GL_NUM_EXTENSIONS 0x821D
+typedef const GLubyte* (APIENTRY *PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
+
+// glGetString(GL_EXTENSIONS) returns NULL under a Core Profile context (that
+// enumeration was removed in GL 3.0 core) -- fall back to the modern
+// per-index glGetStringi query and rebuild the same space-separated format
+// (each entry followed by a space) that the strstr(gl_extensions, "...")
+// checks elsewhere in this file and in gl_ext.cpp expect.
+static const char *GL_BuildExtensionsString (void)
+{
+	static char buf[16384];
+	const char *legacy = (const char *)glGetString (GL_EXTENSIONS);
+	if (legacy)
+		return legacy;
+
+	PFNGLGETSTRINGIPROC qglGetStringi =
+		(PFNGLGETSTRINGIPROC) wglGetProcAddress ("glGetStringi");
+	if (!qglGetStringi)
+		return "";
+
+	GLint count = 0;
+	glGetIntegerv (GL_NUM_EXTENSIONS, &count);
+
+	size_t used = 0;
+	buf[0] = '\0';
+	for (GLint i = 0; i < count; i++)
+	{
+		const char *ext = (const char *)qglGetStringi (GL_EXTENSIONS, (GLuint)i);
+		if (!ext)
+			continue;
+		size_t len = strlen (ext);
+		if (used + len + 2 > sizeof(buf))
+			break;
+		memcpy (buf + used, ext, len);
+		used += len;
+		buf[used++] = ' ';
+		buf[used] = '\0';
+	}
+	return buf;
+}
+
 /*
 ===============
 GL_Init
@@ -608,7 +627,7 @@ void GL_Init (void)
 
 	gl_version = (const char *)glGetString (GL_VERSION);
 	Con_Printf ("GL_VERSION: %s\n", gl_version);
-	gl_extensions = (const char *)glGetString (GL_EXTENSIONS);
+	gl_extensions = GL_BuildExtensionsString ();
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
@@ -1805,11 +1824,46 @@ void	VID_Init (unsigned char *palette)
     maindc = GetDC(mainwindow);
 	bSetupPixelFormat(maindc);
 
-    baseRC = wglCreateContext( maindc );
-	if (!baseRC)
+	// Bootstrap: wglGetProcAddress requires a current context before it can
+	// resolve anything, including wglCreateContextAttribsARB itself -- so
+	// create a throwaway legacy context first, just to load that one function.
+	HGLRC dummyRC = wglCreateContext( maindc );
+	if (!dummyRC)
 		Sys_Error ("Could not initialize GL (wglCreateContext failed).\n\nMake sure you in are 65535 color mode, and try running -window.");
-    if (!wglMakeCurrent( maindc, baseRC ))
+    if (!wglMakeCurrent( maindc, dummyRC ))
 		Sys_Error ("wglMakeCurrent failed");
+
+	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
+		(PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress ("wglCreateContextAttribsARB");
+
+	baseRC = nullptr;
+	if (wglCreateContextAttribsARB)
+	{
+		int attribs[] = {
+			WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 5,
+			WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+			0
+		};
+		baseRC = wglCreateContextAttribsARB (maindc, nullptr, attribs);
+	}
+
+	if (baseRC)
+	{
+		// Real GL 4.5 core context created -- switch to it and drop the dummy.
+		wglMakeCurrent (NULL, NULL);
+		wglDeleteContext (dummyRC);
+		if (!wglMakeCurrent (maindc, baseRC))
+			Sys_Error ("wglMakeCurrent failed (core context)");
+		Con_Printf ("Using OpenGL 4.5 core profile context\n");
+	}
+	else
+	{
+		// wglCreateContextAttribsARB missing or 4.5 core unavailable on this
+		// driver -- fall back to the legacy context already current.
+		baseRC = dummyRC;
+		Con_Printf ("WGL_ARB_create_context unavailable -- using legacy GL context\n");
+	}
 
 	GL_Init ();
 
