@@ -1,6 +1,6 @@
 #include "quakedef.h"
 
-static void MatMul4x4(const float *a, const float *b, float *out)
+void GL_Mat4Mul(const float *a, const float *b, float *out)
 {
     for (int col = 0; col < 4; col++)
         for (int row = 0; row < 4; row++)
@@ -12,12 +12,17 @@ static void MatMul4x4(const float *a, const float *b, float *out)
         }
 }
 
+void GL_Mat4Identity(float *out16)
+{
+    static const float I[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+    memcpy(out16, I, sizeof(I));
+}
+
 void GL_GetMVP(float *out16)
 {
-    float proj[16], mv[16];
-    glGetFloatv(GL_PROJECTION_MATRIX, proj);
-    glGetFloatv(GL_MODELVIEW_MATRIX,  mv);
-    MatMul4x4(proj, mv, out16);
+    float pv[16];
+    GL_Mat4Mul(r_proj_matrix, r_world_matrix, pv);
+    GL_Mat4Mul(pv, r_entity_matrix, out16);
 }
 
 GLuint GL_CompileShader(GLenum type, const char *src)

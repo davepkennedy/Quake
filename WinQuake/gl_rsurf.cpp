@@ -672,16 +672,8 @@ void R_DrawWaterSurfaces (void)
 	if (r_wateralpha.value == 1.0 && gl_texsort.value)
 		return;
 
-	//
-	// go back to the world matrix
-	//
-
-    glLoadMatrixf (r_world_matrix);
-
 	if (r_wateralpha.value < 1.0) {
 		glEnable (GL_BLEND);
-		glColor4f (1,1,1,r_wateralpha.value);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 
 	if (!gl_texsort.value) {
@@ -720,9 +712,6 @@ void R_DrawWaterSurfaces (void)
 	}
 
 	if (r_wateralpha.value < 1.0) {
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-		glColor4f (1,1,1,1);
 		glDisable (GL_BLEND);
 	}
 
@@ -867,8 +856,6 @@ void R_DrawBrushModel (entity_t *e)
 	if (R_CullBox (mins, maxs))
 		return;
 
-	glColor3f (1,1,1);
-
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
 	if (rotated)
 	{
@@ -899,7 +886,6 @@ void R_DrawBrushModel (entity_t *e)
 		}
 	}
 
-    glPushMatrix ();
 e->angles[0] = -e->angles[0];	// stupid quake bug
 	R_RotateForEntity (e);
 e->angles[0] = -e->angles[0];	// stupid quake bug
@@ -959,7 +945,7 @@ e->angles[0] = -e->angles[0];	// stupid quake bug
 	}
 
 	R_World_EndDraw ();
-	glPopMatrix ();
+	GL_Mat4Identity (r_entity_matrix);
 }
 
 /*
@@ -1111,7 +1097,6 @@ void R_DrawWorld (void)
 	currententity = &ent;
 	currenttexture = -1;
 
-	glColor3f (1,1,1);
 #ifdef QUAKE2
 	R_ClearSkyBox ();
 #endif

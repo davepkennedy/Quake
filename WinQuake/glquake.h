@@ -226,6 +226,8 @@ extern	qboolean	mirror;
 extern	mplane_t	*mirror_plane;
 
 extern	float	r_world_matrix[16];
+extern	float	r_proj_matrix[16];
+extern	float	r_entity_matrix[16];
 
 extern	const char *gl_vendor;
 extern	const char *gl_renderer;
