@@ -194,12 +194,9 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
 // Shared by sprite entities (R_DrawSpriteModel: alpha-tested textured quad
 // — explosions, muzzleflashes, bullet marks) and the fullscreen damage/
 // underwater tint (R_PolyBlend: flat blended quad) — both are just a
-// single MVP-transformed quad, textured or not. 0.666 matches the fixed-
-// function glAlphaFunc(GL_GREATER, 0.666) set once in gl_vidnt.cpp, which
-// (being a per-fragment test, not a fixed-function coloring stage) still
-// applies to shader output in this compatibility-profile context — the
-// in-shader discard here just keeps the same cutoff once Core Profile
-// removes GL_ALPHA_TEST outright.
+// single MVP-transformed quad, textured or not. 0.666 matches the original
+// fixed-function glAlphaFunc(GL_GREATER, 0.666) cutoff (now removed —
+// the in-shader discard is the only alpha test left).
 // -------------------------------------------------------------------------
 
 static GLuint billboard_vao  = 0;
@@ -344,8 +341,6 @@ void R_DrawSpriteModel (entity_t *e)
 
     GL_Bind(frame->gl_texturenum);
 
-	glEnable (GL_ALPHA_TEST);
-
 	VectorMA (e->origin, frame->down, up, point);
 	VectorMA (point, frame->left, right, point);
 	quad[0][0] = point[0]; quad[0][1] = point[1]; quad[0][2] = point[2]; quad[0][3] = 0; quad[0][4] = 1;
@@ -367,8 +362,6 @@ void R_DrawSpriteModel (entity_t *e)
 	qglUniform1i (u_billboard_flat, 0);
 	Billboard_DrawQuad (quad);
 	Billboard_EndDraw ();
-
-	glDisable (GL_ALPHA_TEST);
 }
 
 /*
@@ -991,10 +984,8 @@ void R_PolyBlend (void)
 
 	GL_DisableMultitexture();
 
-	glDisable (GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 	glDisable (GL_DEPTH_TEST);
-	glDisable (GL_TEXTURE_2D);
 
     glLoadIdentity ();
 
@@ -1018,8 +1009,6 @@ void R_PolyBlend (void)
 	}
 
 	glDisable (GL_BLEND);
-	glEnable (GL_TEXTURE_2D);
-	glEnable (GL_ALPHA_TEST);
 }
 
 
@@ -1208,7 +1197,6 @@ void R_SetupGL (void)
 		glDisable(GL_CULL_FACE);
 
 	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 }
 
