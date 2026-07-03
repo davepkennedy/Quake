@@ -572,6 +572,7 @@ void CheckMultiTextureExtensions(void)
 }
 #endif
 
+#define GL_MAJOR_VERSION 0x821B
 #define GL_NUM_EXTENSIONS 0x821D
 typedef const GLubyte* (APIENTRY *PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
 
@@ -583,9 +584,18 @@ typedef const GLubyte* (APIENTRY *PFNGLGETSTRINGIPROC)(GLenum name, GLuint index
 static const char *GL_BuildExtensionsString (void)
 {
 	static char buf[16384];
-	const char *legacy = (const char *)glGetString (GL_EXTENSIONS);
-	if (legacy)
-		return legacy;
+
+	// glGetString(GL_EXTENSIONS) itself raises GL_INVALID_ENUM under a core
+	// context (not just returning NULL), so check the version first rather
+	// than trying it and inspecting the result.
+	GLint major = 0;
+	glGetIntegerv (GL_MAJOR_VERSION, &major);
+	if (major < 3)
+	{
+		const char *legacy = (const char *)glGetString (GL_EXTENSIONS);
+		if (legacy)
+			return legacy;
+	}
 
 	PFNGLGETSTRINGIPROC qglGetStringi =
 		(PFNGLGETSTRINGIPROC) wglGetProcAddress ("glGetStringi");
@@ -641,6 +651,28 @@ void GL_Init (void)
 	CheckTextureExtensions ();
 	CheckMultiTextureExtensions ();
 	GL_LoadExtensions ();
+
+	// Every texture "slot" in this renderer (world/model/skin textures,
+	// lightmap atlases, player skins, scrap, sky, particle, console, ...) is
+	// allocated by incrementing texture_extension_number and using the raw
+	// integer directly as the GL texture name -- relying on OpenGL 1.1's
+	// "binding an unused name implicitly creates the object" behavior.
+	// Core Profile requires names to originate from glGenTextures (an
+	// unreserved name is not a valid texture per the object model used from
+	// GL 3.0 on), so reserve a large pool up front and start counting from
+	// there instead. glGenTextures doesn't guarantee sequential names, but
+	// every real-world driver hands out a contiguous run for a single fresh
+	// batch this size -- verified below, and it's a hard error (not a silent
+	// texture-corruption bug) if that ever stops holding.
+	{
+		#define TEXTURE_NAME_POOL_SIZE 65536
+		static GLuint pool[TEXTURE_NAME_POOL_SIZE];
+		glGenTextures (TEXTURE_NAME_POOL_SIZE, pool);
+		for (int i = 1; i < TEXTURE_NAME_POOL_SIZE; i++)
+			if (pool[i] != pool[0] + (GLuint)i)
+				Sys_Error ("GL_Init: glGenTextures returned non-sequential names");
+		texture_extension_number = (int)pool[0];
+	}
 
 	glClearColor (1,0,0,0);
 	glCullFace(GL_FRONT);

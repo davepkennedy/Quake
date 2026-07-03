@@ -245,6 +245,7 @@ store:
 	case GL_ALPHA:
 	case GL_LUMINANCE:
 	case GL_INTENSITY:
+	case GL_RED:
 		bl = blocklights;
 		for (i=0 ; i<tmax ; i++, dest += stride)
 		{
@@ -1376,17 +1377,22 @@ void GL_BuildLightmaps (void)
 		texture_extension_number += MAX_LIGHTMAPS;
 	}
 
-	gl_lightmap_format = GL_LUMINANCE;
+	// GL_LUMINANCE/GL_ALPHA/GL_INTENSITY are all removed as texture formats
+	// under Core Profile (GL_INVALID_ENUM); the shader-based lightmap path
+	// only ever samples the red channel (see world_frag_src's "texture(u_lm,
+	// v_lmuv).r"), so GL_RED -- a plain GL 1.0 base format, still valid in
+	// core -- is a drop-in single-channel replacement for all three.
+	gl_lightmap_format = GL_RED;
 	// default differently on the Permedia
 	if (isPermedia)
 		gl_lightmap_format = GL_RGBA;
 
 	if (COM_CheckParm ("-lm_1"))
-		gl_lightmap_format = GL_LUMINANCE;
+		gl_lightmap_format = GL_RED;
 	if (COM_CheckParm ("-lm_a"))
-		gl_lightmap_format = GL_ALPHA;
+		gl_lightmap_format = GL_RED;
 	if (COM_CheckParm ("-lm_i"))
-		gl_lightmap_format = GL_INTENSITY;
+		gl_lightmap_format = GL_RED;
 	if (COM_CheckParm ("-lm_2"))
 		gl_lightmap_format = GL_RGBA4;
 	if (COM_CheckParm ("-lm_4"))
@@ -1403,6 +1409,7 @@ void GL_BuildLightmaps (void)
 	case GL_LUMINANCE:
 	case GL_INTENSITY:
 	case GL_ALPHA:
+	case GL_RED:
 		lightmap_bytes = 1;
 		break;
 	}
