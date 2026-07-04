@@ -55,6 +55,7 @@ extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
 #include "gl_shader.h"
 
 extern	int texture_extension_number;
+void GL_ReserveTextureNames (int count);
 extern	int		texture_mode;
 
 extern	float	gldepthmin, gldepthmax;

@@ -587,9 +587,11 @@ void Draw_Init (void)
 	Hunk_FreeToLowMark(start);
 
 	// save a texture slot for translated picture
+	GL_ReserveTextureNames (1);
 	translate_texture = texture_extension_number++;
 
 	// save slots for scraps
+	GL_ReserveTextureNames (MAX_SCRAPS);
 	scrap_texnum = texture_extension_number;
 	texture_extension_number += MAX_SCRAPS;
 
@@ -1338,6 +1340,7 @@ int GL_LoadTexture (const char *identifier, int width, int height, byte *data, q
 	}
 
 	strcpy (glt->identifier, identifier);
+	GL_ReserveTextureNames (1);
 	glt->texnum = texture_extension_number;
 	glt->width = width;
 	glt->height = height;

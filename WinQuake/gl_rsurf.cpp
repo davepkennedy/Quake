@@ -1373,6 +1373,7 @@ void GL_BuildLightmaps (void)
 
 	if (!lightmap_textures)
 	{
+		GL_ReserveTextureNames (MAX_LIGHTMAPS);
 		lightmap_textures = texture_extension_number;
 		texture_extension_number += MAX_LIGHTMAPS;
 	}

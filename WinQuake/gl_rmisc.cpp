@@ -75,6 +75,7 @@ void R_InitParticleTexture (void)
 	//
 	// particle texture
 	//
+	GL_ReserveTextureNames (1);
 	particletexture = texture_extension_number++;
     GL_Bind(particletexture);
 
@@ -214,6 +215,7 @@ void R_Init (void)
 	Test_Init ();
 #endif
 
+	GL_ReserveTextureNames (16);
 	playertextures = texture_extension_number;
 	texture_extension_number += 16;
 }

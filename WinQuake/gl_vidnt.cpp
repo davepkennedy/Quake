@@ -555,8 +555,61 @@ int		texture_mode = GL_LINEAR;
 
 int		texture_extension_number = 1;
 
+#define TEXTURE_NAME_BATCH 2048
+
+// one past the last GL texture name known to be reserved; 0 means "not yet initialized"
+static GLuint texture_pool_end = 0;
+
+// Ensures `count` sequential GL texture names starting at
+// texture_extension_number are valid, growing the reservation via
+// glGenTextures as needed. Every texture "slot" in this renderer (world/
+// model/skin textures, lightmap atlases, player skins, scrap, sky,
+// particle, console, ...) is allocated by incrementing
+// texture_extension_number and using the raw integer directly as the GL
+// texture name -- Core Profile requires names to originate from
+// glGenTextures (see [[quake_gl_texture_naming_bug]] in project memory for
+// the full incident), so this reserves them just ahead of where each
+// caller is about to consume them.
+//
+// Grows in batches rather than one big upfront pool, since total demand
+// isn't knowable at startup -- this engine never frees/reuses texture IDs
+// across level loads, so a long multi-level session can need more than
+// any single level would suggest. glGenTextures doesn't guarantee
+// sequential names across separate calls, but every real-world driver
+// hands out a contiguous run for a single fresh batch this size; verified
+// below, and it's a hard error (not silent texture corruption) if that
+// ever stops holding.
+void GL_ReserveTextureNames (int count)
+{
+	if (!texture_pool_end)
+	{
+		// First call ever: texture_extension_number hasn't been assigned a
+		// real reserved name yet -- seed it from the first batch.
+		GLuint batch[TEXTURE_NAME_BATCH];
+		glGenTextures (TEXTURE_NAME_BATCH, batch);
+		for (int i = 1; i < TEXTURE_NAME_BATCH; i++)
+			if (batch[i] != batch[0] + (GLuint)i)
+				Sys_Error ("GL_ReserveTextureNames: glGenTextures returned non-sequential names");
+		texture_extension_number = (int)batch[0];
+		texture_pool_end = batch[0] + TEXTURE_NAME_BATCH;
+	}
+
+	GLuint want_end = (GLuint)texture_extension_number + (GLuint)count;
+	while (want_end > texture_pool_end)
+	{
+		GLuint batch[TEXTURE_NAME_BATCH];
+		glGenTextures (TEXTURE_NAME_BATCH, batch);
+		if (batch[0] != texture_pool_end)
+			Sys_Error ("GL_ReserveTextureNames: glGenTextures did not continue the sequential run");
+		for (int i = 1; i < TEXTURE_NAME_BATCH; i++)
+			if (batch[i] != batch[0] + (GLuint)i)
+				Sys_Error ("GL_ReserveTextureNames: glGenTextures returned non-sequential names");
+		texture_pool_end += TEXTURE_NAME_BATCH;
+	}
+}
+
 #ifdef _WIN32
-void CheckMultiTextureExtensions(void) 
+void CheckMultiTextureExtensions(void)
 {
 	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !COM_CheckParm("-nomtex")) {
 		Con_Printf("Multitexture extensions found.\n");
@@ -651,28 +704,6 @@ void GL_Init (void)
 	CheckTextureExtensions ();
 	CheckMultiTextureExtensions ();
 	GL_LoadExtensions ();
-
-	// Every texture "slot" in this renderer (world/model/skin textures,
-	// lightmap atlases, player skins, scrap, sky, particle, console, ...) is
-	// allocated by incrementing texture_extension_number and using the raw
-	// integer directly as the GL texture name -- relying on OpenGL 1.1's
-	// "binding an unused name implicitly creates the object" behavior.
-	// Core Profile requires names to originate from glGenTextures (an
-	// unreserved name is not a valid texture per the object model used from
-	// GL 3.0 on), so reserve a large pool up front and start counting from
-	// there instead. glGenTextures doesn't guarantee sequential names, but
-	// every real-world driver hands out a contiguous run for a single fresh
-	// batch this size -- verified below, and it's a hard error (not a silent
-	// texture-corruption bug) if that ever stops holding.
-	{
-		#define TEXTURE_NAME_POOL_SIZE 65536
-		static GLuint pool[TEXTURE_NAME_POOL_SIZE];
-		glGenTextures (TEXTURE_NAME_POOL_SIZE, pool);
-		for (int i = 1; i < TEXTURE_NAME_POOL_SIZE; i++)
-			if (pool[i] != pool[0] + (GLuint)i)
-				Sys_Error ("GL_Init: glGenTextures returned non-sequential names");
-		texture_extension_number = (int)pool[0];
-	}
 
 	glClearColor (1,0,0,0);
 	glCullFace(GL_FRONT);
