@@ -49,7 +49,11 @@ int			minimum_memory;
 
 client_t	*host_client;			// current client
 
-jmp_buf 	host_abortserver;
+// Thrown by Host_EndGame/Host_Error to abort the current frame back to
+// _Host_Frame's try/catch -- replaces the old setjmp(host_abortserver)/
+// longjmp pair. Deliberately empty: nothing ever needed the "1" that used
+// to be passed to longjmp, only the control-flow jump itself.
+struct Host_AbortFrame {};
 
 byte		*host_basepal;
 byte		*host_colormap;
@@ -108,7 +112,7 @@ void Host_EndGame (const char *message, ...)
 	else
 		CL_Disconnect ();
 
-	longjmp (host_abortserver, 1);
+	throw Host_AbortFrame();
 }
 
 /*
@@ -146,7 +150,7 @@ void Host_Error (const char *error, ...)
 
 	inerror = false;
 
-	longjmp (host_abortserver, 1);
+	throw Host_AbortFrame();
 }
 
 /*
@@ -637,8 +641,8 @@ void _Host_Frame (float time)
 	static double		time3 = 0;
 	int			pass1, pass2, pass3;
 
-	if (setjmp (host_abortserver) )
-		return;			// something bad happened, or the server disconnected
+	try
+	{
 
 // keep the random time dependent
 	rand ();
@@ -722,8 +726,14 @@ void _Host_Frame (float time)
 		Con_Printf ("%3i tot %3i server %3i gfx %3i snd\n",
 					pass1+pass2+pass3, pass1, pass2, pass3);
 	}
-	
+
 	host_framecount++;
+
+	}
+	catch (const Host_AbortFrame&)
+	{
+		return;			// something bad happened, or the server disconnected
+	}
 }
 
 void Host_Frame (float time)
