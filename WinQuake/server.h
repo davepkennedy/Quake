@@ -32,8 +32,14 @@ typedef struct
 
 typedef enum {ss_loading, ss_active} server_state_t;
 
-typedef struct
+struct server_t
 {
+	// Resets every field to zero, matching the previous memset(&sv, 0,
+	// sizeof(sv)) call sites -- kept as an explicit method (rather than
+	// leaving memset scattered at each call site) so it stays correct if
+	// this struct ever gains a non-trivial member (e.g. std::string).
+	void Clear();
+
 	qboolean	active;				// false if only a net client
 
 	qboolean	paused;
@@ -69,7 +75,7 @@ typedef struct
 
 	sizebuf_t	signon;
 	byte		signon_buf[8192];
-} server_t;
+};
 
 
 #define	NUM_PING_TIMES		16

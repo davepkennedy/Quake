@@ -145,8 +145,14 @@ extern client_static_t	cls;
 // the client_state_t structure is wiped completely at every
 // server signon
 //
-typedef struct
+struct client_state_t
 {
+	// Resets every field to zero, matching the previous memset(&cl, 0,
+	// sizeof(cl)) call sites -- kept as an explicit method (rather than
+	// leaving memset scattered at each call site) so it stays correct if
+	// this struct ever gains a non-trivial member (e.g. std::string).
+	void Clear();
+
 	int			movemessages;	// since connecting to this server
 								// throw out the first couple, so the player
 								// doesn't accidentally do something the 
@@ -232,7 +238,7 @@ typedef struct
 // architectually ugly but it works
 	int			light_level;
 #endif
-} client_state_t;
+};
 
 
 //

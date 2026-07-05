@@ -53,6 +53,11 @@ dlight_t		cl_dlights[MAX_DLIGHTS];
 int				cl_numvisedicts;
 entity_t		*cl_visedicts[MAX_VISEDICTS];
 
+void client_state_t::Clear ()
+{
+	memset (this, 0, sizeof(*this));
+}
+
 /*
 =====================
 CL_ClearState
@@ -67,7 +72,7 @@ void CL_ClearState (void)
 		Host_ClearMemory ();
 
 // wipe the entire cl structure
-	memset (&cl, 0, sizeof(cl));
+	cl.Clear ();
 
 	SZ_Clear (&cls.message);
 

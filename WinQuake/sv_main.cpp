@@ -24,6 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 server_t		sv;
 server_static_t	svs;
 
+void server_t::Clear ()
+{
+	memset (this, 0, sizeof(*this));
+}
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================
@@ -1085,7 +1090,7 @@ void SV_SpawnServer (char *server)
 //
 	Host_ClearMemory ();
 
-	memset (&sv, 0, sizeof(sv));
+	sv.Clear ();
 
 	strcpy (sv.name, server);
 #ifdef QUAKE2

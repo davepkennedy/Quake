@@ -465,7 +465,7 @@ void Host_ShutdownServer(qboolean crash)
 //
 // clear structures
 //
-	memset (&sv, 0, sizeof(sv));
+	sv.Clear ();
 	memset (svs.clients, 0, svs.maxclientslimit*sizeof(client_t));
 }
 
@@ -487,8 +487,8 @@ void Host_ClearMemory (void)
 		Hunk_FreeToLowMark (host_hunklevel);
 
 	cls.signon = 0;
-	memset (&sv, 0, sizeof(sv));
-	memset (&cl, 0, sizeof(cl));
+	sv.Clear ();
+	cl.Clear ();
 }
 
 
