@@ -77,7 +77,7 @@ void S_TransferStereo16 (int endtime)
 	snd_vol = volume.value*256;
 
 	snd_p = (int *) paintbuffer;
-	lpaintedtime = paintedtime;
+	lpaintedtime = sound.paintedtime;
 
 #ifdef _WIN32
 	if (pDSBuf)
@@ -160,9 +160,9 @@ void S_TransferPaintBuffer(int endtime)
 	}
 	
 	p = (int *) paintbuffer;
-	count = (endtime - paintedtime) * shm->channels;
+	count = (endtime - sound.paintedtime) * shm->channels;
 	out_mask = shm->samples - 1; 
-	out_idx = paintedtime * shm->channels & out_mask;
+	out_idx = sound.paintedtime * shm->channels & out_mask;
 	step = 3 - shm->channels;
 	snd_vol = volume.value*256;
 
@@ -231,8 +231,8 @@ void S_TransferPaintBuffer(int endtime)
 #ifdef _WIN32
 	if (pDSBuf) {
 		DWORD dwNewpos, dwWrite;
-		int il = paintedtime;
-		int ir = endtime - paintedtime;
+		int il = sound.paintedtime;
+		int ir = endtime - sound.paintedtime;
 		
 		ir += il;
 
@@ -266,19 +266,19 @@ void S_PaintChannels(int endtime)
 	sfxcache_t	*sc;
 	int		ltime, count;
 
-	while (paintedtime < endtime)
+	while (sound.paintedtime < endtime)
 	{
 	// if paintbuffer is smaller than DMA buffer
 		end = endtime;
-		if (endtime - paintedtime > PAINTBUFFER_SIZE)
-			end = paintedtime + PAINTBUFFER_SIZE;
+		if (endtime - sound.paintedtime > PAINTBUFFER_SIZE)
+			end = sound.paintedtime + PAINTBUFFER_SIZE;
 
 	// clear the paint buffer
-		Q_memset(paintbuffer, 0, (end - paintedtime) * sizeof(portable_samplepair_t));
+		Q_memset(paintbuffer, 0, (end - sound.paintedtime) * sizeof(portable_samplepair_t));
 
 	// paint in the channels.
 		ch = channels;
-		for (i=0; i<total_channels ; i++, ch++)
+		for (i=0; i<sound.total_channels ; i++, ch++)
 		{
 			if (!ch->sfx)
 				continue;
@@ -288,7 +288,7 @@ void S_PaintChannels(int endtime)
 			if (!sc)
 				continue;
 
-			ltime = paintedtime;
+			ltime = sound.paintedtime;
 
 			while (ltime < end)
 			{	// paint up to end
@@ -327,7 +327,7 @@ void S_PaintChannels(int endtime)
 
 	// transfer out according to DMA format
 		S_TransferPaintBuffer(end);
-		paintedtime = end;
+		sound.paintedtime = end;
 	}
 }
 

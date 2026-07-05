@@ -81,9 +81,9 @@ void S_BlockSound (void)
 // DirectSound takes care of blocking itself
 	if (snd_iswave)
 	{
-		snd_blocked++;
+		sound.blocked++;
 
-		if (snd_blocked == 1)
+		if (sound.blocked == 1)
 		{
 			waveOutReset (hWaveOut);
 		}
@@ -102,7 +102,7 @@ void S_UnblockSound (void)
 // DirectSound takes care of blocking itself
 	if (snd_iswave)
 	{
-		snd_blocked--;
+		sound.blocked--;
 	}
 }
 

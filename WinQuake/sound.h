@@ -136,32 +136,53 @@ extern	channel_t   channels[MAX_CHANNELS];
 // MAX_DYNAMIC_CHANNELS to MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS -1 = water, etc
 // MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS to total_channels = static sounds
 
-extern	int			total_channels;
-
-//
-// Fake dma is a synchronous faking of the DMA progress used for
-// isolating performance in the renderer.  The fakedma_updates is
-// number of times S_Update() is called per second.
-//
-
-extern qboolean 		fakedma;
-extern int 			fakedma_updates;
-extern int		paintedtime;
-extern vec3_t listener_origin;
-extern vec3_t listener_forward;
-extern vec3_t listener_right;
-extern vec3_t listener_up;
 extern volatile dma_t *shm;
 extern volatile dma_t sn;
-extern vec_t sound_nominal_clip_dist;
+
+// Mixer/subsystem state -- everything sound-related that isn't the DMA
+// device (shm/sn above) or the channel pool (channels[] above), both of
+// which are already a single canonical instance and heavily dereferenced
+// in the mixer's hot path, so left as standalone globals rather than
+// folded in here too.
+struct sound_state_t
+{
+	int			total_channels;
+
+	int			blocked = 0;
+	qboolean	ambient_enabled = true;
+	qboolean	initialized = false;
+
+	vec3_t		listener_origin;
+	vec3_t		listener_forward;
+	vec3_t		listener_right;
+	vec3_t		listener_up;
+	vec_t		nominal_clip_dist = 1000.0;
+
+	int			time;			// sample PAIRS
+	int			paintedtime;	// sample PAIRS
+
+	sfx_t		*known_sfx;		// hunk allocated [MAX_SFX]
+	int			num_sfx;
+
+	sfx_t		*ambient_sfx[NUM_AMBIENTS];
+
+	int			desired_speed = 11025;
+	int			desired_bits = 16;
+
+	int			started = 0;
+
+	// Fake dma is a synchronous faking of the DMA progress used for
+	// isolating performance in the renderer. fakedma_updates is the
+	// number of times S_Update() is called per second.
+	qboolean	fakedma = false;
+	int			fakedma_updates = 15;
+};
+
+extern sound_state_t sound;
 
 extern	cvar_t loadas8bit;
 extern	cvar_t bgmvolume;
 extern	cvar_t volume;
-
-extern qboolean	snd_initialized;
-
-extern int		snd_blocked;
 
 void S_LocalSound (const char *s);
 sfxcache_t *S_LoadSound (sfx_t *s);
