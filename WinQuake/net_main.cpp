@@ -22,13 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "net_vcr.h"
 
-qsocket_t	*net_activeSockets = NULL;
-qsocket_t	*net_freeSockets = NULL;
-int			net_numsockets = 0;
-
-qboolean	serialAvailable = false;
-qboolean	ipxAvailable = false;
-qboolean	tcpipAvailable = false;
+net_state_t net;
 
 int			net_hostport;
 int			DEFAULTnet_hostport = 26000;
@@ -54,14 +48,6 @@ static void Slist_Poll(void);
 PollProcedure	slistSendProcedure = {NULL, 0.0, Slist_Send};
 PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
 
-
-sizebuf_t		net_message;
-int				net_activeconnections = 0;
-
-int messagesSent = 0;
-int messagesReceived = 0;
-int unreliableMessagesSent = 0;
-int unreliableMessagesReceived = 0;
 
 cvar_t	net_messagetimeout = {"net_messagetimeout","300"};
 cvar_t	hostname = {"hostname", "UNNAMED"};
@@ -90,12 +76,10 @@ qboolean recording = false;
 int	net_driverlevel;
 
 
-double			net_time;
-
 double SetNetTime(void)
 {
-	net_time = Sys_FloatTime();
-	return net_time;
+	net.time = Sys_FloatTime();
+	return net.time;
 }
 
 
@@ -111,29 +95,29 @@ qsocket_t *NET_NewQSocket (void)
 {
 	qsocket_t	*sock;
 
-	if (net_freeSockets == NULL)
+	if (net.freeSockets == NULL)
 		return NULL;
 
-	if (net_activeconnections >= svs.maxclients)
+	if (net.activeconnections >= svs.maxclients)
 		return NULL;
 
 	// get one from free list
-	sock = net_freeSockets;
-	net_freeSockets = sock->next;
+	sock = net.freeSockets;
+	net.freeSockets = sock->next;
 
 	// add it to active list
-	sock->next = net_activeSockets;
-	net_activeSockets = sock;
+	sock->next = net.activeSockets;
+	net.activeSockets = sock;
 
 	sock->disconnected = false;
-	sock->connecttime = net_time;
+	sock->connecttime = net.time;
 	Q_strcpy (sock->address,"UNSET ADDRESS");
 	sock->driver = net_driverlevel;
 	sock->socket = 0;
 	sock->driverdata = NULL;
 	sock->canSend = true;
 	sock->sendNext = false;
-	sock->lastMessageTime = net_time;
+	sock->lastMessageTime = net.time;
 	sock->ackSequence = 0;
 	sock->sendSequence = 0;
 	sock->unreliableSendSequence = 0;
@@ -151,11 +135,11 @@ void NET_FreeQSocket(qsocket_t *sock)
 	qsocket_t	*s;
 
 	// remove it from active list
-	if (sock == net_activeSockets)
-		net_activeSockets = net_activeSockets->next;
+	if (sock == net.activeSockets)
+		net.activeSockets = net.activeSockets->next;
 	else
 	{
-		for (s = net_activeSockets; s; s = s->next)
+		for (s = net.activeSockets; s; s = s->next)
 			if (s->next == sock)
 			{
 				s->next = sock->next;
@@ -166,8 +150,8 @@ void NET_FreeQSocket(qsocket_t *sock)
 	}
 
 	// add it to free list
-	sock->next = net_freeSockets;
-	net_freeSockets = sock;
+	sock->next = net.freeSockets;
+	net.freeSockets = sock;
 	sock->disconnected = true;
 }
 
@@ -518,7 +502,7 @@ void NET_Close (qsocket_t *sock)
 =================
 NET_GetMessage
 
-If there is a complete message, return it in net_message
+If there is a complete message, return it in net.message
 
 returns 0 if no data is waiting
 returns 1 if a message was received
@@ -557,7 +541,7 @@ int	NET_GetMessage (qsocket_t *sock)
 	// see if this connection has timed out
 	if (ret == 0 && sock->driver)
 	{
-		if (net_time - sock->lastMessageTime > net_messagetimeout.value)
+		if (net.time - sock->lastMessageTime > net_messagetimeout.value)
 		{
 			NET_Close(sock);
 			return -1;
@@ -569,11 +553,11 @@ int	NET_GetMessage (qsocket_t *sock)
 	{
 		if (sock->driver)
 		{
-			sock->lastMessageTime = net_time;
+			sock->lastMessageTime = net.time;
 			if (ret == 1)
-				messagesReceived++;
+				net.messagesReceived++;
 			else if (ret == 2)
-				unreliableMessagesReceived++;
+				net.unreliableMessagesReceived++;
 		}
 
 		if (recording)
@@ -582,9 +566,9 @@ int	NET_GetMessage (qsocket_t *sock)
 			vcrGetMessage.op = VCR_OP_GETMESSAGE;
 			vcrGetMessage.session = (intptr_t)sock;
 			vcrGetMessage.ret = ret;
-			vcrGetMessage.len = net_message.cursize;
+			vcrGetMessage.len = net.message.cursize;
 			Sys_FileWrite (vcrFile, &vcrGetMessage, 24);
-			Sys_FileWrite (vcrFile, net_message.data, net_message.cursize);
+			Sys_FileWrite (vcrFile, net.message.data, net.message.cursize);
 		}
 	}
 	else
@@ -638,7 +622,7 @@ int NET_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	SetNetTime();
 	r = sfunc.QSendMessage(sock, data);
 	if (r == 1 && sock->driver)
-		messagesSent++;
+		net.messagesSent++;
 
 	if (recording)
 	{
@@ -669,7 +653,7 @@ int NET_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 	SetNetTime();
 	r = sfunc.SendUnreliableMessage(sock, data);
 	if (r == 1 && sock->driver)
-		unreliableMessagesSent++;
+		net.unreliableMessagesSent++;
 
 	if (recording)
 	{
@@ -833,22 +817,22 @@ void NET_Init (void)
 
 	if (COM_CheckParm("-listen") || cls.state == ca_dedicated)
 		listening = true;
-	net_numsockets = svs.maxclientslimit;
+	net.numsockets = svs.maxclientslimit;
 	if (cls.state != ca_dedicated)
-		net_numsockets++;
+		net.numsockets++;
 
 	SetNetTime();
 
-	for (i = 0; i < net_numsockets; i++)
+	for (i = 0; i < net.numsockets; i++)
 	{
 		s = (qsocket_t *)Hunk_AllocName(sizeof(qsocket_t), "qsocket");
-		s->next = net_freeSockets;
-		net_freeSockets = s;
+		s->next = net.freeSockets;
+		net.freeSockets = s;
 		s->disconnected = true;
 	}
 
 	// allocate space for network message buffer
-	SZ_Alloc (&net_message, NET_MAXMESSAGE);
+	SZ_Alloc (&net.message, NET_MAXMESSAGE);
 
 	Cvar_RegisterVariable (&net_messagetimeout);
 	Cvar_RegisterVariable (&hostname);
@@ -899,7 +883,7 @@ void		NET_Shutdown (void)
 
 	SetNetTime();
 
-	for (sock = net_activeSockets; sock; sock = sock->next)
+	for (sock = net.activeSockets; sock; sock = sock->next)
 		NET_Close(sock);
 
 //
@@ -931,7 +915,7 @@ void NET_Poll(void)
 
 	if (!configRestored)
 	{
-		if (serialAvailable)
+		if (net.serialAvailable)
 		{
 			if (config_com_modem.value == 1.0)
 				useModem = true;
@@ -947,7 +931,7 @@ void NET_Poll(void)
 
 	for (pp = pollProcedureList; pp; pp = pp->next)
 	{
-		if (pp->nextTime > net_time)
+		if (pp->nextTime > net.time)
 			break;
 		pollProcedureList = pp->next;
 		pp->procedure();

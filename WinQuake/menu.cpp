@@ -631,7 +631,7 @@ void M_MultiPlayer_Draw (void)
 
 	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 
-	if (serialAvailable || ipxAvailable || tcpipAvailable)
+	if (net.serialAvailable || net.ipxAvailable || net.tcpipAvailable)
 		return;
 	M_PrintWhite ((320/2) - ((27*8)/2), 148, "No Communications Available");
 }
@@ -662,12 +662,12 @@ void M_MultiPlayer_Key (int key)
 		switch (m_multiplayer_cursor)
 		{
 		case 0:
-			if (serialAvailable || ipxAvailable || tcpipAvailable)
+			if (net.serialAvailable || net.ipxAvailable || net.tcpipAvailable)
 				M_Menu_Net_f ();
 			break;
 
 		case 1:
-			if (serialAvailable || ipxAvailable || tcpipAvailable)
+			if (net.serialAvailable || net.ipxAvailable || net.tcpipAvailable)
 				M_Menu_Net_f ();
 			break;
 
@@ -908,7 +908,7 @@ void M_Net_Draw (void)
 
 	f = 32;
 
-	if (serialAvailable)
+	if (net.serialAvailable)
 	{
 		p = Draw_CachePic ("gfx/netmen1.lmp");
 	}
@@ -926,7 +926,7 @@ void M_Net_Draw (void)
 
 	f += 19;
 
-	if (serialAvailable)
+	if (net.serialAvailable)
 	{
 		p = Draw_CachePic ("gfx/netmen2.lmp");
 	}
@@ -943,14 +943,14 @@ void M_Net_Draw (void)
 		M_DrawTransPic (72, f, p);
 
 	f += 19;
-	if (ipxAvailable)
+	if (net.ipxAvailable)
 		p = Draw_CachePic ("gfx/netmen3.lmp");
 	else
 		p = Draw_CachePic ("gfx/dim_ipx.lmp");
 	M_DrawTransPic (72, f, p);
 
 	f += 19;
-	if (tcpipAvailable)
+	if (net.tcpipAvailable)
 		p = Draw_CachePic ("gfx/netmen4.lmp");
 	else
 		p = Draw_CachePic ("gfx/dim_tcp.lmp");
@@ -1024,13 +1024,13 @@ again:
 		}
 	}
 
-	if (m_net_cursor == 0 && !serialAvailable)
+	if (m_net_cursor == 0 && !net.serialAvailable)
 		goto again;
-	if (m_net_cursor == 1 && !serialAvailable)
+	if (m_net_cursor == 1 && !net.serialAvailable)
 		goto again;
-	if (m_net_cursor == 2 && !ipxAvailable)
+	if (m_net_cursor == 2 && !net.ipxAvailable)
 		goto again;
-	if (m_net_cursor == 3 && !tcpipAvailable)
+	if (m_net_cursor == 3 && !net.tcpipAvailable)
 		goto again;
 }
 

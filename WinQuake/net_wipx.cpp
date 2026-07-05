@@ -117,7 +117,7 @@ int WIPX_Init (void)
 		*p = 0;
 
 	Con_Printf("Winsock IPX Initialized\n");
-	ipxAvailable = true;
+	net.ipxAvailable = true;
 
 	return net_controlsocket;
 }

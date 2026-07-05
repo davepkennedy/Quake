@@ -148,9 +148,37 @@ typedef struct qsocket_s
 
 } qsocket_t;
 
-extern qsocket_t	*net_activeSockets;
-extern qsocket_t	*net_freeSockets;
-extern int			net_numsockets;
+// Core network connection state -- consolidated per an explicit scoping
+// decision (this subsystem is much larger/more cross-cutting than
+// console/sound/zone, and much harder to verify headlessly since there's
+// no way to test a real multiplayer connection in this environment).
+// This holds just the actively-used cross-cutting state. Left as
+// standalone globals: the driver-selection tables (net_landrivers/
+// net_drivers), modem/serial dial-up config (dead on any modern system,
+// same category as the GL_EXT_paletted_texture code left alone during
+// the Core Profile work), the LAN server-browser hostcache, and VCR
+// record/playback.
+struct net_state_t
+{
+	qsocket_t	*activeSockets = nullptr;
+	qsocket_t	*freeSockets = nullptr;
+	int			numsockets = 0;
+
+	qboolean	serialAvailable = false;
+	qboolean	ipxAvailable = false;
+	qboolean	tcpipAvailable = false;
+
+	sizebuf_t	message;
+	int			activeconnections = 0;
+	double		time = 0;
+
+	int			messagesSent = 0;
+	int			messagesReceived = 0;
+	int			unreliableMessagesSent = 0;
+	int			unreliableMessagesReceived = 0;
+};
+
+extern net_state_t net;
 
 typedef struct
 {
@@ -211,11 +239,6 @@ extern cvar_t		hostname;
 extern char			playername[];
 extern int			playercolor;
 
-extern int		messagesSent;
-extern int		messagesReceived;
-extern int		unreliableMessagesSent;
-extern int		unreliableMessagesReceived;
-
 qsocket_t *NET_NewQSocket (void);
 void NET_FreeQSocket(qsocket_t *);
 double SetNetTime(void);
@@ -262,10 +285,6 @@ qboolean IsID(struct qsockaddr *addr);
 // public network functions
 //
 //============================================================================
-
-extern	double		net_time;
-extern	sizebuf_t	net_message;
-extern	int			net_activeconnections;
 
 void		NET_Init (void);
 void		NET_Shutdown (void);
@@ -320,9 +339,6 @@ typedef struct _PollProcedure
 
 void SchedulePollProcedure(PollProcedure *pp, double timeOffset);
 
-extern	qboolean	serialAvailable;
-extern	qboolean	ipxAvailable;
-extern	qboolean	tcpipAvailable;
 extern	char		my_ipx_address[NET_NAMELEN];
 extern	char		my_tcpip_address[NET_NAMELEN];
 extern void (*GetComPortConfig) (int portNumber, int *port, int *irq, int *baud, qboolean *useModem);

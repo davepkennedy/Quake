@@ -55,7 +55,7 @@ void Loop_SearchForHosts (qboolean xmit)
 	else
 		Q_strcpy(hostcache[0].name, hostname.string);
 	Q_strcpy(hostcache[0].map, sv.name);
-	hostcache[0].users = net_activeconnections;
+	hostcache[0].users = net.activeconnections;
 	hostcache[0].maxusers = svs.maxclients;
 	hostcache[0].driver = net_driverlevel;
 	Q_strcpy(hostcache[0].cname, "local");
@@ -135,8 +135,8 @@ int Loop_GetMessage (qsocket_t *sock)
 	ret = sock->receiveMessage[0];
 	length = sock->receiveMessage[1] + (sock->receiveMessage[2] << 8);
 	// alignment byte skipped here
-	SZ_Clear (&net_message);
-	SZ_Write (&net_message, &sock->receiveMessage[4], length);
+	SZ_Clear (&net.message);
+	SZ_Write (&net.message, &sock->receiveMessage[4], length);
 
 	length = IntAlign(length + 4);
 	sock->receiveMessageLength -= length;

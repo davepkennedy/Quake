@@ -330,7 +330,7 @@ void SV_CheckForNewClients (void)
 		svs.clients[i].netconnection = ret;
 		SV_ConnectClient (i);	
 	
-		net_activeconnections++;
+		net.activeconnections++;
 	}
 }
 

@@ -380,7 +380,7 @@ void SV_DropClient (qboolean crash)
 	host_client->active = false;
 	host_client->name[0] = 0;
 	host_client->old_frags = -999999;
-	net_activeconnections--;
+	net.activeconnections--;
 
 // send notification to all clients
 	for (i=0, client = svs.clients ; i<svs.maxclients ; i++, client++)

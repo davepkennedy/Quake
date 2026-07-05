@@ -239,7 +239,7 @@ int WINS_Init (void)
 	((struct sockaddr_in *)&broadcastaddr)->sin_port = htons((unsigned short)net_hostport);
 
 	Con_Printf("Winsock TCP/IP Initialized\n");
-	tcpipAvailable = true;
+	net.tcpipAvailable = true;
 
 	return net_controlsocket;
 }

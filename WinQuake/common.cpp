@@ -608,13 +608,13 @@ int MSG_ReadChar (void)
 {
 	int     c;
 	
-	if (msg_readcount+1 > net_message.cursize)
+	if (msg_readcount+1 > net.message.cursize)
 	{
 		msg_badread = true;
 		return -1;
 	}
 		
-	c = (signed char)net_message.data[msg_readcount];
+	c = (signed char)net.message.data[msg_readcount];
 	msg_readcount++;
 	
 	return c;
@@ -624,13 +624,13 @@ int MSG_ReadByte (void)
 {
 	int     c;
 	
-	if (msg_readcount+1 > net_message.cursize)
+	if (msg_readcount+1 > net.message.cursize)
 	{
 		msg_badread = true;
 		return -1;
 	}
 		
-	c = (unsigned char)net_message.data[msg_readcount];
+	c = (unsigned char)net.message.data[msg_readcount];
 	msg_readcount++;
 	
 	return c;
@@ -640,14 +640,14 @@ int MSG_ReadShort (void)
 {
 	int     c;
 	
-	if (msg_readcount+2 > net_message.cursize)
+	if (msg_readcount+2 > net.message.cursize)
 	{
 		msg_badread = true;
 		return -1;
 	}
 		
-	c = (short)(net_message.data[msg_readcount]
-	+ (net_message.data[msg_readcount+1]<<8));
+	c = (short)(net.message.data[msg_readcount]
+	+ (net.message.data[msg_readcount+1]<<8));
 	
 	msg_readcount += 2;
 	
@@ -658,16 +658,16 @@ int MSG_ReadLong (void)
 {
 	int     c;
 	
-	if (msg_readcount+4 > net_message.cursize)
+	if (msg_readcount+4 > net.message.cursize)
 	{
 		msg_badread = true;
 		return -1;
 	}
 		
-	c = net_message.data[msg_readcount]
-	+ (net_message.data[msg_readcount+1]<<8)
-	+ (net_message.data[msg_readcount+2]<<16)
-	+ (net_message.data[msg_readcount+3]<<24);
+	c = net.message.data[msg_readcount]
+	+ (net.message.data[msg_readcount+1]<<8)
+	+ (net.message.data[msg_readcount+2]<<16)
+	+ (net.message.data[msg_readcount+3]<<24);
 	
 	msg_readcount += 4;
 	
@@ -683,10 +683,10 @@ float MSG_ReadFloat (void)
 		int     l;
 	} dat;
 	
-	dat.b[0] =      net_message.data[msg_readcount];
-	dat.b[1] =      net_message.data[msg_readcount+1];
-	dat.b[2] =      net_message.data[msg_readcount+2];
-	dat.b[3] =      net_message.data[msg_readcount+3];
+	dat.b[0] =      net.message.data[msg_readcount];
+	dat.b[1] =      net.message.data[msg_readcount+1];
+	dat.b[2] =      net.message.data[msg_readcount+2];
+	dat.b[3] =      net.message.data[msg_readcount+3];
 	msg_readcount += 4;
 	
 	dat.l = LittleLong (dat.l);

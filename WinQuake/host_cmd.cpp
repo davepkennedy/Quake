@@ -75,17 +75,17 @@ void Host_Status_f (void)
 
 	print ("host:    %s\n", Cvar_VariableString ("hostname"));
 	print ("version: %4.2f\n", VERSION);
-	if (tcpipAvailable)
+	if (net.tcpipAvailable)
 		print ("tcp/ip:  %s\n", my_tcpip_address);
-	if (ipxAvailable)
+	if (net.ipxAvailable)
 		print ("ipx:     %s\n", my_ipx_address);
 	print ("map:     %s\n", sv.name);
-	print ("players: %i active (%i max)\n\n", net_activeconnections, svs.maxclients);
+	print ("players: %i active (%i max)\n\n", net.activeconnections, svs.maxclients);
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
 	{
 		if (!client->active)
 			continue;
-		seconds = (int)(net_time - client->netconnection->connecttime);
+		seconds = (int)(net.time - client->netconnection->connecttime);
 		minutes = seconds / 60;
 		if (minutes)
 		{

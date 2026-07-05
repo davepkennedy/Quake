@@ -157,8 +157,8 @@ void CL_KeepaliveMessage (void)
 		return;
 
 // read messages from server, should just be nops
-	old = net_message;
-	memcpy (olddata, net_message.data, net_message.cursize);
+	old = net.message;
+	memcpy (olddata, net.message.data, net.message.cursize);
 	
 	do
 	{
@@ -179,8 +179,8 @@ void CL_KeepaliveMessage (void)
 		}
 	} while (ret);
 
-	net_message = old;
-	memcpy (net_message.data, olddata, net_message.cursize);
+	net.message = old;
+	memcpy (net.message.data, olddata, net.message.cursize);
 
 // check time
 	time = Sys_FloatTime ();
@@ -726,7 +726,7 @@ void CL_ParseServerMessage (void)
 // if recording demos, copy the message out
 //
 	if (cl_shownet.value == 1)
-		Con_Printf ("%i ",net_message.cursize);
+		Con_Printf ("%i ",net.message.cursize);
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");
 	
