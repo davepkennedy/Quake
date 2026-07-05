@@ -509,9 +509,9 @@ void SCR_SetUpToDrawConsole (void)
 		return;		// never a console with loading plaque
 		
 // decide on the height of the console
-	con_forcedup = !cl.worldmodel || cls.signon != SIGNONS;
+	con.forcedup = !cl.worldmodel || cls.signon != SIGNONS;
 
-	if (con_forcedup)
+	if (con.forcedup)
 	{
 		scr_conlines = vid.height;		// full screen
 		scr_con_current = scr_conlines;
@@ -543,7 +543,7 @@ void SCR_SetUpToDrawConsole (void)
 	{
 	}
 	else
-		con_notifylines = 0;
+		con.notifylines = 0;
 }
 	
 /*
@@ -842,7 +842,7 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-	if (!scr_initialized || !con_initialized)
+	if (!scr_initialized || !con.initialized)
 		return;				// not initialized yet
 
 

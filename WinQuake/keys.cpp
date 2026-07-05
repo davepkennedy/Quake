@@ -236,29 +236,29 @@ void Key_Console (int key)
 
 	if (key == K_PGUP || key==K_MWHEELUP)
 	{
-		con_backscroll += 2;
-		if (con_backscroll > con_totallines - (vid.height>>3) - 1)
-			con_backscroll = con_totallines - (vid.height>>3) - 1;
+		con.backscroll += 2;
+		if (con.backscroll > con.totallines - (vid.height>>3) - 1)
+			con.backscroll = con.totallines - (vid.height>>3) - 1;
 		return;
 	}
 
 	if (key == K_PGDN || key==K_MWHEELDOWN)
 	{
-		con_backscroll -= 2;
-		if (con_backscroll < 0)
-			con_backscroll = 0;
+		con.backscroll -= 2;
+		if (con.backscroll < 0)
+			con.backscroll = 0;
 		return;
 	}
 
 	if (key == K_HOME)
 	{
-		con_backscroll = con_totallines - (vid.height>>3) - 1;
+		con.backscroll = con.totallines - (vid.height>>3) - 1;
 		return;
 	}
 
 	if (key == K_END)
 	{
-		con_backscroll = 0;
+		con.backscroll = 0;
 		return;
 	}
 	
@@ -695,7 +695,7 @@ void Key_Event (int key, qboolean down)
 //
 	if ( (key_dest == key_menu && menubound[key])
 	|| (key_dest == key_console && !consolekeys[key])
-	|| (key_dest == key_game && ( !con_forcedup || !consolekeys[key] ) ) )
+	|| (key_dest == key_game && ( !con.forcedup || !consolekeys[key] ) ) )
 	{
 		kb = keybindings[key];
 		if (kb)

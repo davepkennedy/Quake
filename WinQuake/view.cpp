@@ -994,7 +994,7 @@ extern vrect_t	scr_vrect;
 
 void V_RenderView (void)
 {
-	if (con_forcedup)
+	if (con.forcedup)
 		return;
 
 // don't allow cheats in multiplayer

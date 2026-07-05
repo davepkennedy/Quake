@@ -21,12 +21,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // console
 //
-extern int con_totallines;
-extern int con_backscroll;
-extern	qboolean con_forcedup;	// because no entities to refresh
-extern qboolean con_initialized;
-extern byte *con_chars;
-extern	int	con_notifylines;		// scan lines to clear for notify lines
+#define	NUM_CON_TIMES 4
+
+struct console_state_t
+{
+	int			linewidth;		// current width of the console, in characters
+	float		cursorspeed = 4;
+
+	qboolean	forcedup;		// because no entities to refresh
+
+	int			totallines;		// total lines in console scrollback
+	int			backscroll;		// lines up from bottom to display
+	int			current;		// where next message will be printed
+	int			x;				// offset in current line for next print
+	char		*text = nullptr;
+
+	float		times[NUM_CON_TIMES];	// realtime time the line was generated
+										// for transparent notify lines
+
+	int			vislines;
+
+	qboolean	debuglog;
+
+	qboolean	initialized;
+
+	int			notifylines;	// scan lines to clear for notify lines
+};
+
+extern console_state_t con;
 
 void Con_DrawCharacter (int cx, int line, int num);
 
