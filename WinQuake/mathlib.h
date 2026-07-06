@@ -58,9 +58,6 @@ void VectorInverse (vec3_t v);
 void VectorScale (vec3_t in, vec_t scale, vec3_t out);
 int Q_log2(int val);
 
-void R_ConcatRotations (float in1[3][3], float in2[3][3], float out[3][3]);
-void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4]);
-
 void FloorDivMod (double numer, double denom, int *quotient,
 		int *rem);
 fixed16_t Invert24To16(fixed16_t val);
