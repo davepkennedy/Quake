@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_main.c
 
 #include "quakedef.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 entity_t	r_worldentity;
 
@@ -56,10 +58,10 @@ vec3_t	vpn;
 vec3_t	vright;
 vec3_t	r_origin;
 
-float	r_world_matrix[16];
-float	r_base_world_matrix[16];
-float	r_proj_matrix[16];
-float	r_entity_matrix[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+glm::mat4	r_world_matrix;
+glm::mat4	r_base_world_matrix;
+glm::mat4	r_proj_matrix;
+glm::mat4	r_entity_matrix(1.0f);
 
 //
 // screen size info
@@ -121,82 +123,13 @@ qboolean R_CullBox (vec3_t mins, vec3_t maxs)
 }
 
 
-// -------------------------------------------------------------------------
-// CPU-side matrix helpers replacing the legacy glMatrixMode/glLoadIdentity/
-// glFrustum/glRotatef/glTranslatef/glScalef stack (none of which exist in a
-// Core Profile context). All "in place" helpers post-multiply onto *m,
-// matching the corresponding gl*f call's post-multiply-onto-current-matrix
-// semantics -- so a sequence of calls here reproduces the same composition
-// as the equivalent sequence of legacy calls would have built.
-// -------------------------------------------------------------------------
-
-static void Mat4Translate (float *m, float x, float y, float z)
-{
-	float t[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1 };
-	float out[16];
-	GL_Mat4Mul (m, t, out);
-	memcpy (m, out, sizeof(out));
-}
-
-static void Mat4Scale (float *m, float x, float y, float z)
-{
-	float s[16] = { x,0,0,0, 0,y,0,0, 0,0,z,0, 0,0,0,1 };
-	float out[16];
-	GL_Mat4Mul (m, s, out);
-	memcpy (m, out, sizeof(out));
-}
-
-static void Mat4RotateX (float *m, float degrees)
-{
-	float r = degrees * (float)M_PI / 180.f;
-	float c = cosf (r), s = sinf (r);
-	float rot[16] = { 1,0,0,0,  0,c,s,0,  0,-s,c,0,  0,0,0,1 };
-	float out[16];
-	GL_Mat4Mul (m, rot, out);
-	memcpy (m, out, sizeof(out));
-}
-
-static void Mat4RotateY (float *m, float degrees)
-{
-	float r = degrees * (float)M_PI / 180.f;
-	float c = cosf (r), s = sinf (r);
-	float rot[16] = { c,0,-s,0,  0,1,0,0,  s,0,c,0,  0,0,0,1 };
-	float out[16];
-	GL_Mat4Mul (m, rot, out);
-	memcpy (m, out, sizeof(out));
-}
-
-static void Mat4RotateZ (float *m, float degrees)
-{
-	float r = degrees * (float)M_PI / 180.f;
-	float c = cosf (r), s = sinf (r);
-	float rot[16] = { c,s,0,0,  -s,c,0,0,  0,0,1,0,  0,0,0,1 };
-	float out[16];
-	GL_Mat4Mul (m, rot, out);
-	memcpy (m, out, sizeof(out));
-}
-
-// Overwrites *out (does not post-multiply) -- matches glLoadIdentity()+glFrustum().
-static void Mat4Frustum (float *out, double l, double r, double b, double t, double n, double f)
-{
-	memset (out, 0, 16*sizeof(float));
-	out[0]  = (float)(2*n / (r-l));
-	out[5]  = (float)(2*n / (t-b));
-	out[8]  = (float)((r+l) / (r-l));
-	out[9]  = (float)((t+b) / (t-b));
-	out[10] = (float)(-(f+n) / (f-n));
-	out[11] = -1.f;
-	out[14] = (float)(-2*f*n / (f-n));
-}
-
 void R_RotateForEntity (entity_t *e)
 {
-	GL_Mat4Identity (r_entity_matrix);
-	Mat4Translate (r_entity_matrix, e->origin[0],  e->origin[1],  e->origin[2]);
+	r_entity_matrix = glm::translate (glm::mat4(1.0f), glm::vec3(e->origin[0], e->origin[1], e->origin[2]));
 
-	Mat4RotateZ (r_entity_matrix, e->angles[1]);
-	Mat4RotateY (r_entity_matrix, -e->angles[0]);
-	Mat4RotateX (r_entity_matrix, e->angles[2]);
+	r_entity_matrix = glm::rotate (r_entity_matrix, glm::radians(e->angles[1]), glm::vec3(0,0,1));
+	r_entity_matrix = glm::rotate (r_entity_matrix, glm::radians(-e->angles[0]), glm::vec3(0,1,0));
+	r_entity_matrix = glm::rotate (r_entity_matrix, glm::radians(e->angles[2]), glm::vec3(1,0,0));
 }
 
 /*
@@ -886,12 +819,12 @@ void R_DrawAliasModel (entity_t *e)
 	R_RotateForEntity (e);
 
 	if (!strcmp (clmodel->name, "progs/eyes.mdl") && gl_doubleeyes.value) {
-		Mat4Translate (r_entity_matrix, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
+		r_entity_matrix = glm::translate (r_entity_matrix, glm::vec3(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8)));
 // double size of eyes, since they are really hard to see in gl
-		Mat4Scale (r_entity_matrix, paliashdr->scale[0]*2, paliashdr->scale[1]*2, paliashdr->scale[2]*2);
+		r_entity_matrix = glm::scale (r_entity_matrix, glm::vec3(paliashdr->scale[0]*2, paliashdr->scale[1]*2, paliashdr->scale[2]*2));
 	} else {
-		Mat4Translate (r_entity_matrix, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		Mat4Scale (r_entity_matrix, paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+		r_entity_matrix = glm::translate (r_entity_matrix, glm::vec3(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]));
+		r_entity_matrix = glm::scale (r_entity_matrix, glm::vec3(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]));
 	}
 
 	anim = (int)(cl.time*10) & 3;
@@ -908,7 +841,7 @@ void R_DrawAliasModel (entity_t *e)
 
 	R_SetupAliasFrame (currententity->frame, paliashdr);
 
-	GL_Mat4Identity (r_entity_matrix);
+	r_entity_matrix = glm::mat4(1.0f);
 
 	if (r_shadows.value)
 	{
@@ -916,7 +849,7 @@ void R_DrawAliasModel (entity_t *e)
 		glEnable (GL_BLEND);
 		GL_DrawAliasShadow (paliashdr, lastposenum);
 		glDisable (GL_BLEND);
-		GL_Mat4Identity (r_entity_matrix);
+		r_entity_matrix = glm::mat4(1.0f);
 	}
 
 }
@@ -1059,11 +992,10 @@ void R_PolyBlend (void)
 	{
 		// Fixed "Z going up" view, independent of the player's actual
 		// view angles -- this is a full-screen tint quad, not a world object.
-		float view[16], mvp[16];
-		GL_Mat4Identity (view);
-		Mat4RotateX (view, -90);
-		Mat4RotateZ (view, 90);
-		GL_Mat4Mul (r_proj_matrix, view, mvp);
+		glm::mat4 view(1.0f);
+		view = glm::rotate (view, glm::radians(-90.0f), glm::vec3(1,0,0));
+		view = glm::rotate (view, glm::radians(90.0f), glm::vec3(0,0,1));
+		glm::mat4 mvp = r_proj_matrix * view;
 
 		float quad[4][5] = {
 			{ 10,  100,  100, 0, 0 },
@@ -1073,7 +1005,7 @@ void R_PolyBlend (void)
 		};
 
 		Billboard_BeginDraw ();
-		qglUniformMatrix4fv (u_billboard_mvp, 1, GL_FALSE, mvp);
+		qglUniformMatrix4fv (u_billboard_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
 		qglUniform1i (u_billboard_flat, 1);
 		qglUniform4fv (u_billboard_color, 1, v_blend);
 		Billboard_DrawQuad (quad);
@@ -1186,7 +1118,7 @@ void MYgluPerspective( GLdouble fovy, GLdouble aspect,
    xmin = ymin * aspect;
    xmax = ymax * aspect;
 
-   Mat4Frustum( r_proj_matrix, xmin, xmax, ymin, ymax, zNear, zFar );
+   r_proj_matrix = glm::frustum( (float)xmin, (float)xmax, (float)ymin, (float)ymax, (float)zNear, (float)zFar );
 }
 
 
@@ -1238,24 +1170,24 @@ void R_SetupGL (void)
 	if (mirror)
 	{
 		if (mirror_plane->normal[2])
-			Mat4Scale (r_proj_matrix, 1, -1, 1);
+			r_proj_matrix = glm::scale (r_proj_matrix, glm::vec3(1, -1, 1));
 		else
-			Mat4Scale (r_proj_matrix, -1, 1, 1);
+			r_proj_matrix = glm::scale (r_proj_matrix, glm::vec3(-1, 1, 1));
 		glCullFace(GL_BACK);
 	}
 	else
 		glCullFace(GL_FRONT);
 
-	GL_Mat4Identity (r_world_matrix);
+	r_world_matrix = glm::mat4(1.0f);
 
-	Mat4RotateX (r_world_matrix, -90);	    // put Z going up
-	Mat4RotateZ (r_world_matrix, 90);	    // put Z going up
-	Mat4RotateX (r_world_matrix, -r_refdef.viewangles[2]);
-	Mat4RotateY (r_world_matrix, -r_refdef.viewangles[0]);
-	Mat4RotateZ (r_world_matrix, -r_refdef.viewangles[1]);
-	Mat4Translate (r_world_matrix, -r_refdef.vieworg[0],  -r_refdef.vieworg[1],  -r_refdef.vieworg[2]);
+	r_world_matrix = glm::rotate (r_world_matrix, glm::radians(-90.0f), glm::vec3(1,0,0));	    // put Z going up
+	r_world_matrix = glm::rotate (r_world_matrix, glm::radians(90.0f), glm::vec3(0,0,1));	    // put Z going up
+	r_world_matrix = glm::rotate (r_world_matrix, glm::radians(-r_refdef.viewangles[2]), glm::vec3(1,0,0));
+	r_world_matrix = glm::rotate (r_world_matrix, glm::radians(-r_refdef.viewangles[0]), glm::vec3(0,1,0));
+	r_world_matrix = glm::rotate (r_world_matrix, glm::radians(-r_refdef.viewangles[1]), glm::vec3(0,0,1));
+	r_world_matrix = glm::translate (r_world_matrix, glm::vec3(-r_refdef.vieworg[0], -r_refdef.vieworg[1], -r_refdef.vieworg[2]));
 
-	GL_Mat4Identity (r_entity_matrix);
+	r_entity_matrix = glm::mat4(1.0f);
 
 	//
 	// set drawing parms
@@ -1371,7 +1303,7 @@ void R_Mirror (void)
 	if (!mirror)
 		return;
 
-	memcpy (r_base_world_matrix, r_world_matrix, sizeof(r_base_world_matrix));
+	r_base_world_matrix = r_world_matrix;
 
 	d = DotProduct (r_refdef.vieworg, mirror_plane->normal) - mirror_plane->dist;
 	VectorMA (r_refdef.vieworg, -2*d, mirror_plane->normal, r_refdef.vieworg);
@@ -1409,12 +1341,12 @@ void R_Mirror (void)
 	// R_RenderScene() call above, since the mirror quad itself must be
 	// drawn un-mirrored, from the original (pre-reflection) viewpoint.
 	if (mirror_plane->normal[2])
-		Mat4Scale (r_proj_matrix, 1,-1,1);
+		r_proj_matrix = glm::scale (r_proj_matrix, glm::vec3(1,-1,1));
 	else
-		Mat4Scale (r_proj_matrix, -1,1,1);
+		r_proj_matrix = glm::scale (r_proj_matrix, glm::vec3(-1,1,1));
 	glCullFace(GL_FRONT);
 
-	memcpy (r_world_matrix, r_base_world_matrix, sizeof(r_world_matrix));
+	r_world_matrix = r_base_world_matrix;
 
 	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)

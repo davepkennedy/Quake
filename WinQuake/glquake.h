@@ -30,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+#include <glm/glm.hpp>
+
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
@@ -226,9 +228,9 @@ extern	int			mirrortexturenum;	// quake texturenum, not gltexturenum
 extern	qboolean	mirror;
 extern	mplane_t	*mirror_plane;
 
-extern	float	r_world_matrix[16];
-extern	float	r_proj_matrix[16];
-extern	float	r_entity_matrix[16];
+extern	glm::mat4	r_world_matrix;
+extern	glm::mat4	r_proj_matrix;
+extern	glm::mat4	r_entity_matrix;
 
 extern	const char *gl_vendor;
 extern	const char *gl_renderer;

@@ -946,7 +946,7 @@ e->angles[0] = -e->angles[0];	// stupid quake bug
 	}
 
 	R_World_EndDraw ();
-	GL_Mat4Identity (r_entity_matrix);
+	r_entity_matrix = glm::mat4(1.0f);
 }
 
 /*

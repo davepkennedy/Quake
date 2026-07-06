@@ -1,28 +1,10 @@
 #include "quakedef.h"
-
-void GL_Mat4Mul(const float *a, const float *b, float *out)
-{
-    for (int col = 0; col < 4; col++)
-        for (int row = 0; row < 4; row++)
-        {
-            float s = 0.f;
-            for (int k = 0; k < 4; k++)
-                s += a[k*4 + row] * b[col*4 + k];
-            out[col*4 + row] = s;
-        }
-}
-
-void GL_Mat4Identity(float *out16)
-{
-    static const float I[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
-    memcpy(out16, I, sizeof(I));
-}
+#include <glm/gtc/type_ptr.hpp>
 
 void GL_GetMVP(float *out16)
 {
-    float pv[16];
-    GL_Mat4Mul(r_proj_matrix, r_world_matrix, pv);
-    GL_Mat4Mul(pv, r_entity_matrix, out16);
+    glm::mat4 mvp = r_proj_matrix * r_world_matrix * r_entity_matrix;
+    memcpy(out16, glm::value_ptr(mvp), 16 * sizeof(float));
 }
 
 GLuint GL_CompileShader(GLenum type, const char *src)
