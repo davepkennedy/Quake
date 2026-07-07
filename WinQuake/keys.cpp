@@ -39,7 +39,7 @@ keydest_t	key_dest;
 
 int		key_count;			// incremented every key event
 
-char	*keybindings[256];
+std::string	keybindings[256];
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
 qboolean	menubound[256];	// if true, can't be rebound while in menu
 int		keyshift[256];		// key to map to if shift held down in console
@@ -393,25 +393,10 @@ Key_SetBinding
 */
 void Key_SetBinding (int keynum, const char *binding)
 {
-	char	*newbinding;
-	int		l;
-
 	if (keynum == -1)
 		return;
 
-// free old bindings
-	if (keybindings[keynum])
-	{
-		Z_Free (keybindings[keynum]);
-		keybindings[keynum] = NULL;
-	}
-
-// allocate memory for new binding
-	l = Q_strlen (binding);
-	newbinding = (char *)Z_Malloc (l+1);
-	Q_strcpy (newbinding, binding);
-	newbinding[l] = 0;
-	keybindings[keynum] = newbinding;
+	keybindings[keynum] = binding;
 }
 
 /*
@@ -444,7 +429,7 @@ void Key_Unbindall_f (void)
 	int		i;
 	
 	for (i=0 ; i<256 ; i++)
-		if (keybindings[i])
+		if (!keybindings[i].empty())
 			Key_SetBinding (i, "");
 }
 
@@ -457,8 +442,7 @@ Key_Bind_f
 void Key_Bind_f (void)
 {
 	int			i, c, b;
-	char		cmd[1024];
-	
+
 	c = Cmd_Argc();
 
 	if (c != 2 && c != 3)
@@ -475,23 +459,23 @@ void Key_Bind_f (void)
 
 	if (c == 2)
 	{
-		if (keybindings[b])
-			Con_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b] );
+		if (!keybindings[b].empty())
+			Con_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b].c_str() );
 		else
 			Con_Printf ("\"%s\" is not bound\n", Cmd_Argv(1) );
 		return;
 	}
-	
+
 // copy the rest of the command line
-	cmd[0] = 0;		// start out with a null string
+	std::string cmd;
 	for (i=2 ; i< c ; i++)
 	{
 		if (i > 2)
-			strcat (cmd, " ");
-		strcat (cmd, Cmd_Argv(i));
+			cmd += " ";
+		cmd += Cmd_Argv(i);
 	}
 
-	Key_SetBinding (b, cmd);
+	Key_SetBinding (b, cmd.c_str());
 }
 
 /*
@@ -506,9 +490,8 @@ void Key_WriteBindings (FILE *f)
 	int		i;
 
 	for (i=0 ; i<256 ; i++)
-		if (keybindings[i])
-			if (*keybindings[i])
-				fprintf (f, "bind \"%s\" \"%s\"\n", Key_KeynumToString(i), keybindings[i]);
+		if (!keybindings[i].empty())
+			fprintf (f, "bind \"%s\" \"%s\"\n", Key_KeynumToString(i), keybindings[i].c_str());
 }
 
 
@@ -598,7 +581,7 @@ Should NOT be called during an interrupt!
 */
 void Key_Event (int key, qboolean down)
 {
-	char	*kb;
+	const std::string *kb;
 	char	cmd[1024];
 
 	keydown[key] = down;
@@ -622,7 +605,7 @@ void Key_Event (int key, qboolean down)
 			return;	// ignore most autorepeats
 		}
 			
-		if (key >= 200 && !keybindings[key])
+		if (key >= 200 && keybindings[key].empty())
 			Con_Printf ("%s is unbound, hit F4 to set.\n", Key_KeynumToString (key) );
 	}
 
@@ -663,18 +646,18 @@ void Key_Event (int key, qboolean down)
 //
 	if (!down)
 	{
-		kb = keybindings[key];
-		if (kb && kb[0] == '+')
+		kb = &keybindings[key];
+		if (!kb->empty() && (*kb)[0] == '+')
 		{
-			sprintf (cmd, "-%s %i\n", kb+1, key);
+			sprintf (cmd, "-%s %i\n", kb->c_str()+1, key);
 			Cbuf_AddText (cmd);
 		}
 		if (keyshift[key] != key)
 		{
-			kb = keybindings[keyshift[key]];
-			if (kb && kb[0] == '+')
+			kb = &keybindings[keyshift[key]];
+			if (!kb->empty() && (*kb)[0] == '+')
 			{
-				sprintf (cmd, "-%s %i\n", kb+1, key);
+				sprintf (cmd, "-%s %i\n", kb->c_str()+1, key);
 				Cbuf_AddText (cmd);
 			}
 		}
@@ -697,17 +680,17 @@ void Key_Event (int key, qboolean down)
 	|| (key_dest == key_console && !consolekeys[key])
 	|| (key_dest == key_game && ( !con.forcedup || !consolekeys[key] ) ) )
 	{
-		kb = keybindings[key];
-		if (kb)
+		kb = &keybindings[key];
+		if (!kb->empty())
 		{
-			if (kb[0] == '+')
+			if ((*kb)[0] == '+')
 			{	// button commands add keynum as a parm
-				sprintf (cmd, "%s %i\n", kb, key);
+				sprintf (cmd, "%s %i\n", kb->c_str(), key);
 				Cbuf_AddText (cmd);
 			}
 			else
 			{
-				Cbuf_AddText (kb);
+				Cbuf_AddText (kb->c_str());
 				Cbuf_AddText ("\n");
 			}
 		}
