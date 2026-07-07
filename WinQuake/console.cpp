@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <io.h>
 #endif
 #include <fcntl.h>
+#include <string>
 #include "quakedef.h"
 
 console_state_t	con;
@@ -326,20 +327,45 @@ void Con_Print (const char *txt)
 
 /*
 ================
+Con_FormatVA
+
+Formats fmt/argptr into a std::string sized exactly to fit -- no fixed
+buffer, so no truncation and no overflow, regardless of message length.
+argptr must not be used again by the caller afterward (matches va_list's
+usual single-pass-per-va_start convention).
+================
+*/
+static std::string Con_FormatVA (const char *fmt, va_list argptr)
+{
+	va_list measure;
+	va_copy (measure, argptr);
+	int need = vsnprintf (nullptr, 0, fmt, measure);
+	va_end (measure);
+
+	if (need <= 0)
+		return std::string ();
+
+	std::string msg (need, '\0');
+	vsnprintf (msg.data (), need + 1, fmt, argptr);
+	return msg;
+}
+
+/*
+================
 Con_DebugLog
 ================
 */
 void Con_DebugLog(const char *file, const char *fmt, ...)
 {
-    va_list argptr; 
-    static char data[1024];
+    va_list argptr;
     int fd;
-    
+
     va_start(argptr, fmt);
-    vsprintf(data, fmt, argptr);
+    std::string data = Con_FormatVA (fmt, argptr);
     va_end(argptr);
+
     fd = _open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
-    _write(fd, data, (unsigned)strlen(data));
+    _write(fd, data.c_str(), (unsigned)data.size());
     _close(fd);
 }
 
@@ -351,34 +377,31 @@ Con_Printf
 Handles cursor positioning, line wrapping, etc
 ================
 */
-#define	MAXPRINTMSG	8192
-// FIXME: make a buffer size safe vsprintf?
 void Con_Printf (const char *fmt, ...)
 {
 	va_list		argptr;
-	char		msg[MAXPRINTMSG];
 	static qboolean	inupdate;
-	
+
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	std::string msg = Con_FormatVA (fmt, argptr);
 	va_end (argptr);
-	
+
 // also echo to debugging console
-	Sys_Printf ("%s", msg);	// also echo to debugging console
+	Sys_Printf ("%s", msg.c_str());	// also echo to debugging console
 
 // log all messages to file
 	if (con.debuglog)
-		Con_DebugLog(va("%s/qconsole.log",com_gamedir), "%s", msg);
+		Con_DebugLog(va("%s/qconsole.log",com_gamedir), "%s", msg.c_str());
 
 	if (!con.initialized)
 		return;
-		
+
 	if (cls.state == ca_dedicated)
 		return;		// no graphics mode
 
 // write it to the scrollable buffer
-	Con_Print (msg);
-	
+	Con_Print (msg.c_str());
+
 // update the screen if the console is displayed
 	if (cls.signon != SIGNONS && !scr_disabled_for_loading )
 	{
@@ -403,16 +426,15 @@ A Con_Printf that only shows up if the "developer" cvar is set
 void Con_DPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-		
+
 	if (!developer.value)
 		return;			// don't confuse non-developers with techie stuff...
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	std::string msg = Con_FormatVA (fmt, argptr);
 	va_end (argptr);
-	
-	Con_Printf ("%s", msg);
+
+	Con_Printf ("%s", msg.c_str());
 }
 
 
@@ -426,16 +448,15 @@ Okay to call even when the screen can't be updated
 void Con_SafePrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-	char		msg[1024];
 	int			temp;
-		
+
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	std::string msg = Con_FormatVA (fmt, argptr);
 	va_end (argptr);
 
 	temp = scr_disabled_for_loading;
 	scr_disabled_for_loading = true;
-	Con_Printf ("%s", msg);
+	Con_Printf ("%s", msg.c_str());
 	scr_disabled_for_loading = temp;
 }
 
