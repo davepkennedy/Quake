@@ -279,6 +279,7 @@ void R_DrawWorld (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWaterSurfaces (void);
 void R_RenderBrushPoly (msurface_t *fa);
+void R_World_SetAlpha (float a);
 
 // gl_rlight.cpp
 void R_AnimateLight (void);

@@ -196,8 +196,9 @@ float	turbsin[] =
 static GLuint warp_vao  = 0;
 static GLuint warp_vbo  = 0;
 static GLuint warp_prog = 0;
-static GLint  u_warp_mvp = -1;
-static GLint  u_warp_tex = -1;
+static GLint  u_warp_mvp   = -1;
+static GLint  u_warp_tex   = -1;
+static GLint  u_warp_alpha = -1;
 
 #define WARP_STREAM_VERTS 4096
 static float  warp_stream[WARP_STREAM_VERTS * 5];
@@ -217,9 +218,11 @@ static const char warp_frag_src[] =
     "#version 450 core\n"
     "in vec2 v_uv;\n"
     "uniform sampler2D u_tex;\n"
+    "uniform float u_alpha;\n"
     "out vec4 frag_color;\n"
     "void main() {\n"
-    "    frag_color = texture(u_tex, v_uv);\n"
+    "    vec4 c = texture(u_tex, v_uv);\n"
+    "    frag_color = vec4(c.rgb, c.a * u_alpha);\n"
     "}\n";
 
 static void Warp_InitRenderer (void)
@@ -232,8 +235,9 @@ static void Warp_InitRenderer (void)
 		Sys_Error ("Warp_InitRenderer: shader compile failed");
 
 	qglUseProgram (warp_prog);
-	u_warp_mvp = qglGetUniformLocation (warp_prog, "u_mvp");
-	u_warp_tex = qglGetUniformLocation (warp_prog, "u_tex");
+	u_warp_mvp   = qglGetUniformLocation (warp_prog, "u_mvp");
+	u_warp_tex   = qglGetUniformLocation (warp_prog, "u_tex");
+	u_warp_alpha = qglGetUniformLocation (warp_prog, "u_alpha");
 	qglUseProgram (0);
 
 	qglGenVertexArrays (1, &warp_vao);
@@ -259,6 +263,7 @@ static void Warp_BeginDraw (void)
 	qglBindVertexArray (warp_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, warp_vbo);
 	qglUniform1i (u_warp_tex, 0);
+	qglUniform1f (u_warp_alpha, 1.0f);
 }
 
 static void Warp_SetMVP (void)
@@ -287,6 +292,7 @@ void EmitWaterPolys (msurface_t *fa)
 
 	Warp_BeginDraw ();
 	Warp_SetMVP ();
+	qglUniform1f (u_warp_alpha, r_wateralpha.value);
 
 	for (p=fa->polys ; p ; p=p->next)
 	{

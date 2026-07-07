@@ -68,6 +68,16 @@ static GLint  u_world_mvp    = -1;
 static GLint  u_world_tex    = -1;
 static GLint  u_world_lm     = -1;
 static GLint  u_world_lmonly = -1;
+static GLint  u_world_alpha  = -1;
+
+// Current alpha for the world shader -- 1.0 (opaque) except while R_Mirror
+// redraws the mirror quad through this same shader with r_mirroralpha.value.
+static float world_alpha = 1.0f;
+
+void R_World_SetAlpha (float a)
+{
+	world_alpha = a;
+}
 
 #define WORLD_STREAM_VERTS 4096
 static float  world_stream[WORLD_STREAM_VERTS * 7];
@@ -93,13 +103,14 @@ static const char world_frag_src[] =
     "uniform sampler2D u_tex;\n"
     "uniform sampler2D u_lm;\n"
     "uniform int u_lm_only;\n"
+    "uniform float u_alpha;\n"
     "out vec4 frag_color;\n"
     "void main() {\n"
     "    float lit = 1.0 - texture(u_lm, v_lmuv).r;\n"
     "    if (u_lm_only != 0)\n"
-    "        frag_color = vec4(lit, lit, lit, 1.0);\n"
+    "        frag_color = vec4(lit, lit, lit, u_alpha);\n"
     "    else\n"
-    "        frag_color = vec4(texture(u_tex, v_texuv).rgb * lit, 1.0);\n"
+    "        frag_color = vec4(texture(u_tex, v_texuv).rgb * lit, u_alpha);\n"
     "}\n";
 
 /*
@@ -377,6 +388,7 @@ void R_World_InitRenderer (void)
 	u_world_tex    = qglGetUniformLocation (world_prog, "u_tex");
 	u_world_lm     = qglGetUniformLocation (world_prog, "u_lm");
 	u_world_lmonly = qglGetUniformLocation (world_prog, "u_lm_only");
+	u_world_alpha  = qglGetUniformLocation (world_prog, "u_alpha");
 	qglUseProgram (0);
 
 	qglGenVertexArrays (1, &world_vao);
@@ -413,6 +425,7 @@ static void R_World_BeginDraw (void)
 	qglUniform1i (u_world_tex,    0);
 	qglUniform1i (u_world_lm,     1);
 	qglUniform1i (u_world_lmonly, (int)r_lightmap.value);
+	qglUniform1f (u_world_alpha,  world_alpha);
 }
 
 static void R_World_EndDraw (void)

@@ -1348,10 +1348,12 @@ void R_Mirror (void)
 
 	r_world_matrix = r_base_world_matrix;
 
+	R_World_SetAlpha (r_mirroralpha.value);
 	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s);
 	cl.worldmodel->textures[mirrortexturenum]->texturechain = NULL;
+	R_World_SetAlpha (1.0f);
 	glDisable (GL_BLEND);
 }
 
