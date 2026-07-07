@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cmd.c -- Quake script command processing module
 
 #include "quakedef.h"
+#include <string>
 
 void Cmd_ForwardToServer (void);
 
@@ -28,8 +29,8 @@ void Cmd_ForwardToServer (void);
 typedef struct cmdalias_s
 {
 	struct cmdalias_s	*next;
-	char	name[MAX_ALIAS_NAME];
-	char	*value;
+	std::string	name;
+	std::string	value;
 } cmdalias_t;
 
 cmdalias_t	*cmd_alias;
@@ -329,19 +330,9 @@ Creates a new command that executes a command string (possibly ; seperated)
 ===============
 */
 
-char *CopyString (const char *in)
-{
-	char	*out;
-
-	out = (char *)Z_Malloc (strlen(in)+1);
-	strcpy (out, in);
-	return out;
-}
-
 void Cmd_Alias_f (void)
 {
 	cmdalias_t	*a;
-	char		cmd[1024];
 	int			i, c;
 	const char	*s;
 
@@ -349,7 +340,7 @@ void Cmd_Alias_f (void)
 	{
 		Con_Printf ("Current alias commands:\n");
 		for (a = cmd_alias ; a ; a=a->next)
-			Con_Printf ("%s : %s\n", a->name, a->value);
+			Con_Printf ("%s : %s\n", a->name.c_str(), a->value.c_str());
 		return;
 	}
 
@@ -363,33 +354,30 @@ void Cmd_Alias_f (void)
 	// if the alias allready exists, reuse it
 	for (a = cmd_alias ; a ; a=a->next)
 	{
-		if (!strcmp(s, a->name))
-		{
-			Z_Free (a->value);
+		if (a->name == s)
 			break;
-		}
 	}
 
 	if (!a)
 	{
-		a = (cmdalias_t *)Z_Malloc (sizeof(cmdalias_t));
+		a = new cmdalias_t ();
 		a->next = cmd_alias;
 		cmd_alias = a;
 	}
-	strcpy (a->name, s);	
+	a->name = s;
 
 // copy the rest of the command line
-	cmd[0] = 0;		// start out with a null string
+	std::string cmd;
 	c = Cmd_Argc();
 	for (i=2 ; i< c ; i++)
 	{
-		strcat (cmd, Cmd_Argv(i));
+		cmd += Cmd_Argv(i);
 		if (i != c)
-			strcat (cmd, " ");
+			cmd += " ";
 	}
-	strcat (cmd, "\n");
-	
-	a->value = CopyString (cmd);
+	cmd += "\n";
+
+	a->value = cmd;
 }
 
 /*
@@ -411,7 +399,7 @@ typedef struct cmd_function_s
 #define	MAX_ARGS		80
 
 static	int			cmd_argc;
-static	char		*cmd_argv[MAX_ARGS];
+static	std::string	cmd_argv[MAX_ARGS];
 static	const char	*cmd_null_string = "";
 static	const char	*cmd_args = NULL;
 
@@ -457,7 +445,7 @@ const char	*Cmd_Argv (int arg)
 {
 	if ( (unsigned)arg >= cmd_argc )
 		return cmd_null_string;
-	return cmd_argv[arg];
+	return cmd_argv[arg].c_str();
 }
 
 /*
@@ -480,12 +468,6 @@ Parses the given string into command line tokens.
 */
 void Cmd_TokenizeString (const char *text)
 {
-	int		i;
-	
-// clear the args from the last string
-	for (i=0 ; i<cmd_argc ; i++)
-		Z_Free (cmd_argv[i]);
-		
 	cmd_argc = 0;
 	cmd_args = NULL;
 	
@@ -515,8 +497,7 @@ void Cmd_TokenizeString (const char *text)
 
 		if (cmd_argc < MAX_ARGS)
 		{
-			cmd_argv[cmd_argc] = (char *)Z_Malloc (Q_strlen(com_token)+1);
-			Q_strcpy (cmd_argv[cmd_argc], com_token);
+			cmd_argv[cmd_argc] = com_token;
 			cmd_argc++;
 		}
 	}
@@ -626,7 +607,7 @@ void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 // check functions
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 	{
-		if (!Q_strcasecmp (cmd_argv[0],cmd->name))
+		if (!Q_strcasecmp (cmd_argv[0].c_str(), cmd->name))
 		{
 			cmd->function ();
 			return;
@@ -636,9 +617,9 @@ void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 // check alias
 	for (a=cmd_alias ; a ; a=a->next)
 	{
-		if (!Q_strcasecmp (cmd_argv[0], a->name))
+		if (!Q_strcasecmp (cmd_argv[0].c_str(), a->name.c_str()))
 		{
-			Cbuf_InsertText (a->value);
+			Cbuf_InsertText (a->value.c_str());
 			return;
 		}
 	}
