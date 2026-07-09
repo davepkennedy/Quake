@@ -186,6 +186,17 @@ void Q_strcpy (char *dest, const char *src)
 	*dest++ = 0;
 }
 
+void Q_strlcpy (char *dest, const char *src, size_t destsize)
+{
+	if (destsize == 0)
+		return;
+
+	size_t i = 0;
+	for (; i < destsize - 1 && src[i]; i++)
+		dest[i] = src[i];
+	dest[i] = 0;
+}
+
 void Q_strncpy (char *dest, const char *src, int count)
 {
 	while (*src && count--)

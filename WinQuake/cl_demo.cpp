@@ -230,7 +230,7 @@ void CL_Record_f (void)
 	else
 		track = -1;	
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+	snprintf (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
 	
 //
 // start the map up
@@ -288,7 +288,7 @@ void CL_PlayDemo_f (void)
 //
 // open the demo file
 //
-	strcpy (name, Cmd_Argv(1));
+	Q_strlcpy (name, Cmd_Argv(1), sizeof(name));
 	COM_DefaultExtension (name, ".dem");
 
 	Con_Printf ("Playing demo from %s.\n", name);

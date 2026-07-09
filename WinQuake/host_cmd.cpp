@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include <string>
 
 extern cvar_t	pausable;
 
@@ -268,16 +269,19 @@ void Host_Map_f (void)
 	key_dest = key_game;			// remove console or menu
 	SCR_BeginLoadingPlaque ();
 
-	cls.mapstring[0] = 0;
-	for (i=0 ; i<Cmd_Argc() ; i++)
 	{
-		strcat (cls.mapstring, Cmd_Argv(i));
-		strcat (cls.mapstring, " ");
+		std::string mapstring;
+		for (i=0 ; i<Cmd_Argc() ; i++)
+		{
+			mapstring += Cmd_Argv(i);
+			mapstring += " ";
+		}
+		mapstring += "\n";
+		Q_strlcpy (cls.mapstring, mapstring.c_str(), sizeof(cls.mapstring));
 	}
-	strcat (cls.mapstring, "\n");
 
 	svs.serverflags = 0;			// haven't completed an episode yet
-	strcpy (name, Cmd_Argv(1));
+	Q_strlcpy (name, Cmd_Argv(1), sizeof(name));
 #ifdef QUAKE2
 	SV_SpawnServer (name, NULL);
 #else
@@ -285,19 +289,19 @@ void Host_Map_f (void)
 #endif
 	if (!sv.active)
 		return;
-	
+
 	if (cls.state != ca_dedicated)
 	{
-		strcpy (cls.spawnparms, "");
-
+		std::string spawnparms;
 		for (i=2 ; i<Cmd_Argc() ; i++)
 		{
-			strcat (cls.spawnparms, Cmd_Argv(i));
-			strcat (cls.spawnparms, " ");
+			spawnparms += Cmd_Argv(i);
+			spawnparms += " ";
 		}
-		
+		Q_strlcpy (cls.spawnparms, spawnparms.c_str(), sizeof(cls.spawnparms));
+
 		Cmd_ExecuteString ("connect local", src_command);
-	}	
+	}
 }
 
 /*
@@ -350,7 +354,7 @@ void Host_Changelevel_f (void)
 		return;
 	}
 	SV_SaveSpawnparms ();
-	strcpy (level, Cmd_Argv(1));
+	Q_strlcpy (level, Cmd_Argv(1), sizeof(level));
 	SV_SpawnServer (level);
 #endif
 }
@@ -374,7 +378,7 @@ void Host_Restart_f (void)
 
 	if (cmd_source != src_command)
 		return;
-	strcpy (mapname, sv.name);	// must copy out, because it gets cleared
+	Q_strlcpy (mapname, sv.name, sizeof(mapname));	// must copy out, because it gets cleared
 								// in sv_spawnserver
 #ifdef QUAKE2
 	strcpy(startspot, sv.startspot);
@@ -415,7 +419,7 @@ void Host_Connect_f (void)
 		CL_StopPlayback ();
 		CL_Disconnect ();
 	}
-	strcpy (name, Cmd_Argv(1));
+	Q_strlcpy (name, Cmd_Argv(1), sizeof(name));
 	CL_EstablishConnection (name);
 	Host_Reconnect_f ();
 }
@@ -510,7 +514,7 @@ void Host_Savegame_f (void)
 		}
 	}
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+	snprintf (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
 	COM_DefaultExtension (name, ".sav");
 	
 	Con_Printf ("Saving game to %s...\n", name);
@@ -582,7 +586,7 @@ void Host_Loadgame_f (void)
 
 	cls.demonum = -1;		// stop demo loop in case this fails
 
-	sprintf (name, "%s/%s", com_gamedir, Cmd_Argv(1));
+	snprintf (name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
 	COM_DefaultExtension (name, ".sav");
 	
 // we can't call SCR_BeginLoadingPlaque, because too much stack space has
@@ -879,12 +883,12 @@ void Host_Changelevel2_f (void)
 		return;
 	}
 
-	strcpy (level, Cmd_Argv(1));
+	Q_strlcpy (level, Cmd_Argv(1), sizeof(level));
 	if (Cmd_Argc() == 2)
 		startspot = NULL;
 	else
 	{
-		strcpy (_startspot, Cmd_Argv(2));
+		Q_strlcpy (_startspot, Cmd_Argv(2), sizeof(_startspot));
 		startspot = _startspot;
 	}
 
@@ -1048,9 +1052,9 @@ void Host_Say(qboolean teamonly)
 
 // turn on color set 1
 	if (!fromServer)
-		sprintf (text, "%c%s: ", 1, save->name);
+		snprintf (text, sizeof(text), "%c%s: ", 1, save->name);
 	else
-		sprintf (text, "%c<%s> ", 1, hostname.string);
+		snprintf (text, sizeof(text), "%c<%s> ", 1, hostname.string);
 
 	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
 	if (Q_strlen(p) > j)

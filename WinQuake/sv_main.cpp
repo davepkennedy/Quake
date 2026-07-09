@@ -209,7 +209,7 @@ void SV_SendServerinfo (client_t *client)
 	else
 		MSG_WriteByte (&client->message, GAME_COOP);
 
-	sprintf (message, pr_strings+sv.edicts->v.message);
+	snprintf (message, sizeof(message), "%s", pr_strings+sv.edicts->v.message);
 
 	MSG_WriteString (&client->message,message);
 
@@ -1092,7 +1092,7 @@ void SV_SpawnServer (char *server)
 
 	sv.Clear ();
 
-	strcpy (sv.name, server);
+	Q_strlcpy (sv.name, server, sizeof(sv.name));
 #ifdef QUAKE2
 	if (startspot)
 		strcpy(sv.startspot, startspot);
@@ -1131,8 +1131,8 @@ void SV_SpawnServer (char *server)
 
 	sv.time = 1.0;
 	
-	strcpy (sv.name, server);
-	sprintf (sv.modelname,"maps/%s.bsp", server);
+	Q_strlcpy (sv.name, server, sizeof(sv.name));
+	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", server);
 	sv.worldmodel = Mod_ForName (sv.modelname, false);
 	if (!sv.worldmodel)
 	{

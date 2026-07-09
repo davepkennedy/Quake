@@ -582,7 +582,7 @@ Should NOT be called during an interrupt!
 void Key_Event (int key, qboolean down)
 {
 	const std::string *kb;
-	char	cmd[1024];
+	std::string	cmd;
 
 	keydown[key] = down;
 
@@ -649,16 +649,16 @@ void Key_Event (int key, qboolean down)
 		kb = &keybindings[key];
 		if (!kb->empty() && (*kb)[0] == '+')
 		{
-			sprintf (cmd, "-%s %i\n", kb->c_str()+1, key);
-			Cbuf_AddText (cmd);
+			cmd = "-" + kb->substr(1) + " " + std::to_string(key) + "\n";
+			Cbuf_AddText (cmd.c_str());
 		}
 		if (keyshift[key] != key)
 		{
 			kb = &keybindings[keyshift[key]];
 			if (!kb->empty() && (*kb)[0] == '+')
 			{
-				sprintf (cmd, "-%s %i\n", kb->c_str()+1, key);
-				Cbuf_AddText (cmd);
+				cmd = "-" + kb->substr(1) + " " + std::to_string(key) + "\n";
+				Cbuf_AddText (cmd.c_str());
 			}
 		}
 		return;
@@ -685,8 +685,8 @@ void Key_Event (int key, qboolean down)
 		{
 			if ((*kb)[0] == '+')
 			{	// button commands add keynum as a parm
-				sprintf (cmd, "%s %i\n", kb->c_str(), key);
-				Cbuf_AddText (cmd);
+				cmd = *kb + " " + std::to_string(key) + "\n";
+				Cbuf_AddText (cmd.c_str());
 			}
 			else
 			{

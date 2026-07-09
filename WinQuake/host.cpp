@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include <string>
 
 /*
 
@@ -94,18 +95,17 @@ Host_EndGame
 void Host_EndGame (const char *message, ...)
 {
 	va_list		argptr;
-	char		string[1024];
-	
+
 	va_start (argptr,message);
-	vsprintf (string,message,argptr);
+	std::string string = COM_FormatVA (message, argptr);
 	va_end (argptr);
-	Con_DPrintf ("Host_EndGame: %s\n",string);
-	
+	Con_DPrintf ("Host_EndGame: %s\n",string.c_str());
+
 	if (sv.active)
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
-		Sys_Error ("Host_EndGame: %s\n",string);	// dedicated servers exit
+		Sys_Error ("Host_EndGame: %s\n",string.c_str());	// dedicated servers exit
 	
 	if (cls.demonum != -1)
 		CL_NextDemo ();
@@ -125,25 +125,24 @@ This shuts down both the client and server
 void Host_Error (const char *error, ...)
 {
 	va_list		argptr;
-	char		string[1024];
 	static	qboolean inerror = false;
-	
+
 	if (inerror)
 		Sys_Error ("Host_Error: recursively entered");
 	inerror = true;
-	
+
 	SCR_EndLoadingPlaque ();		// reenable screen updates
 
 	va_start (argptr,error);
-	vsprintf (string,error,argptr);
+	std::string string = COM_FormatVA (error, argptr);
 	va_end (argptr);
-	Con_Printf ("Host_Error: %s\n",string);
-	
+	Con_Printf ("Host_Error: %s\n",string.c_str());
+
 	if (sv.active)
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
-		Sys_Error ("Host_Error: %s\n",string);	// dedicated servers exit
+		Sys_Error ("Host_Error: %s\n",string.c_str());	// dedicated servers exit
 
 	CL_Disconnect ();
 	cls.demonum = -1;
@@ -281,14 +280,13 @@ FIXME: make this just a stuffed echo?
 void SV_ClientPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-	char		string[1024];
-	
+
 	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
+	std::string string = COM_FormatVA (fmt, argptr);
 	va_end (argptr);
-	
+
 	MSG_WriteByte (&host_client->message, svc_print);
-	MSG_WriteString (&host_client->message, string);
+	MSG_WriteString (&host_client->message, string.c_str());
 }
 
 /*
@@ -301,18 +299,17 @@ Sends text to all active clients
 void SV_BroadcastPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-	char		string[1024];
 	int			i;
-	
+
 	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
+	std::string string = COM_FormatVA (fmt, argptr);
 	va_end (argptr);
-	
+
 	for (i=0 ; i<svs.maxclients ; i++)
 		if (svs.clients[i].active && svs.clients[i].spawned)
 		{
 			MSG_WriteByte (&svs.clients[i].message, svc_print);
-			MSG_WriteString (&svs.clients[i].message, string);
+			MSG_WriteString (&svs.clients[i].message, string.c_str());
 		}
 }
 
@@ -326,14 +323,13 @@ Send text over to the client to be executed
 void Host_ClientCommands (const char *fmt, ...)
 {
 	va_list		argptr;
-	char		string[1024];
-	
+
 	va_start (argptr,fmt);
-	vsprintf (string, fmt,argptr);
+	std::string string = COM_FormatVA (fmt, argptr);
 	va_end (argptr);
-	
+
 	MSG_WriteByte (&host_client->message, svc_stufftext);
-	MSG_WriteString (&host_client->message, string);
+	MSG_WriteString (&host_client->message, string.c_str());
 }
 
 /*

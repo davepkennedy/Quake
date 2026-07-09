@@ -126,6 +126,10 @@ void Q_memcpy (void *dest, const void *src, int count);
 int Q_memcmp (const void *m1, const void *m2, int count);
 void Q_strcpy (char *dest, const char *src);
 void Q_strncpy (char *dest, const char *src, int count);
+void Q_strlcpy (char *dest, const char *src, size_t destsize);
+// Like strcpy, but truncates to fit destsize and always null-terminates
+// within it (BSD strlcpy semantics) -- the safe replacement for strcpy
+// into a fixed-size buffer with unbounded/untrusted source data.
 int Q_strlen (const char *str);
 char *Q_strrchr (const char *s, char c);
 void Q_strcat (char *dest, const char *src);

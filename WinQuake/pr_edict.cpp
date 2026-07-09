@@ -660,9 +660,9 @@ void ED_ParseGlobals (const char *data)
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
-		strcpy (keyname, com_token);
+		Q_strlcpy (keyname, com_token, sizeof(keyname));
 
-	// parse value	
+	// parse value
 		data = COM_Parse (data);
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
@@ -747,7 +747,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 		break;
 		
 	case ev_vector:
-		strcpy (string, s);
+		Q_strlcpy (string, s, sizeof(string));
 		v = string;
 		w = string;
 		for (i=0 ; i<3 ; i++)
@@ -837,7 +837,7 @@ else
 if (!strcmp(com_token, "light"))
 	strcpy (com_token, "light_lev");	// hack for single light def
 
-		strcpy (keyname, com_token);
+		Q_strlcpy (keyname, com_token, sizeof(keyname));
 
 		// another hack to fix heynames with trailing spaces
 		n = strlen(keyname);
