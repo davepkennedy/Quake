@@ -1159,23 +1159,43 @@ void COM_Init (const char *basedir)
 
 /*
 ============
+COM_FormatVA
+============
+*/
+std::string COM_FormatVA (const char *fmt, va_list argptr)
+{
+	va_list measure;
+	va_copy (measure, argptr);
+	int need = vsnprintf (nullptr, 0, fmt, measure);
+	va_end (measure);
+
+	if (need <= 0)
+		return std::string ();
+
+	std::string msg (need, '\0');
+	vsnprintf (msg.data (), need + 1, fmt, argptr);
+	return msg;
+}
+
+/*
+============
 va
 
 does a varargs printf into a temp buffer, so I don't need to have
-varargs versions of all text functions.
-FIXME: make this buffer size safe someday
+varargs versions of all text functions. The buffer is sized exactly to
+fit each call (see COM_FormatVA) -- no fixed size, can't overflow.
 ============
 */
 const char *va(const char *format, ...)
 {
 	va_list         argptr;
-	static char             string[1024];
-	
+	static std::string      string;
+
 	va_start (argptr, format);
-	vsprintf (string, format,argptr);
+	string = COM_FormatVA (format, argptr);
 	va_end (argptr);
 
-	return string;  
+	return string.c_str();
 }
 
 

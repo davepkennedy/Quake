@@ -327,31 +327,6 @@ void Con_Print (const char *txt)
 
 /*
 ================
-Con_FormatVA
-
-Formats fmt/argptr into a std::string sized exactly to fit -- no fixed
-buffer, so no truncation and no overflow, regardless of message length.
-argptr must not be used again by the caller afterward (matches va_list's
-usual single-pass-per-va_start convention).
-================
-*/
-static std::string Con_FormatVA (const char *fmt, va_list argptr)
-{
-	va_list measure;
-	va_copy (measure, argptr);
-	int need = vsnprintf (nullptr, 0, fmt, measure);
-	va_end (measure);
-
-	if (need <= 0)
-		return std::string ();
-
-	std::string msg (need, '\0');
-	vsnprintf (msg.data (), need + 1, fmt, argptr);
-	return msg;
-}
-
-/*
-================
 Con_DebugLog
 ================
 */
@@ -361,7 +336,7 @@ void Con_DebugLog(const char *file, const char *fmt, ...)
     int fd;
 
     va_start(argptr, fmt);
-    std::string data = Con_FormatVA (fmt, argptr);
+    std::string data = COM_FormatVA (fmt, argptr);
     va_end(argptr);
 
     fd = _open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
@@ -383,7 +358,7 @@ void Con_Printf (const char *fmt, ...)
 	static qboolean	inupdate;
 
 	va_start (argptr,fmt);
-	std::string msg = Con_FormatVA (fmt, argptr);
+	std::string msg = COM_FormatVA (fmt, argptr);
 	va_end (argptr);
 
 // also echo to debugging console
@@ -431,7 +406,7 @@ void Con_DPrintf (const char *fmt, ...)
 		return;			// don't confuse non-developers with techie stuff...
 
 	va_start (argptr,fmt);
-	std::string msg = Con_FormatVA (fmt, argptr);
+	std::string msg = COM_FormatVA (fmt, argptr);
 	va_end (argptr);
 
 	Con_Printf ("%s", msg.c_str());
@@ -451,7 +426,7 @@ void Con_SafePrintf (const char *fmt, ...)
 	int			temp;
 
 	va_start (argptr,fmt);
-	std::string msg = Con_FormatVA (fmt, argptr);
+	std::string msg = COM_FormatVA (fmt, argptr);
 	va_end (argptr);
 
 	temp = scr_disabled_for_loading;

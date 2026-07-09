@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // comndef.h  -- general definitions
 
+#include <string>
+#include <cstdarg>
+
 #if !defined BYTE_DEFINED
 typedef unsigned char 		byte;
 #define BYTE_DEFINED 1
@@ -155,6 +158,12 @@ void COM_DefaultExtension (char *path, const char *extension);
 
 const char	*va(const char *format, ...);
 // does a varargs printf into a temp buffer
+
+std::string COM_FormatVA (const char *fmt, va_list argptr);
+// formats fmt/argptr into a string sized exactly to fit -- no fixed buffer,
+// so no truncation and no overflow regardless of message length. argptr
+// must not be used again by the caller afterward (single-pass, matches the
+// usual va_start/va_end pairing convention).
 
 
 //============================================================================
