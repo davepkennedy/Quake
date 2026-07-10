@@ -915,10 +915,10 @@ void Joy_AdvancedUpdate_f (void)
 	}
 	else
 	{
-		if (Q_strcmp (joy_name.string, "joystick") != 0)
+		if (Q_strcmp (joy_name.string.c_str(), "joystick") != 0)
 		{
 			// notify user of advanced controller
-			Con_Printf ("\n%s configured\n\n", joy_name.string);
+			Con_Printf ("\n%s configured\n\n", joy_name.string.c_str());
 		}
 
 		// advanced initialization here

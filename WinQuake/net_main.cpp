@@ -922,7 +922,7 @@ void NET_Poll(void)
 			else
 				useModem = false;
 			SetComPortConfig (0, (int)config_com_port.value, (int)config_com_irq.value, (int)config_com_baud.value, useModem);
-			SetModemConfig (0, config_modem_dialtype.string, config_modem_clear.string, config_modem_init.string, config_modem_hangup.string);
+			SetModemConfig (0, config_modem_dialtype.string.c_str(), config_modem_clear.string.c_str(), config_modem_init.string.c_str(), config_modem_hangup.string.c_str());
 		}
 		configRestored = true;
 	}

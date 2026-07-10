@@ -48,11 +48,11 @@ Cvar_VariableValue
 float	Cvar_VariableValue (const char *var_name)
 {
 	cvar_t	*var;
-	
+
 	var = Cvar_FindVar (var_name);
 	if (!var)
 		return 0;
-	return Q_atof (var->string);
+	return Q_atof (var->string.c_str());
 }
 
 
@@ -64,11 +64,11 @@ Cvar_VariableString
 const char *Cvar_VariableString (const char *var_name)
 {
 	cvar_t *var;
-	
+
 	var = Cvar_FindVar (var_name);
 	if (!var)
 		return cvar_null_string;
-	return var->string;
+	return var->string.c_str();
 }
 
 
@@ -105,7 +105,7 @@ void Cvar_Set (const char *var_name, const char *value)
 {
 	cvar_t	*var;
 	qboolean changed;
-	
+
 	var = Cvar_FindVar (var_name);
 	if (!var)
 	{	// there is an error in C code if this happens
@@ -113,17 +113,14 @@ void Cvar_Set (const char *var_name, const char *value)
 		return;
 	}
 
-	changed = Q_strcmp(var->string, value);
+	changed = var->string != value;
 
-	Z_Free ((void *)var->string);
-
-	var->string = (const char *)Z_Malloc (Q_strlen(value)+1);
-	Q_strcpy ((char *)var->string, value);
-	var->value = Q_atof (var->string);
+	var->string = value;
+	var->value = Q_atof (var->string.c_str());
 	if (var->server && changed)
 	{
 		if (sv.active)
-			SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
+			SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string.c_str());
 	}
 }
 
@@ -134,10 +131,7 @@ Cvar_SetValue
 */
 void Cvar_SetValue (const char *var_name, float value)
 {
-	char	val[32];
-	
-	sprintf (val, "%f",value);
-	Cvar_Set (var_name, val);
+	Cvar_Set (var_name, va("%f", value));
 }
 
 
@@ -163,13 +157,9 @@ void Cvar_RegisterVariable (cvar_t *variable)
 		Con_Printf ("Cvar_RegisterVariable: %s is a command\n", variable->name);
 		return;
 	}
-		
-// copy the value off, because future sets will Z_Free it
-	const char *oldstr = variable->string;
-	variable->string = (const char *)Z_Malloc (Q_strlen(variable->string)+1);
-	Q_strcpy ((char *)variable->string, oldstr);
-	variable->value = Q_atof (variable->string);
-	
+
+	variable->value = Q_atof (variable->string.c_str());
+
 // link the variable in
 	variable->next = cvar_vars;
 	cvar_vars = variable;
@@ -194,7 +184,7 @@ qboolean	Cvar_Command (void)
 // perform a variable print or set
 	if (Cmd_Argc() == 1)
 	{
-		Con_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
+		Con_Printf ("\"%s\" is \"%s\"\n", v->name, v->string.c_str());
 		return true;
 	}
 
@@ -217,6 +207,6 @@ void Cvar_WriteVariables (FILE *f)
 	
 	for (var = cvar_vars ; var ; var = var->next)
 		if (var->archive)
-			fprintf (f, "%s \"%s\"\n", var->name, var->string);
+			fprintf (f, "%s \"%s\"\n", var->name, var->string.c_str());
 }
 
