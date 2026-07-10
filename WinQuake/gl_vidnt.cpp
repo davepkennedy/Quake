@@ -1163,10 +1163,24 @@ LRESULT WINAPI MainWndProc (
 
 			break;
 
+		case WM_INPUT:
+		{
+			UINT dwSize = sizeof(RAWINPUT);
+			static BYTE lpb[sizeof(RAWINPUT)];
+
+			GetRawInputData ((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+
+			RAWINPUT *raw = (RAWINPUT *)lpb;
+			if (raw->header.dwType == RIM_TYPEMOUSE && !(raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
+				IN_RawMouseMoved (raw->data.mouse.lLastX, raw->data.mouse.lLastY);
+
+			break;
+		}
+
 		// JACK: This is the mouse wheel with the Intellimouse
 		// Its delta is either positive or neg, and we generate the proper
 		// Event.
-		case WM_MOUSEWHEEL: 
+		case WM_MOUSEWHEEL:
 			if ((short) HIWORD(wParam) > 0) {
 				Key_Event(K_MWHEELUP, true);
 				Key_Event(K_MWHEELUP, false);

@@ -38,6 +38,36 @@ int			starttime;
 qboolean	ActiveApp, Minimized;
 qboolean	WinNT;
 
+/*
+==================
+Sys_EnableDpiAwareness
+
+Requests per-monitor DPI awareness so the window renders at native
+resolution on high-DPI displays instead of being bitmap-stretched by
+Windows. Resolved dynamically rather than statically linked, since
+SetProcessDpiAwarenessContext only exists on Windows 10 1607+ and a
+static import would fail to load at all on older systems; a missing
+entry point here just means DPI awareness is silently skipped, same
+class of graceful-degradation already used for wglCreateContextAttribsARB
+and DirectInput elsewhere in this codebase. Must run before any window
+is created, so this is called first thing in WinMain.
+==================
+*/
+typedef BOOL (WINAPI *SETPROCESSDPIAWARENESSCONTEXTPROC)(HANDLE);
+#define QUAKE_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((HANDLE)-4)
+
+static void Sys_EnableDpiAwareness (void)
+{
+	HMODULE user32 = GetModuleHandle ("user32.dll");
+	if (!user32)
+		return;
+
+	SETPROCESSDPIAWARENESSCONTEXTPROC pSetProcessDpiAwarenessContext =
+		(SETPROCESSDPIAWARENESSCONTEXTPROC)GetProcAddress (user32, "SetProcessDpiAwarenessContext");
+	if (pSetProcessDpiAwarenessContext)
+		pSetProcessDpiAwarenessContext (QUAKE_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+}
+
 static double		pfreq;
 static double		curtime = 0.0;
 static double		lastcurtime = 0.0;
@@ -704,6 +734,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     /* previous instances do not exist in Win32 */
     if (hPrevInstance)
         return 0;
+
+	Sys_EnableDpiAwareness ();
 
 	global_hInstance = hInstance;
 	global_nCmdShow = nCmdShow;
