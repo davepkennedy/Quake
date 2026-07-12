@@ -527,12 +527,8 @@ void S_StopAllSoundsC (void)
 void S_ClearBuffer (void)
 {
 	int		clear;
-		
-#ifdef _WIN32
-	if (!sound.started || !shm || (!shm->buffer && !pDSBuf))
-#else
+
 	if (!sound.started || !shm || !shm->buffer)
-#endif
 		return;
 
 	if (shm->samplebits == 8)
@@ -540,43 +536,7 @@ void S_ClearBuffer (void)
 	else
 		clear = 0;
 
-#ifdef _WIN32
-	if (pDSBuf)
-	{
-		DWORD	dwSize;
-		DWORD	*pData;
-		int		reps;
-		HRESULT	hresult;
-
-		reps = 0;
-
-		while ((hresult = pDSBuf->Lock(0, gSndBufSize, (LPVOID *)&pData, &dwSize, NULL, NULL, 0)) != DS_OK)
-		{
-			if (hresult != DSERR_BUFFERLOST)
-			{
-				Con_Printf ("S_ClearBuffer: DS::Lock Sound Buffer Failed\n");
-				S_Shutdown ();
-				return;
-			}
-
-			if (++reps > 10000)
-			{
-				Con_Printf ("S_ClearBuffer: DS: couldn't restore buffer\n");
-				S_Shutdown ();
-				return;
-			}
-		}
-
-		Q_memset(pData, clear, shm->samples * shm->samplebits/8);
-
-		pDSBuf->Unlock(pData, dwSize, NULL, 0);
-	
-	}
-	else
-#endif
-	{
-		Q_memset(shm->buffer, clear, shm->samples * shm->samplebits/8);
-	}
+	Q_memset(shm->buffer, clear, shm->samples * shm->samplebits/8);
 }
 
 
@@ -844,25 +804,6 @@ void S_Update_(void)
 	samps = shm->samples >> (shm->channels-1);
 	if (endtime - sound.time > samps)
 		endtime = sound.time + samps;
-
-#ifdef _WIN32
-// if the buffer was lost or stopped, restore it and/or restart it
-	{
-		DWORD	dwStatus;
-
-		if (pDSBuf)
-		{
-			if (pDSBuf->GetStatus (&dwStatus) != DD_OK)
-				Con_Printf ("Couldn't get sound buffer status\n");
-			
-			if (dwStatus & DSBSTATUS_BUFFERLOST)
-				pDSBuf->Restore ();
-			
-			if (!(dwStatus & DSBSTATUS_PLAYING))
-				pDSBuf->Play(0, 0, DSBPLAY_LOOPING);
-		}
-	}
-#endif
 
 	S_PaintChannels (endtime);
 

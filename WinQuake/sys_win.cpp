@@ -477,6 +477,8 @@ void Sys_Quit (void)
 
 	Host_Shutdown();
 
+	CoUninitialize ();
+
 	if (tevent)
 		CloseHandle (tevent);
 
@@ -736,6 +738,9 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
         return 0;
 
 	Sys_EnableDpiAwareness ();
+
+	// needed by snd_win.cpp's WASAPI device enumeration/activation
+	CoInitializeEx (NULL, COINIT_APARTMENTTHREADED);
 
 	global_hInstance = hInstance;
 	global_nCmdShow = nCmdShow;

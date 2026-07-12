@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -17,533 +17,239 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+// snd_win.cpp -- WASAPI shared-mode sound output.
+//
+// Replaces the original DirectSound/waveOut dual-path implementation.
+// WASAPI has shipped since Vista and covers everything both legacy paths
+// did, so there's no fallback path kept here (unlike XInput/legacy
+// joystick, which cover genuinely different hardware).
+//
+// Quake's mixer (snd_mix.cpp/snd_dma.cpp) paints stereo 16-bit samples
+// directly into a persistent, power-of-two-sized circular "DMA" buffer
+// (shm->buffer) exactly like it always has -- that part is completely
+// unchanged. This file's only job is to own a shadow copy of that ring
+// (sized independently of WASAPI's own internal buffer) and periodically
+// copy the newly-painted range into WASAPI's render buffer, plus report
+// back an emulated hardware "read cursor" so the mixer knows how far
+// ahead of playback it's safe to paint.
+
 #include "quakedef.h"
 #include "winquake.h"
 
-#define iDirectSoundCreate(a,b,c)	pDirectSoundCreate(a,b,c)
+#include <mmdeviceapi.h>
+#include <audioclient.h>
 
-HRESULT (WINAPI *pDirectSoundCreate)(GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS, IUnknown FAR *pUnkOuter);
+static IMMDeviceEnumerator		*pEnumerator;
+static IMMDevice				*pDevice;
+static IAudioClient			*pAudioClient;
+static IAudioRenderClient		*pRenderClient;
 
-// 64K is > 1 second at 16-bit, 22050 Hz
-#define	WAV_BUFFERS				64
-#define	WAV_MASK				0x3F
-#define	WAV_BUFFER_SIZE			0x0400
-#define SECONDARY_BUFFER_SIZE	0x10000
+static qboolean	wasapi_active;
+static qboolean	wasapi_client_initialized;	// true once IAudioClient::Initialize succeeded -- Stop() is undefined before that
+static UINT32	wasapi_buffer_frames;		// size of WASAPI's own internal ring
+static UINT64	wasapi_submitted_frames;	// monotonic count of frames handed to WASAPI so far
 
-typedef enum {SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL} sndinitstat;
-
-static qboolean	wavonly;
-static qboolean	dsound_init;
-static qboolean	wav_init;
-static qboolean	snd_firsttime = true, snd_isdirect, snd_iswave;
-static qboolean	primary_format_set;
-
-static int	sample16;
-static int	snd_sent, snd_completed;
-
-
-/* 
- * Global variables. Must be visible to window-procedure function 
- *  so it can unlock and free the data block after it has been played. 
- */ 
-
-HANDLE		hData;
-HPSTR		lpData, lpData2;
-
-HGLOBAL		hWaveHdr;
-LPWAVEHDR	lpWaveHdr;
-
-HWAVEOUT    hWaveOut; 
-
-WAVEOUTCAPS	wavecaps;
-
-DWORD	gSndBufSize;
-
-MMTIME		mmstarttime;
-
-LPDIRECTSOUND pDS;
-LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
-
-HINSTANCE hInstDS;
-
-sndinitstat SNDDMA_InitDirect (void);
-qboolean SNDDMA_InitWav (void);
+// generous buffer duration (100ns units) since we poll once per game frame
+// rather than from a dedicated real-time audio thread -- matches the
+// safety margin the original ~1.5-second DirectSound secondary buffer gave
+#define WASAPI_BUFFER_DURATION	10000000LL	// 1 second
 
 
 /*
 ==================
-S_BlockSound
+SNDDMA_NegotiateFormat
+
+Always requests 16-bit stereo PCM -- Quake's mixer and stereo
+spatialization are hardcoded for 2 channels, and the shared-mode audio
+engine transparently handles channel-count conversion for us, so there's
+no reason to ever adopt a device's suggested channel count. Only the
+sample rate is negotiated: try the classic 11025Hz first, then the
+device's suggested rate, then its shared-mode mix format's rate.
+
+Note: IsFormatSupported's ppClosestMatch parameter is documented as
+optional (NULL-able) in shared mode, but at least one real driver in the
+wild returns E_POINTER if it's actually NULL -- so every call here always
+passes a real out-pointer and frees whatever comes back, even when the
+suggestion itself isn't used.
 ==================
 */
-void S_BlockSound (void)
+static qboolean SNDDMA_NegotiateFormat (WAVEFORMATEX *wfx)
 {
-
-// DirectSound takes care of blocking itself
-	if (snd_iswave)
-	{
-		sound.blocked++;
-
-		if (sound.blocked == 1)
-		{
-			waveOutReset (hWaveOut);
-		}
-	}
-}
-
-
-/*
-==================
-S_UnblockSound
-==================
-*/
-void S_UnblockSound (void)
-{
-
-// DirectSound takes care of blocking itself
-	if (snd_iswave)
-	{
-		sound.blocked--;
-	}
-}
-
-
-/*
-==================
-FreeSound
-==================
-*/
-void FreeSound (void)
-{
-	int		i;
-
-	if (pDSBuf)
-	{
-		pDSBuf->Stop();
-		pDSBuf->Release();
-	}
-
-// only release primary buffer if it's not also the mixing buffer we just released
-	if (pDSPBuf && (pDSBuf != pDSPBuf))
-	{
-		pDSPBuf->Release();
-	}
-
-	if (pDS)
-	{
-		pDS->SetCooperativeLevel (mainwindow, DSSCL_NORMAL);
-		pDS->Release();
-	}
-
-	if (hWaveOut)
-	{
-		waveOutReset (hWaveOut);
-
-		if (lpWaveHdr)
-		{
-			for (i=0 ; i< WAV_BUFFERS ; i++)
-				waveOutUnprepareHeader (hWaveOut, lpWaveHdr+i, sizeof(WAVEHDR));
-		}
-
-		waveOutClose (hWaveOut);
-
-		if (hWaveHdr)
-		{
-			GlobalUnlock(hWaveHdr); 
-			GlobalFree(hWaveHdr);
-		}
-
-		if (hData)
-		{
-			GlobalUnlock(hData);
-			GlobalFree(hData);
-		}
-
-	}
-
-	pDS = NULL;
-	pDSBuf = NULL;
-	pDSPBuf = NULL;
-	hWaveOut = 0;
-	hData = 0;
-	hWaveHdr = 0;
-	lpData = NULL;
-	lpWaveHdr = NULL;
-	dsound_init = false;
-	wav_init = false;
-}
-
-
-/*
-==================
-SNDDMA_InitDirect
-
-Direct-Sound support
-==================
-*/
-sndinitstat SNDDMA_InitDirect (void)
-{
-	DSBUFFERDESC	dsbuf;
-	DSBCAPS			dsbcaps;
-	DWORD			dwSize, dwWrite;
-	DSCAPS			dscaps;
-	WAVEFORMATEX	format, pformat; 
-	HRESULT			hresult;
-	int				reps;
-
-	memset ((void *)&sn, 0, sizeof (sn));
-
-	shm = &sn;
-
-	shm->channels = 2;
-	shm->samplebits = 16;
-	shm->speed = 11025;
-
-	memset (&format, 0, sizeof(format));
-	format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = shm->channels;
-    format.wBitsPerSample = shm->samplebits;
-    format.nSamplesPerSec = shm->speed;
-    format.nBlockAlign = format.nChannels
-		*format.wBitsPerSample / 8;
-    format.cbSize = 0;
-    format.nAvgBytesPerSec = format.nSamplesPerSec
-		*format.nBlockAlign; 
-
-	if (!hInstDS)
-	{
-		hInstDS = LoadLibrary("dsound.dll");
-		
-		if (hInstDS == NULL)
-		{
-			Con_SafePrintf ("Couldn't load dsound.dll\n");
-			return SIS_FAILURE;
-		}
-
-		pDirectSoundCreate = (HRESULT (WINAPI *)(GUID FAR *, LPDIRECTSOUND FAR *, IUnknown FAR *))GetProcAddress(hInstDS,"DirectSoundCreate");
-
-		if (!pDirectSoundCreate)
-		{
-			Con_SafePrintf ("Couldn't get DS proc addr\n");
-			return SIS_FAILURE;
-		}
-	}
-
-	while ((hresult = iDirectSoundCreate(NULL, &pDS, NULL)) != DS_OK)
-	{
-		if (hresult != DSERR_ALLOCATED)
-		{
-			Con_SafePrintf ("DirectSound create failed\n");
-			return SIS_FAILURE;
-		}
-
-		if (MessageBox (NULL,
-						"The sound hardware is in use by another app.\n\n"
-					    "Select Retry to try to start sound again or Cancel to run Quake with no sound.",
-						"Sound not available",
-						MB_RETRYCANCEL | MB_SETFOREGROUND | MB_ICONEXCLAMATION) != IDRETRY)
-		{
-			Con_SafePrintf ("DirectSoundCreate failure\n"
-							"  hardware already in use\n");
-			return SIS_NOTAVAIL;
-		}
-	}
-
-	dscaps.dwSize = sizeof(dscaps);
-
-	if (DS_OK != pDS->GetCaps (&dscaps))
-	{
-		Con_SafePrintf ("Couldn't get DS caps\n");
-	}
-
-	if (dscaps.dwFlags & DSCAPS_EMULDRIVER)
-	{
-		Con_SafePrintf ("No DirectSound driver installed\n");
-		FreeSound ();
-		return SIS_FAILURE;
-	}
-
-	if (DS_OK != pDS->SetCooperativeLevel (mainwindow, DSSCL_EXCLUSIVE))
-	{
-		Con_SafePrintf ("Set coop level failed\n");
-		FreeSound ();
-		return SIS_FAILURE;
-	}
-
-// get access to the primary buffer, if possible, so we can set the
-// sound hardware format
-	memset (&dsbuf, 0, sizeof(dsbuf));
-	dsbuf.dwSize = sizeof(DSBUFFERDESC);
-	dsbuf.dwFlags = DSBCAPS_PRIMARYBUFFER;
-	dsbuf.dwBufferBytes = 0;
-	dsbuf.lpwfxFormat = NULL;
-
-	memset(&dsbcaps, 0, sizeof(dsbcaps));
-	dsbcaps.dwSize = sizeof(dsbcaps);
-	primary_format_set = false;
-
-	if (!COM_CheckParm ("-snoforceformat"))
-	{
-		if (DS_OK == pDS->CreateSoundBuffer(&dsbuf, &pDSPBuf, NULL))
-		{
-			pformat = format;
-
-			if (DS_OK != pDSPBuf->SetFormat (&pformat))
-			{
-				if (snd_firsttime)
-					Con_SafePrintf ("Set primary sound buffer format: no\n");
-			}
-			else
-			{
-				if (snd_firsttime)
-					Con_SafePrintf ("Set primary sound buffer format: yes\n");
-
-				primary_format_set = true;
-			}
-		}
-	}
-
-	if (!primary_format_set || !COM_CheckParm ("-primarysound"))
-	{
-	// create the secondary buffer we'll actually work with
-		memset (&dsbuf, 0, sizeof(dsbuf));
-		dsbuf.dwSize = sizeof(DSBUFFERDESC);
-		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE;
-		dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
-		dsbuf.lpwfxFormat = &format;
-
-		memset(&dsbcaps, 0, sizeof(dsbcaps));
-		dsbcaps.dwSize = sizeof(dsbcaps);
-
-		if (DS_OK != pDS->CreateSoundBuffer(&dsbuf, &pDSBuf, NULL))
-		{
-			Con_SafePrintf ("DS:CreateSoundBuffer Failed");
-			FreeSound ();
-			return SIS_FAILURE;
-		}
-
-		shm->channels = format.nChannels;
-		shm->samplebits = format.wBitsPerSample;
-		shm->speed = format.nSamplesPerSec;
-
-		if (DS_OK != pDSBuf->GetCaps (&dsbcaps))
-		{
-			Con_SafePrintf ("DS:GetCaps failed\n");
-			FreeSound ();
-			return SIS_FAILURE;
-		}
-
-		if (snd_firsttime)
-			Con_SafePrintf ("Using secondary sound buffer\n");
-	}
-	else
-	{
-		if (DS_OK != pDS->SetCooperativeLevel (mainwindow, DSSCL_WRITEPRIMARY))
-		{
-			Con_SafePrintf ("Set coop level failed\n");
-			FreeSound ();
-			return SIS_FAILURE;
-		}
-
-		if (DS_OK != pDSPBuf->GetCaps (&dsbcaps))
-		{
-			Con_Printf ("DS:GetCaps failed\n");
-			return SIS_FAILURE;
-		}
-
-		pDSBuf = pDSPBuf;
-		Con_SafePrintf ("Using primary sound buffer\n");
-	}
-
-	// Make sure mixer is active
-	pDSBuf->Play(0, 0, DSBPLAY_LOOPING);
-
-	if (snd_firsttime)
-		Con_SafePrintf("   %d channel(s)\n"
-		               "   %d bits/sample\n"
-					   "   %d bytes/sec\n",
-					   shm->channels, shm->samplebits, shm->speed);
-	
-	gSndBufSize = dsbcaps.dwBufferBytes;
-
-// initialize the buffer
-	reps = 0;
-
-	while ((hresult = pDSBuf->Lock(0, gSndBufSize, (LPVOID *)&lpData, &dwSize, NULL, NULL, 0)) != DS_OK)
-	{
-		if (hresult != DSERR_BUFFERLOST)
-		{
-			Con_SafePrintf ("SNDDMA_InitDirect: DS::Lock Sound Buffer Failed\n");
-			FreeSound ();
-			return SIS_FAILURE;
-		}
-
-		if (++reps > 10000)
-		{
-			Con_SafePrintf ("SNDDMA_InitDirect: DS: couldn't restore buffer\n");
-			FreeSound ();
-			return SIS_FAILURE;
-		}
-
-	}
-
-	memset(lpData, 0, dwSize);
-//		lpData[4] = lpData[5] = 0x7f;	// force a pop for debugging
-
-	pDSBuf->Unlock(lpData, dwSize, NULL, 0);
-
-	/* we don't want anyone to access the buffer directly w/o locking it first. */
-	lpData = NULL;
-
-	pDSBuf->Stop();
-	pDSBuf->GetCurrentPosition(&mmstarttime.u.sample, &dwWrite);
-	pDSBuf->Play(0, 0, DSBPLAY_LOOPING);
-
-	shm->soundalive = true;
-	shm->splitbuffer = false;
-	shm->samples = gSndBufSize/(shm->samplebits/8);
-	shm->samplepos = 0;
-	shm->submission_chunk = 1;
-	shm->buffer = (unsigned char *) lpData;
-	sample16 = (shm->samplebits/8) - 1;
-
-	dsound_init = true;
-
-	return SIS_SUCCESS;
-}
-
-
-/*
-==================
-SNDDM_InitWav
-
-Crappy windows multimedia base
-==================
-*/
-qboolean SNDDMA_InitWav (void)
-{
-	WAVEFORMATEX  format; 
-	int				i;
 	HRESULT			hr;
-	
-	snd_sent = 0;
-	snd_completed = 0;
+	WAVEFORMATEX	*closest;
+	int				suggestedRate = 0;
+
+	memset (wfx, 0, sizeof(*wfx));
+	wfx->wFormatTag = WAVE_FORMAT_PCM;
+	wfx->nChannels = 2;
+	wfx->wBitsPerSample = 16;
+	wfx->nSamplesPerSec = 11025;
+	wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample / 8;
+	wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
+
+	closest = NULL;
+	hr = pAudioClient->IsFormatSupported (AUDCLNT_SHAREMODE_SHARED, wfx, &closest);
+	if (hr == S_OK)
+	{
+		if (closest)
+			CoTaskMemFree (closest);
+		return true;
+	}
+
+	if (hr == S_FALSE && closest)
+		suggestedRate = closest->nSamplesPerSec;
+	if (closest)
+		CoTaskMemFree (closest);
+
+	if (!suggestedRate)
+	{
+		WAVEFORMATEX *mixfmt = NULL;
+		if (SUCCEEDED (pAudioClient->GetMixFormat (&mixfmt)) && mixfmt)
+		{
+			suggestedRate = mixfmt->nSamplesPerSec;
+			CoTaskMemFree (mixfmt);
+		}
+	}
+
+	if (!suggestedRate)
+		return false;
+
+	wfx->nSamplesPerSec = suggestedRate;
+	wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
+
+	closest = NULL;
+	hr = pAudioClient->IsFormatSupported (AUDCLNT_SHAREMODE_SHARED, wfx, &closest);
+	if (closest)
+		CoTaskMemFree (closest);
+
+	return hr == S_OK;
+}
+
+
+/*
+==================
+SNDDMA_Shutdown
+
+Reset the sound device for exiting
+==================
+*/
+void SNDDMA_Shutdown (void)
+{
+	if (pAudioClient && wasapi_client_initialized)
+		pAudioClient->Stop ();
+
+	if (pRenderClient) { pRenderClient->Release (); pRenderClient = NULL; }
+	if (pAudioClient)  { pAudioClient->Release ();  pAudioClient = NULL; }
+	if (pDevice)       { pDevice->Release ();       pDevice = NULL; }
+	if (pEnumerator)   { pEnumerator->Release ();   pEnumerator = NULL; }
+
+	wasapi_client_initialized = false;
+	wasapi_active = false;
+}
+
+
+/*
+==================
+SNDDMA_InitWASAPI
+==================
+*/
+static qboolean SNDDMA_InitWASAPI (void)
+{
+	HRESULT			hr;
+	WAVEFORMATEX	wfx;
+	BYTE			*pData;
+	int				bytesPerFrame;
+	int				shadowFrames;
+
+	hr = CoCreateInstance (__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
+							__uuidof(IMMDeviceEnumerator), (void **)&pEnumerator);
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: CoCreateInstance(MMDeviceEnumerator) failed\n");
+		return false;
+	}
+
+	hr = pEnumerator->GetDefaultAudioEndpoint (eRender, eConsole, &pDevice);
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: no default audio render endpoint\n");
+		return false;
+	}
+
+	hr = pDevice->Activate (__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void **)&pAudioClient);
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: IAudioClient activation failed\n");
+		return false;
+	}
+
+	if (!SNDDMA_NegotiateFormat (&wfx))
+	{
+		Con_SafePrintf ("WASAPI: no supported audio format found\n");
+		return false;
+	}
+
+	hr = pAudioClient->Initialize (AUDCLNT_SHAREMODE_SHARED, 0, WASAPI_BUFFER_DURATION, 0, &wfx, NULL);
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: IAudioClient::Initialize failed (hr=0x%x)\n", (unsigned)hr);
+		return false;
+	}
+	wasapi_client_initialized = true;
+
+	hr = pAudioClient->GetBufferSize (&wasapi_buffer_frames);
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: GetBufferSize failed\n");
+		return false;
+	}
+
+	hr = pAudioClient->GetService (__uuidof(IAudioRenderClient), (void **)&pRenderClient);
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: GetService(IAudioRenderClient) failed\n");
+		return false;
+	}
 
 	shm = &sn;
-
-	shm->channels = 2;
-	shm->samplebits = 16;
-	shm->speed = 11025;
-
-	memset (&format, 0, sizeof(format));
-	format.wFormatTag = WAVE_FORMAT_PCM;
-	format.nChannels = shm->channels;
-	format.wBitsPerSample = shm->samplebits;
-	format.nSamplesPerSec = shm->speed;
-	format.nBlockAlign = format.nChannels
-		*format.wBitsPerSample / 8;
-	format.cbSize = 0;
-	format.nAvgBytesPerSec = format.nSamplesPerSec
-		*format.nBlockAlign; 
-	
-	/* Open a waveform device for output using window callback. */ 
-	while ((hr = waveOutOpen((LPHWAVEOUT)&hWaveOut, WAVE_MAPPER, 
-					&format, 
-					0, 0L, CALLBACK_NULL)) != MMSYSERR_NOERROR)
-	{
-		if (hr != MMSYSERR_ALLOCATED)
-		{
-			Con_SafePrintf ("waveOutOpen failed\n");
-			return false;
-		}
-
-		if (MessageBox (NULL,
-						"The sound hardware is in use by another app.\n\n"
-					    "Select Retry to try to start sound again or Cancel to run Quake with no sound.",
-						"Sound not available",
-						MB_RETRYCANCEL | MB_SETFOREGROUND | MB_ICONEXCLAMATION) != IDRETRY)
-		{
-			Con_SafePrintf ("waveOutOpen failure;\n"
-							"  hardware already in use\n");
-			return false;
-		}
-	} 
-
-	/* 
-	 * Allocate and lock memory for the waveform data. The memory 
-	 * for waveform data must be globally allocated with 
-	 * GMEM_MOVEABLE and GMEM_SHARE flags. 
-
-	*/ 
-	gSndBufSize = WAV_BUFFERS*WAV_BUFFER_SIZE;
-	hData = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, gSndBufSize); 
-	if (!hData) 
-	{ 
-		Con_SafePrintf ("Sound: Out of memory.\n");
-		FreeSound ();
-		return false; 
-	}
-	lpData = (HPSTR)GlobalLock(hData);
-	if (!lpData)
-	{ 
-		Con_SafePrintf ("Sound: Failed to lock.\n");
-		FreeSound ();
-		return false; 
-	} 
-	memset (lpData, 0, gSndBufSize);
-
-	/* 
-	 * Allocate and lock memory for the header. This memory must 
-	 * also be globally allocated with GMEM_MOVEABLE and 
-	 * GMEM_SHARE flags. 
-	 */ 
-	hWaveHdr = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, 
-		(DWORD) sizeof(WAVEHDR) * WAV_BUFFERS); 
-
-	if (hWaveHdr == NULL)
-	{ 
-		Con_SafePrintf ("Sound: Failed to Alloc header.\n");
-		FreeSound ();
-		return false; 
-	} 
-
-	lpWaveHdr = (LPWAVEHDR) GlobalLock(hWaveHdr); 
-
-	if (lpWaveHdr == NULL)
-	{ 
-		Con_SafePrintf ("Sound: Failed to lock header.\n");
-		FreeSound ();
-		return false; 
-	}
-
-	memset (lpWaveHdr, 0, sizeof(WAVEHDR) * WAV_BUFFERS);
-
-	/* After allocation, set up and prepare headers. */ 
-	for (i=0 ; i<WAV_BUFFERS ; i++)
-	{
-		lpWaveHdr[i].dwBufferLength = WAV_BUFFER_SIZE; 
-		lpWaveHdr[i].lpData = lpData + i*WAV_BUFFER_SIZE;
-
-		if (waveOutPrepareHeader(hWaveOut, lpWaveHdr+i, sizeof(WAVEHDR)) !=
-				MMSYSERR_NOERROR)
-		{
-			Con_SafePrintf ("Sound: failed to prepare wave headers\n");
-			FreeSound ();
-			return false;
-		}
-	}
-
+	shm->channels = wfx.nChannels;
+	shm->samplebits = wfx.wBitsPerSample;
+	shm->speed = wfx.nSamplesPerSec;
 	shm->soundalive = true;
 	shm->splitbuffer = false;
-	shm->samples = gSndBufSize/(shm->samplebits/8);
-	shm->samplepos = 0;
 	shm->submission_chunk = 1;
-	shm->buffer = (unsigned char *) lpData;
-	sample16 = (shm->samplebits/8) - 1;
+	shm->samplepos = 0;
 
-	wav_init = true;
+	// shadow ring buffer the mixer paints into directly -- sized a
+	// power of two (required by the mixer's "& (samples-1)" wrap math)
+	// and comfortably larger than WASAPI's own internal buffer so
+	// per-frame polling never has to fight for room to paint ahead
+	bytesPerFrame = shm->channels * (shm->samplebits / 8);
+	shadowFrames = 1;
+	while (shadowFrames < (int)wasapi_buffer_frames * 2)
+		shadowFrames <<= 1;
 
+	shm->samples = shadowFrames * shm->channels;
+	shm->buffer = (unsigned char *)Hunk_AllocName (shadowFrames * bytesPerFrame, "shmbuf");
+
+	// prime WASAPI's buffer with silence and start the stream
+	hr = pRenderClient->GetBuffer (wasapi_buffer_frames, &pData);
+	if (SUCCEEDED (hr))
+		pRenderClient->ReleaseBuffer (wasapi_buffer_frames, AUDCLNT_BUFFERFLAGS_SILENT);
+
+	wasapi_submitted_frames = wasapi_buffer_frames;
+
+	hr = pAudioClient->Start ();
+	if (FAILED (hr))
+	{
+		Con_SafePrintf ("WASAPI: IAudioClient::Start failed\n");
+		return false;
+	}
+
+	wasapi_active = true;
 	return true;
 }
+
 
 /*
 ==================
@@ -553,177 +259,127 @@ Try to find a sound device to mix for.
 Returns false if nothing is found.
 ==================
 */
-
-int SNDDMA_Init(void)
+int SNDDMA_Init (void)
 {
-	sndinitstat	stat;
-
-	if (COM_CheckParm ("-wavonly"))
-		wavonly = true;
-
-	dsound_init = wav_init = 0;
-
-	stat = SIS_FAILURE;	// assume DirectSound won't initialize
-
-	/* Init DirectSound */
-	if (!wavonly)
+	if (!SNDDMA_InitWASAPI ())
 	{
-		if (snd_firsttime || snd_isdirect)
-		{
-			stat = SNDDMA_InitDirect ();;
-
-			if (stat == SIS_SUCCESS)
-			{
-				snd_isdirect = true;
-
-				if (snd_firsttime)
-					Con_SafePrintf ("DirectSound initialized\n");
-			}
-			else
-			{
-				snd_isdirect = false;
-				Con_SafePrintf ("DirectSound failed to init\n");
-			}
-		}
-	}
-
-// if DirectSound didn't succeed in initializing, try to initialize
-// waveOut sound, unless DirectSound failed because the hardware is
-// already allocated (in which case the user has already chosen not
-// to have sound)
-	if (!dsound_init && (stat != SIS_NOTAVAIL))
-	{
-		if (snd_firsttime || snd_iswave)
-		{
-
-			snd_iswave = SNDDMA_InitWav ();
-
-			if (snd_iswave)
-			{
-				if (snd_firsttime)
-					Con_SafePrintf ("Wave sound initialized\n");
-			}
-			else
-			{
-				Con_SafePrintf ("Wave sound failed to init\n");
-			}
-		}
-	}
-
-	snd_firsttime = false;
-
-	if (!dsound_init && !wav_init)
-	{
-		if (snd_firsttime)
-			Con_SafePrintf ("No sound device initialized\n");
-
+		SNDDMA_Shutdown ();
 		return 0;
 	}
 
+	Con_SafePrintf ("WASAPI sound initialized\n");
+	Con_SafePrintf ("   %d channel(s)\n"
+	                 "   %d bits/sample\n"
+	                 "   %d samples/sec\n",
+	                 shm->channels, shm->samplebits, shm->speed);
+
 	return 1;
 }
+
 
 /*
 ==============
 SNDDMA_GetDMAPos
 
-return the current sample position (in mono samples read)
-inside the recirculating dma buffer, so the mixing code will know
-how many sample are required to fill it up.
+Return the current emulated hardware read position (in interleaved
+samples, matching shm->samples' units) so the mixer knows how far ahead
+of actual playback it's safe to paint. Derived from how many frames
+we've handed to WASAPI so far minus how many are still queued and unplayed
+(IAudioClient::GetCurrentPadding) -- the WASAPI equivalent of DirectSound's
+GetCurrentPosition play cursor.
 ===============
 */
-int SNDDMA_GetDMAPos(void)
+int SNDDMA_GetDMAPos (void)
 {
-	MMTIME	mmtime;
-	int		s;
-	DWORD	dwWrite;
+	UINT32	padding;
+	UINT64	playedFrames;
 
-	if (dsound_init) 
-	{
-		mmtime.wType = TIME_SAMPLES;
-		pDSBuf->GetCurrentPosition(&mmtime.u.sample, &dwWrite);
-		s = mmtime.u.sample - mmstarttime.u.sample;
-	}
-	else if (wav_init)
-	{
-		s = snd_sent * WAV_BUFFER_SIZE;
-	}
+	if (!wasapi_active)
+		return 0;
 
+	padding = 0;
+	if (FAILED (pAudioClient->GetCurrentPadding (&padding)))
+		padding = 0;
 
-	s >>= sample16;
+	playedFrames = wasapi_submitted_frames - padding;
 
-	s &= (shm->samples-1);
-
-	return s;
+	return (int)((playedFrames * shm->channels) % (UINT64)shm->samples);
 }
+
 
 /*
 ==============
 SNDDMA_Submit
 
-Send sound to device if buffer isn't really the dma buffer
+Copy newly-painted samples (sound.paintedtime is how far the mixer has
+painted, in mono frames) from the shadow ring buffer into however much
+room WASAPI currently has free.
 ===============
 */
-void SNDDMA_Submit(void)
+void SNDDMA_Submit (void)
 {
-	LPWAVEHDR	h;
-	int			wResult;
+	UINT32	padding, framesFree, framesToWrite;
+	UINT64	targetFrames;
+	BYTE	*pData;
+	int		bytesPerFrame, shadowFrameCount, startFrame, firstChunk;
 
-	if (!wav_init)
+	if (!wasapi_active)
 		return;
 
-	//
-	// find which sound blocks have completed
-	//
-	while (1)
+	targetFrames = (UINT64)sound.paintedtime;
+	if (targetFrames <= wasapi_submitted_frames)
+		return;
+
+	if (FAILED (pAudioClient->GetCurrentPadding (&padding)))
+		return;
+
+	framesFree = wasapi_buffer_frames - padding;
+	framesToWrite = (UINT32)(targetFrames - wasapi_submitted_frames);
+	if (framesToWrite > framesFree)
+		framesToWrite = framesFree;
+	if (framesToWrite == 0)
+		return;
+
+	if (FAILED (pRenderClient->GetBuffer (framesToWrite, &pData)))
+		return;
+
+	bytesPerFrame = shm->channels * (shm->samplebits / 8);
+	shadowFrameCount = shm->samples / shm->channels;
+	startFrame = (int)(wasapi_submitted_frames % (UINT64)shadowFrameCount);
+
+	firstChunk = shadowFrameCount - startFrame;
+	if (firstChunk > (int)framesToWrite)
+		firstChunk = framesToWrite;
+
+	memcpy (pData, shm->buffer + (size_t)startFrame * bytesPerFrame, (size_t)firstChunk * bytesPerFrame);
+
+	if ((int)framesToWrite > firstChunk)
 	{
-		if ( snd_completed == snd_sent )
-		{
-			Con_DPrintf ("Sound overrun\n");
-			break;
-		}
-
-		if ( ! (lpWaveHdr[ snd_completed & WAV_MASK].dwFlags & WHDR_DONE) )
-		{
-			break;
-		}
-
-		snd_completed++;	// this buffer has been played
+		memcpy (pData + (size_t)firstChunk * bytesPerFrame, shm->buffer,
+				(size_t)((int)framesToWrite - firstChunk) * bytesPerFrame);
 	}
 
-	//
-	// submit two new sound blocks
-	//
-	while (((snd_sent - snd_completed) >> sample16) < 4)
-	{
-		h = lpWaveHdr + ( snd_sent&WAV_MASK );
-
-		snd_sent++;
-		/* 
-		 * Now the data block can be sent to the output device. The 
-		 * waveOutWrite function returns immediately and waveform 
-		 * data is sent to the output device in the background. 
-		 */ 
-		wResult = waveOutWrite(hWaveOut, h, sizeof(WAVEHDR)); 
-
-		if (wResult != MMSYSERR_NOERROR)
-		{ 
-			Con_SafePrintf ("Failed to write block to device\n");
-			FreeSound ();
-			return; 
-		} 
-	}
+	pRenderClient->ReleaseBuffer (framesToWrite, 0);
+	wasapi_submitted_frames += framesToWrite;
 }
+
 
 /*
-==============
-SNDDMA_Shutdown
+==================
+S_BlockSound / S_UnblockSound
 
-Reset the sound device for exiting
-===============
+Nothing to do -- like DirectSound, WASAPI's shared-mode ring buffer just
+keeps playing (and naturally runs down to silence once drained) while
+S_Update stops submitting new samples. Kept only for the sound.blocked
+reference-count bookkeeping S_Update already relies on.
+==================
 */
-void SNDDMA_Shutdown(void)
+void S_BlockSound (void)
 {
-	FreeSound ();
+	sound.blocked++;
 }
 
+void S_UnblockSound (void)
+{
+	sound.blocked--;
+}

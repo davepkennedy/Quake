@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef SERVERONLY
 #include <ddraw.h>
-#include <dsound.h>
 #ifndef GLQUAKE
 #include <mgraph.h>
 #endif
@@ -43,11 +42,6 @@ extern LPDIRECTDRAWSURFACE lpPrimary;
 extern LPDIRECTDRAWSURFACE lpFrontBuffer;
 extern LPDIRECTDRAWSURFACE lpBackBuffer;
 extern LPDIRECTDRAWPALETTE lpDDPal;
-extern LPDIRECTSOUND pDS;
-extern LPDIRECTSOUNDBUFFER pDSBuf;
-
-extern DWORD gSndBufSize;
-// #define SNDBUFSIZE 65536
 
 void VID_LockBuffer(void);
 void VID_UnlockBuffer(void);
