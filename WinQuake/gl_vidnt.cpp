@@ -1732,7 +1732,17 @@ void	VID_Init (unsigned char *palette)
 		}
 		else
 		{
-			if (COM_CheckParm("-current"))
+			// Default to the desktop's current native resolution (same as
+			// -current) whenever the user hasn't asked for a specific mode
+			// or size -- matches what every modern game does for its default
+			// fullscreen behavior, and (via leavecurrentmode) skips the
+			// ChangeDisplaySettings exclusive-mode switch entirely, which
+			// makes this a borderless-fullscreen-at-native-resolution window
+			// by construction (VID_SetFullDIBMode already always creates a
+			// WS_POPUP borderless window; leavecurrentmode just decides
+			// whether it also switches the physical display mode).
+			if (COM_CheckParm("-current") ||
+				(!COM_CheckParm("-width") && !COM_CheckParm("-height")))
 			{
 				modelist[MODE_FULLSCREEN_DEFAULT].width =
 						GetSystemMetrics (SM_CXSCREEN);
@@ -1878,8 +1888,18 @@ void	VID_Init (unsigned char *palette)
 	if (vid.conwidth < 320)
 		vid.conwidth = 320;
 
-	// pick a conheight that matches with correct aspect
-	vid.conheight = vid.conwidth*3 / 4;
+	// pick a conheight that matches with correct aspect -- derive it from
+	// the actual selected mode's aspect ratio (whatever that is: native
+	// desktop resolution by default now, or whatever -width/-height/-mode
+	// picked) instead of hardcoding 4:3. This is what actually fixes the
+	// stretched/letterboxed look on a widescreen display: r_refdef.vrect
+	// (the 3D view's projection aspect) is computed from vid.conwidth/
+	// conheight, so a wrong aspect here means a wrong FOV/projection even
+	// though the real GL viewport is already correctly sized to the window.
+	if (modelist[vid_default].width > 0 && modelist[vid_default].height > 0)
+		vid.conheight = (int)((float)vid.conwidth * modelist[vid_default].height / modelist[vid_default].width + 0.5f);
+	else
+		vid.conheight = vid.conwidth*3 / 4;
 
 	if ((i = COM_CheckParm("-conheight")) != 0)
 		vid.conheight = Q_atoi(com_argv[i+1]);
