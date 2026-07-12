@@ -54,6 +54,181 @@ void IN_RawMouseMoved (int dx, int dy)
 	raw_my += dy;
 }
 
+// ------------------------------------------------------------------------
+// XInput (Xbox-style controller) support -- preferred over the legacy
+// joyGetPosEx joystick path below whenever a controller actually shows up
+// connected, since it gives proper separate analog triggers and a fixed,
+// standard button layout instead of joyGetPosEx's generic N-axis/N-button
+// abstraction that needs manual per-device axis-mapping cvars to be usable
+// at all. The legacy path remains as a fallback for wheels, flight sticks,
+// and other non-Xbox-style devices XInput doesn't cover.
+// ------------------------------------------------------------------------
+#include <xinput.h>
+
+extern cvar_t in_joystick;	// defined further down, alongside the rest of the joystick cvars
+
+typedef DWORD (WINAPI *PFN_XInputGetState)(DWORD, XINPUT_STATE *);
+
+cvar_t	joy_xinput_deadzone = {"joy_xinput_deadzone", "0.24"};
+
+static HMODULE				xinput_dll;
+static PFN_XInputGetState	pXInputGetState;
+static qboolean				xinput_avail;
+static qboolean				xinput_connected;
+static DWORD				xinput_index;
+static WORD					xinput_oldbuttons;
+static qboolean				xinput_oldlt, xinput_oldrt;
+
+void IN_StartupXInput (void)
+{
+	if (COM_CheckParm ("-noxinput"))
+		return;
+
+	xinput_dll = LoadLibrary ("xinput1_4.dll");
+	if (!xinput_dll)
+		xinput_dll = LoadLibrary ("xinput9_1_0.dll");	// Vista-era stub, always present
+
+	if (!xinput_dll)
+		return;
+
+	pXInputGetState = (PFN_XInputGetState)GetProcAddress (xinput_dll, "XInputGetState");
+
+	if (!pXInputGetState)
+	{
+		FreeLibrary (xinput_dll);
+		xinput_dll = NULL;
+		return;
+	}
+
+	xinput_avail = true;
+	Con_SafePrintf ("XInput initialized\n");
+}
+
+void IN_ShutdownXInput (void)
+{
+	if (xinput_dll)
+	{
+		FreeLibrary (xinput_dll);
+		xinput_dll = NULL;
+	}
+	pXInputGetState = NULL;
+	xinput_avail = xinput_connected = false;
+}
+
+static qboolean IN_XInputFindController (void)
+{
+	XINPUT_STATE state;
+
+	for (DWORD i = 0; i < XUSER_MAX_COUNT; i++)
+	{
+		memset (&state, 0, sizeof(state));
+		if (pXInputGetState (i, &state) == ERROR_SUCCESS)
+		{
+			xinput_index = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+// Radial deadzone: below the threshold, no output; above it, rescaled so
+// the stick's physical extremes still reach exactly -1..1.
+static float IN_XInputAxis (SHORT raw)
+{
+	float v = raw / 32768.0f;
+	float dz = joy_xinput_deadzone.value;
+
+	if (fabs(v) < dz)
+		return 0.0f;
+
+	return (v < 0 ? -1.0f : 1.0f) * (fabs(v) - dz) / (1.0f - dz);
+}
+
+qboolean IN_XInputActive (void)
+{
+	return xinput_avail && xinput_connected;
+}
+
+void IN_XInputMove (usercmd_t *cmd)
+{
+	XINPUT_STATE	state;
+	WORD			buttons;
+	float			speed, aspeed, lx, ly, rx, ry;
+	qboolean		ltdown, rtdown;
+
+	static const struct { WORD mask; int key; } buttonmap[] =
+	{
+		{ XINPUT_GAMEPAD_DPAD_UP,        K_AUX29 },	// matches the legacy
+		{ XINPUT_GAMEPAD_DPAD_RIGHT,     K_AUX30 },	// joystick's POV-hat
+		{ XINPUT_GAMEPAD_DPAD_DOWN,      K_AUX31 },	// key slots -- mutually
+		{ XINPUT_GAMEPAD_DPAD_LEFT,      K_AUX32 },	// exclusive, no clash
+		{ XINPUT_GAMEPAD_START,          K_XBOX_START },
+		{ XINPUT_GAMEPAD_BACK,           K_XBOX_BACK },
+		{ XINPUT_GAMEPAD_LEFT_THUMB,     K_XBOX_LTHUMB },
+		{ XINPUT_GAMEPAD_RIGHT_THUMB,    K_XBOX_RTHUMB },
+		{ XINPUT_GAMEPAD_LEFT_SHOULDER,  K_XBOX_LSHOULDER },
+		{ XINPUT_GAMEPAD_RIGHT_SHOULDER, K_XBOX_RSHOULDER },
+		{ XINPUT_GAMEPAD_A,              K_XBOX_A },
+		{ XINPUT_GAMEPAD_B,              K_XBOX_B },
+		{ XINPUT_GAMEPAD_X,              K_XBOX_X },
+		{ XINPUT_GAMEPAD_Y,              K_XBOX_Y },
+	};
+
+	if (!xinput_avail || !in_joystick.value)
+		return;
+
+	if (!xinput_connected)
+	{
+		if (!IN_XInputFindController ())
+			return;
+		xinput_connected = true;
+	}
+
+	memset (&state, 0, sizeof(state));
+	if (pXInputGetState (xinput_index, &state) != ERROR_SUCCESS)
+	{
+		// controller unplugged -- go back to looking for one next frame
+		xinput_connected = false;
+		return;
+	}
+
+	buttons = state.Gamepad.wButtons;
+	for (auto &b : buttonmap)
+	{
+		qboolean down = !!(buttons & b.mask);
+		if (down != !!(xinput_oldbuttons & b.mask))
+			Key_Event (b.key, down);
+	}
+	xinput_oldbuttons = buttons;
+
+	ltdown = state.Gamepad.bLeftTrigger  > XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+	rtdown = state.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+	if (ltdown != xinput_oldlt) Key_Event (K_XBOX_LTRIGGER, ltdown);
+	if (rtdown != xinput_oldrt) Key_Event (K_XBOX_RTRIGGER, rtdown);
+	xinput_oldlt = ltdown;
+	xinput_oldrt = rtdown;
+
+	// left stick = move, right stick = look (always-on, like mlook)
+	lx = IN_XInputAxis (state.Gamepad.sThumbLX);
+	ly = IN_XInputAxis (state.Gamepad.sThumbLY);
+	rx = IN_XInputAxis (state.Gamepad.sThumbRX);
+	ry = IN_XInputAxis (state.Gamepad.sThumbRY);
+
+	speed = (in_speed.state & 1) ? cl_movespeedkey.value : 1;
+	aspeed = speed * host_frametime;
+
+	cmd->forwardmove += ly * speed * cl_forwardspeed.value;
+	cmd->sidemove    += lx * speed * cl_sidespeed.value;
+
+	cl.viewangles[YAW]   -= rx * aspeed * cl_yawspeed.value;
+	cl.viewangles[PITCH] -= ry * aspeed * cl_pitchspeed.value;
+
+	if (cl.viewangles[PITCH] > 80.0)
+		cl.viewangles[PITCH] = 80.0;
+	if (cl.viewangles[PITCH] < -70.0)
+		cl.viewangles[PITCH] = -70.0;
+}
+
 // joystick defines and variables
 // where should defines be moved?
 #define JOY_ABSOLUTE_AXIS	0x00000000		// control like a joystick
@@ -345,6 +520,7 @@ void IN_Init (void)
 	Cvar_RegisterVariable (&joy_yawsensitivity);
 	Cvar_RegisterVariable (&joy_wwhack1);
 	Cvar_RegisterVariable (&joy_wwhack2);
+	Cvar_RegisterVariable (&joy_xinput_deadzone);
 
 	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
@@ -353,6 +529,7 @@ void IN_Init (void)
 
 	IN_StartupMouse ();
 	IN_StartupJoystick ();
+	IN_StartupXInput ();
 }
 
 /*
@@ -365,6 +542,7 @@ void IN_Shutdown (void)
 
 	IN_DeactivateMouse ();
 	IN_ShowMouse ();
+	IN_ShutdownXInput ();
 }
 
 
@@ -495,7 +673,9 @@ void IN_Move (usercmd_t *cmd)
 	if (ActiveApp && !Minimized)
 	{
 		IN_MouseMove (cmd);
-		IN_JoyMove (cmd);
+		IN_XInputMove (cmd);
+		if (!IN_XInputActive ())
+			IN_JoyMove (cmd);
 	}
 }
 

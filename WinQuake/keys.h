@@ -117,6 +117,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define K_MWHEELUP		239
 #define K_MWHEELDOWN	240
 
+// XInput (Xbox-style) controller buttons -- the d-pad reuses K_AUX29-32
+// (the existing legacy-joystick POV-hat slots) since XInput and the old
+// joyGetPosEx joystick path are mutually exclusive (XInput preferred when
+// a controller is present), so there's no risk of collision.
+#define K_XBOX_A			241
+#define K_XBOX_B			242
+#define K_XBOX_X			243
+#define K_XBOX_Y			244
+#define K_XBOX_LSHOULDER	245
+#define K_XBOX_RSHOULDER	246
+#define K_XBOX_LTRIGGER		247
+#define K_XBOX_RTRIGGER		248
+#define K_XBOX_LTHUMB		249
+#define K_XBOX_RTHUMB		250
+#define K_XBOX_START		251
+#define K_XBOX_BACK			252
+
 
 
 typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
