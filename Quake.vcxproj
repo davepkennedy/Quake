@@ -180,7 +180,6 @@
     <ClCompile Include="WinQuake\gl_rmisc.cpp" />
     <ClCompile Include="WinQuake\gl_rsurf.cpp" />
     <ClCompile Include="WinQuake\gl_screen.cpp" />
-    <ClCompile Include="WinQuake\gl_test.cpp" />
     <ClCompile Include="WinQuake\gl_vidnt.cpp" />
     <ClCompile Include="WinQuake\gl_warp.cpp" />
   </ItemGroup>
@@ -189,7 +188,6 @@
        Header files
        ================================================================ -->
   <ItemGroup>
-    <ClInclude Include="WinQuake\adivtab.h" />
     <ClInclude Include="WinQuake\anorm_dots.h" />
     <ClInclude Include="WinQuake\anorms.h" />
     <ClInclude Include="WinQuake\bspfile.h" />
@@ -201,7 +199,6 @@
     <ClInclude Include="WinQuake\console.h" />
     <ClInclude Include="WinQuake\crc.h" />
     <ClInclude Include="WinQuake\cvar.h" />
-    <ClInclude Include="WinQuake\d_iface.h" />
     <ClInclude Include="WinQuake\draw.h" />
     <ClInclude Include="WinQuake\gl_model.h" />
     <ClInclude Include="WinQuake\gl_warp_sin.h" />
@@ -210,7 +207,6 @@
     <ClInclude Include="WinQuake\keys.h" />
     <ClInclude Include="WinQuake\mathlib.h" />
     <ClInclude Include="WinQuake\menu.h" />
-    <ClInclude Include="WinQuake\model.h" />
     <ClInclude Include="WinQuake\modelgen.h" />
     <ClInclude Include="WinQuake\net.h" />
     <ClInclude Include="WinQuake\net_dgrm.h" />
@@ -223,8 +219,6 @@
     <ClInclude Include="WinQuake\progs.h" />
     <ClInclude Include="WinQuake\protocol.h" />
     <ClInclude Include="WinQuake\quakedef.h" />
-    <ClInclude Include="WinQuake\r_local.h" />
-    <ClInclude Include="WinQuake\r_shared.h" />
     <ClInclude Include="WinQuake\render.h" />
     <ClInclude Include="WinQuake\sbar.h" />
     <ClInclude Include="WinQuake\screen.h" />
@@ -245,86 +239,6 @@
        ================================================================ -->
   <ItemGroup>
     <ResourceCompile Include="WinQuake\winquake.rc" />
-  </ItemGroup>
-
-  <!-- ================================================================
-       Source files present in tree but excluded from this build
-       (software renderer, DOS/Linux/Sun platform, x86 ASM)
-       Included as None so they appear in Solution Explorer.
-       ================================================================ -->
-  <ItemGroup Label="SoftwareRenderer_Excluded">
-    <None Include="WinQuake\nonintel.cpp" />
-    <None Include="WinQuake\d_edge.cpp" />
-    <None Include="WinQuake\d_fill.cpp" />
-    <None Include="WinQuake\d_init.cpp" />
-    <None Include="WinQuake\d_modech.cpp" />
-    <None Include="WinQuake\d_part.cpp" />
-    <None Include="WinQuake\d_polyse.cpp" />
-    <None Include="WinQuake\d_scan.cpp" />
-    <None Include="WinQuake\d_sky.cpp" />
-    <None Include="WinQuake\d_sprite.cpp" />
-    <None Include="WinQuake\d_surf.cpp" />
-    <None Include="WinQuake\d_vars.cpp" />
-    <None Include="WinQuake\d_zpoint.cpp" />
-    <None Include="WinQuake\draw.cpp" />
-    <None Include="WinQuake\model.cpp" />
-    <None Include="WinQuake\r_aclip.cpp" />
-    <None Include="WinQuake\r_alias.cpp" />
-    <None Include="WinQuake\r_bsp.cpp" />
-    <None Include="WinQuake\r_draw.cpp" />
-    <None Include="WinQuake\r_edge.cpp" />
-    <None Include="WinQuake\r_efrag.cpp" />
-    <None Include="WinQuake\r_light.cpp" />
-    <None Include="WinQuake\r_main.cpp" />
-    <None Include="WinQuake\r_misc.cpp" />
-    <None Include="WinQuake\r_sky.cpp" />
-    <None Include="WinQuake\r_sprite.cpp" />
-    <None Include="WinQuake\r_surf.cpp" />
-    <None Include="WinQuake\r_vars.cpp" />
-    <None Include="WinQuake\screen.cpp" />
-    <None Include="WinQuake\vid_win.cpp" />
-  </ItemGroup>
-  <ItemGroup Label="Platform_Excluded">
-    <None Include="WinQuake\cd_linux.cpp" />
-    <None Include="WinQuake\cd_null.cpp" />
-    <None Include="WinQuake\dos_v2.cpp" />
-    <None Include="WinQuake\gl_vidlinux.cpp" />
-    <None Include="WinQuake\gl_vidlinuxglx.cpp" />
-    <None Include="WinQuake\in_dos.cpp" />
-    <None Include="WinQuake\in_null.cpp" />
-    <None Include="WinQuake\in_sun.cpp" />
-    <None Include="WinQuake\mplib.cpp" />
-    <None Include="WinQuake\mplpc.cpp" />
-    <None Include="WinQuake\net_bsd.cpp" />
-    <None Include="WinQuake\net_bw.cpp" />
-    <None Include="WinQuake\net_comx.cpp" />
-    <None Include="WinQuake\net_dos.cpp" />
-    <None Include="WinQuake\net_ipx.cpp" />
-    <None Include="WinQuake\net_mp.cpp" />
-    <None Include="WinQuake\net_none.cpp" />
-    <None Include="WinQuake\net_ser.cpp" />
-    <None Include="WinQuake\net_udp.cpp" />
-    <None Include="WinQuake\net_wso.cpp" />
-    <None Include="WinQuake\snd_dos.cpp" />
-    <None Include="WinQuake\snd_gus.cpp" />
-    <None Include="WinQuake\snd_linux.cpp" />
-    <None Include="WinQuake\snd_next.cpp" />
-    <None Include="WinQuake\snd_null.cpp" />
-    <None Include="WinQuake\snd_sun.cpp" />
-    <None Include="WinQuake\sys_dos.cpp" />
-    <None Include="WinQuake\sys_linux.cpp" />
-    <None Include="WinQuake\sys_null.cpp" />
-    <None Include="WinQuake\sys_sun.cpp" />
-    <None Include="WinQuake\sys_wind.cpp" />
-    <None Include="WinQuake\vid_dos.cpp" />
-    <None Include="WinQuake\vid_ext.cpp" />
-    <None Include="WinQuake\vid_null.cpp" />
-    <None Include="WinQuake\vid_sunx.cpp" />
-    <None Include="WinQuake\vid_sunxil.cpp" />
-    <None Include="WinQuake\vid_svgalib.cpp" />
-    <None Include="WinQuake\vid_vga.cpp" />
-    <None Include="WinQuake\vid_x.cpp" />
-    <None Include="WinQuake\vregset.cpp" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
