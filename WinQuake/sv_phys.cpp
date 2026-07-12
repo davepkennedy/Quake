@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 /*
 
 
@@ -190,25 +193,27 @@ returns the blocked flags (1 = floor, 2 = step / wall)
 int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce)
 {
 	float	backoff;
-	float	change;
 	int		i, blocked;
-	
+
 	blocked = 0;
 	if (normal[2] > 0)
 		blocked |= 1;		// floor
 	if (!normal[2])
 		blocked |= 2;		// step
-	
+
 	backoff = DotProduct (in, normal) * overbounce;
+
+	{
+		glm::vec3 result = glm::make_vec3(in) - glm::make_vec3(normal) * backoff;
+		out[0] = result.x; out[1] = result.y; out[2] = result.z;
+	}
 
 	for (i=0 ; i<3 ; i++)
 	{
-		change = normal[i]*backoff;
-		out[i] = in[i] - change;
 		if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
 			out[i] = 0;
 	}
-	
+
 	return blocked;
 }
 
@@ -867,23 +872,21 @@ SV_WallFriction
 void SV_WallFriction (edict_t *ent, trace_t *trace)
 {
 	vec3_t		forward, right, up;
-	float		d, i;
-	vec3_t		into, side;
-	
+	float		d;
+
 	AngleVectors (ent->v.v_angle, forward, right, up);
 	d = DotProduct (trace->plane.normal, forward);
-	
+
 	d += 0.5;
 	if (d >= 0)
 		return;
-		
+
 // cut the tangential velocity
-	i = DotProduct (trace->plane.normal, ent->v.velocity);
-	VectorScale (trace->plane.normal, i, into);
-	VectorSubtract (ent->v.velocity, into, side);
-	
-	ent->v.velocity[0] = side[0] * (1 + d);
-	ent->v.velocity[1] = side[1] * (1 + d);
+	glm::vec3 normal = glm::make_vec3(trace->plane.normal);
+	glm::vec3 side = glm::make_vec3(ent->v.velocity) - normal * glm::dot (normal, glm::make_vec3(ent->v.velocity));
+
+	ent->v.velocity[0] = side.x * (1 + d);
+	ent->v.velocity[1] = side.y * (1 + d);
 }
 
 /*

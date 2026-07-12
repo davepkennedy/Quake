@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 /*
 
 entities never clip against themselves, or their owner
@@ -584,7 +587,6 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 	mplane_t	*plane;
 	float		t1, t2;
 	float		frac;
-	int			i;
 	vec3_t		mid;
 	int			side;
 	float		midf;
@@ -648,8 +650,10 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 		frac = 1;
 		
 	midf = p1f + (p2f - p1f)*frac;
-	for (i=0 ; i<3 ; i++)
-		mid[i] = p1[i] + frac*(p2[i] - p1[i]);
+	{
+		glm::vec3 result = glm::mix (glm::make_vec3(p1), glm::make_vec3(p2), frac);
+		mid[0] = result.x; mid[1] = result.y; mid[2] = result.z;
+	}
 
 	side = (t1 < 0);
 
@@ -700,8 +704,8 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 			return false;
 		}
 		midf = p1f + (p2f - p1f)*frac;
-		for (i=0 ; i<3 ; i++)
-			mid[i] = p1[i] + frac*(p2[i] - p1[i]);
+		glm::vec3 result = glm::mix (glm::make_vec3(p1), glm::make_vec3(p2), frac);
+		mid[0] = result.x; mid[1] = result.y; mid[2] = result.z;
 	}
 
 	trace->fraction = midf;
