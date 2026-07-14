@@ -154,7 +154,7 @@ void PR_PrintStatement (dstatement_t *s)
 	if ( (unsigned)s->op < sizeof(pr_opnames)/sizeof(pr_opnames[0]))
 	{
 		Con_Printf ("%s ",  pr_opnames[s->op]);
-		i = strlen(pr_opnames[s->op]);
+		i = (int)strlen(pr_opnames[s->op]);
 		for ( ; i<10 ; i++)
 			Con_Printf (" ");
 	}

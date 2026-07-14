@@ -736,10 +736,10 @@ void M_Setup_Draw (void)
 	M_DrawCharacter (56, setup_cursor_table [setup_cursor], 12+((int)(realtime*4)&1));
 
 	if (setup_cursor == 0)
-		M_DrawCharacter (168 + 8*strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*(int)strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
 
 	if (setup_cursor == 1)
-		M_DrawCharacter (168 + 8*strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*(int)strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
 }
 
 
@@ -824,7 +824,7 @@ forward:
 			break;
 		if (setup_cursor == 0)
 		{
-			l = strlen(setup_hostname);
+			l = (int)strlen(setup_hostname);
 			if (l < 15)
 			{
 				setup_hostname[l+1] = 0;
@@ -833,7 +833,7 @@ forward:
 		}
 		if (setup_cursor == 1)
 		{
-			l = strlen(setup_myname);
+			l = (int)strlen(setup_myname);
 			if (l < 15)
 			{
 				setup_myname[l+1] = 0;
@@ -1355,7 +1355,7 @@ void M_FindKeysForCommand (const char *command, int *twokeys)
 	int		l;
 
 	twokeys[0] = twokeys[1] = -1;
-	l = strlen(command);
+	l = (int)strlen(command);
 	count = 0;
 
 	for (j=0 ; j<256 ; j++)
@@ -1377,7 +1377,7 @@ void M_UnbindCommand (const char *command)
 	int		j;
 	int		l;
 
-	l = strlen(command);
+	l = (int)strlen(command);
 
 	for (j=0 ; j<256 ; j++)
 	{
@@ -1412,7 +1412,7 @@ void M_Keys_Draw (void)
 
 		M_Print (16, y, bindnames[i][1]);
 
-		l = strlen (bindnames[i][0]);
+		l = (int)strlen (bindnames[i][0]);
 
 		M_FindKeysForCommand (bindnames[i][0], keys);
 
@@ -1424,7 +1424,7 @@ void M_Keys_Draw (void)
 		{
 			name = Key_KeynumToString (keys[0]);
 			M_Print (140, y, name);
-			x = strlen(name) * 8;
+			x = (int)strlen(name) * 8;
 			if (keys[1] != -1)
 			{
 				M_Print (140 + x + 8, y, "or");
@@ -1828,7 +1828,7 @@ void M_SerialConfig_Draw (void)
 	M_DrawCharacter (basex-8, serialConfig_cursor_table [serialConfig_cursor], 12+((int)(realtime*4)&1));
 
 	if (serialConfig_cursor == 4)
-		M_DrawCharacter (168 + 8*strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (168 + 8*(int)strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
@@ -1977,7 +1977,7 @@ forward:
 			break;
 		if (serialConfig_cursor == 4)
 		{
-			l = strlen(serialConfig_phone);
+			l = (int)strlen(serialConfig_phone);
 			if (l < 15)
 			{
 				serialConfig_phone[l+1] = 0;
@@ -2040,19 +2040,19 @@ void M_ModemConfig_Draw (void)
 	M_DrawTextBox (basex, modemConfig_cursor_table[1]+4, 16, 1);
 	M_Print (basex+8, modemConfig_cursor_table[1]+12, modemConfig_clear);
 	if (modemConfig_cursor == 1)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[2], "Init");
 	M_DrawTextBox (basex, modemConfig_cursor_table[2]+4, 30, 1);
 	M_Print (basex+8, modemConfig_cursor_table[2]+12, modemConfig_init);
 	if (modemConfig_cursor == 2)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[3], "Hangup");
 	M_DrawTextBox (basex, modemConfig_cursor_table[3]+4, 16, 1);
 	M_Print (basex+8, modemConfig_cursor_table[3]+12, modemConfig_hangup);
 	if (modemConfig_cursor == 3)
-		M_DrawCharacter (basex+8 + 8*strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
 
 	M_DrawTextBox (basex, modemConfig_cursor_table[4]-8, 2, 1);
 	M_Print (basex+8, modemConfig_cursor_table[4], "OK");
@@ -2141,7 +2141,7 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 1)
 		{
-			l = strlen(modemConfig_clear);
+			l = (int)strlen(modemConfig_clear);
 			if (l < 15)
 			{
 				modemConfig_clear[l+1] = 0;
@@ -2151,7 +2151,7 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 2)
 		{
-			l = strlen(modemConfig_init);
+			l = (int)strlen(modemConfig_init);
 			if (l < 29)
 			{
 				modemConfig_init[l+1] = 0;
@@ -2161,7 +2161,7 @@ void M_ModemConfig_Key (int key)
 
 		if (modemConfig_cursor == 3)
 		{
-			l = strlen(modemConfig_hangup);
+			l = (int)strlen(modemConfig_hangup);
 			if (l < 15)
 			{
 				modemConfig_hangup[l+1] = 0;
@@ -2253,10 +2253,10 @@ void M_LanConfig_Draw (void)
 	M_DrawCharacter (basex-8, lanConfig_cursor_table [lanConfig_cursor], 12+((int)(realtime*4)&1));
 
 	if (lanConfig_cursor == 0)
-		M_DrawCharacter (basex+9*8 + 8*strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+9*8 + 8*(int)strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
 
 	if (lanConfig_cursor == 2)
-		M_DrawCharacter (basex+16 + 8*strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
+		M_DrawCharacter (basex+16 + 8*(int)strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
@@ -2338,7 +2338,7 @@ void M_LanConfig_Key (int key)
 
 		if (lanConfig_cursor == 2)
 		{
-			l = strlen(lanConfig_joinname);
+			l = (int)strlen(lanConfig_joinname);
 			if (l < 21)
 			{
 				lanConfig_joinname[l+1] = 0;
@@ -2350,7 +2350,7 @@ void M_LanConfig_Key (int key)
 			break;
 		if (lanConfig_cursor == 0)
 		{
-			l = strlen(lanConfig_portname);
+			l = (int)strlen(lanConfig_portname);
 			if (l < 5)
 			{
 				lanConfig_portname[l+1] = 0;

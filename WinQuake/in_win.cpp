@@ -726,7 +726,7 @@ IN_StartupJoystick
 */  
 void IN_StartupJoystick (void) 
 { 
-	int			i, numdevs;
+	int			numdevs;
 	JOYCAPS		jc;
 	MMRESULT	mmr;
  
@@ -809,6 +809,8 @@ PDWORD RawValuePointer (int axis)
 		return &ji.dwUpos;
 	case JOY_AXIS_V:
 		return &ji.dwVpos;
+	default:
+		Sys_Error ("RawValuePointer: invalid axis %d", axis);
 	}
 }
 
@@ -904,7 +906,7 @@ void IN_Commands (void)
 	// loop through the joystick buttons
 	// key a joystick event or auxillary event for higher number buttons for each state change
 	buttonstate = ji.dwButtons;
-	for (i=0 ; i < joy_numbuttons ; i++)
+	for (i=0 ; i < (int)joy_numbuttons ; i++)
 	{
 		if ( (buttonstate & (1<<i)) && !(joy_oldbuttonstate & (1<<i)) )
 		{

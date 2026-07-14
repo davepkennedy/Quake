@@ -726,16 +726,14 @@ R_DrawAliasModel
 */
 void R_DrawAliasModel (entity_t *e)
 {
-	int			i, j;
+	int			i;
 	int			lnum;
 	vec3_t		dist;
 	float		add;
 	model_t		*clmodel;
 	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
-	trivertx_t	*verts, *v;
-	int			index;
-	float		s, t, an;
+	float		an;
 	int			anim;
 
 	clmodel = currententity->model;
@@ -1075,10 +1073,6 @@ R_SetupFrame
 */
 void R_SetupFrame (void)
 {
-	int				edgecount;
-	vrect_t			vrect;
-	float			w, h;
-
 // don't allow cheats in multiplayer
 	if (cl.maxclients > 1)
 		Cvar_Set ("r_fullbright", "0");
@@ -1130,8 +1124,6 @@ R_SetupGL
 void R_SetupGL (void)
 {
 	float	screenaspect;
-	float	yfov;
-	int		i;
 	extern	int glwidth, glheight;
 	int		x, x2, y2, y, w, h;
 
@@ -1265,7 +1257,7 @@ void R_Clear (void)
 		if (trickframe & 1)
 		{
 			gldepthmin = 0;
-			gldepthmax = 0.49999;
+			gldepthmax = 0.49999f;
 			glDepthFunc (GL_LEQUAL);
 		}
 		else

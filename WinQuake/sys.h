@@ -46,7 +46,7 @@ void Sys_MakeCodeWriteable (size_t startaddr, size_t length);
 //
 void Sys_DebugLog(const char *file, const char *fmt, ...);
 
-void Sys_Error (const char *error, ...);
+[[noreturn]] void Sys_Error (const char *error, ...);
 // an error will cause the entire program to exit
 
 void Sys_Printf (const char *fmt, ...);

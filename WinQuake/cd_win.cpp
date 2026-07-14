@@ -245,7 +245,6 @@ static void CD_f (void)
 	const char	*command;
 	int		ret;
 	int		n;
-	int		startAddress;
 
 	if (Cmd_Argc() < 2)
 		return;

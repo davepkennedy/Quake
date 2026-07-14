@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int			starttime;
 qboolean	ActiveApp, Minimized;
-qboolean	WinNT;
 
 /*
 ==================
@@ -99,7 +98,7 @@ Sys_PageIn
 void Sys_PageIn (void *ptr, size_t size)
 {
 	byte	*x;
-	size_t	j, m, n;
+	size_t	m, n;
 
 // touch all the memory to make sure it's there. The 16-page skip is to
 // keep Win 95 from thinking we're trying to page ourselves in (we are
@@ -235,7 +234,7 @@ int Sys_FileRead (int handle, void *dest, int count)
 	int		t, x;
 
 	t = VID_ForceUnlockedAndReturnState ();
-	x = fread (dest, 1, count, sys_handles[handle]);
+	x = (int)fread (dest, 1, count, sys_handles[handle]);
 	VID_ForceLockState (t);
 	return x;
 }
@@ -245,7 +244,7 @@ int Sys_FileWrite (int handle, const void *data, int count)
 	int		t, x;
 
 	t = VID_ForceUnlockedAndReturnState ();
-	x = fwrite (data, 1, count, sys_handles[handle]);
+	x = (int)fwrite (data, 1, count, sys_handles[handle]);
 	VID_ForceLockState (t);
 	return x;
 }
@@ -330,7 +329,6 @@ void Sys_Init (void)
 {
 	LARGE_INTEGER	PerformanceFreq;
 	unsigned int	lowpart, highpart;
-	OSVERSIONINFO	vinfo;
 
 	MaskExceptions ();
 	Sys_SetFPCW ();
@@ -355,26 +353,10 @@ void Sys_Init (void)
 	pfreq = 1.0 / (double)lowpart;
 
 	Sys_InitFloatTime ();
-
-	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
-
-	if (!GetVersionEx (&vinfo))
-		Sys_Error ("Couldn't get OS info");
-
-	if ((vinfo.dwMajorVersion < 4) ||
-		(vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
-	{
-		Sys_Error ("WinQuake requires at least Win95 or NT 4.0");
-	}
-
-	if (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
-		WinNT = true;
-	else
-		WinNT = false;
 }
 
 
-void Sys_Error (const char *error, ...)
+[[noreturn]] void Sys_Error (const char *error, ...)
 {
 	va_list		argptr;
 	char		text[1024], text2[1024];
@@ -405,11 +387,11 @@ void Sys_Error (const char *error, ...)
 		va_end (argptr);
 
 		sprintf (text2, "ERROR: %s\n", text);
-		WriteFile (houtput, text5, strlen (text5), &dummy, NULL);
-		WriteFile (houtput, text4, strlen (text4), &dummy, NULL);
-		WriteFile (houtput, text2, strlen (text2), &dummy, NULL);
-		WriteFile (houtput, text3, strlen (text3), &dummy, NULL);
-		WriteFile (houtput, text4, strlen (text4), &dummy, NULL);
+		WriteFile (houtput, text5, (DWORD)strlen (text5), &dummy, NULL);
+		WriteFile (houtput, text4, (DWORD)strlen (text4), &dummy, NULL);
+		WriteFile (houtput, text2, (DWORD)strlen (text2), &dummy, NULL);
+		WriteFile (houtput, text3, (DWORD)strlen (text3), &dummy, NULL);
+		WriteFile (houtput, text4, (DWORD)strlen (text4), &dummy, NULL);
 
 
 		starttime = Sys_FloatTime ();
@@ -466,7 +448,7 @@ void Sys_Printf (const char *fmt, ...)
 		vsprintf (text, fmt, argptr);
 		va_end (argptr);
 
-		WriteFile(houtput, text, strlen (text), &dummy, NULL);	
+		WriteFile(houtput, text, (DWORD)strlen (text), &dummy, NULL);
 	}
 }
 
@@ -590,8 +572,6 @@ char *Sys_ConsoleInput (void)
 	static char	text[256];
 	static int		len;
 	INPUT_RECORD	recs[1024];
-	int		count;
-	int		i;
 	int		ch;
 	DWORD	dummy, numread, numevents;
 
@@ -725,7 +705,6 @@ HWND		hwnd_dialog;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    MSG				msg;
 	quakeparms_t	parms;
 	double			time, oldtime, newtime;
 	MEMORYSTATUSEX	lpBuffer;

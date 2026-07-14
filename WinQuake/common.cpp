@@ -1776,7 +1776,7 @@ void COM_InitFilesystem (void)
 	else
 		strcpy (basedir, host_parms.basedir);
 
-	j = strlen (basedir);
+	j = (int)strlen (basedir);
 
 	if (j > 0)
 	{

@@ -1251,10 +1251,10 @@ Mod_LoadAliasFrame
 */
 void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 {
-	trivertx_t		*pframe, *pinframe;
-	int				i, j;
+	trivertx_t		*pinframe;
+	int				i;
 	daliasframe_t	*pdaliasframe;
-	
+
 	pdaliasframe = (daliasframe_t *)pin;
 
 	strcpy (frame->name, pdaliasframe->name);
@@ -1266,7 +1266,7 @@ void * Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame)
 	// these are byte values, so we don't have to worry about
 	// endianness
 		frame->bboxmin.v[i] = pdaliasframe->bboxmin.v[i];
-		frame->bboxmin.v[i] = pdaliasframe->bboxmax.v[i];
+		frame->bboxmax.v[i] = pdaliasframe->bboxmax.v[i];
 	}
 
 	pinframe = (trivertx_t *)(pdaliasframe + 1);
@@ -1303,7 +1303,7 @@ void *Mod_LoadAliasGroup (void * pin,  maliasframedesc_t *frame)
 	{
 	// these are byte values, so we don't have to worry about endianness
 		frame->bboxmin.v[i] = pingroup->bboxmin.v[i];
-		frame->bboxmin.v[i] = pingroup->bboxmax.v[i];
+		frame->bboxmax.v[i] = pingroup->bboxmax.v[i];
 	}
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
@@ -1413,7 +1413,6 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	int		i, j, k;
 	char	name[32];
 	int		s;
-	byte	*copy;
 	byte	*skin;
 	byte	*texels;
 	daliasskingroup_t		*pinskingroup;
@@ -1492,7 +1491,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	mdl_t				*pinmodel;
 	stvert_t			*pinstverts;
 	dtriangle_t			*pintriangles;
-	int					version, numframes, numskins;
+	int					version, numframes;
 	int					size;
 	daliasframetype_t	*pframetype;
 	daliasskintype_t	*pskintype;
@@ -1656,9 +1655,7 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 {
 	dspriteframe_t		*pinframe;
 	mspriteframe_t		*pspriteframe;
-	int					i, width, height, size, origin[2];
-	unsigned short		*ppixout;
-	byte				*ppixin;
+	int					width, height, size, origin[2];
 	char				name[64];
 
 	pinframe = (dspriteframe_t *)pin;

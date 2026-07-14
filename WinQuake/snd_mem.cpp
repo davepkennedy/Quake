@@ -224,22 +224,6 @@ void FindChunk(const char *name)
 }
 
 
-void DumpChunks(void)
-{
-	char	str[5];
-	
-	str[4] = 0;
-	data_p=iff_data;
-	do
-	{
-		memcpy (str, data_p, 4);
-		data_p += 4;
-		iff_chunk_len = GetLittleLong();
-		Con_Printf ("0x%x : %s (%d)\n", (int)(data_p - 4), str, iff_chunk_len);
-		data_p += (iff_chunk_len + 1) & ~1;
-	} while (data_p < iff_end);
-}
-
 /*
 ============
 GetWavinfo
@@ -270,7 +254,6 @@ wavinfo_t GetWavinfo (const char *name, byte *wav, int wavlength)
 
 // get "fmt " chunk
 	iff_data = data_p + 12;
-// DumpChunks ();
 
 	FindChunk("fmt ");
 	if (!data_p)

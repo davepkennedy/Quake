@@ -32,7 +32,13 @@ ALIAS MODEL DISPLAY LIST GENERATION
 model_t		*aliasmodel;
 aliashdr_t	*paliashdr;
 
-qboolean	used[8192];
+// 3-state, not a real bool: 0 = unused, 1 = committed to a strip/fan,
+// 2 = temporarily marked during StripLength/FanLength's exploration of a
+// candidate (cleared back to 0 before returning). Must stay a wide-enough
+// integer type -- qboolean is a real bool here, and silently collapsing
+// the "2" state into "1" (true) would leave temp marks uncleared, corrupting
+// later exploration passes within the same BuildTris() call.
+byte	used[8192];
 
 // the command list holds counts and s/t values that are valid for
 // every frame
@@ -199,13 +205,7 @@ void BuildTris (void)
 {
 	int		i, j, k;
 	int		startv;
-	mtriangle_t	*last, *check;
-	int		m1, m2;
-	int		striplength;
-	trivertx_t	*v;
-	mtriangle_t *tv;
 	float	s, t;
-	int		index;
 	int		len, bestlen, besttype;
 	int		bestverts[1024];
 	int		besttris[1024];
@@ -265,8 +265,8 @@ void BuildTris (void)
 			t = stverts[k].t;
 			if (!triangles[besttris[0]].facesfront && stverts[k].onseam)
 				s += pheader->skinwidth / 2;	// on back side
-			s = (s + 0.5) / pheader->skinwidth;
-			t = (t + 0.5) / pheader->skinheight;
+			s = (s + 0.5f) / pheader->skinwidth;
+			t = (t + 0.5f) / pheader->skinheight;
 
 			*(float *)&commands[numcommands++] = s;
 			*(float *)&commands[numcommands++] = t;
@@ -290,13 +290,10 @@ GL_MakeAliasModelDisplayLists
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 {
 	int		i, j;
-	maliasgroup_t	*paliasgroup;
 	int			*cmds;
 	trivertx_t	*verts;
-	char	cache[MAX_QPATH], fullpath[MAX_OSPATH], *c;
+	char	cache[MAX_QPATH], fullpath[MAX_OSPATH];
 	FILE	*f;
-	int		len;
-	byte	*data;
 
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);

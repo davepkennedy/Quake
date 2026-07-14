@@ -269,7 +269,7 @@ void SV_WaterMove (void)
 		VectorScale (wishvel, sv_maxspeed.value/wishspeed, wishvel);
 		wishspeed = sv_maxspeed.value;
 	}
-	wishspeed *= 0.7;
+	wishspeed *= 0.7f;
 
 //
 // water friction

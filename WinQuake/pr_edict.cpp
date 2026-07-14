@@ -396,11 +396,11 @@ const char *PR_GlobalString (int ofs)
 		sprintf (line,"%i(%s)%s", ofs, pr_strings + def->s_name, s);
 	}
 	
-	i = strlen(line);
+	i = (int)strlen(line);
 	for ( ; i<20 ; i++)
 		strcat (line," ");
 	strcat (line," ");
-		
+
 	return line;
 }
 
@@ -416,7 +416,7 @@ const char *PR_GlobalStringNoContents (int ofs)
 	else
 		sprintf (line,"%i(%s)", ofs, pr_strings + def->s_name);
 	
-	i = strlen(line);
+	i = (int)strlen(line);
 	for ( ; i<20 ; i++)
 		strcat (line," ");
 	strcat (line," ");
@@ -467,7 +467,7 @@ void ED_Print (edict_t *ed)
 			continue;
 	
 		Con_Printf ("%s",name);
-		l = strlen (name);
+		l = (int)strlen (name);
 		while (l++ < 15)
 			Con_Printf (" ");
 
@@ -695,7 +695,7 @@ char *ED_NewString (const char *string)
 	char	*newstr, *new_p;
 	int		i,l;
 
-	l = strlen(string) + 1;
+	l = (int)strlen(string) + 1;
 	newstr = (char *)Hunk_Alloc (l);
 	new_p = newstr;
 
@@ -840,7 +840,7 @@ if (!strcmp(com_token, "light"))
 		Q_strlcpy (keyname, com_token, sizeof(keyname));
 
 		// another hack to fix heynames with trailing spaces
-		n = strlen(keyname);
+		n = (int)strlen(keyname);
 		while (n && keyname[n-1] == ' ')
 		{
 			keyname[n-1] = 0;

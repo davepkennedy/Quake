@@ -366,7 +366,7 @@ SND_Spatialize
 void SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
-    vec_t ldist, rdist, dist;
+    vec_t dist;
     vec_t lscale, rscale, scale;
     vec3_t source_vec;
 	sfx_t *snd;
@@ -802,7 +802,7 @@ void S_Update_(void)
 // mix ahead of current position
 	endtime = sound.time + _snd_mixahead.value * shm->speed;
 	samps = shm->samples >> (shm->channels-1);
-	if (endtime - sound.time > samps)
+	if (endtime - sound.time > (unsigned)samps)
 		endtime = sound.time + samps;
 
 	S_PaintChannels (endtime);
