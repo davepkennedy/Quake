@@ -213,6 +213,7 @@
     <ClInclude Include="WinQuake\net_loop.h" />
     <ClInclude Include="WinQuake\net_vcr.h" />
     <ClInclude Include="WinQuake\net_wins.h" />
+    <ClInclude Include="WinQuake\net_wins_internal.h" />
     <ClInclude Include="WinQuake\net_wipx.h" />
     <ClInclude Include="WinQuake\pr_comp.h" />
     <ClInclude Include="WinQuake\progdefs.h" />
@@ -223,6 +224,7 @@
     <ClInclude Include="WinQuake\sbar.h" />
     <ClInclude Include="WinQuake\screen.h" />
     <ClInclude Include="WinQuake\server.h" />
+    <ClInclude Include="WinQuake\snd_internal.h" />
     <ClInclude Include="WinQuake\sound.h" />
     <ClInclude Include="WinQuake\spritegn.h" />
     <ClInclude Include="WinQuake\sys.h" />

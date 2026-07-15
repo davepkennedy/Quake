@@ -80,7 +80,6 @@ const char *gl_renderer;
 const char *gl_version;
 const char *gl_extensions;
 
-qboolean		DDActive;
 qboolean		scr_skipupdate;
 
 static vmode_t	modelist[MAX_MODE_LIST];
@@ -168,8 +167,23 @@ cvar_t		vid_config_y = {"vid_config_y","600", true};
 cvar_t		vid_stretch_by_2 = {"vid_stretch_by_2","1", true};
 cvar_t		_windowed_mouse = {"_windowed_mouse","1", true};
 
-int			window_center_x, window_center_y, window_x, window_y, window_width, window_height;
-RECT		window_rect;
+static int	window_center_x, window_center_y, window_x, window_y, window_width, window_height;
+static RECT	window_rect;
+
+// Window geometry is owned here (Video) but also needed by in_win.cpp's
+// cursor-warp fallback (clip the cursor to the window, warp it back to
+// center) -- exposed through these two accessors instead of externing the
+// raw globals, so Input can't come to depend on the exact representation.
+void VID_GetWindowCenter (int *x, int *y)
+{
+	*x = window_center_x;
+	*y = window_center_y;
+}
+
+const RECT *VID_GetWindowRect (void)
+{
+	return &window_rect;
+}
 
 // direct draw software compatability stuff
 
@@ -203,7 +217,7 @@ void D_EndDirectRect (int x, int y, int width, int height)
 }
 
 
-void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify)
+static void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify)
 {
     int     CenterX, CenterY;
 
@@ -1899,7 +1913,7 @@ void	VID_Init (unsigned char *palette)
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 
-	DestroyWindow (hwnd_dialog);
+	Sys_CloseSplashDialog ();
 
 	Check_Gamma(palette);
 	VID_SetPalette (palette);

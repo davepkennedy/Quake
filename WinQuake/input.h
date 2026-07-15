@@ -34,3 +34,16 @@ void IN_ClearStates (void);
 
 void IN_Accumulate (void);
 
+// mouse show/hide/capture state, driven by focus and menu/console changes
+// elsewhere in the app -- these mutate in_win.cpp's own internal mouse
+// state, which nothing outside this file touches directly
+void IN_ShowMouse (void);
+void IN_HideMouse (void);
+void IN_ActivateMouse (void);
+void IN_DeactivateMouse (void);
+void IN_RestoreOriginalMouseState (void);
+void IN_SetQuakeMouseState (void);
+void IN_MouseEvent (int mstate);
+void IN_RawMouseMoved (int dx, int dy);
+void IN_UpdateClipCursor (void);
+

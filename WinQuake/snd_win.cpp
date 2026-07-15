@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // ahead of playback it's safe to paint.
 
 #include "quakedef.h"
+#include "snd_internal.h"
 #include "winquake.h"
 
 #include <mmdeviceapi.h>

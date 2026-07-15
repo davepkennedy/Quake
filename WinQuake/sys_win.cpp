@@ -73,7 +73,7 @@ static double		lastcurtime = 0.0;
 static int			lowshift;
 qboolean			isDedicated;
 static qboolean		sc_return_on_enter = false;
-HANDLE				hinput, houtput;
+static HANDLE		hinput, houtput;
 
 static const char	*tracking_tag = "Clams & Mooses";
 
@@ -700,7 +700,19 @@ HINSTANCE	global_hInstance;
 int			global_nCmdShow;
 const char	*argv[MAX_NUM_ARGVS];
 static const char *empty_string = "";
-HWND		hwnd_dialog;
+static HWND	hwnd_dialog;
+
+// the startup splash dialog is created here, but torn down by Video once
+// the real GL window is up -- exposed as a one-shot action instead of the
+// raw HWND, so Video can't do anything to the dialog except close it
+void Sys_CloseSplashDialog (void)
+{
+	if (hwnd_dialog)
+	{
+		DestroyWindow (hwnd_dialog);
+		hwnd_dialog = NULL;
+	}
+}
 
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -887,12 +899,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		else
 		{
 		// yield the CPU for a little while when paused, minimized, or not the focus
-			if ((cl.paused && (!ActiveApp && !DDActive)) || Minimized || block_drawing)
+			if ((cl.paused && !ActiveApp) || Minimized || block_drawing)
 			{
 				SleepUntilInput (PAUSE_SLEEP);
 				scr_skipupdate = 1;		// no point in bothering to draw
 			}
-			else if (!ActiveApp && !DDActive)
+			else if (!ActiveApp)
 			{
 				SleepUntilInput (NOT_FOCUS_SLEEP);
 			}

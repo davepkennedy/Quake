@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define WM_MOUSEWHEEL 0x020A
 
 #ifndef SERVERONLY
-#include <ddraw.h>
 #ifndef GLQUAKE
 #include <mgraph.h>
 #endif
@@ -34,77 +33,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern HINSTANCE global_hInstance;
 extern int global_nCmdShow;
 
-#ifndef SERVERONLY
-
-extern LPDIRECTDRAW lpDD;
-extern qboolean DDActive;
-extern LPDIRECTDRAWSURFACE lpPrimary;
-extern LPDIRECTDRAWSURFACE lpFrontBuffer;
-extern LPDIRECTDRAWSURFACE lpBackBuffer;
-extern LPDIRECTDRAWPALETTE lpDDPal;
-
-void VID_LockBuffer(void);
-void VID_UnlockBuffer(void);
-
-#endif
-
-typedef enum
-{
-    MS_WINDOWED,
-    MS_FULLSCREEN,
-    MS_FULLDIB,
-    MS_UNINIT
-} modestate_t;
-
-extern modestate_t modestate;
-
 extern HWND mainwindow;
 extern qboolean ActiveApp, Minimized;
 
-int VID_ForceUnlockedAndReturnState(void);
-void VID_ForceLockState(int lk);
+// startup splash dialog: created in sys_win.cpp, torn down by Video once
+// the real GL window is up. Exposed as a one-shot action rather than the
+// raw HWND.
+void Sys_CloseSplashDialog (void);
 
-void IN_ShowMouse(void);
-void IN_DeactivateMouse(void);
-void IN_HideMouse(void);
-void IN_ActivateMouse(void);
-void IN_RestoreOriginalMouseState(void);
-void IN_SetQuakeMouseState(void);
-void IN_MouseEvent(int mstate);
-void IN_RawMouseMoved(int dx, int dy);
+// window geometry, owned and computed by Video (gl_vidnt.cpp) but also
+// needed by in_win.cpp's cursor-warp mouse-look fallback. RECT-typed, so
+// these live here (the Win32-specific header) rather than in vid.h.
+void VID_GetWindowCenter (int *x, int *y);
+const RECT *VID_GetWindowRect (void);
 
-extern qboolean winsock_lib_initialized;
-
+// Video's cvar, declared here rather than vid.h -- vid.h is included (via
+// quakedef.h) before cvar.h, so cvar_t isn't a known type there yet
 extern cvar_t _windowed_mouse;
-
-extern int window_center_x, window_center_y;
-extern RECT window_rect;
-
-extern qboolean mouseinitialized;
-extern HWND hwnd_dialog;
-
-extern HANDLE hinput, houtput;
-
-void IN_UpdateClipCursor(void);
-void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify);
-
-void S_BlockSound(void);
-void S_UnblockSound(void);
-
-void VID_SetDefaultMode(void);
-
-extern int(PASCAL FAR *pWSAStartup)(WORD wVersionRequired, LPWSADATA lpWSAData);
-extern int(PASCAL FAR *pWSACleanup)(void);
-extern int(PASCAL FAR *pWSAGetLastError)(void);
-extern SOCKET(PASCAL FAR *psocket)(int af, int type, int protocol);
-extern int(PASCAL FAR *pioctlsocket)(SOCKET s, long cmd, u_long FAR *argp);
-extern int(PASCAL FAR *psetsockopt)(SOCKET s, int level, int optname, const char FAR *optval, int optlen);
-extern int(PASCAL FAR *precvfrom)(SOCKET s, char FAR *buf, int len, int flags, struct sockaddr FAR *from,
-                                  int FAR *fromlen);
-extern int(PASCAL FAR *psendto)(SOCKET s, const char FAR *buf, int len, int flags, const struct sockaddr FAR *to,
-                                int tolen);
-extern int(PASCAL FAR *pclosesocket)(SOCKET s);
-extern int(PASCAL FAR *pgethostname)(char FAR *name, int namelen);
-extern struct hostent FAR *(PASCAL FAR *pgethostbyname)(const char FAR *name);
-extern struct hostent FAR *(PASCAL FAR *pgethostbyaddr)(const char FAR *addr, int len, int type);
-extern int(PASCAL FAR *pgetsockname)(SOCKET s, struct sockaddr FAR *name, int FAR *namelen);

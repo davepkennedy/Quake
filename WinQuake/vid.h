@@ -59,6 +59,24 @@ extern	unsigned	d_8to24table[256];
 extern void (*vid_menudrawfn)(void);
 extern void (*vid_menukeyfn)(int key);
 
+typedef enum
+{
+    MS_WINDOWED,
+    MS_FULLSCREEN,
+    MS_FULLDIB,
+    MS_UNINIT
+} modestate_t;
+
+extern modestate_t modestate;
+// _windowed_mouse cvar declared in winquake.h -- vid.h is included (via
+// quakedef.h) before cvar.h, so cvar_t isn't a known type here yet
+
+int VID_ForceUnlockedAndReturnState (void);
+void VID_ForceLockState (int lk);
+void VID_LockBuffer (void);
+void VID_UnlockBuffer (void);
+void VID_SetDefaultMode (void);
+
 void	VID_SetPalette (unsigned char *palette);
 // called at startup and after any gamma correction
 

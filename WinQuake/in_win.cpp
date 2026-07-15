@@ -36,7 +36,7 @@ static int		originalmouseparms[3], newmouseparms[3] = {0, 0, 1};
 
 unsigned int uiWheelMessage;
 qboolean	mouseactive;
-qboolean		mouseinitialized;
+static qboolean	mouseinitialized;
 static qboolean	mouseparmsvalid, mouseactivatetoggle;
 static qboolean	mouseshowtoggle = 1;
 
@@ -316,7 +316,7 @@ void IN_UpdateClipCursor (void)
 
 	if (mouseinitialized && mouseactive)
 	{
-		ClipCursor (&window_rect);
+		ClipCursor (VID_GetWindowRect ());
 	}
 }
 
@@ -369,9 +369,13 @@ void IN_ActivateMouse (void)
 			restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
 
 		if (!rawinput_active)
-			SetCursorPos (window_center_x, window_center_y);
+		{
+			int cx, cy;
+			VID_GetWindowCenter (&cx, &cy);
+			SetCursorPos (cx, cy);
+		}
 		SetCapture (mainwindow);
-		ClipCursor (&window_rect);
+		ClipCursor (VID_GetWindowRect ());
 
 		mouseactive = true;
 	}
@@ -586,6 +590,7 @@ IN_MouseMove
 void IN_MouseMove (usercmd_t *cmd)
 {
 	int					mx, my;
+	int					center_x = 0, center_y = 0;
 
 	if (!mouseactive)
 		return;
@@ -600,9 +605,10 @@ void IN_MouseMove (usercmd_t *cmd)
 	else
 	{
 		// fallback if RegisterRawInputDevices failed in IN_StartupMouse
+		VID_GetWindowCenter (&center_x, &center_y);
 		GetCursorPos (&current_pos);
-		mx = current_pos.x - window_center_x + mx_accum;
-		my = current_pos.y - window_center_y + my_accum;
+		mx = current_pos.x - center_x + mx_accum;
+		my = current_pos.y - center_y + my_accum;
 		mx_accum = 0;
 		my_accum = 0;
 	}
@@ -657,7 +663,7 @@ void IN_MouseMove (usercmd_t *cmd)
 // independent of cursor position)
 	if (!rawinput_active && (mx || my))
 	{
-		SetCursorPos (window_center_x, window_center_y);
+		SetCursorPos (center_x, center_y);
 	}
 }
 
@@ -691,13 +697,16 @@ void IN_Accumulate (void)
 	// pumped, so there's nothing to do here unless we fell back to cursor-warp
 	if (mouseactive && !rawinput_active)
 	{
+		int center_x, center_y;
+		VID_GetWindowCenter (&center_x, &center_y);
+
 		GetCursorPos (&current_pos);
 
-		mx_accum += current_pos.x - window_center_x;
-		my_accum += current_pos.y - window_center_y;
+		mx_accum += current_pos.x - center_x;
+		my_accum += current_pos.y - center_y;
 
 	// force the mouse to the center, so there's room to move
-		SetCursorPos (window_center_x, window_center_y);
+		SetCursorPos (center_x, center_y);
 	}
 }
 
