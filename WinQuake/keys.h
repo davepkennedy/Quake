@@ -138,11 +138,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
 
+// widely-polled UI-focus routing flag -- read/written from ~10 files across
+// client, server, and video code as ordinary coordination state, not an
+// implementation detail of Input worth hiding behind an accessor
 extern keydest_t	key_dest;
-extern std::string keybindings[256];
-extern	int		key_repeats[256];
-extern	int		key_count;			// incremented every key event
-extern	int		key_lastpress;
 
 void Key_Event (int key, qboolean down);
 void Key_Init (void);
@@ -150,4 +149,15 @@ void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, const char *binding);
 const char *Key_KeynumToString (int keynum);
 void Key_ClearStates (void);
+
+// keybindings[] queries used by the Keys menu (bind display/edit, unbind)
+void Key_KeysForCommand (const char *command, int *twokeys);
+void Key_UnbindCommand (const char *command);
+
+// "press a key to continue" primitives used by console notify boxes
+// (Con_NotifyBox) and modal screen messages (SCR_ModalMessage)
+void Key_ArmForKeyDownUpWait (void);
+bool Key_IsArmedForKeyWait (void);
+void Key_ArmForSingleKeyWait (void);
+int Key_LastKeyPressed (void);
 

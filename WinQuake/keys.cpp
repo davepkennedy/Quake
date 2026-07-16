@@ -30,20 +30,20 @@ key up events are sent even if in console mode
 char	key_lines[32][MAXCMDLINE];
 int		key_linepos;
 int		shift_down=false;
-int		key_lastpress;
+static int		key_lastpress;
 
 int		edit_line=0;
 int		history_line=0;
 
 keydest_t	key_dest;
 
-int		key_count;			// incremented every key event
+static int		key_count;			// incremented every key event
 
-std::string	keybindings[256];
+static std::string	keybindings[256];
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
 qboolean	menubound[256];	// if true, can't be rebound while in menu
 int		keyshift[256];		// key to map to if shift held down in console
-int		key_repeats[256];	// if > 1, it is autorepeating
+static int		key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 
 typedef struct
@@ -410,6 +410,98 @@ void Key_SetBinding (int keynum, const char *binding)
 		return;
 
 	keybindings[keynum] = binding;
+}
+
+/*
+===================
+Key_KeysForCommand
+
+Finds up to two keys bound to a command whose name starts with the given
+string. Used by the Keys menu to display/edit bindings.
+===================
+*/
+void Key_KeysForCommand (const char *command, int *twokeys)
+{
+	int		count;
+	int		j;
+	int		l;
+
+	twokeys[0] = twokeys[1] = -1;
+	l = (int)strlen(command);
+	count = 0;
+
+	for (j=0 ; j<256 ; j++)
+	{
+		if (keybindings[j].empty())
+			continue;
+		if (!strncmp (keybindings[j].c_str(), command, l) )
+		{
+			twokeys[count] = j;
+			count++;
+			if (count == 2)
+				break;
+		}
+	}
+}
+
+/*
+===================
+Key_UnbindCommand
+
+Clears every key bound to a command whose name starts with the given
+string. Used by the Keys menu's "clear binding" action.
+===================
+*/
+void Key_UnbindCommand (const char *command)
+{
+	int		j;
+	int		l;
+
+	l = (int)strlen(command);
+
+	for (j=0 ; j<256 ; j++)
+	{
+		if (keybindings[j].empty())
+			continue;
+		if (!strncmp (keybindings[j].c_str(), command, l) )
+			Key_SetBinding (j, "");
+	}
+}
+
+/*
+===================
+Key_ArmForKeyDownUpWait / Key_IsArmedForKeyWait
+
+"Press a key" wait used by Con_NotifyBox -- arms key_count so it only
+unblocks once a full key down-and-up pair has been seen.
+===================
+*/
+void Key_ArmForKeyDownUpWait (void)
+{
+	key_count = -2;
+}
+
+bool Key_IsArmedForKeyWait (void)
+{
+	return key_count < 0;
+}
+
+/*
+===================
+Key_ArmForSingleKeyWait / Key_LastKeyPressed
+
+"Press a key" wait used by SCR_ModalMessage -- rearmed every poll so only
+the most recent key transition is examined via Key_LastKeyPressed.
+===================
+*/
+void Key_ArmForSingleKeyWait (void)
+{
+	key_count = -1;
+}
+
+int Key_LastKeyPressed (void)
+{
+	return key_lastpress;
 }
 
 /*

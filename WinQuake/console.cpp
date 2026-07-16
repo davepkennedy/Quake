@@ -605,7 +605,7 @@ void Con_NotifyBox (char *text)
 	Con_Printf ("Press a key.\n");
 	Con_Printf("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
 
-	key_count = -2;		// wait for a key down and up
+	Key_ArmForKeyDownUpWait ();		// wait for a key down and up
 	key_dest = key_console;
 
 	do
@@ -615,7 +615,7 @@ void Con_NotifyBox (char *text)
 		Sys_SendKeyEvents ();
 		t2 = Sys_FloatTime ();
 		realtime += t2-t1;		// make the cursor blink
-	} while (key_count < 0);
+	} while (Key_IsArmedForKeyWait ());
 
 	Con_Printf ("\n");
 	key_dest = key_game;

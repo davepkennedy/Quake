@@ -1348,47 +1348,6 @@ void M_Menu_Keys_f (void)
 }
 
 
-void M_FindKeysForCommand (const char *command, int *twokeys)
-{
-	int		count;
-	int		j;
-	int		l;
-
-	twokeys[0] = twokeys[1] = -1;
-	l = (int)strlen(command);
-	count = 0;
-
-	for (j=0 ; j<256 ; j++)
-	{
-		if (keybindings[j].empty())
-			continue;
-		if (!strncmp (keybindings[j].c_str(), command, l) )
-		{
-			twokeys[count] = j;
-			count++;
-			if (count == 2)
-				break;
-		}
-	}
-}
-
-void M_UnbindCommand (const char *command)
-{
-	int		j;
-	int		l;
-
-	l = (int)strlen(command);
-
-	for (j=0 ; j<256 ; j++)
-	{
-		if (keybindings[j].empty())
-			continue;
-		if (!strncmp (keybindings[j].c_str(), command, l) )
-			Key_SetBinding (j, "");
-	}
-}
-
-
 void M_Keys_Draw (void)
 {
 	int		i, l;
@@ -1414,7 +1373,7 @@ void M_Keys_Draw (void)
 
 		l = (int)strlen (bindnames[i][0]);
 
-		M_FindKeysForCommand (bindnames[i][0], keys);
+		Key_KeysForCommand (bindnames[i][0], keys);
 
 		if (keys[0] == -1)
 		{
@@ -1485,17 +1444,17 @@ void M_Keys_Key (int k)
 		break;
 
 	case K_ENTER:		// go into bind mode
-		M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
+		Key_KeysForCommand (bindnames[keys_cursor][0], keys);
 		S_LocalSound ("misc/menu2.wav");
 		if (keys[1] != -1)
-			M_UnbindCommand (bindnames[keys_cursor][0]);
+			Key_UnbindCommand (bindnames[keys_cursor][0]);
 		bind_grab = true;
 		break;
 
 	case K_BACKSPACE:		// delete bindings
 	case K_DEL:				// delete bindings
 		S_LocalSound ("misc/menu2.wav");
-		M_UnbindCommand (bindnames[keys_cursor][0]);
+		Key_UnbindCommand (bindnames[keys_cursor][0]);
 		break;
 	}
 }

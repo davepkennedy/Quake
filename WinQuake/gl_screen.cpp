@@ -749,14 +749,14 @@ int SCR_ModalMessage (const char *text)
 
 	do
 	{
-		key_count = -1;		// wait for a key down and up
+		Key_ArmForSingleKeyWait ();		// wait for a key down and up
 		Sys_SendKeyEvents ();
-	} while (key_lastpress != 'y' && key_lastpress != 'n' && key_lastpress != K_ESCAPE);
+	} while (Key_LastKeyPressed () != 'y' && Key_LastKeyPressed () != 'n' && Key_LastKeyPressed () != K_ESCAPE);
 
 	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 
-	return key_lastpress == 'y';
+	return Key_LastKeyPressed () == 'y';
 }
 
 
