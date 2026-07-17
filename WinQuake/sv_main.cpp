@@ -61,6 +61,27 @@ sizebuf_t *SV_ReliableDatagramBuffer (void)
 	return &sv.reliable_datagram;
 }
 
+double SV_Time (void)
+{
+	return sv.time;
+}
+
+int SV_LastCheckClient (void)
+{
+	return sv.lastcheck;
+}
+
+double SV_LastCheckClientTime (void)
+{
+	return sv.lastchecktime;
+}
+
+void SV_SetLastCheckClient (int entnum, double time)
+{
+	sv.lastcheck = entnum;
+	sv.lastchecktime = time;
+}
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================

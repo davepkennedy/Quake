@@ -758,14 +758,11 @@ void PF_checkclient (void)
 	vec3_t	view;
 	
 // find a new check if on a new frame
-	if (sv.time - sv.lastchecktime >= 0.1)
-	{
-		sv.lastcheck = PF_newcheckclient (sv.lastcheck);
-		sv.lastchecktime = sv.time;
-	}
+	if (SV_Time() - SV_LastCheckClientTime() >= 0.1)
+		SV_SetLastCheckClient (PF_newcheckclient (SV_LastCheckClient()), SV_Time());
 
-// return check if it might be visible	
-	ent = EDICT_NUM(sv.lastcheck);
+// return check if it might be visible
+	ent = EDICT_NUM(SV_LastCheckClient());
 	if (ent->free || ent->v.health <= 0)
 	{
 		RETURN_EDICT(EDICT_NUM(0));
@@ -1696,12 +1693,13 @@ void PF_WaterMove (void)
 	int			watertype;
 	float		drownlevel;
 	float		damage = 0.0;
+	double		now = SV_Time ();
 
 	self = PROG_TO_EDICT(pr_global_struct->self);
 
 	if (self->v.movetype == MOVETYPE_NOCLIP)
 	{
-		self->v.air_finished = sv.time + 12;
+		self->v.air_finished = now + 12;
 		G_FLOAT(OFS_RETURN) = damage;
 		return;
 	}
@@ -1724,39 +1722,39 @@ void PF_WaterMove (void)
 	if (!(flags & (FL_IMMUNE_WATER + FL_GODMODE)))
 		if (((flags & FL_SWIM) && (waterlevel < drownlevel)) || (waterlevel >= drownlevel))
 		{
-			if (self->v.air_finished < sv.time)
-				if (self->v.pain_finished < sv.time)
+			if (self->v.air_finished < now)
+				if (self->v.pain_finished < now)
 				{
 					self->v.dmg = self->v.dmg + 2;
 					if (self->v.dmg > 15)
 						self->v.dmg = 10;
 //					T_Damage (self, world, world, self.dmg, 0, FALSE);
 					damage = self->v.dmg;
-					self->v.pain_finished = sv.time + 1.0;
+					self->v.pain_finished = now + 1.0;
 				}
 		}
 		else
 		{
-			if (self->v.air_finished < sv.time)
+			if (self->v.air_finished < now)
 //				sound (self, CHAN_VOICE, "player/gasp2.wav", 1, ATTN_NORM);
 				SV_StartSound (self, CHAN_VOICE, "player/gasp2.wav", 255, ATTN_NORM);
-			else if (self->v.air_finished < sv.time + 9)
+			else if (self->v.air_finished < now + 9)
 //				sound (self, CHAN_VOICE, "player/gasp1.wav", 1, ATTN_NORM);
 				SV_StartSound (self, CHAN_VOICE, "player/gasp1.wav", 255, ATTN_NORM);
-			self->v.air_finished = sv.time + 12.0;
+			self->v.air_finished = now + 12.0;
 			self->v.dmg = 2;
 		}
-	
+
 	if (!waterlevel)
 	{
 		if (flags & FL_INWATER)
-		{	
+		{
 			// play leave water sound
 //			sound (self, CHAN_BODY, "misc/outwater.wav", 1, ATTN_NORM);
 			SV_StartSound (self, CHAN_BODY, "misc/outwater.wav", 255, ATTN_NORM);
 			self->v.flags = (float)(flags &~FL_INWATER);
 		}
-		self->v.air_finished = sv.time + 12.0;
+		self->v.air_finished = now + 12.0;
 		G_FLOAT(OFS_RETURN) = damage;
 		return;
 	}
@@ -1764,12 +1762,12 @@ void PF_WaterMove (void)
 	if (watertype == CONTENT_LAVA)
 	{	// do damage
 		if (!(flags & (FL_IMMUNE_LAVA + FL_GODMODE)))
-			if (self->v.dmgtime < sv.time)
+			if (self->v.dmgtime < now)
 			{
-				if (self->v.radsuit_finished < sv.time)
-					self->v.dmgtime = sv.time + 0.2;
+				if (self->v.radsuit_finished < now)
+					self->v.dmgtime = now + 0.2;
 				else
-					self->v.dmgtime = sv.time + 1.0;
+					self->v.dmgtime = now + 1.0;
 //				T_Damage (self, world, world, 10*self.waterlevel, 0, TRUE);
 				damage = (float)(10*waterlevel);
 			}
@@ -1777,9 +1775,9 @@ void PF_WaterMove (void)
 	else if (watertype == CONTENT_SLIME)
 	{	// do damage
 		if (!(flags & (FL_IMMUNE_SLIME + FL_GODMODE)))
-			if (self->v.dmgtime < sv.time && self->v.radsuit_finished < sv.time)
+			if (self->v.dmgtime < now && self->v.radsuit_finished < now)
 			{
-				self->v.dmgtime = sv.time + 1.0;
+				self->v.dmgtime = now + 1.0;
 //				T_Damage (self, world, world, 4*self.waterlevel, 0, TRUE);
 				damage = (float)(4*waterlevel);
 			}

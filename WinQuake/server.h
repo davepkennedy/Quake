@@ -225,6 +225,15 @@ sizebuf_t *SV_SignonBuffer (void);				// &sv.signon
 sizebuf_t *SV_DatagramBuffer (void);			// &sv.datagram
 sizebuf_t *SV_ReliableDatagramBuffer (void);	// &sv.reliable_datagram
 
+// Narrow sim-clock/bookkeeping accessors -- same idea again. SV_Time() is
+// a trivial read; the LastCheckClient pair covers PF_checkclient's own
+// round-robin PVS-check cursor, still stored in server_t but only ever
+// touched from pr_cmds.cpp.
+double SV_Time (void);							// sv.time
+int SV_LastCheckClient (void);					// sv.lastcheck
+double SV_LastCheckClientTime (void);			// sv.lastchecktime
+void SV_SetLastCheckClient (int entnum, double time);	// sv.lastcheck/lastchecktime
+
 extern	client_t	*host_client;
 
 extern	double		host_time;
