@@ -234,7 +234,7 @@ setmodel(entity, model)
 void PF_setmodel (void)
 {
 	edict_t	*e;
-	char	*m, **check;
+	char	*m;
 	model_t	*mod;
 	int		i;
 
@@ -242,19 +242,15 @@ void PF_setmodel (void)
 	m = G_STRING(OFS_PARM1);
 
 // check to see if model was properly precached
-	for (i=0, check = sv.model_precache ; *check ; i++, check++)
-		if (!strcmp(*check, m))
-			break;
-			
-	if (!*check)
+	i = SV_ModelPrecacheIndex (m);
+	if (i < 0)
 		PR_RunError ("no precache: %s\n", m);
-		
 
 	e->v.model = m - pr_strings;
 	e->v.modelindex = i; //SV_ModelIndex (m);
 
-	mod = sv.models[ (int)e->v.modelindex];  // Mod_ForName (m, true);
-	
+	mod = SV_ModelForIndex ((int)e->v.modelindex);  // Mod_ForName (m, true);
+
 	if (mod)
 		SetMinMaxSize (e, mod->mins, mod->maxs, true);
 	else
@@ -503,23 +499,19 @@ PF_ambientsound
 */
 void PF_ambientsound (void)
 {
-	char		**check;
 	char		*samp;
 	float		*pos;
 	float 		vol, attenuation;
 	int			i, soundnum;
 
-	pos = G_VECTOR (OFS_PARM0);			
+	pos = G_VECTOR (OFS_PARM0);
 	samp = G_STRING(OFS_PARM1);
 	vol = G_FLOAT(OFS_PARM2);
 	attenuation = G_FLOAT(OFS_PARM3);
-	
+
 // check to see if samp was properly precached
-	for (soundnum=0, check = sv.sound_precache ; *check ; check++, soundnum++)
-		if (!strcmp(*check,samp))
-			break;
-			
-	if (!*check)
+	soundnum = SV_SoundPrecacheIndex (samp);
+	if (soundnum < 0)
 	{
 		Con_Printf ("no precache: %s\n", samp);
 		return;
@@ -725,10 +717,11 @@ int PF_newcheckclient (int check)
 	}
 
 // get the PVS for the entity
+	model_t *worldmodel = SV_WorldModel ();
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
-	leaf = Mod_PointInLeaf (org, sv.worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
+	leaf = Mod_PointInLeaf (org, worldmodel);
+	pvs = Mod_LeafPVS (leaf, worldmodel);
+	memcpy (checkpvs, pvs, (worldmodel->numleafs+7)>>3 );
 
 	return i;
 }
@@ -770,10 +763,11 @@ void PF_checkclient (void)
 	}
 
 // if current entity can't possibly see the check entity, return 0
+	model_t *worldmodel = SV_WorldModel ();
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v.origin, self->v.view_ofs, view);
-	leaf = Mod_PointInLeaf (view, sv.worldmodel);
-	l = (leaf - sv.worldmodel->leafs) - 1;
+	leaf = Mod_PointInLeaf (view, worldmodel);
+	l = (leaf - worldmodel->leafs) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 c_notvis++;
@@ -1066,52 +1060,31 @@ void PF_precache_file (void)
 void PF_precache_sound (void)
 {
 	char	*s;
-	int		i;
-	
-	if (sv.state != ss_loading)
+
+	if (SV_State() != ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
-		
+
 	s = G_STRING(OFS_PARM0);
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 	PR_CheckEmptyString (s);
-	
-	for (i=0 ; i<MAX_SOUNDS ; i++)
-	{
-		if (!sv.sound_precache[i])
-		{
-			sv.sound_precache[i] = s;
-			return;
-		}
-		if (!strcmp(sv.sound_precache[i], s))
-			return;
-	}
-	PR_RunError ("PF_precache_sound: overflow");
+
+	if (SV_PrecacheSound (s) < 0)
+		PR_RunError ("PF_precache_sound: overflow");
 }
 
 void PF_precache_model (void)
 {
 	char	*s;
-	int		i;
-	
-	if (sv.state != ss_loading)
+
+	if (SV_State() != ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
-		
+
 	s = G_STRING(OFS_PARM0);
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 	PR_CheckEmptyString (s);
 
-	for (i=0 ; i<MAX_MODELS ; i++)
-	{
-		if (!sv.model_precache[i])
-		{
-			sv.model_precache[i] = s;
-			sv.models[i] = Mod_ForName (s, true);
-			return;
-		}
-		if (!strcmp(sv.model_precache[i], s))
-			return;
-	}
-	PR_RunError ("PF_precache_model: overflow");
+	if (SV_PrecacheModel (s) < 0)
+		PR_RunError ("PF_precache_model: overflow");
 }
 
 
@@ -1231,7 +1204,7 @@ void PF_lightstyle (void)
 	sv.lightstyles[style] = val;
 	
 // send message to all clients on this server
-	if (sv.state != ss_active)
+	if (SV_State() != ss_active)
 		return;
 	
 	for (j=1 ; j<=SV_NumClients() ; j++)
@@ -1660,10 +1633,9 @@ void PF_changelevel (void)
 	char	*s;
 
 // make sure we don't issue two changelevels
-	if (svs.changelevel_issued)
+	if (!SV_TryIssueChangelevel ())
 		return;
-	svs.changelevel_issued = true;
-	
+
 	s = G_STRING(OFS_PARM0);
 	Cbuf_AddText (va("changelevel %s\n",s));
 #endif

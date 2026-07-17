@@ -82,6 +82,88 @@ void SV_SetLastCheckClient (int entnum, double time)
 	sv.lastchecktime = time;
 }
 
+server_state_t SV_State (void)
+{
+	return sv.state;
+}
+
+struct model_s *SV_WorldModel (void)
+{
+	return sv.worldmodel;
+}
+
+int SV_SoundPrecacheIndex (const char *name)
+{
+	int		i;
+
+	for (i=0 ; i<MAX_SOUNDS && sv.sound_precache[i] ; i++)
+		if (!strcmp(sv.sound_precache[i], name))
+			return i;
+	return -1;
+}
+
+int SV_PrecacheSound (char *name)
+{
+	int		i;
+
+	i = SV_SoundPrecacheIndex (name);
+	if (i >= 0)
+		return i;
+
+	for (i=0 ; i<MAX_SOUNDS ; i++)
+	{
+		if (!sv.sound_precache[i])
+		{
+			sv.sound_precache[i] = name;
+			return i;
+		}
+	}
+	return -1;
+}
+
+int SV_ModelPrecacheIndex (const char *name)
+{
+	int		i;
+
+	for (i=0 ; i<MAX_MODELS && sv.model_precache[i] ; i++)
+		if (!strcmp(sv.model_precache[i], name))
+			return i;
+	return -1;
+}
+
+int SV_PrecacheModel (char *name)
+{
+	int		i;
+
+	i = SV_ModelPrecacheIndex (name);
+	if (i >= 0)
+		return i;
+
+	for (i=0 ; i<MAX_MODELS ; i++)
+	{
+		if (!sv.model_precache[i])
+		{
+			sv.model_precache[i] = name;
+			sv.models[i] = Mod_ForName (name, true);
+			return i;
+		}
+	}
+	return -1;
+}
+
+struct model_s *SV_ModelForIndex (int index)
+{
+	return sv.models[index];
+}
+
+qboolean SV_TryIssueChangelevel (void)
+{
+	if (svs.changelevel_issued)
+		return false;
+	svs.changelevel_issued = true;
+	return true;
+}
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================

@@ -234,6 +234,18 @@ int SV_LastCheckClient (void);					// sv.lastcheck
 double SV_LastCheckClientTime (void);			// sv.lastchecktime
 void SV_SetLastCheckClient (int entnum, double time);	// sv.lastcheck/lastchecktime
 
+// Narrow lifecycle/precache accessors -- this bucket is more mixed than
+// the others: most are simple reads, but SV_TryIssueChangelevel is a
+// genuine check-and-set state transition, not a plain getter/setter.
+server_state_t SV_State (void);				// sv.state
+struct model_s *SV_WorldModel (void);			// sv.worldmodel
+int SV_SoundPrecacheIndex (const char *name);	// find only; -1 if not precached
+int SV_PrecacheSound (char *name);				// find-or-register; -1 if table full
+int SV_ModelPrecacheIndex (const char *name);	// find only; -1 if not precached
+int SV_PrecacheModel (char *name);				// find-or-register (also loads the model); -1 if table full
+struct model_s *SV_ModelForIndex (int index);	// sv.models[index]
+qboolean SV_TryIssueChangelevel (void);		// true if this call issued it, false if already issued this spawn
+
 extern	client_t	*host_client;
 
 extern	double		host_time;
