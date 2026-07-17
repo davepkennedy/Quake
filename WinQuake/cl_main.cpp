@@ -118,6 +118,25 @@ struct model_s *CL_ModelPrecache (int index)
 	return cl.model_precache[index];
 }
 
+struct efrag_s *CL_AllocEfrag (void)
+{
+	struct efrag_s *ef = cl.free_efrags;
+	if (ef)
+		cl.free_efrags = ef->entnext;
+	return ef;
+}
+
+void CL_FreeEfrag (struct efrag_s *ef)
+{
+	ef->entnext = cl.free_efrags;
+	cl.free_efrags = ef;
+}
+
+void CL_ClearContentsCshift (void)
+{
+	cl.cshifts[CSHIFT_CONTENTS].percent = 0;
+}
+
 /*
 =====================
 CL_ClearState

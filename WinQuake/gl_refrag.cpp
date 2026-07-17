@@ -73,10 +73,9 @@ void R_RemoveEfrags (entity_t *ent)
 				
 		old = ef;
 		ef = ef->entnext;
-		
+
 	// put it on the free list
-		old->entnext = cl.free_efrags;
-		cl.free_efrags = old;
+		CL_FreeEfrag (old);
 	}
 	
 	ent->efrag = NULL; 
@@ -109,13 +108,12 @@ void R_SplitEntityOnNode (mnode_t *node)
 		leaf = (mleaf_t *)node;
 
 // grab an efrag off the free list
-		ef = cl.free_efrags;
+		ef = CL_AllocEfrag ();
 		if (!ef)
 		{
 			Con_Printf ("Too many efrags!\n");
 			return;		// no free fragments...
 		}
-		cl.free_efrags = cl.free_efrags->entnext;
 
 		ef->entity = r_addent;
 		

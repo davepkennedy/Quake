@@ -296,6 +296,18 @@ entity_t *CL_ViewEnt (void);						// &cl.viewent
 scoreboard_t *CL_Score (int index);				// &cl.scores[index]
 struct model_s *CL_ModelPrecache (int index);		// cl.model_precache[index]
 
+// cl.free_efrags is a singly-linked free list; gl_refrag.cpp is its sole
+// active manager (cl_main.cpp only builds the initial list once), so these
+// are verbs for the two operations it actually performs, not a raw
+// getter/setter pair.
+struct efrag_s *CL_AllocEfrag (void);				// pop the free-list head, or NULL if empty
+void CL_FreeEfrag (struct efrag_s *ef);				// push ef onto the free-list head
+
+// cl.cshifts[CSHIFT_CONTENTS] is otherwise owned entirely by view.cpp
+// (V_SetContentsColor writes it, V_UpdatePalette reads it); this is the one
+// spot outside view.cpp that needs to force it to "no tint" immediately.
+void CL_ClearContentsCshift (void);				// cl.cshifts[CSHIFT_CONTENTS].percent = 0
+
 // FIXME, allocate dynamically
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
 extern	entity_t		cl_entities[MAX_EDICTS];

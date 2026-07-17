@@ -778,7 +778,7 @@ void SCR_BringDownConsole (void)
 	for (i=0 ; i<20 && scr_conlines != scr_con_current ; i++)
 		SCR_UpdateScreen ();
 
-	cl.cshifts[0].percent = 0;		// no area contents palette on next frame
+	CL_ClearContentsCshift ();		// no area contents palette on next frame
 	VID_SetPalette (host_basepal);
 }
 
