@@ -218,6 +218,13 @@ int SV_NumEdicts (void);					// sv.num_edicts
 int SV_NumClients (void);					// svs.maxclients
 client_t *SV_ClientForEntNum (int entnum);	// 1-based; NULL if entnum isn't a client
 
+// Narrow network-buffer accessors -- same idea, for QuakeC builtins that
+// write directly to one of the server's outgoing message buffers instead
+// of going through WriteDest()'s destination dispatch.
+sizebuf_t *SV_SignonBuffer (void);				// &sv.signon
+sizebuf_t *SV_DatagramBuffer (void);			// &sv.datagram
+sizebuf_t *SV_ReliableDatagramBuffer (void);	// &sv.reliable_datagram
+
 extern	client_t	*host_client;
 
 extern	double		host_time;

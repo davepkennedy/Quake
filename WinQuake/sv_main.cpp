@@ -46,6 +46,21 @@ client_t *SV_ClientForEntNum (int entnum)
 	return &svs.clients[entnum-1];
 }
 
+sizebuf_t *SV_SignonBuffer (void)
+{
+	return &sv.signon;
+}
+
+sizebuf_t *SV_DatagramBuffer (void)
+{
+	return &sv.datagram;
+}
+
+sizebuf_t *SV_ReliableDatagramBuffer (void)
+{
+	return &sv.reliable_datagram;
+}
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================

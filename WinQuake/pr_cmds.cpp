@@ -527,14 +527,16 @@ void PF_ambientsound (void)
 
 // add an svc_spawnambient command to the level signon packet
 
-	MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+	sizebuf_t *signon = SV_SignonBuffer ();
+
+	MSG_WriteByte (signon,svc_spawnstaticsound);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord(&sv.signon, pos[i]);
+		MSG_WriteCoord(signon, pos[i]);
 
-	MSG_WriteByte (&sv.signon, soundnum);
+	MSG_WriteByte (signon, soundnum);
 
-	MSG_WriteByte (&sv.signon, vol*255);
-	MSG_WriteByte (&sv.signon, attenuation*64);
+	MSG_WriteByte (signon, vol*255);
+	MSG_WriteByte (signon, attenuation*64);
 
 }
 
@@ -1517,7 +1519,7 @@ sizebuf_t *WriteDest (void)
 	switch (dest)
 	{
 	case MSG_BROADCAST:
-		return &sv.datagram;
+		return SV_DatagramBuffer ();
 
 	case MSG_ONE:
 		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
@@ -1526,12 +1528,12 @@ sizebuf_t *WriteDest (void)
 		if (!client)
 			PR_RunError ("WriteDest: not a client");
 		return &client->message;
-		
+
 	case MSG_ALL:
-		return &sv.reliable_datagram;
-	
+		return SV_ReliableDatagramBuffer ();
+
 	case MSG_INIT:
-		return &sv.signon;
+		return SV_SignonBuffer ();
 
 	default:
 		PR_RunError ("WriteDest: bad destination");
@@ -1593,17 +1595,19 @@ void PF_makestatic (void)
 	
 	ent = G_EDICT(OFS_PARM0);
 
-	MSG_WriteByte (&sv.signon,svc_spawnstatic);
+	sizebuf_t *signon = SV_SignonBuffer ();
 
-	MSG_WriteByte (&sv.signon, SV_ModelIndex(pr_strings + ent->v.model));
+	MSG_WriteByte (signon,svc_spawnstatic);
 
-	MSG_WriteByte (&sv.signon, ent->v.frame);
-	MSG_WriteByte (&sv.signon, ent->v.colormap);
-	MSG_WriteByte (&sv.signon, ent->v.skin);
+	MSG_WriteByte (signon, SV_ModelIndex(pr_strings + ent->v.model));
+
+	MSG_WriteByte (signon, ent->v.frame);
+	MSG_WriteByte (signon, ent->v.colormap);
+	MSG_WriteByte (signon, ent->v.skin);
 	for (i=0 ; i<3 ; i++)
 	{
-		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		MSG_WriteCoord(signon, ent->v.origin[i]);
+		MSG_WriteAngle(signon, ent->v.angles[i]);
 	}
 
 // throw the entity away now
