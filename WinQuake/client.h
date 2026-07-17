@@ -280,6 +280,22 @@ extern	cvar_t	m_side;
 
 extern	client_state_t	cl;
 
+// Narrow client-state accessors -- for rendering code (gl_*.cpp) that
+// needs to read cl.'s state without reaching into client_state_t's
+// representation directly.
+struct model_s *CL_WorldModel (void);				// cl.worldmodel
+double CL_Time (void);								// cl.time
+int CL_MaxClients (void);							// cl.maxclients
+int CL_Intermission (void);						// cl.intermission
+qboolean CL_Paused (void);							// cl.paused
+int CL_Items (void);								// cl.items
+int CL_Stat (int index);							// cl.stats[index]
+int CL_ViewEntity (void);							// cl.viewentity
+float CL_LastReceivedMessage (void);				// cl.last_received_message
+entity_t *CL_ViewEnt (void);						// &cl.viewent
+scoreboard_t *CL_Score (int index);				// &cl.scores[index]
+struct model_s *CL_ModelPrecache (int index);		// cl.model_precache[index]
+
 // FIXME, allocate dynamically
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
 extern	entity_t		cl_entities[MAX_EDICTS];

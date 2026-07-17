@@ -243,8 +243,8 @@ void R_TranslatePlayerSkin (int playernum)
 
 	GL_DisableMultitexture();
 
-	top = cl.scores[playernum].colors & 0xf0;
-	bottom = (cl.scores[playernum].colors &15)<<4;
+	top = CL_Score(playernum)->colors & 0xf0;
+	bottom = (CL_Score(playernum)->colors &15)<<4;
 
 	for (i=0 ; i<256 ; i++)
 		translate[i] = i;
@@ -380,14 +380,16 @@ void R_NewMap (void)
 	for (i=0 ; i<256 ; i++)
 		d_lightstylevalue[i] = 264;		// normal light value
 
+	model_t *worldmodel = CL_WorldModel();
+
 	memset (&r_worldentity, 0, sizeof(r_worldentity));
-	r_worldentity.model = cl.worldmodel;
+	r_worldentity.model = worldmodel;
 
 // clear out efrags in case the level hasn't been reloaded
 // FIXME: is this one short?
-	for (i=0 ; i<cl.worldmodel->numleafs ; i++)
-		cl.worldmodel->leafs[i].efrags = NULL;
-		 	
+	for (i=0 ; i<worldmodel->numleafs ; i++)
+		worldmodel->leafs[i].efrags = NULL;
+
 	r_viewleaf = NULL;
 	R_ClearParticles ();
 
@@ -396,15 +398,15 @@ void R_NewMap (void)
 	// identify sky texture
 	skytexturenum = -1;
 	mirrortexturenum = -1;
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+	for (i=0 ; i<worldmodel->numtextures ; i++)
 	{
-		if (!cl.worldmodel->textures[i])
+		if (!worldmodel->textures[i])
 			continue;
-		if (!Q_strncmp(cl.worldmodel->textures[i]->name,"sky",3) )
+		if (!Q_strncmp(worldmodel->textures[i]->name,"sky",3) )
 			skytexturenum = i;
-		if (!Q_strncmp(cl.worldmodel->textures[i]->name,"window02_1",10) )
+		if (!Q_strncmp(worldmodel->textures[i]->name,"window02_1",10) )
 			mirrortexturenum = i;
- 		cl.worldmodel->textures[i]->texturechain = NULL;
+ 		worldmodel->textures[i]->texturechain = NULL;
 	}
 #ifdef QUAKE2
 	R_LoadSkys ();

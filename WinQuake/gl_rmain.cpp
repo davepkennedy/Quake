@@ -173,7 +173,7 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
 		numframes = pspritegroup->numframes;
 		fullinterval = pintervals[numframes-1];
 
-		time = cl.time + currententity->syncbase;
+		time = CL_Time() + currententity->syncbase;
 
 	// when loading in Mod_LoadSpriteGroup, we guaranteed all interval values
 	// are positive, so we don't have to worry about division by 0
@@ -710,7 +710,7 @@ void R_SetupAliasFrame (int frame, aliashdr_t *paliashdr)
 	if (numposes > 1)
 	{
 		interval = paliashdr->frames[frame].interval;
-		pose += (int)(cl.time / interval) % numposes;
+		pose += (int)(CL_Time() / interval) % numposes;
 	}
 
 	GL_DrawAliasFrame (paliashdr, pose);
@@ -755,12 +755,12 @@ void R_DrawAliasModel (entity_t *e)
 	ambientlight = shadelight = R_LightPoint (currententity->origin);
 
 	// allways give the gun some light
-	if (e == &cl.viewent && ambientlight < 24)
+	if (e == CL_ViewEnt() && ambientlight < 24)
 		ambientlight = shadelight = 24;
 
 	for (lnum=0 ; lnum<MAX_DLIGHTS ; lnum++)
 	{
-		if (cl_dlights[lnum].die >= cl.time)
+		if (cl_dlights[lnum].die >= CL_Time())
 		{
 			VectorSubtract (currententity->origin,
 							cl_dlights[lnum].origin,
@@ -783,7 +783,7 @@ void R_DrawAliasModel (entity_t *e)
 
 	// ZOID: never allow players to go totally black
 	i = currententity - cl_entities;
-	if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
+	if (i >= 1 && i<=CL_MaxClients() /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
 		if (ambientlight < 8)
 			ambientlight = shadelight = 8;
 
@@ -825,7 +825,7 @@ void R_DrawAliasModel (entity_t *e)
 		r_entity_matrix = glm::scale (r_entity_matrix, glm::vec3(paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]));
 	}
 
-	anim = (int)(cl.time*10) & 3;
+	anim = (int)(CL_Time()*10) & 3;
     GL_Bind(paliashdr->gl_texturenum[currententity->skinnum][anim]);
 
 	// we can't dynamically colormap textures, so they are cached
@@ -833,7 +833,7 @@ void R_DrawAliasModel (entity_t *e)
 	if (currententity->colormap != vid.colormap && !gl_nocolors.value)
 	{
 		i = currententity - cl_entities;
-		if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
+		if (i >= 1 && i<=CL_MaxClients() /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
 		    GL_Bind(playertextures - 1 + i);
 	}
 
@@ -926,13 +926,13 @@ void R_DrawViewModel (void)
 	if (!r_drawentities.value)
 		return;
 
-	if (cl.items & IT_INVISIBILITY)
+	if (CL_Items() & IT_INVISIBILITY)
 		return;
 
-	if (cl.stats[STAT_HEALTH] <= 0)
+	if (CL_Stat(STAT_HEALTH) <= 0)
 		return;
 
-	currententity = &cl.viewent;
+	currententity = CL_ViewEnt();
 	if (!currententity->model)
 		return;
 
@@ -951,7 +951,7 @@ void R_DrawViewModel (void)
 			continue;
 		if (!dl->radius)
 			continue;
-		if (dl->die < cl.time)
+		if (dl->die < CL_Time())
 			continue;
 
 		VectorSubtract (currententity->origin, dl->origin, dist);
@@ -1074,7 +1074,7 @@ R_SetupFrame
 void R_SetupFrame (void)
 {
 // don't allow cheats in multiplayer
-	if (cl.maxclients > 1)
+	if (CL_MaxClients() > 1)
 		Cvar_Set ("r_fullbright", "0");
 
 	R_AnimateLight ();
@@ -1088,7 +1088,7 @@ void R_SetupFrame (void)
 
 // current viewleaf
 	r_oldviewleaf = r_viewleaf;
-	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
+	r_viewleaf = Mod_PointInLeaf (r_origin, CL_WorldModel());
 
 	V_SetContentsColor (r_viewleaf->contents);
 	V_CalcBlend ();
@@ -1307,7 +1307,7 @@ void R_Mirror (void)
 	r_refdef.viewangles[1] = atan2 (vpn[1], vpn[0])/M_PI*180;
 	r_refdef.viewangles[2] = -r_refdef.viewangles[2];
 
-	ent = &cl_entities[cl.viewentity];
+	ent = &cl_entities[CL_ViewEntity()];
 	if (cl_numvisedicts < MAX_VISEDICTS)
 	{
 		cl_visedicts[cl_numvisedicts] = ent;
@@ -1341,10 +1341,10 @@ void R_Mirror (void)
 	r_world_matrix = r_base_world_matrix;
 
 	R_World_SetAlpha (r_mirroralpha.value);
-	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
+	s = CL_WorldModel()->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s);
-	cl.worldmodel->textures[mirrortexturenum]->texturechain = NULL;
+	CL_WorldModel()->textures[mirrortexturenum]->texturechain = NULL;
 	R_World_SetAlpha (1.0f);
 	glDisable (GL_BLEND);
 }
@@ -1364,7 +1364,7 @@ void R_RenderView (void)
 	if (r_norefresh.value)
 		return;
 
-	if (!r_worldentity.model || !cl.worldmodel)
+	if (!r_worldentity.model || !CL_WorldModel())
 		Sys_Error ("R_RenderView: NULL worldmodel");
 
 	if (r_speeds.value)

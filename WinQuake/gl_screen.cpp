@@ -144,7 +144,7 @@ void SCR_CenterPrint (char *str)
 {
 	strncpy (scr_centerstring, str, sizeof(scr_centerstring)-1);
 	scr_centertime_off = scr_centertime.value;
-	scr_centertime_start = cl.time;
+	scr_centertime_start = CL_Time();
 
 // count the number of lines for centering
 	scr_center_lines = 1;
@@ -166,8 +166,8 @@ void SCR_DrawCenterString (void)
 	int		remaining;
 
 // the finale prints the characters one at a time
-	if (cl.intermission)
-		remaining = scr_printspeed.value * (cl.time - scr_centertime_start);
+	if (CL_Intermission())
+		remaining = scr_printspeed.value * (CL_Time() - scr_centertime_start);
 	else
 		remaining = 9999;
 
@@ -212,7 +212,7 @@ void SCR_CheckDrawCenterString (void)
 
 	scr_centertime_off -= host_frametime;
 	
-	if (scr_centertime_off <= 0 && !cl.intermission)
+	if (scr_centertime_off <= 0 && !CL_Intermission())
 		return;
 	if (key_dest != key_game)
 		return;
@@ -280,7 +280,7 @@ static void SCR_CalcRefdef (void)
 		Cvar_Set ("fov","170");
 
 // intermission is always full screen	
-	if (cl.intermission)
+	if (CL_Intermission())
 		size = 120;
 	else
 		size = scr_viewsize.value;
@@ -297,7 +297,7 @@ static void SCR_CalcRefdef (void)
 		size = 100.0;
 	} else
 		size = scr_viewsize.value;
-	if (cl.intermission)
+	if (CL_Intermission())
 	{
 		full = true;
 		size = 100;
@@ -443,7 +443,7 @@ SCR_DrawNet
 */
 void SCR_DrawNet (void)
 {
-	if (realtime - cl.last_received_message < 0.3)
+	if (realtime - CL_LastReceivedMessage() < 0.3)
 		return;
 	if (cls.demoplayback)
 		return;
@@ -463,7 +463,7 @@ void SCR_DrawPause (void)
 	if (!scr_showpause.value)		// turn off for screenshots
 		return;
 
-	if (!cl.paused)
+	if (!CL_Paused())
 		return;
 
 	pic = Draw_CachePic ("gfx/pause.lmp");
@@ -508,7 +508,7 @@ void SCR_SetUpToDrawConsole (void)
 		return;		// never a console with loading plaque
 		
 // decide on the height of the console
-	con.forcedup = !cl.worldmodel || cls.signon != SIGNONS;
+	con.forcedup = !CL_WorldModel() || cls.signon != SIGNONS;
 
 	if (con.forcedup)
 	{
@@ -890,11 +890,11 @@ void SCR_UpdateScreen (void)
 		SCR_DrawLoading ();
 		Sbar_Draw ();
 	}
-	else if (cl.intermission == 1 && key_dest == key_game)
+	else if (CL_Intermission() == 1 && key_dest == key_game)
 	{
 		Sbar_IntermissionOverlay ();
 	}
-	else if (cl.intermission == 2 && key_dest == key_game)
+	else if (CL_Intermission() == 2 && key_dest == key_game)
 	{
 		Sbar_FinaleOverlay ();
 		SCR_CheckDrawCenterString ();

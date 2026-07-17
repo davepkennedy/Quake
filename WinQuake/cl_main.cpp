@@ -58,6 +58,66 @@ void client_state_t::Clear ()
 	memset (this, 0, sizeof(*this));
 }
 
+struct model_s *CL_WorldModel (void)
+{
+	return cl.worldmodel;
+}
+
+double CL_Time (void)
+{
+	return cl.time;
+}
+
+int CL_MaxClients (void)
+{
+	return cl.maxclients;
+}
+
+int CL_Intermission (void)
+{
+	return cl.intermission;
+}
+
+qboolean CL_Paused (void)
+{
+	return cl.paused;
+}
+
+int CL_Items (void)
+{
+	return cl.items;
+}
+
+int CL_Stat (int index)
+{
+	return cl.stats[index];
+}
+
+int CL_ViewEntity (void)
+{
+	return cl.viewentity;
+}
+
+float CL_LastReceivedMessage (void)
+{
+	return cl.last_received_message;
+}
+
+entity_t *CL_ViewEnt (void)
+{
+	return &cl.viewent;
+}
+
+scoreboard_t *CL_Score (int index)
+{
+	return &cl.scores[index];
+}
+
+struct model_s *CL_ModelPrecache (int index)
+{
+	return cl.model_precache[index];
+}
+
 /*
 =====================
 CL_ClearState

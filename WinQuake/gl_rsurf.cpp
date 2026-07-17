@@ -206,7 +206,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	lightmap = surf->samples;
 
 // set to full bright if no light data
-	if (r_fullbright.value || !cl.worldmodel->lightdata)
+	if (r_fullbright.value || !CL_WorldModel()->lightdata)
 	{
 		for (i=0 ; i<size ; i++)
 			blocklights[i] = 255*256;
@@ -297,7 +297,7 @@ texture_t *R_TextureAnimation (texture_t *base)
 	if (!base->anim_total)
 		return base;
 
-	reletive = (int)(cl.time*10) % base->anim_total;
+	reletive = (int)(CL_Time()*10) % base->anim_total;
 
 	count = 0;	
 	while (base->anim_min > reletive || base->anim_max <= reletive)
@@ -702,9 +702,10 @@ void R_DrawWaterSurfaces (void)
 		waterchain = NULL;
 	} else {
 
-		for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+		model_t *worldmodel = CL_WorldModel();
+		for (i=0 ; i<worldmodel->numtextures ; i++)
 		{
-			t = cl.worldmodel->textures[i];
+			t = worldmodel->textures[i];
 			if (!t)
 				continue;
 			s = t->texturechain;
@@ -714,7 +715,7 @@ void R_DrawWaterSurfaces (void)
 				continue;
 
 			// set modulate mode explicitly
-			
+
 			GL_Bind (t->gl_texturenum);
 
 			for ( ; s ; s=s->texturechain)
@@ -761,9 +762,10 @@ void DrawTextureChains (void)
 	// Phase 1: compute all CPU-side lightmap data for every visible surface.
 	// Done before any uploads so that surfaces sharing an atlas are all
 	// updated before the atlas is sent to the GPU.
-	for (i = 0; i < cl.worldmodel->numtextures; i++)
+	model_t *worldmodel = CL_WorldModel();
+	for (i = 0; i < worldmodel->numtextures; i++)
 	{
-		t = cl.worldmodel->textures[i];
+		t = worldmodel->textures[i];
 		if (!t) continue;
 		for (s = t->texturechain; s; s = s->texturechain)
 		{
@@ -779,9 +781,9 @@ void DrawTextureChains (void)
 	R_World_BeginDraw ();
 	R_World_SetMVP ();
 
-	for (i = 0; i < cl.worldmodel->numtextures; i++)
+	for (i = 0; i < worldmodel->numtextures; i++)
 	{
-		t = cl.worldmodel->textures[i];
+		t = worldmodel->textures[i];
 		if (!t) continue;
 		s = t->texturechain;
 		if (!s) continue;
@@ -891,7 +893,7 @@ void R_DrawBrushModel (entity_t *e)
 	{
 		for (k=0 ; k<MAX_DLIGHTS ; k++)
 		{
-			if ((cl_dlights[k].die < cl.time) ||
+			if ((cl_dlights[k].die < CL_Time()) ||
 				(!cl_dlights[k].radius))
 				continue;
 
@@ -1049,7 +1051,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 
 	if (c)
 	{
-		surf = cl.worldmodel->surfaces + node->firstsurface;
+		surf = CL_WorldModel()->surfaces + node->firstsurface;
 
 		if (dot < 0 -BACKFACE_EPSILON)
 			side = SURF_PLANEBACK;
@@ -1069,7 +1071,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 				if (gl_texsort.value)
 				{
 					if (!mirror
-					|| surf->texinfo->texture != cl.worldmodel->textures[mirrortexturenum])
+					|| surf->texinfo->texture != CL_WorldModel()->textures[mirrortexturenum])
 					{
 						surf->texturechain = surf->texinfo->texture->texturechain;
 						surf->texinfo->texture->texturechain = surf;
@@ -1104,7 +1106,7 @@ void R_DrawWorld (void)
 	entity_t	ent;
 
 	memset (&ent, 0, sizeof(ent));
-	ent.model = cl.worldmodel;
+	ent.model = CL_WorldModel();
 
 	VectorCopy (r_refdef.vieworg, modelorg);
 
@@ -1115,7 +1117,7 @@ void R_DrawWorld (void)
 	R_ClearSkyBox ();
 #endif
 
-	R_RecursiveWorldNode (cl.worldmodel->nodes);
+	R_RecursiveWorldNode (CL_WorldModel()->nodes);
 
 	DrawTextureChains ();
 
@@ -1148,19 +1150,20 @@ void R_MarkLeaves (void)
 	r_visframecount++;
 	r_oldviewleaf = r_viewleaf;
 
+	model_t *worldmodel = CL_WorldModel();
 	if (r_novis.value)
 	{
 		vis = solid;
-		memset (solid, 0xff, (cl.worldmodel->numleafs+7)>>3);
+		memset (solid, 0xff, (worldmodel->numleafs+7)>>3);
 	}
 	else
-		vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
-		
-	for (i=0 ; i<cl.worldmodel->numleafs ; i++)
+		vis = Mod_LeafPVS (r_viewleaf, worldmodel);
+
+	for (i=0 ; i<worldmodel->numleafs ; i++)
 	{
 		if (vis[i>>3] & (1<<(i&7)))
 		{
-			node = (mnode_t *)&cl.worldmodel->leafs[i+1];
+			node = (mnode_t *)&worldmodel->leafs[i+1];
 			do
 			{
 				if (node->visframe == r_visframecount)
@@ -1430,7 +1433,7 @@ void GL_BuildLightmaps (void)
 
 	for (j=1 ; j<MAX_MODELS ; j++)
 	{
-		m = cl.model_precache[j];
+		m = CL_ModelPrecache(j);
 		if (!m)
 			break;
 		if (m->name[0] == '*')
