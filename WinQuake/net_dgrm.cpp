@@ -119,7 +119,7 @@ void NET_Ban_f (void)
 	}
 	else
 	{
-		if (pr_global_struct->deathmatch && !host_client->privileged)
+		if (deathmatch.value && !host_client->privileged)
 			return;
 		print = SV_ClientPrintf;
 	}

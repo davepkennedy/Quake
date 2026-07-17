@@ -295,15 +295,14 @@ void PF_sprint (void)
 	
 	entnum = G_EDICTNUM(OFS_PARM0);
 	s = PF_VarString(1);
-	
-	if (entnum < 1 || entnum > svs.maxclients)
+
+	client = SV_ClientForEntNum (entnum);
+	if (!client)
 	{
 		Con_Printf ("tried to sprint to a non-client\n");
 		return;
 	}
-		
-	client = &svs.clients[entnum-1];
-		
+
 	MSG_WriteChar (&client->message,svc_print);
 	MSG_WriteString (&client->message, s );
 }
@@ -326,15 +325,14 @@ void PF_centerprint (void)
 	
 	entnum = G_EDICTNUM(OFS_PARM0);
 	s = PF_VarString(1);
-	
-	if (entnum < 1 || entnum > svs.maxclients)
+
+	client = SV_ClientForEntNum (entnum);
+	if (!client)
 	{
 		Con_Printf ("tried to sprint to a non-client\n");
 		return;
 	}
-		
-	client = &svs.clients[entnum-1];
-		
+
 	MSG_WriteChar (&client->message,svc_centerprint);
 	MSG_WriteString (&client->message, s );
 }
@@ -631,7 +629,7 @@ void PF_traceline (void)
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else
-		pr_global_struct->trace_ent = EDICT_TO_PROG(sv.edicts);
+		pr_global_struct->trace_ent = EDICT_TO_PROG(EDICT_NUM(0));
 }
 
 
@@ -695,17 +693,17 @@ int PF_newcheckclient (int check)
 
 	if (check < 1)
 		check = 1;
-	if (check > svs.maxclients)
-		check = svs.maxclients;
+	if (check > SV_NumClients())
+		check = SV_NumClients();
 
-	if (check == svs.maxclients)
+	if (check == SV_NumClients())
 		i = 1;
 	else
 		i = check + 1;
 
 	for ( ;  ; i++)
 	{
-		if (i == svs.maxclients+1)
+		if (i == SV_NumClients()+1)
 			i = 1;
 
 		ent = EDICT_NUM(i);
@@ -768,7 +766,7 @@ void PF_checkclient (void)
 	ent = EDICT_NUM(sv.lastcheck);
 	if (ent->free || ent->v.health <= 0)
 	{
-		RETURN_EDICT(sv.edicts);
+		RETURN_EDICT(EDICT_NUM(0));
 		return;
 	}
 
@@ -780,7 +778,7 @@ void PF_checkclient (void)
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 c_notvis++;
-		RETURN_EDICT(sv.edicts);
+		RETURN_EDICT(EDICT_NUM(0));
 		return;
 	}
 
@@ -806,14 +804,16 @@ void PF_stuffcmd (void)
 	int		entnum;
 	char	*str;
 	client_t	*old;
-	
+	client_t	*target;
+
 	entnum = G_EDICTNUM(OFS_PARM0);
-	if (entnum < 1 || entnum > svs.maxclients)
+	target = SV_ClientForEntNum (entnum);
+	if (!target)
 		PR_RunError ("Parm 0 not a client");
-	str = G_STRING(OFS_PARM1);	
-	
+	str = G_STRING(OFS_PARM1);
+
 	old = host_client;
-	host_client = &svs.clients[entnum-1];
+	host_client = target;
 	Host_ClientCommands ("%s", str);
 	host_client = old;
 }
@@ -885,13 +885,13 @@ void PF_findradius (void)
 	vec3_t	eorg;
 	int		i, j;
 
-	chain = (edict_t *)sv.edicts;
-	
+	chain = EDICT_NUM(0);
+
 	org = G_VECTOR(OFS_PARM0);
 	rad = G_FLOAT(OFS_PARM1);
 
-	ent = NEXT_EDICT(sv.edicts);
-	for (i=1 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	ent = EDICT_NUM(1);
+	for (i=1 ; i<SV_NumEdicts() ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
@@ -1034,7 +1034,7 @@ void PF_Find (void)
 	if (!s)
 		PR_RunError ("PF_Find: bad search string");
 		
-	for (e++ ; e < sv.num_edicts ; e++)
+	for (e++ ; e < SV_NumEdicts() ; e++)
 	{
 		ed = EDICT_NUM(e);
 		if (ed->free)
@@ -1049,7 +1049,7 @@ void PF_Find (void)
 		}
 	}
 
-	RETURN_EDICT(sv.edicts);
+	RETURN_EDICT(EDICT_NUM(0));
 }
 #endif
 
@@ -1235,13 +1235,16 @@ void PF_lightstyle (void)
 	if (sv.state != ss_active)
 		return;
 	
-	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
+	for (j=1 ; j<=SV_NumClients() ; j++)
+	{
+		client = SV_ClientForEntNum (j);
 		if (client->active || client->spawned)
 		{
 			MSG_WriteChar (&client->message, svc_lightstyle);
 			MSG_WriteChar (&client->message,style);
 			MSG_WriteString (&client->message, val);
 		}
+	}
 }
 
 void PF_rint (void)
@@ -1307,9 +1310,9 @@ void PF_nextent (void)
 	while (1)
 	{
 		i++;
-		if (i == sv.num_edicts)
+		if (i == SV_NumEdicts())
 		{
-			RETURN_EDICT(sv.edicts);
+			RETURN_EDICT(EDICT_NUM(0));
 			return;
 		}
 		ent = EDICT_NUM(i);
@@ -1362,8 +1365,8 @@ void PF_aim (void)
 	bestdist = sv_aim.value;
 	bestent = NULL;
 	
-	check = NEXT_EDICT(sv.edicts);
-	for (i=1 ; i<sv.num_edicts ; i++, check = NEXT_EDICT(check) )
+	check = EDICT_NUM(1);
+	for (i=1 ; i<SV_NumEdicts() ; i++, check = NEXT_EDICT(check) )
 	{
 		if (check->v.takedamage != DAMAGE_AIM)
 			continue;
@@ -1508,19 +1511,21 @@ sizebuf_t *WriteDest (void)
 	int		entnum;
 	int		dest;
 	edict_t	*ent;
+	client_t	*client;
 
 	dest = G_FLOAT(OFS_PARM0);
 	switch (dest)
 	{
 	case MSG_BROADCAST:
 		return &sv.datagram;
-	
+
 	case MSG_ONE:
 		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
 		entnum = NUM_FOR_EDICT(ent);
-		if (entnum < 1 || entnum > svs.maxclients)
+		client = SV_ClientForEntNum (entnum);
+		if (!client)
 			PR_RunError ("WriteDest: not a client");
-		return &svs.clients[entnum-1].message;
+		return &client->message;
 		
 	case MSG_ALL:
 		return &sv.reliable_datagram;
@@ -1620,12 +1625,11 @@ void PF_setspawnparms (void)
 
 	ent = G_EDICT(OFS_PARM0);
 	i = NUM_FOR_EDICT(ent);
-	if (i < 1 || i > svs.maxclients)
+	client = SV_ClientForEntNum (i);
+	if (!client)
 		PR_RunError ("Entity is not a client");
 
 	// copy spawn parms out of the client_t
-	client = svs.clients + (i-1);
-
 	for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
 		(&pr_global_struct->parm1)[i] = client->spawn_parms[i];
 }

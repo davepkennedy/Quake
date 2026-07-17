@@ -29,6 +29,23 @@ void server_t::Clear ()
 	memset (this, 0, sizeof(*this));
 }
 
+int SV_NumEdicts (void)
+{
+	return sv.num_edicts;
+}
+
+int SV_NumClients (void)
+{
+	return svs.maxclients;
+}
+
+client_t *SV_ClientForEntNum (int entnum)
+{
+	if (entnum < 1 || entnum > svs.maxclients)
+		return NULL;
+	return &svs.clients[entnum-1];
+}
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================

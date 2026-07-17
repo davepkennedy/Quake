@@ -211,6 +211,13 @@ extern	cvar_t	timelimit;
 extern	server_static_t	svs;				// persistant server info
 extern	server_t		sv;					// local server
 
+// Narrow entity/client-pool accessors -- for QuakeC builtins (pr_cmds.cpp)
+// that need to iterate or look up by entity number without reaching into
+// sv./svs.'s representation directly.
+int SV_NumEdicts (void);					// sv.num_edicts
+int SV_NumClients (void);					// svs.maxclients
+client_t *SV_ClientForEntNum (int entnum);	// 1-based; NULL if entnum isn't a client
+
 extern	client_t	*host_client;
 
 extern	double		host_time;
