@@ -118,6 +118,31 @@ struct model_s *CL_ModelPrecache (int index)
 	return cl.model_precache[index];
 }
 
+int CL_GameType (void)
+{
+	return cl.gametype;
+}
+
+char *CL_LevelName (void)
+{
+	return cl.levelname;
+}
+
+float CL_ItemGetTime (int index)
+{
+	return cl.item_gettime[index];
+}
+
+int CL_CompletedTime (void)
+{
+	return cl.completed_time;
+}
+
+float CL_FaceAnimTime (void)
+{
+	return cl.faceanimtime;
+}
+
 struct efrag_s *CL_AllocEfrag (void)
 {
 	struct efrag_s *ef = cl.free_efrags;

@@ -295,6 +295,11 @@ float CL_LastReceivedMessage (void);				// cl.last_received_message
 entity_t *CL_ViewEnt (void);						// &cl.viewent
 scoreboard_t *CL_Score (int index);				// &cl.scores[index]
 struct model_s *CL_ModelPrecache (int index);		// cl.model_precache[index]
+int CL_GameType (void);							// cl.gametype
+char *CL_LevelName (void);							// cl.levelname
+float CL_ItemGetTime (int index);					// cl.item_gettime[index]
+int CL_CompletedTime (void);						// cl.completed_time
+float CL_FaceAnimTime (void);						// cl.faceanimtime
 
 // cl.free_efrags is a singly-linked free list; gl_refrag.cpp is its sole
 // active manager (cl_main.cpp only builds the initial list once), so these

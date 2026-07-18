@@ -245,6 +245,8 @@ int SV_ModelPrecacheIndex (const char *name);	// find only; -1 if not precached
 int SV_PrecacheModel (char *name);				// find-or-register (also loads the model); -1 if table full
 struct model_s *SV_ModelForIndex (int index);	// sv.models[index]
 qboolean SV_TryIssueChangelevel (void);		// true if this call issued it, false if already issued this spawn
+qboolean SV_Active (void);						// sv.active
+int SV_MaxClientsLimit (void);					// svs.maxclientslimit
 
 extern	client_t	*host_client;
 

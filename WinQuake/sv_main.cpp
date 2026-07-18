@@ -164,6 +164,16 @@ qboolean SV_TryIssueChangelevel (void)
 	return true;
 }
 
+qboolean SV_Active (void)
+{
+	return sv.active;
+}
+
+int SV_MaxClientsLimit (void)
+{
+	return svs.maxclientslimit;
+}
+
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
 //============================================================================

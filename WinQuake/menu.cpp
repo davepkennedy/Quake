@@ -414,11 +414,11 @@ void M_SinglePlayer_Key (int key)
 		switch (m_singleplayer_cursor)
 		{
 		case 0:
-			if (sv.active)
+			if (SV_Active())
 				if (!SCR_ModalMessage("Are you sure you want to\nstart a new game?\n"))
 					break;
 			key_dest = key_game;
-			if (sv.active)
+			if (SV_Active())
 				Cbuf_AddText ("disconnect\n");
 			Cbuf_AddText ("maxplayers 1\n");
 			Cbuf_AddText ("map start\n");
@@ -483,11 +483,11 @@ void M_Menu_Load_f (void)
 
 void M_Menu_Save_f (void)
 {
-	if (!sv.active)
+	if (!SV_Active())
 		return;
-	if (cl.intermission)
+	if (CL_Intermission())
 		return;
-	if (svs.maxclients != 1)
+	if (SV_NumClients() != 1)
 		return;
 	m_entersound = true;
 	m_state = m_save;
@@ -2491,9 +2491,9 @@ void M_Menu_GameOptions_f (void)
 	m_state = m_gameoptions;
 	m_entersound = true;
 	if (maxplayers == 0)
-		maxplayers = svs.maxclients;
+		maxplayers = SV_NumClients();
 	if (maxplayers < 2)
-		maxplayers = svs.maxclientslimit;
+		maxplayers = SV_MaxClientsLimit();
 }
 
 
@@ -2634,9 +2634,9 @@ void M_NetStart_Change (int dir)
 	{
 	case 1:
 		maxplayers += dir;
-		if (maxplayers > svs.maxclientslimit)
+		if (maxplayers > SV_MaxClientsLimit())
 		{
-			maxplayers = svs.maxclientslimit;
+			maxplayers = SV_MaxClientsLimit();
 			m_serverInfoMessage = true;
 			m_serverInfoMessageTime = realtime;
 		}
@@ -2768,7 +2768,7 @@ void M_GameOptions_Key (int key)
 		S_LocalSound ("misc/menu2.wav");
 		if (gameoptions_cursor == 0)
 		{
-			if (sv.active)
+			if (SV_Active())
 				Cbuf_AddText ("disconnect\n");
 			Cbuf_AddText ("listen 0\n");	// so host_netport will be re-examined
 			Cbuf_AddText ( va ("maxplayers %u\n", maxplayers) );
