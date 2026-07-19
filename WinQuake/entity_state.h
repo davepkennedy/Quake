@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -17,11 +17,22 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-/* crc.h */
+// entity_state.h -- a network-protocol snapshot of an entity's visible
+// state. Used by value in both render.h's entity_t (as a baseline to fill
+// in defaults from) and progs.h's edict-adjacent structs; small enough,
+// and shared by exactly those two, to warrant its own header rather than
+// being defined inline in quakedef.h the way it used to be.
 #pragma once
 
-#include "common.h"	// byte
+#include "mathlib.h"	// vec3_t
 
-void CRC_Init(unsigned short *crcvalue);
-void CRC_ProcessByte(unsigned short *crcvalue, byte data);
-unsigned short CRC_Value(unsigned short crcvalue);
+typedef struct
+{
+	vec3_t	origin;
+	vec3_t	angles;
+	int		modelindex;
+	int		frame;
+	int		colormap;
+	int		skin;
+	int		effects;
+} entity_state_t;

@@ -20,6 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // draw.h -- these are the only functions outside the refresh allowed
 // to touch the vid buffer
+#pragma once
+
+#include "common.h"	// byte
+#include "wad.h"	// qpic_t
 
 extern	qpic_t		*draw_disc;	// also used on sbar
 

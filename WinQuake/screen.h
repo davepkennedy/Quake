@@ -18,6 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // screen.h
+#pragma once
+
+#include "common.h"	// qboolean
+#include "cvar.h"	// cvar_t
 
 void SCR_Init (void);
 

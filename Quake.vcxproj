@@ -200,6 +200,7 @@
     <ClInclude Include="WinQuake\crc.h" />
     <ClInclude Include="WinQuake\cvar.h" />
     <ClInclude Include="WinQuake\draw.h" />
+    <ClInclude Include="WinQuake\entity_state.h" />
     <ClInclude Include="WinQuake\gl_model.h" />
     <ClInclude Include="WinQuake\gl_warp_sin.h" />
     <ClInclude Include="WinQuake\glquake.h" />
@@ -219,6 +220,7 @@
     <ClInclude Include="WinQuake\progdefs.h" />
     <ClInclude Include="WinQuake\progs.h" />
     <ClInclude Include="WinQuake\protocol.h" />
+    <ClInclude Include="WinQuake\qlimits.h" />
     <ClInclude Include="WinQuake\quakedef.h" />
     <ClInclude Include="WinQuake\render.h" />
     <ClInclude Include="WinQuake\sbar.h" />

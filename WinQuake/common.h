@@ -18,9 +18,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // comndef.h  -- general definitions
+#pragma once
 
 #include <string>
 #include <cstdarg>
+
+#include "qlimits.h"	// MAX_OSPATH
 
 #if !defined BYTE_DEFINED
 typedef unsigned char 		byte;

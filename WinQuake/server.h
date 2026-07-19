@@ -18,6 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // server.h
+#pragma once
+
+#include "qlimits.h"	// MAX_MODELS, MAX_SOUNDS, MAX_LIGHTSTYLES, MAX_DATAGRAM,
+						// MAX_MSGLEN
+#include "common.h"	// byte, qboolean, sizebuf_t
+#include "mathlib.h"	// vec3_t
+#include "client.h"	// usercmd_t
+#include "progs.h"	// edict_t
 
 typedef struct
 {

@@ -18,11 +18,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // disable data conversion warnings
+#pragma once
 
 #pragma warning(disable : 4244)     // MIPS
 #pragma warning(disable : 4136)     // X86
 #pragma warning(disable : 4051)     // ALPHA
-  
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -31,6 +32,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/glu.h>
 
 #include <glm/glm.hpp>
+
+#include "common.h"	// byte, qboolean
+#include "mathlib.h"	// vec3_t, fixed8_t
+#include "vid.h"	// pixel_t
+#include "cvar.h"	// cvar_t
+#include "wad.h"	// qpic_t
+#include "render.h"	// entity_t
+#include "gl_model.h"	// texture_t, msurface_t, mplane_t
+#include "client.h"	// dlight_t
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);

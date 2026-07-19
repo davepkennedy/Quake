@@ -18,6 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // net.h -- quake's interface to the networking layer
+#pragma once
+
+#include "qlimits.h"	// MAX_DATAGRAM
+#include "common.h"	// byte, qboolean, sizebuf_t
+#include "cvar.h"	// cvar_t
 
 struct qsockaddr
 {

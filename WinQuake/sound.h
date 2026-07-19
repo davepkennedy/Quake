@@ -22,6 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sound_state_t, ...) lives in snd_internal.h instead, included only by
 // snd_dma.cpp/snd_mem.cpp/snd_mix.cpp/snd_win.cpp -- nothing outside those
 // files needs it, confirmed via a full-codebase grep before the split.
+#pragma once
+
+#include "qlimits.h"	// MAX_QPATH
+#include "common.h"	// qboolean
+#include "zone.h"	// cache_user_t
+#include "mathlib.h"	// vec3_t
+#include "cvar.h"	// cvar_t
 
 #ifndef __SOUND__
 #define __SOUND__

@@ -18,8 +18,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // cvar.h
+#pragma once
 
 #include <string>
+#include <cstdio>	// FILE
+
+#include "common.h"	// qboolean
 
 /*
 

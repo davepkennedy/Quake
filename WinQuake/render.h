@@ -19,6 +19,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // refresh.h -- public interface to refresh functions
+#pragma once
+
+#include "common.h"	// byte, qboolean
+#include "mathlib.h"	// vec3_t
+#include "vid.h"	// vrect_t
+#include "entity_state.h"	// entity_state_t
 
 #define	MAXCLIPPLANES	11
 

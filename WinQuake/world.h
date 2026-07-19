@@ -18,6 +18,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // world.h
+#pragma once
+
+#include "common.h"	// qboolean
+#include "mathlib.h"	// vec3_t
+#include "progs.h"	// edict_t
+#include "gl_model.h"	// hull_t
 
 typedef struct
 {

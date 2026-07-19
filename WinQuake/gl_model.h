@@ -18,6 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#pragma once
+
+#include "qlimits.h"	// MAX_QPATH
+#include "common.h"	// byte, qboolean
+#include "mathlib.h"	// vec3_t
+#include "zone.h"	// cache_user_t
+#include "bspfile.h"	// MIPLEVELS, MAXLIGHTMAPS, NUM_AMBIENTS, MAX_MAP_HULLS
+
 #ifndef __MODEL__
 #define __MODEL__
 

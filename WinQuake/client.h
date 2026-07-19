@@ -18,6 +18,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // client.h
+#pragma once
+
+#include <cstdio>	// FILE
+
+#include "qlimits.h"	// MAX_STYLESTRING, MAX_SCOREBOARDNAME, MAX_QPATH,
+						// MAX_CL_STATS, MAX_MODELS, MAX_SOUNDS, MAX_EDICTS,
+						// MAX_LIGHTSTYLES
+#include "common.h"	// byte, qboolean, sizebuf_t
+#include "mathlib.h"	// vec3_t
+#include "vid.h"	// VID_GRADES
+#include "cvar.h"	// cvar_t
+#include "render.h"	// entity_t, efrag_t
 
 typedef struct
 {

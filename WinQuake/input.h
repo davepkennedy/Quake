@@ -18,6 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // input.h -- external (non-keyboard) input devices
+#pragma once
+
+#include "client.h"	// usercmd_t
 
 void IN_Init (void);
 

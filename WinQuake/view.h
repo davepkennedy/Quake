@@ -18,6 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // view.h
+#pragma once
+
+#include "common.h"	// byte
+#include "mathlib.h"	// vec3_t
+#include "cvar.h"	// cvar_t
 
 extern	cvar_t		v_gamma;
 
