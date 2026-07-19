@@ -1290,17 +1290,15 @@ The filename will be prefixed by the current game directory
 void COM_WriteFile (const char *filename, const void *data, int len)
 {
 	int             handle;
-	char    name[MAX_OSPATH];
-	
-	sprintf (name, "%s/%s", com_gamedir, filename);
+	std::string     name = std::format ("{}/{}", com_gamedir, filename);
 
-	handle = Sys_FileOpenWrite (name);
+	handle = Sys_FileOpenWrite (name.c_str ());
 	if (handle == -1)
 	{
 		Sys_Printf ("COM_WriteFile: failed on {}\n", name);
 		return;
 	}
-	
+
 	Sys_Printf ("COM_WriteFile: {}\n", name);
 	Sys_FileWrite (handle, data, len);
 	Sys_FileClose (handle);
@@ -1374,8 +1372,8 @@ Sets com_filesize and one of handle or file
 int COM_FindFile (const char *filename, int *handle, FILE **file)
 {
 	searchpath_t    *search;
-	char            netpath[MAX_OSPATH];
-	char            cachepath[MAX_OSPATH];
+	std::string     netpath;
+	std::string     cachepath;
 	pack_t          *pak;
 	int                     i;
 	int                     findtime, cachetime;
@@ -1430,41 +1428,41 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 					continue;
 			}
 			
-			sprintf (netpath, "%s/%s",search->filename, filename);
-			
-			findtime = Sys_FileTime (netpath);
+			netpath = std::format ("{}/{}",search->filename, filename);
+
+			findtime = Sys_FileTime (netpath.c_str ());
 			if (findtime == -1)
 				continue;
-				
+
 		// see if the file needs to be updated in the cache
 			if (!com_cachedir[0])
-				strcpy (cachepath, netpath);
+				cachepath = netpath;
 			else
-			{	
+			{
 #if defined(_WIN32)
-				if ((strlen(netpath) < 2) || (netpath[1] != ':'))
-					sprintf (cachepath,"%s%s", com_cachedir, netpath);
+				if ((netpath.size () < 2) || (netpath[1] != ':'))
+					cachepath = std::format ("{}{}", com_cachedir, netpath);
 				else
-					sprintf (cachepath,"%s%s", com_cachedir, netpath+2);
+					cachepath = std::format ("{}{}", com_cachedir, netpath.substr (2));
 #else
-				sprintf (cachepath,"%s%s", com_cachedir, netpath);
+				cachepath = std::format ("{}{}", com_cachedir, netpath);
 #endif
 
-				cachetime = Sys_FileTime (cachepath);
-			
+				cachetime = Sys_FileTime (cachepath.c_str ());
+
 				if (cachetime < findtime)
-					COM_CopyFile (netpath, cachepath);
-				strcpy (netpath, cachepath);
-			}	
+					COM_CopyFile (netpath.data (), cachepath.data ());
+				netpath = cachepath;
+			}
 
 			Sys_Printf ("FindFile: {}\n",netpath);
-			com_filesize = Sys_FileOpenRead (netpath, &i);
+			com_filesize = Sys_FileOpenRead (netpath.c_str (), &i);
 			if (handle)
 				*handle = i;
 			else
 			{
 				Sys_FileClose (i);
-				*file = fopen (netpath, "rb");
+				*file = fopen (netpath.c_str (), "rb");
 			}
 			return com_filesize;
 		}
@@ -1700,7 +1698,7 @@ void COM_AddGameDirectory (const char *dir)
 	int                             i;
 	searchpath_t    *search;
 	pack_t                  *pak;
-	char                    pakfile[MAX_OSPATH];
+	std::string             pakfile;
 
 	strcpy (com_gamedir, dir);
 
@@ -1717,8 +1715,8 @@ void COM_AddGameDirectory (const char *dir)
 //
 	for (i=0 ; ; i++)
 	{
-		sprintf (pakfile, "%s/pak%i.pak", dir, i);
-		pak = COM_LoadPackFile (pakfile);
+		pakfile = std::format ("{}/pak{}.pak", dir, i);
+		pak = COM_LoadPackFile (pakfile.c_str ());
 		if (!pak)
 			break;
 		search = (searchpath_t *)Hunk_Alloc (sizeof(searchpath_t));

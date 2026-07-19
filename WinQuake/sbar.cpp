@@ -456,23 +456,23 @@ Sbar_SoloScoreboard
 */
 void Sbar_SoloScoreboard (void)
 {
-	char	str[80];
+	std::string str;
 	int		minutes, seconds, tens, units;
 	int		l;
 
-	sprintf (str,"Monsters:%3i /%3i", CL_Stat(STAT_MONSTERS), CL_Stat(STAT_TOTALMONSTERS));
-	Sbar_DrawString (8, 4, str);
+	str = std::format ("Monsters:{:3} /{:3}", CL_Stat(STAT_MONSTERS), CL_Stat(STAT_TOTALMONSTERS));
+	Sbar_DrawString (8, 4, str.data ());
 
-	sprintf (str,"Secrets :%3i /%3i", CL_Stat(STAT_SECRETS), CL_Stat(STAT_TOTALSECRETS));
-	Sbar_DrawString (8, 12, str);
+	str = std::format ("Secrets :{:3} /{:3}", CL_Stat(STAT_SECRETS), CL_Stat(STAT_TOTALSECRETS));
+	Sbar_DrawString (8, 12, str.data ());
 
 // time
 	minutes = CL_Time() / 60;
 	seconds = CL_Time() - 60*minutes;
 	tens = seconds / 10;
 	units = seconds - 10*tens;
-	sprintf (str,"Time :%3i:%i%i", minutes, tens, units);
-	Sbar_DrawString (184, 4, str);
+	str = std::format ("Time :{:3}:{}{}", minutes, tens, units);
+	Sbar_DrawString (184, 4, str.data ());
 
 // draw level name
 	l = (int)strlen (CL_LevelName());
@@ -546,7 +546,7 @@ Sbar_DrawInventory
 void Sbar_DrawInventory (void)
 {
 	int		i;
-	char	num[6];
+	std::string num;
 	float	time;
 	int		flashon;
 
@@ -661,7 +661,7 @@ void Sbar_DrawInventory (void)
 // ammo counts
 	for (i=0 ; i<4 ; i++)
 	{
-		sprintf (num, "%3i",CL_Stat(STAT_SHELLS+i) );
+		num = std::format ("{:3}",CL_Stat(STAT_SHELLS+i) );
 		if (num[0] != ' ')
 			Sbar_DrawCharacter ( (6*i+1)*8 - 2, -24, 18 + num[0] - '0');
 		if (num[1] != ' ')
@@ -769,7 +769,7 @@ void Sbar_DrawFrags (void)
 	int				top, bottom;
 	int				x, y, f;
 	int				xofs;
-	char			num[12];
+	std::string		num;
 	scoreboard_t	*s;
 
 	Sbar_SortFrags ();
@@ -802,7 +802,7 @@ void Sbar_DrawFrags (void)
 
 	// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		num = std::format ("{:3}",f);
 
 		Sbar_DrawCharacter ( (x+1)*8 , -24, num[0]);
 		Sbar_DrawCharacter ( (x+2)*8 , -24, num[1]);
@@ -838,9 +838,9 @@ void Sbar_DrawFace (void)
 	{
 		int				top, bottom;
 		int				xofs;
-		char			num[12];
+		std::string		num;
 		scoreboard_t	*s;
-		
+
 		s = CL_Score(CL_ViewEntity() - 1);
 		// draw background
 		top = s->colors & 0xf0;
@@ -859,7 +859,7 @@ void Sbar_DrawFace (void)
 
 		// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		num = std::format ("{:3}",f);
 
 		if (top==8)
 		{
@@ -1089,7 +1089,7 @@ void Sbar_DeathmatchOverlay (void)
 	int				i, k, l;
 	int				top, bottom;
 	int				x, y, f;
-	char			num[12];
+	std::string		num;
 	scoreboard_t	*s;
 
 	scr_copyeverything = 1;
@@ -1124,7 +1124,7 @@ void Sbar_DeathmatchOverlay (void)
 
 	// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		num = std::format ("{:3}",f);
 
 		Draw_Character ( x+8 , y, num[0]);
 		Draw_Character ( x+16 , y, num[1]);
@@ -1169,7 +1169,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 	int				i, k, l;
 	int				top, bottom;
 	int				x, y, f;
-	char			num[12];
+	std::string		num;
 	scoreboard_t	*s;
 	int				numlines;
 
@@ -1223,7 +1223,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 
 	// draw number
 		f = s->frags;
-		sprintf (num, "%3i",f);
+		num = std::format ("{:3}",f);
 
 		Draw_Character ( x+8 , y, num[0]);
 		Draw_Character ( x+16 , y, num[1]);
