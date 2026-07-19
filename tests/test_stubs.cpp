@@ -29,6 +29,24 @@
 }
 
 // ===========================================================================
+// Shared cross-file test setup
+// ===========================================================================
+
+// zone.cpp's Memory_Init must run before any Z_/Hunk_/Cache_ call is safe.
+// Called from more than one test file (see test_stubs.h) since doctest's
+// TEST_CASE execution order across files isn't something to rely on.
+void EnsureMemoryInit ()
+{
+	static bool initialized = false;
+	if (!initialized)
+	{
+		static char buffer[4 * 1024 * 1024];
+		Memory_Init (buffer, sizeof (buffer));
+		initialized = true;
+	}
+}
+
+// ===========================================================================
 // cvar.cpp / cmd.cpp's platform-boundary stubs
 // ===========================================================================
 
@@ -65,41 +83,10 @@ void SV_BroadcastPrintf (const char *fmt, ...)
 {
 }
 
-// Hunk semantics (mark/rewind) aren't needed for anything under test --
-// cvar.cpp/cmd.cpp only ever allocate through this, never free.
-void *Hunk_AllocName (int size, const char *name)
-{
-	return malloc (size);
-}
-
 // Only reachable via Cmd_Exec_f (exec a .cfg file), which no test calls.
 byte *COM_LoadHunkFile (const char *path)
 {
 	return NULL;
-}
-
-// Only reachable via Cmd_Exec_f, which no test calls.
-size_t Hunk_LowMark (void)
-{
-	return 0;
-}
-
-void Hunk_FreeToLowMark (size_t mark)
-{
-}
-
-// Real dependency of Cbuf_InsertText (used by the alias-dispatch test) --
-// mark/rewind semantics aren't needed, just working alloc/free.
-void *Z_Malloc (int size)
-{
-	void *p = malloc (size);
-	memset (p, 0, size);
-	return p;
-}
-
-void Z_Free (void *ptr)
-{
-	free (ptr);
 }
 
 // Only reachable via Cmd_ForwardToServer, which no test calls.
@@ -128,12 +115,12 @@ qboolean host_initialized = false;
 // ===========================================================================
 // Duplicated from common.cpp for test isolation.
 //
-// cvar.cpp/cmd.cpp call a small, self-contained cluster of common.cpp's
-// string/parsing utilities. Compiling the real common.cpp to get them would
-// also pull in filesystem/packfile loading (COM_LoadFile, COM_OpenFile, ...)
-// needing ~10 more stub symbols (Hunk_Alloc, Cache_Alloc, Z_Malloc,
-// Sys_FileOpenRead/Write/Close/Seek/Time, Sys_mkdir) for functionality with
-// zero bearing on cvar/cmd correctness. Every function below was checked
+// cvar.cpp/cmd.cpp/zone.cpp call a small, self-contained cluster of
+// common.cpp's string/parsing utilities. Compiling the real common.cpp to
+// get them would also pull in filesystem/packfile loading (COM_LoadFile,
+// COM_OpenFile, ...) needing ~10 more stub symbols (Sys_FileOpenRead/
+// Write/Close/Seek/Time, Sys_mkdir) for functionality with zero bearing on
+// any of the three files' correctness. Every function below was checked
 // directly against common.cpp and confirmed to call only each other or
 // plain C library functions -- nothing else in the engine. Copied
 // character-for-character; keep in sync if common.cpp's versions change.
@@ -425,6 +412,121 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 void SZ_Write (sizebuf_t *buf, const void *data, int length)
 {
 	Q_memcpy (SZ_GetSpace(buf,length),data,length);
+}
+
+// zone.cpp needs these four more from the same common.cpp cluster.
+void Q_memset (void *dest, int fill, int count)
+{
+	int             i;
+
+	if ( (((size_t)dest | count) & 3) == 0)
+	{
+		count >>= 2;
+		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
+		for (i=0 ; i<count ; i++)
+			((int *)dest)[i] = fill;
+	}
+	else
+		for (i=0 ; i<count ; i++)
+			((byte *)dest)[i] = fill;
+}
+
+void Q_strncpy (char *dest, const char *src, int count)
+{
+	while (*src && count--)
+	{
+		*dest++ = *src++;
+	}
+	if (count)
+		*dest++ = 0;
+}
+
+int Q_strcmp (const char *s1, const char *s2)
+{
+	while (1)
+	{
+		if (*s1 != *s2)
+			return -1;              // strings not equal
+		if (!*s1)
+			return 0;               // strings are equal
+		s1++;
+		s2++;
+	}
+
+	return -1;
+}
+
+int Q_atoi (const char *str)
+{
+	int             val;
+	int             sign;
+	int             c;
+
+	if (*str == '-')
+	{
+		sign = -1;
+		str++;
+	}
+	else
+		sign = 1;
+
+	val = 0;
+
+//
+// check for hex
+//
+	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X') )
+	{
+		str += 2;
+		while (1)
+		{
+			c = *str++;
+			if (c >= '0' && c <= '9')
+				val = (val<<4) + c - '0';
+			else if (c >= 'a' && c <= 'f')
+				val = (val<<4) + c - 'a' + 10;
+			else if (c >= 'A' && c <= 'F')
+				val = (val<<4) + c - 'A' + 10;
+			else
+				return val*sign;
+		}
+	}
+
+//
+// check for character
+//
+	if (str[0] == '\'')
+	{
+		return sign * str[1];
+	}
+
+//
+// assume decimal
+//
+	while (1)
+	{
+		c = *str++;
+		if (c <'0' || c > '9')
+			return val*sign;
+		val = val*10 + c - '0';
+	}
+
+	return 0;
+}
+
+int COM_CheckParm (const char *parm)
+{
+	int             i;
+
+	for (i=1 ; i<com_argc ; i++)
+	{
+		if (!com_argv[i])
+			continue;               // NEXTSTEP sometimes clears appkit vars.
+		if (!Q_strcmp (parm,com_argv[i]))
+			return i;
+	}
+
+	return 0;
 }
 
 // ===========================================================================

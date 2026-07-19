@@ -26,3 +26,12 @@ void ClearConPrint ();
 int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
 int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce);
 void SV_WallFriction (edict_t *ent, trace_t *trace);
+
+// Idempotent, shared across every test file: the real zone.cpp requires
+// Memory_Init to have run before any Z_/Hunk_/Cache_ call is safe (its
+// state starts as a null hunk_base). Both test_cmd.cpp's alias-dispatch
+// test (Cbuf_Init -> SZ_Alloc -> Hunk_AllocName) and test_zone.cpp call
+// this directly, since doctest's TEST_CASE execution order across files
+// isn't something to rely on -- whichever runs first performs the real
+// initialization exactly once.
+void EnsureMemoryInit ();

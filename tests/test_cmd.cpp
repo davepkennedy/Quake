@@ -18,6 +18,7 @@ static void EnsureCmdInit ()
 	static bool initialized = false;
 	if (!initialized)
 	{
+		EnsureMemoryInit (); // Cbuf_Init -> SZ_Alloc -> Hunk_AllocName needs this first
 		Cbuf_Init ();
 		Cmd_Init ();
 		initialized = true;
