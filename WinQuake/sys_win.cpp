@@ -436,20 +436,12 @@ void Sys_Init (void)
 	exit (1);
 }
 
-void Sys_Printf (const char *fmt, ...)
+void Sys_PrintfImpl (const std::string &text)
 {
-	va_list		argptr;
-	char		text[1024];
 	DWORD		dummy;
-	
-	if (isDedicated)
-	{
-		va_start (argptr,fmt);
-		vsprintf (text, fmt, argptr);
-		va_end (argptr);
 
-		WriteFile(houtput, text, (DWORD)strlen (text), &dummy, NULL);
-	}
+	if (isDedicated)
+		WriteFile (houtput, text.c_str (), (DWORD)text.size (), &dummy, NULL);
 }
 
 void Sys_Quit (void)

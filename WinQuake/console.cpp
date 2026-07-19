@@ -362,7 +362,7 @@ void Con_Printf (const char *fmt, ...)
 	va_end (argptr);
 
 // also echo to debugging console
-	Sys_Printf ("%s", msg.c_str());	// also echo to debugging console
+	Sys_Printf ("{}", msg.c_str());	// also echo to debugging console
 
 // log all messages to file
 	if (con.debuglog)

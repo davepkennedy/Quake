@@ -1297,11 +1297,11 @@ void COM_WriteFile (const char *filename, const void *data, int len)
 	handle = Sys_FileOpenWrite (name);
 	if (handle == -1)
 	{
-		Sys_Printf ("COM_WriteFile: failed on %s\n", name);
+		Sys_Printf ("COM_WriteFile: failed on {}\n", name);
 		return;
 	}
 	
-	Sys_Printf ("COM_WriteFile: %s\n", name);
+	Sys_Printf ("COM_WriteFile: {}\n", name);
 	Sys_FileWrite (handle, data, len);
 	Sys_FileClose (handle);
 }
@@ -1405,7 +1405,7 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 			for (i=0 ; i<pak->numfiles ; i++)
 				if (!strcmp (pak->files[i].name, filename))
 				{       // found it!
-					Sys_Printf ("PackFile: %s : %s\n",pak->filename, filename);
+					Sys_Printf ("PackFile: {} : {}\n",pak->filename, filename);
 					if (handle)
 					{
 						*handle = pak->handle;
@@ -1457,7 +1457,7 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 				strcpy (netpath, cachepath);
 			}	
 
-			Sys_Printf ("FindFile: %s\n",netpath);
+			Sys_Printf ("FindFile: {}\n",netpath);
 			com_filesize = Sys_FileOpenRead (netpath, &i);
 			if (handle)
 				*handle = i;
@@ -1471,7 +1471,7 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 		
 	}
 	
-	Sys_Printf ("FindFile: can't find %s\n", filename);
+	Sys_Printf ("FindFile: can't find {}\n", filename);
 	
 	if (handle)
 		*handle = -1;

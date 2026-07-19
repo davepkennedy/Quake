@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include <cstddef>	// size_t
+#include <string>
+#include <format>
+#include <utility>
 
 //
 // file IO
@@ -52,8 +55,18 @@ void Sys_DebugLog(const char *file, const char *fmt, ...);
 [[noreturn]] void Sys_Error (const char *error, ...);
 // an error will cause the entire program to exit
 
-void Sys_Printf (const char *fmt, ...);
+// Sends already-formatted text to the console (dedicated-server output).
+// Defined in sys_win.cpp, which keeps its output HANDLE private -- kept as
+// a plain function rather than exposing that handle here just so the
+// Sys_Printf template below could reach it directly.
+void Sys_PrintfImpl (const std::string &text);
+
 // send text to the console
+template <typename... Args>
+void Sys_Printf (std::format_string<Args...> fmt, Args&&... args)
+{
+	Sys_PrintfImpl (std::format (fmt, std::forward<Args> (args)...));
+}
 
 void Sys_Quit (void);
 
