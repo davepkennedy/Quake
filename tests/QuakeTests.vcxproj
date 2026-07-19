@@ -118,6 +118,7 @@
     <ClCompile Include="test_mathlib.cpp" />
     <ClCompile Include="test_cvar.cpp" />
     <ClCompile Include="test_cmd.cpp" />
+    <ClCompile Include="test_physics.cpp" />
   </ItemGroup>
 
   <ItemGroup>

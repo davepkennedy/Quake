@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 // ===========================================================================
 // mathlib.cpp's platform-boundary stub
 // ===========================================================================
@@ -37,6 +40,16 @@ void ClearConPrint ()
 }
 
 void Con_Printf (const char *fmt, ...)
+{
+	char text[1024];
+	va_list argptr;
+	va_start (argptr, fmt);
+	vsnprintf (text, sizeof(text), fmt, argptr);
+	va_end (argptr);
+	g_lastConPrint = text;
+}
+
+void Con_DPrintf (const char *fmt, ...)
 {
 	char text[1024];
 	va_list argptr;
@@ -412,4 +425,217 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 void SZ_Write (sizebuf_t *buf, const void *data, int length)
 {
 	Q_memcpy (SZ_GetSpace(buf,length),data,length);
+}
+
+// ===========================================================================
+// Duplicated from world.cpp / sv_phys.cpp for test isolation.
+//
+// SV_HullPointContents/SV_RecursiveHullCheck (world.cpp) and
+// ClipVelocity/SV_WallFriction (sv_phys.cpp) are the actual functions
+// under test in test_physics.cpp -- confirmed by direct reading to touch
+// nothing beyond hull_t/trace_t/edict_t fields, Sys_Error/Con_Printf/
+// Con_DPrintf, GLM, and mathlib macros. Both source files also contain
+// the live entity-linking/area-tree system (SV_LinkEdict, SV_TouchLinks,
+// ...) and the full physics simulation loop (SV_Physics_*, PR_ExecuteProgram-
+// heavy) respectively -- compiling either file wholesale to get these 4
+// functions would need a much larger, disproportionate stub investment
+// for machinery this test file has no interest in. Copied
+// character-for-character; keep in sync if the real versions change.
+// AngleVectors (used by SV_WallFriction) is NOT duplicated here -- the
+// real mathlib.cpp is already a compiled source in this project.
+// ===========================================================================
+
+#define DIST_EPSILON	(0.03125)
+
+int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
+{
+	float		d;
+	dclipnode_t	*node;
+	mplane_t	*plane;
+
+	while (num >= 0)
+	{
+		if (num < hull->firstclipnode || num > hull->lastclipnode)
+			Sys_Error ("SV_HullPointContents: bad node number");
+
+		node = hull->clipnodes + num;
+		plane = hull->planes + node->planenum;
+
+		if (plane->type < 3)
+			d = p[plane->type] - plane->dist;
+		else
+			d = DotProduct (plane->normal, p) - plane->dist;
+		if (d < 0)
+			num = node->children[1];
+		else
+			num = node->children[0];
+	}
+
+	return num;
+}
+
+qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace)
+{
+	dclipnode_t	*node;
+	mplane_t	*plane;
+	float		t1, t2;
+	float		frac;
+	vec3_t		mid;
+	int			side;
+	float		midf;
+
+// check for empty
+	if (num < 0)
+	{
+		if (num != CONTENTS_SOLID)
+		{
+			trace->allsolid = false;
+			if (num == CONTENTS_EMPTY)
+				trace->inopen = true;
+			else
+				trace->inwater = true;
+		}
+		else
+			trace->startsolid = true;
+		return true;		// empty
+	}
+
+	if (num < hull->firstclipnode || num > hull->lastclipnode)
+		Sys_Error ("SV_RecursiveHullCheck: bad node number");
+
+//
+// find the point distances
+//
+	node = hull->clipnodes + num;
+	plane = hull->planes + node->planenum;
+
+	if (plane->type < 3)
+	{
+		t1 = p1[plane->type] - plane->dist;
+		t2 = p2[plane->type] - plane->dist;
+	}
+	else
+	{
+		t1 = DotProduct (plane->normal, p1) - plane->dist;
+		t2 = DotProduct (plane->normal, p2) - plane->dist;
+	}
+
+	if (t1 >= 0 && t2 >= 0)
+		return SV_RecursiveHullCheck (hull, node->children[0], p1f, p2f, p1, p2, trace);
+	if (t1 < 0 && t2 < 0)
+		return SV_RecursiveHullCheck (hull, node->children[1], p1f, p2f, p1, p2, trace);
+
+// put the crosspoint DIST_EPSILON pixels on the near side
+	if (t1 < 0)
+		frac = (t1 + DIST_EPSILON)/(t1-t2);
+	else
+		frac = (t1 - DIST_EPSILON)/(t1-t2);
+	if (frac < 0)
+		frac = 0;
+	if (frac > 1)
+		frac = 1;
+
+	midf = p1f + (p2f - p1f)*frac;
+	{
+		glm::vec3 result = glm::mix (glm::make_vec3(p1), glm::make_vec3(p2), frac);
+		mid[0] = result.x; mid[1] = result.y; mid[2] = result.z;
+	}
+
+	side = (t1 < 0);
+
+// move up to the node
+	if (!SV_RecursiveHullCheck (hull, node->children[side], p1f, midf, p1, mid, trace) )
+		return false;
+
+	if (SV_HullPointContents (hull, node->children[side^1], mid)
+	!= CONTENTS_SOLID)
+// go past the node
+		return SV_RecursiveHullCheck (hull, node->children[side^1], midf, p2f, mid, p2, trace);
+
+	if (trace->allsolid)
+		return false;		// never got out of the solid area
+
+//==================
+// the other side of the node is solid, this is the impact point
+//==================
+	if (!side)
+	{
+		VectorCopy (plane->normal, trace->plane.normal);
+		trace->plane.dist = plane->dist;
+	}
+	else
+	{
+		VectorSubtract (vec3_origin, plane->normal, trace->plane.normal);
+		trace->plane.dist = -plane->dist;
+	}
+
+	while (SV_HullPointContents (hull, hull->firstclipnode, mid)
+	== CONTENTS_SOLID)
+	{ // shouldn't really happen, but does occasionally
+		frac -= 0.1f;
+		if (frac < 0)
+		{
+			trace->fraction = midf;
+			VectorCopy (mid, trace->endpos);
+			Con_DPrintf ("backup past 0\n");
+			return false;
+		}
+		midf = p1f + (p2f - p1f)*frac;
+		glm::vec3 result = glm::mix (glm::make_vec3(p1), glm::make_vec3(p2), frac);
+		mid[0] = result.x; mid[1] = result.y; mid[2] = result.z;
+	}
+
+	trace->fraction = midf;
+	VectorCopy (mid, trace->endpos);
+
+	return false;
+}
+
+#define	STOP_EPSILON	0.1
+
+int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce)
+{
+	float	backoff;
+	int		i, blocked;
+
+	blocked = 0;
+	if (normal[2] > 0)
+		blocked |= 1;		// floor
+	if (!normal[2])
+		blocked |= 2;		// step
+
+	backoff = DotProduct (in, normal) * overbounce;
+
+	{
+		glm::vec3 result = glm::make_vec3(in) - glm::make_vec3(normal) * backoff;
+		out[0] = result.x; out[1] = result.y; out[2] = result.z;
+	}
+
+	for (i=0 ; i<3 ; i++)
+	{
+		if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
+			out[i] = 0;
+	}
+
+	return blocked;
+}
+
+void SV_WallFriction (edict_t *ent, trace_t *trace)
+{
+	vec3_t		forward, right, up;
+	float		d;
+
+	AngleVectors (ent->v.v_angle, forward, right, up);
+	d = DotProduct (trace->plane.normal, forward);
+
+	d += 0.5;
+	if (d >= 0)
+		return;
+
+// cut the tangential velocity
+	glm::vec3 normal = glm::make_vec3(trace->plane.normal);
+	glm::vec3 side = glm::make_vec3(ent->v.velocity) - normal * glm::dot (normal, glm::make_vec3(ent->v.velocity));
+
+	ent->v.velocity[0] = side.x * (1 + d);
+	ent->v.velocity[1] = side.y * (1 + d);
 }
