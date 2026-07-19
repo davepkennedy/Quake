@@ -48,18 +48,12 @@ void M_Menu_GameOptions_f (void);
 void M_Menu_Search_f (void);
 void M_Menu_ServerList_f (void);
 
-void M_Main_Draw (void);
-	void M_SinglePlayer_Draw (void);
-		void M_Load_Draw (void);
-		void M_Save_Draw (void);
+void M_SinglePlayer_Draw (void);
 	void M_MultiPlayer_Draw (void);
 		void M_Setup_Draw (void);
 		void M_Net_Draw (void);
-	void M_Options_Draw (void);
-		void M_Keys_Draw (void);
 		void M_Video_Draw (void);
 	void M_Help_Draw (void);
-	void M_Quit_Draw (void);
 void M_SerialConfig_Draw (void);
 	void M_ModemConfig_Draw (void);
 void M_LanConfig_Draw (void);
@@ -67,18 +61,12 @@ void M_GameOptions_Draw (void);
 void M_Search_Draw (void);
 void M_ServerList_Draw (void);
 
-void M_Main_Key (int key);
-	void M_SinglePlayer_Key (int key);
-		void M_Load_Key (int key);
-		void M_Save_Key (int key);
+void M_SinglePlayer_Key (int key);
 	void M_MultiPlayer_Key (int key);
 		void M_Setup_Key (int key);
 		void M_Net_Key (int key);
-	void M_Options_Key (int key);
-		void M_Keys_Key (int key);
 		void M_Video_Key (int key);
 	void M_Help_Key (int key);
-	void M_Quit_Key (int key);
 void M_SerialConfig_Key (int key);
 	void M_ModemConfig_Key (int key);
 void M_LanConfig_Key (int key);
@@ -236,6 +224,21 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 
 //=============================================================================
 
+// A menu screen's Draw()/Key() -- replaces the M_<Name>_Draw()/M_<Name>_Key()
+// free-function pairs the corresponding screens used to dispatch to via
+// M_Draw()/M_Keydown()'s switch statements. m_state remains the authoritative,
+// externally-writable dispatch key (net_dgrm.cpp writes it directly to
+// recover from a failed connection attempt) -- M_ScreenForState() maps it to
+// the active screen object each frame, so this class hierarchy is a
+// presentation-layer addition underneath m_state, not a replacement for it.
+class MenuScreen
+{
+public:
+	virtual ~MenuScreen() = default;
+	virtual void Draw () = 0;
+	virtual void Key (int key) = 0;
+};
+
 int m_save_demonum;
 
 /*
@@ -272,8 +275,16 @@ void M_ToggleMenu_f (void)
 //=============================================================================
 /* MAIN MENU */
 
-int	m_main_cursor;
 #define	MAIN_ITEMS	5
+
+class MainMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+MainMenu mainMenu;
 
 
 void M_Menu_Main_f (void)
@@ -289,7 +300,7 @@ void M_Menu_Main_f (void)
 }
 
 
-void M_Main_Draw (void)
+void MainMenu::Draw (void)
 {
 	int		f;
 	qpic_t	*p;
@@ -301,11 +312,11 @@ void M_Main_Draw (void)
 
 	f = (int)(host_time * 10)%6;
 
-	M_DrawTransPic (54, 32 + m_main_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
 
-void M_Main_Key (int key)
+void MainMenu::Key (int key)
 {
 	switch (key)
 	{
@@ -319,20 +330,20 @@ void M_Main_Key (int key)
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (++m_main_cursor >= MAIN_ITEMS)
-			m_main_cursor = 0;
+		if (++cursor >= MAIN_ITEMS)
+			cursor = 0;
 		break;
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (--m_main_cursor < 0)
-			m_main_cursor = MAIN_ITEMS - 1;
+		if (--cursor < 0)
+			cursor = MAIN_ITEMS - 1;
 		break;
 
 	case K_ENTER:
 		m_entersound = true;
 
-		switch (m_main_cursor)
+		switch (cursor)
 		{
 		case 0:
 			M_Menu_SinglePlayer_f ();
@@ -472,6 +483,26 @@ void M_ScanSaves (void)
 	}
 }
 
+// load_cursor/m_filenames/loadable are shared between Load and Save (the
+// cursor position and scan results carry over between the two screens, an
+// existing behavior preserved exactly here) -- so, unlike a screen-private
+// cursor, they stay as plain globals rather than becoming a class member.
+class LoadGameMenu : public MenuScreen
+{
+public:
+	void Draw () override;
+	void Key (int key) override;
+};
+LoadGameMenu loadGameMenu;
+
+class SaveMenu : public MenuScreen
+{
+public:
+	void Draw () override;
+	void Key (int key) override;
+};
+SaveMenu saveMenu;
+
 void M_Menu_Load_f (void)
 {
 	m_entersound = true;
@@ -496,7 +527,7 @@ void M_Menu_Save_f (void)
 }
 
 
-void M_Load_Draw (void)
+void LoadGameMenu::Draw (void)
 {
 	int		i;
 	qpic_t	*p;
@@ -512,7 +543,7 @@ void M_Load_Draw (void)
 }
 
 
-void M_Save_Draw (void)
+void SaveMenu::Draw (void)
 {
 	int		i;
 	qpic_t	*p;
@@ -528,7 +559,7 @@ void M_Save_Draw (void)
 }
 
 
-void M_Load_Key (int k)
+void LoadGameMenu::Key (int k)
 {
 	switch (k)
 	{
@@ -570,7 +601,7 @@ void M_Load_Key (int k)
 }
 
 
-void M_Save_Key (int k)
+void SaveMenu::Key (int k)
 {
 	switch (k)
 	{
@@ -1045,7 +1076,15 @@ again:
 
 #define	SLIDER_RANGE	10
 
-int		options_cursor;
+class OptionsMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	void Draw () override;
+	void Key (int key) override;
+	void AdjustSliders (int dir);
+};
+OptionsMenu optionsMenu;
 
 void M_Menu_Options_f (void)
 {
@@ -1054,19 +1093,19 @@ void M_Menu_Options_f (void)
 	m_entersound = true;
 
 #ifdef _WIN32
-	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
+	if ((optionsMenu.cursor == 13) && (modestate != MS_WINDOWED))
 	{
-		options_cursor = 0;
+		optionsMenu.cursor = 0;
 	}
 #endif
 }
 
 
-void M_AdjustSliders (int dir)
+void OptionsMenu::AdjustSliders (int dir)
 {
 	S_LocalSound ("misc/menu3.wav");
 
-	switch (options_cursor)
+	switch (cursor)
 	{
 	case 3:	// screen size
 		scr_viewsize.value += dir * 10;
@@ -1176,7 +1215,7 @@ void M_DrawCheckbox (int x, int y, int on)
 		M_Print (x, y, "off");
 }
 
-void M_Options_Draw (void)
+void OptionsMenu::Draw (void)
 {
 	float		r;
 	qpic_t	*p;
@@ -1233,11 +1272,11 @@ void M_Options_Draw (void)
 #endif
 
 // cursor
-	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (200, 32 + cursor*8, 12+((int)(realtime*4)&1));
 }
 
 
-void M_Options_Key (int k)
+void OptionsMenu::Key (int k)
 {
 	switch (k)
 	{
@@ -1247,7 +1286,7 @@ void M_Options_Key (int k)
 
 	case K_ENTER:
 		m_entersound = true;
-		switch (options_cursor)
+		switch (cursor)
 		{
 		case 0:
 			M_Menu_Keys_f ();
@@ -1263,49 +1302,49 @@ void M_Options_Key (int k)
 			M_Menu_Video_f ();
 			break;
 		default:
-			M_AdjustSliders (1);
+			AdjustSliders (1);
 			break;
 		}
 		return;
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		options_cursor--;
-		if (options_cursor < 0)
-			options_cursor = OPTIONS_ITEMS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = OPTIONS_ITEMS-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		options_cursor++;
-		if (options_cursor >= OPTIONS_ITEMS)
-			options_cursor = 0;
+		cursor++;
+		if (cursor >= OPTIONS_ITEMS)
+			cursor = 0;
 		break;
 
 	case K_LEFTARROW:
-		M_AdjustSliders (-1);
+		AdjustSliders (-1);
 		break;
 
 	case K_RIGHTARROW:
-		M_AdjustSliders (1);
+		AdjustSliders (1);
 		break;
 	}
 
-	if (options_cursor == 12 && vid_menudrawfn == NULL)
+	if (cursor == 12 && vid_menudrawfn == NULL)
 	{
 		if (k == K_UPARROW)
-			options_cursor = 11;
+			cursor = 11;
 		else
-			options_cursor = 0;
+			cursor = 0;
 	}
 
 #ifdef _WIN32
-	if ((options_cursor == 13) && (modestate != MS_WINDOWED))
+	if ((cursor == 13) && (modestate != MS_WINDOWED))
 	{
 		if (k == K_UPARROW)
-			options_cursor = 12;
+			cursor = 12;
 		else
-			options_cursor = 0;
+			cursor = 0;
 	}
 #endif
 }
@@ -1337,8 +1376,15 @@ const char *bindnames[][2] =
 
 #define	NUMCOMMANDS	(sizeof(bindnames)/sizeof(bindnames[0]))
 
-int		keys_cursor;
-int		bind_grab;
+class KeysMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	int bindGrab = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+KeysMenu keysMenu;
 
 void M_Menu_Keys_f (void)
 {
@@ -1348,7 +1394,7 @@ void M_Menu_Keys_f (void)
 }
 
 
-void M_Keys_Draw (void)
+void KeysMenu::Draw (void)
 {
 	int		i, l;
 	int		keys[2];
@@ -1359,7 +1405,7 @@ void M_Keys_Draw (void)
 	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
-	if (bind_grab)
+	if (bindGrab)
 		M_Print (12, 32, "Press a key or button for this action");
 	else
 		M_Print (18, 32, "Enter to change, backspace to clear");
@@ -1392,32 +1438,32 @@ void M_Keys_Draw (void)
 		}
 	}
 
-	if (bind_grab)
-		M_DrawCharacter (130, 48 + keys_cursor*8, '=');
+	if (bindGrab)
+		M_DrawCharacter (130, 48 + cursor*8, '=');
 	else
-		M_DrawCharacter (130, 48 + keys_cursor*8, 12+((int)(realtime*4)&1));
+		M_DrawCharacter (130, 48 + cursor*8, 12+((int)(realtime*4)&1));
 }
 
 
-void M_Keys_Key (int k)
+void KeysMenu::Key (int k)
 {
 	char	cmd[80];
 	int		keys[2];
 
-	if (bind_grab)
+	if (bindGrab)
 	{	// defining a key
 		S_LocalSound ("misc/menu1.wav");
 		if (k == K_ESCAPE)
 		{
-			bind_grab = false;
+			bindGrab = false;
 		}
 		else if (k != '`')
 		{
-			sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
+			sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[cursor][0]);
 			Cbuf_InsertText (cmd);
 		}
 
-		bind_grab = false;
+		bindGrab = false;
 		return;
 	}
 
@@ -1430,31 +1476,31 @@ void M_Keys_Key (int k)
 	case K_LEFTARROW:
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		keys_cursor--;
-		if (keys_cursor < 0)
-			keys_cursor = NUMCOMMANDS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = NUMCOMMANDS-1;
 		break;
 
 	case K_DOWNARROW:
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		keys_cursor++;
-		if (keys_cursor >= NUMCOMMANDS)
-			keys_cursor = 0;
+		cursor++;
+		if (cursor >= NUMCOMMANDS)
+			cursor = 0;
 		break;
 
 	case K_ENTER:		// go into bind mode
-		Key_KeysForCommand (bindnames[keys_cursor][0], keys);
+		Key_KeysForCommand (bindnames[cursor][0], keys);
 		S_LocalSound ("misc/menu2.wav");
 		if (keys[1] != -1)
-			Key_UnbindCommand (bindnames[keys_cursor][0]);
-		bind_grab = true;
+			Key_UnbindCommand (bindnames[cursor][0]);
+		bindGrab = true;
 		break;
 
 	case K_BACKSPACE:		// delete bindings
 	case K_DEL:				// delete bindings
 		S_LocalSound ("misc/menu2.wav");
-		Key_UnbindCommand (bindnames[keys_cursor][0]);
+		Key_UnbindCommand (bindnames[cursor][0]);
 		break;
 	}
 }
@@ -1533,8 +1579,15 @@ void M_Help_Key (int key)
 /* QUIT MENU */
 
 int		msgNumber;
-int		m_quit_prevstate;
-qboolean	wasInMenus;
+class QuitMenu : public MenuScreen
+{
+public:
+	int prevState = 0;
+	qboolean wasInMenus = false;
+	void Draw () override;
+	void Key (int key) override;
+};
+QuitMenu quitMenu;
 
 #ifndef	_WIN32
 const char *quitMessage [] = 
@@ -1586,16 +1639,16 @@ void M_Menu_Quit_f (void)
 {
 	if (m_state == m_quit)
 		return;
-	wasInMenus = (key_dest == key_menu);
+	quitMenu.wasInMenus = (key_dest == key_menu);
 	key_dest = key_menu;
-	m_quit_prevstate = m_state;
+	quitMenu.prevState = m_state;
 	m_state = m_quit;
 	m_entersound = true;
 	msgNumber = rand()&7;
 }
 
 
-void M_Quit_Key (int key)
+void QuitMenu::Key (int key)
 {
 	switch (key)
 	{
@@ -1604,7 +1657,7 @@ void M_Quit_Key (int key)
 	case 'N':
 		if (wasInMenus)
 		{
-			m_state = (decltype(m_state))m_quit_prevstate;
+			m_state = (decltype(m_state))prevState;
 			m_entersound = true;
 		}
 		else
@@ -1627,11 +1680,11 @@ void M_Quit_Key (int key)
 }
 
 
-void M_Quit_Draw (void)
+void QuitMenu::Draw (void)
 {
 	if (wasInMenus)
 	{
-		m_state = (decltype(m_state))m_quit_prevstate;
+		m_state = (decltype(m_state))prevState;
 		m_recursiveDraw = true;
 		M_Draw ();
 		m_state = m_quit;
@@ -2974,6 +3027,27 @@ void M_Init (void)
 }
 
 
+// Resolves m_state to the corresponding MenuScreen object. Only screens
+// converted to the MenuScreen hierarchy so far have a case here; the
+// remaining ones fall through to nullptr, and M_Draw()/M_Keydown() fall
+// back to the old per-screen free functions for those until they're
+// converted too (temporary scaffolding, removed once all screens are
+// converted).
+MenuScreen *M_ScreenForState (m_state_t state)
+{
+	switch (state)
+	{
+	case m_main:    return &mainMenu;
+	case m_options: return &optionsMenu;
+	case m_keys:    return &keysMenu;
+	case m_load:    return &loadGameMenu;
+	case m_save:    return &saveMenu;
+	case m_quit:    return &quitMenu;
+	default:        return NULL;
+	}
+}
+
+
 void M_Draw (void)
 {
 	if (m_state == m_none || key_dest != key_menu)
@@ -3000,25 +3074,18 @@ void M_Draw (void)
 		m_recursiveDraw = false;
 	}
 
-	switch (m_state)
+	MenuScreen *screen = M_ScreenForState (m_state);
+	if (screen)
+	{
+		screen->Draw ();
+	}
+	else switch (m_state)
 	{
 	case m_none:
 		break;
 
-	case m_main:
-		M_Main_Draw ();
-		break;
-
 	case m_singleplayer:
 		M_SinglePlayer_Draw ();
-		break;
-
-	case m_load:
-		M_Load_Draw ();
-		break;
-
-	case m_save:
-		M_Save_Draw ();
 		break;
 
 	case m_multiplayer:
@@ -3033,24 +3100,12 @@ void M_Draw (void)
 		M_Net_Draw ();
 		break;
 
-	case m_options:
-		M_Options_Draw ();
-		break;
-
-	case m_keys:
-		M_Keys_Draw ();
-		break;
-
 	case m_video:
 		M_Video_Draw ();
 		break;
 
 	case m_help:
 		M_Help_Draw ();
-		break;
-
-	case m_quit:
-		M_Quit_Draw ();
 		break;
 
 	case m_serialconfig:
@@ -3076,6 +3131,9 @@ void M_Draw (void)
 	case m_slist:
 		M_ServerList_Draw ();
 		break;
+
+	default:
+		break;	// m_main/m_load/m_save/m_options/m_keys/m_quit handled above
 	}
 
 	if (m_entersound)
@@ -3092,25 +3150,20 @@ void M_Draw (void)
 
 void M_Keydown (int key)
 {
+	MenuScreen *screen = M_ScreenForState (m_state);
+	if (screen)
+	{
+		screen->Key (key);
+		return;
+	}
+
 	switch (m_state)
 	{
 	case m_none:
 		return;
 
-	case m_main:
-		M_Main_Key (key);
-		return;
-
 	case m_singleplayer:
 		M_SinglePlayer_Key (key);
-		return;
-
-	case m_load:
-		M_Load_Key (key);
-		return;
-
-	case m_save:
-		M_Save_Key (key);
 		return;
 
 	case m_multiplayer:
@@ -3125,24 +3178,12 @@ void M_Keydown (int key)
 		M_Net_Key (key);
 		return;
 
-	case m_options:
-		M_Options_Key (key);
-		return;
-
-	case m_keys:
-		M_Keys_Key (key);
-		return;
-
 	case m_video:
 		M_Video_Key (key);
 		return;
 
 	case m_help:
 		M_Help_Key (key);
-		return;
-
-	case m_quit:
-		M_Quit_Key (key);
 		return;
 
 	case m_serialconfig:
@@ -3168,6 +3209,9 @@ void M_Keydown (int key)
 	case m_slist:
 		M_ServerList_Key (key);
 		return;
+
+	default:
+		return;	// m_main/m_load/m_save/m_options/m_keys/m_quit handled above
 	}
 }
 
