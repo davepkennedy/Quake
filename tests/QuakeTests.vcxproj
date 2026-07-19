@@ -112,8 +112,12 @@
        ================================================================ -->
   <ItemGroup>
     <ClCompile Include="..\WinQuake\mathlib.cpp" />
+    <ClCompile Include="..\WinQuake\cvar.cpp" />
+    <ClCompile Include="..\WinQuake\cmd.cpp" />
     <ClCompile Include="test_stubs.cpp" />
     <ClCompile Include="test_mathlib.cpp" />
+    <ClCompile Include="test_cvar.cpp" />
+    <ClCompile Include="test_cmd.cpp" />
   </ItemGroup>
 
   <ItemGroup>
