@@ -21,19 +21,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include <string>
+#include <map>
+#include <algorithm>
+#include <cctype>
 
 void Cmd_ForwardToServer (void);
 
 #define	MAX_ALIAS_NAME	32
 
-typedef struct cmdalias_s
+// Command and alias dispatch has always matched case-insensitively
+// (Cmd_ExecuteString used Q_strcasecmp) -- normalizing keys to lowercase
+// at both registration and lookup preserves that with a plain
+// std::map<std::string, T> (ordered, so prefix search stays O(log n) for
+// completion) instead of needing a custom case-insensitive comparator.
+static std::string ToLower (const std::string &s)
 {
-	struct cmdalias_s	*next;
-	std::string	name;
-	std::string	value;
-} cmdalias_t;
+	std::string out = s;
+	std::transform (out.begin (), out.end (), out.begin (),
+		[] (unsigned char c) { return (char)std::tolower (c); });
+	return out;
+}
 
-cmdalias_t	*cmd_alias;
+// name -> expansion text. Was a hand-rolled cmdalias_t linked list;
+// nothing outside this file ever touched it (confirmed via grep), so the
+// struct (name/value/next, both already std::string since Milestone 4)
+// simply isn't needed once the map holds the strings directly.
+static std::map<std::string, std::string> cmd_alias;
 
 int trashtest;
 int *trashspot;
@@ -332,15 +345,14 @@ Creates a new command that executes a command string (possibly ; seperated)
 
 void Cmd_Alias_f (void)
 {
-	cmdalias_t	*a;
 	int			i, c;
 	const char	*s;
 
 	if (Cmd_Argc() == 1)
 	{
 		Con_Printf ("Current alias commands:\n");
-		for (a = cmd_alias ; a ; a=a->next)
-			Con_Printf ("%s : %s\n", a->name.c_str(), a->value.c_str());
+		for (const auto &[name, value] : cmd_alias)
+			Con_Printf ("%s : %s\n", name.c_str(), value.c_str());
 		return;
 	}
 
@@ -350,21 +362,6 @@ void Cmd_Alias_f (void)
 		Con_Printf ("Alias name is too long\n");
 		return;
 	}
-
-	// if the alias allready exists, reuse it
-	for (a = cmd_alias ; a ; a=a->next)
-	{
-		if (a->name == s)
-			break;
-	}
-
-	if (!a)
-	{
-		a = new cmdalias_t ();
-		a->next = cmd_alias;
-		cmd_alias = a;
-	}
-	a->name = s;
 
 // copy the rest of the command line
 	std::string cmd;
@@ -377,7 +374,9 @@ void Cmd_Alias_f (void)
 	}
 	cmd += "\n";
 
-	a->value = cmd;
+	// map::operator[] creates the entry if the alias doesn't exist yet,
+	// or overwrites it in place if it does -- absorbs the old find-or-add
+	cmd_alias[ToLower (s)] = cmd;
 }
 
 /*
@@ -387,14 +386,6 @@ void Cmd_Alias_f (void)
 
 =============================================================================
 */
-
-typedef struct cmd_function_s
-{
-	struct cmd_function_s	*next;
-	const char				*name;
-	xcommand_t				function;
-} cmd_function_t;
-
 
 #define	MAX_ARGS		80
 
@@ -406,7 +397,14 @@ static	const char	*cmd_args = NULL;
 cmd_source_t	cmd_source;
 
 
-static	cmd_function_t	*cmd_functions;		// possible commands to execute
+// name -> handler. Was a hand-rolled cmd_function_t linked list with an
+// O(n) scan on every lookup -- Cmd_ExecuteString (the single most
+// frequently called function in the engine) used to do up to three of
+// these scans per command. Nothing outside this file ever read a
+// registered command's name back (error messages print the input
+// argument, not a stored copy), so the map value can just be the handler
+// itself.
+static	std::map<std::string, xcommand_t>	cmd_functions;
 
 /*
 ============
@@ -512,33 +510,26 @@ Cmd_AddCommand
 */
 void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 {
-	cmd_function_t	*cmd;
-	
 	if (host_initialized)	// because hunk allocation would get stomped
 		Sys_Error ("Cmd_AddCommand after host_initialized");
-		
+
 // fail if the command is a variable name
 	if (Cvar_VariableString(cmd_name)[0])
 	{
 		Con_Printf ("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
 		return;
 	}
-	
+
+	std::string key = ToLower (cmd_name);
+
 // fail if the command already exists
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	if (cmd_functions.find (key) != cmd_functions.end ())
 	{
-		if (!Q_strcmp (cmd_name, cmd->name))
-		{
-			Con_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
-			return;
-		}
+		Con_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
+		return;
 	}
 
-	cmd = (cmd_function_t *)Hunk_Alloc (sizeof(cmd_function_t));
-	cmd->name = cmd_name;
-	cmd->function = function;
-	cmd->next = cmd_functions;
-	cmd_functions = cmd;
+	cmd_functions[key] = function;
 }
 
 /*
@@ -548,15 +539,7 @@ Cmd_Exists
 */
 qboolean	Cmd_Exists (const char *cmd_name)
 {
-	cmd_function_t	*cmd;
-
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-	{
-		if (!Q_strcmp (cmd_name,cmd->name))
-			return true;
-	}
-
-	return false;
+	return cmd_functions.find (ToLower (cmd_name)) != cmd_functions.end ();
 }
 
 
@@ -568,18 +551,15 @@ Cmd_CompleteCommand
 */
 const char *Cmd_CompleteCommand (const char *partial)
 {
-	cmd_function_t	*cmd;
-	int				len;
-	
-	len = Q_strlen(partial);
-	
+	size_t len = Q_strlen (partial);
+
 	if (!len)
 		return NULL;
-		
-// check functions
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
-		if (!Q_strncmp (partial,cmd->name, len))
-			return cmd->name;
+
+	std::string lowerPartial = ToLower (partial);
+	auto it = cmd_functions.lower_bound (lowerPartial);
+	if (it != cmd_functions.end () && it->first.compare (0, len, lowerPartial) == 0)
+		return it->first.c_str ();	// map entries are never erased, so this stays valid
 
 	return NULL;
 }
@@ -593,41 +573,36 @@ FIXME: lookupnoadd the token to speed search?
 ============
 */
 void	Cmd_ExecuteString (const char *text, cmd_source_t src)
-{	
-	cmd_function_t	*cmd;
-	cmdalias_t		*a;
-
+{
 	cmd_source = src;
 	Cmd_TokenizeString (text);
-			
+
 // execute the command line
 	if (!Cmd_Argc())
 		return;		// no tokens
 
+	std::string key = ToLower (cmd_argv[0]);
+
 // check functions
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
+	auto cmdIt = cmd_functions.find (key);
+	if (cmdIt != cmd_functions.end ())
 	{
-		if (!Q_strcasecmp (cmd_argv[0].c_str(), cmd->name))
-		{
-			cmd->function ();
-			return;
-		}
+		cmdIt->second ();
+		return;
 	}
 
 // check alias
-	for (a=cmd_alias ; a ; a=a->next)
+	auto aliasIt = cmd_alias.find (key);
+	if (aliasIt != cmd_alias.end ())
 	{
-		if (!Q_strcasecmp (cmd_argv[0].c_str(), a->name.c_str()))
-		{
-			Cbuf_InsertText (a->value.c_str());
-			return;
-		}
+		Cbuf_InsertText (aliasIt->second.c_str());
+		return;
 	}
-	
+
 // check cvars
 	if (!Cvar_Command ())
 		Con_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));
-	
+
 }
 
 

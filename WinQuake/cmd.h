@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cmd.h -- Command buffer and command execution
 #pragma once
 
+#include <functional>
+
 #include "common.h"	// qboolean
 
 //===========================================================================
@@ -69,7 +71,7 @@ not apropriate.
 
 */
 
-typedef void (*xcommand_t) (void);
+typedef std::function<void ()> xcommand_t;
 
 typedef enum
 {

@@ -927,25 +927,16 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		char	*prevCvarName;
 		cvar_t	*var;
 
-		// find the search start location
+		// find the next server cvar after prevCvarName ("" means start
+		// from the beginning). An unknown prevCvarName drops the request
+		// silently (no response sent) -- distinct from a valid search
+		// that simply finds no more server cvars, which still gets an
+		// (empty) reply below; Cvar_NextServerVar's own NULL doesn't
+		// distinguish those, so check validity here first.
 		prevCvarName = MSG_ReadString();
-		if (*prevCvarName)
-		{
-			var = Cvar_FindVar (prevCvarName);
-			if (!var)
-				return NULL;
-			var = var->next;
-		}
-		else
-			var = cvar_vars;
-
-		// search for the next server cvar
-		while (var)
-		{
-			if (var->server)
-				break;
-			var = var->next;
-		}
+		if (*prevCvarName && !Cvar_FindVar (prevCvarName))
+			return NULL;
+		var = Cvar_NextServerVar (prevCvarName);
 
 		// send the response
 

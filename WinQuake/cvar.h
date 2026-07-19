@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <string>
 #include <cstdio>	// FILE
+#include <map>
 
 #include "common.h"	// qboolean
 
@@ -66,7 +67,6 @@ typedef struct cvar_s
 	qboolean archive;		// set to true to cause it to be saved to vars.rc
 	qboolean server;		// notifies players when changed
 	float	value;
-	struct cvar_s *next;
 } cvar_t;
 
 void 	Cvar_RegisterVariable (cvar_t *variable);
@@ -100,4 +100,10 @@ void 	Cvar_WriteVariables (FILE *f);
 
 cvar_t *Cvar_FindVar (const char *var_name);
 
-extern cvar_t	*cvar_vars;
+cvar_t *Cvar_NextServerVar (const char *afterName);
+// iterator-based enumeration of .server-flagged cvars, in map order;
+// pass NULL/"" to start from the beginning, NULL return means exhausted.
+// Used by net_dgrm.cpp's CCREQ_RULE_INFO handler instead of reaching into
+// cvar_vars directly.
+
+extern std::map<std::string, cvar_t*>	cvar_vars;
