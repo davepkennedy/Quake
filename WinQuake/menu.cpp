@@ -48,31 +48,6 @@ void M_Menu_GameOptions_f (void);
 void M_Menu_Search_f (void);
 void M_Menu_ServerList_f (void);
 
-void M_SinglePlayer_Draw (void);
-	void M_MultiPlayer_Draw (void);
-		void M_Setup_Draw (void);
-		void M_Net_Draw (void);
-		void M_Video_Draw (void);
-	void M_Help_Draw (void);
-void M_SerialConfig_Draw (void);
-	void M_ModemConfig_Draw (void);
-void M_LanConfig_Draw (void);
-void M_GameOptions_Draw (void);
-void M_Search_Draw (void);
-void M_ServerList_Draw (void);
-
-void M_SinglePlayer_Key (int key);
-	void M_MultiPlayer_Key (int key);
-		void M_Setup_Key (int key);
-		void M_Net_Key (int key);
-		void M_Video_Key (int key);
-	void M_Help_Key (int key);
-void M_SerialConfig_Key (int key);
-	void M_ModemConfig_Key (int key);
-void M_LanConfig_Key (int key);
-void M_GameOptions_Key (int key);
-void M_Search_Key (int key);
-void M_ServerList_Key (int key);
 
 qboolean	m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound
@@ -82,12 +57,12 @@ int			m_return_state;
 qboolean	m_return_onerror;
 char		m_return_reason [32];
 
-#define StartingGame	(m_multiplayer_cursor == 1)
-#define JoiningGame		(m_multiplayer_cursor == 0)
-#define SerialConfig	(m_net_cursor == 0)
-#define DirectConfig	(m_net_cursor == 1)
-#define	IPXConfig		(m_net_cursor == 2)
-#define	TCPIPConfig		(m_net_cursor == 3)
+#define StartingGame	(multiPlayerMenu.cursor == 1)
+#define JoiningGame		(multiPlayerMenu.cursor == 0)
+#define SerialConfig	(netMenu.cursor == 0)
+#define DirectConfig	(netMenu.cursor == 1)
+#define	IPXConfig		(netMenu.cursor == 2)
+#define	TCPIPConfig		(netMenu.cursor == 3)
 
 void M_ConfigureNetSubsystem(void);
 
@@ -371,8 +346,16 @@ void MainMenu::Key (int key)
 //=============================================================================
 /* SINGLE PLAYER MENU */
 
-int	m_singleplayer_cursor;
 #define	SINGLEPLAYER_ITEMS	3
+
+class SinglePlayerMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+SinglePlayerMenu singlePlayerMenu;
 
 
 void M_Menu_SinglePlayer_f (void)
@@ -383,7 +366,7 @@ void M_Menu_SinglePlayer_f (void)
 }
 
 
-void M_SinglePlayer_Draw (void)
+void SinglePlayerMenu::Draw (void)
 {
 	int		f;
 	qpic_t	*p;
@@ -395,11 +378,11 @@ void M_SinglePlayer_Draw (void)
 
 	f = (int)(host_time * 10)%6;
 
-	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
 
-void M_SinglePlayer_Key (int key)
+void SinglePlayerMenu::Key (int key)
 {
 	switch (key)
 	{
@@ -409,20 +392,20 @@ void M_SinglePlayer_Key (int key)
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (++m_singleplayer_cursor >= SINGLEPLAYER_ITEMS)
-			m_singleplayer_cursor = 0;
+		if (++cursor >= SINGLEPLAYER_ITEMS)
+			cursor = 0;
 		break;
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (--m_singleplayer_cursor < 0)
-			m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
+		if (--cursor < 0)
+			cursor = SINGLEPLAYER_ITEMS - 1;
 		break;
 
 	case K_ENTER:
 		m_entersound = true;
 
-		switch (m_singleplayer_cursor)
+		switch (cursor)
 		{
 		case 0:
 			if (SV_Active())
@@ -636,8 +619,16 @@ void SaveMenu::Key (int k)
 //=============================================================================
 /* MULTIPLAYER MENU */
 
-int	m_multiplayer_cursor;
 #define	MULTIPLAYER_ITEMS	3
+
+class MultiPlayerMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+MultiPlayerMenu multiPlayerMenu;
 
 
 void M_Menu_MultiPlayer_f (void)
@@ -648,7 +639,7 @@ void M_Menu_MultiPlayer_f (void)
 }
 
 
-void M_MultiPlayer_Draw (void)
+void MultiPlayerMenu::Draw (void)
 {
 	int		f;
 	qpic_t	*p;
@@ -660,7 +651,7 @@ void M_MultiPlayer_Draw (void)
 
 	f = (int)(host_time * 10)%6;
 
-	M_DrawTransPic (54, 32 + m_multiplayer_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 
 	if (net.serialAvailable || net.ipxAvailable || net.tcpipAvailable)
 		return;
@@ -668,7 +659,7 @@ void M_MultiPlayer_Draw (void)
 }
 
 
-void M_MultiPlayer_Key (int key)
+void MultiPlayerMenu::Key (int key)
 {
 	switch (key)
 	{
@@ -678,19 +669,19 @@ void M_MultiPlayer_Key (int key)
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
-			m_multiplayer_cursor = 0;
+		if (++cursor >= MULTIPLAYER_ITEMS)
+			cursor = 0;
 		break;
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (--m_multiplayer_cursor < 0)
-			m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
+		if (--cursor < 0)
+			cursor = MULTIPLAYER_ITEMS - 1;
 		break;
 
 	case K_ENTER:
 		m_entersound = true;
-		switch (m_multiplayer_cursor)
+		switch (cursor)
 		{
 		case 0:
 			if (net.serialAvailable || net.ipxAvailable || net.tcpipAvailable)
@@ -712,31 +703,38 @@ void M_MultiPlayer_Key (int key)
 //=============================================================================
 /* SETUP MENU */
 
-int		setup_cursor = 4;
 int		setup_cursor_table[] = {40, 56, 80, 104, 140};
 
-char	setup_hostname[16];
-char	setup_myname[16];
-int		setup_oldtop;
-int		setup_oldbottom;
-int		setup_top;
-int		setup_bottom;
-
 #define	NUM_SETUP_CMDS	5
+
+class SetupMenu : public MenuScreen
+{
+public:
+	int cursor = 4;
+	char hostnameBuf[16] = {0};
+	char nameBuf[16] = {0};
+	int oldTop = 0;
+	int oldBottom = 0;
+	int top = 0;
+	int bottom = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+SetupMenu setupMenu;
 
 void M_Menu_Setup_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_setup;
 	m_entersound = true;
-	Q_strlcpy(setup_myname, cl_name.string.c_str(), sizeof(setup_myname));
-	Q_strlcpy(setup_hostname, hostname.string.c_str(), sizeof(setup_hostname));
-	setup_top = setup_oldtop = ((int)cl_color.value) >> 4;
-	setup_bottom = setup_oldbottom = ((int)cl_color.value) & 15;
+	Q_strlcpy(setupMenu.nameBuf, cl_name.string.c_str(), sizeof(setupMenu.nameBuf));
+	Q_strlcpy(setupMenu.hostnameBuf, hostname.string.c_str(), sizeof(setupMenu.hostnameBuf));
+	setupMenu.top = setupMenu.oldTop = ((int)cl_color.value) >> 4;
+	setupMenu.bottom = setupMenu.oldBottom = ((int)cl_color.value) & 15;
 }
 
 
-void M_Setup_Draw (void)
+void SetupMenu::Draw (void)
 {
 	qpic_t	*p;
 
@@ -746,11 +744,11 @@ void M_Setup_Draw (void)
 
 	M_Print (64, 40, "Hostname");
 	M_DrawTextBox (160, 32, 16, 1);
-	M_Print (168, 40, setup_hostname);
+	M_Print (168, 40, hostnameBuf);
 
 	M_Print (64, 56, "Your name");
 	M_DrawTextBox (160, 48, 16, 1);
-	M_Print (168, 56, setup_myname);
+	M_Print (168, 56, nameBuf);
 
 	M_Print (64, 80, "Shirt color");
 	M_Print (64, 104, "Pants color");
@@ -761,20 +759,20 @@ void M_Setup_Draw (void)
 	p = Draw_CachePic ("gfx/bigbox.lmp");
 	M_DrawTransPic (160, 64, p);
 	p = Draw_CachePic ("gfx/menuplyr.lmp");
-	M_BuildTranslationTable(setup_top*16, setup_bottom*16);
+	M_BuildTranslationTable(top*16, bottom*16);
 	M_DrawTransPicTranslate (172, 72, p);
 
-	M_DrawCharacter (56, setup_cursor_table [setup_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (56, setup_cursor_table [cursor], 12+((int)(realtime*4)&1));
 
-	if (setup_cursor == 0)
-		M_DrawCharacter (168 + 8*(int)strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+	if (cursor == 0)
+		M_DrawCharacter (168 + 8*(int)strlen(hostnameBuf), setup_cursor_table [cursor], 10+((int)(realtime*4)&1));
 
-	if (setup_cursor == 1)
-		M_DrawCharacter (168 + 8*(int)strlen(setup_myname), setup_cursor_table [setup_cursor], 10+((int)(realtime*4)&1));
+	if (cursor == 1)
+		M_DrawCharacter (168 + 8*(int)strlen(nameBuf), setup_cursor_table [cursor], 10+((int)(realtime*4)&1));
 }
 
 
-void M_Setup_Key (int k)
+void SetupMenu::Key (int k)
 {
 	int			l;
 
@@ -786,109 +784,116 @@ void M_Setup_Key (int k)
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		setup_cursor--;
-		if (setup_cursor < 0)
-			setup_cursor = NUM_SETUP_CMDS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = NUM_SETUP_CMDS-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		setup_cursor++;
-		if (setup_cursor >= NUM_SETUP_CMDS)
-			setup_cursor = 0;
+		cursor++;
+		if (cursor >= NUM_SETUP_CMDS)
+			cursor = 0;
 		break;
 
 	case K_LEFTARROW:
-		if (setup_cursor < 2)
+		if (cursor < 2)
 			return;
 		S_LocalSound ("misc/menu3.wav");
-		if (setup_cursor == 2)
-			setup_top = setup_top - 1;
-		if (setup_cursor == 3)
-			setup_bottom = setup_bottom - 1;
+		if (cursor == 2)
+			top = top - 1;
+		if (cursor == 3)
+			bottom = bottom - 1;
 		break;
 	case K_RIGHTARROW:
-		if (setup_cursor < 2)
+		if (cursor < 2)
 			return;
 forward:
 		S_LocalSound ("misc/menu3.wav");
-		if (setup_cursor == 2)
-			setup_top = setup_top + 1;
-		if (setup_cursor == 3)
-			setup_bottom = setup_bottom + 1;
+		if (cursor == 2)
+			top = top + 1;
+		if (cursor == 3)
+			bottom = bottom + 1;
 		break;
 
 	case K_ENTER:
-		if (setup_cursor == 0 || setup_cursor == 1)
+		if (cursor == 0 || cursor == 1)
 			return;
 
-		if (setup_cursor == 2 || setup_cursor == 3)
+		if (cursor == 2 || cursor == 3)
 			goto forward;
 
-		// setup_cursor == 4 (OK)
-		if (Q_strcmp(cl_name.string.c_str(), setup_myname) != 0)
-			Cbuf_AddText ( va ("name \"%s\"\n", setup_myname) );
-		if (Q_strcmp(hostname.string.c_str(), setup_hostname) != 0)
-			Cvar_Set("hostname", setup_hostname);
-		if (setup_top != setup_oldtop || setup_bottom != setup_oldbottom)
-			Cbuf_AddText( va ("color %i %i\n", setup_top, setup_bottom) );
+		// cursor == 4 (OK)
+		if (Q_strcmp(cl_name.string.c_str(), nameBuf) != 0)
+			Cbuf_AddText ( va ("name \"%s\"\n", nameBuf) );
+		if (Q_strcmp(hostname.string.c_str(), hostnameBuf) != 0)
+			Cvar_Set("hostname", hostnameBuf);
+		if (top != oldTop || bottom != oldBottom)
+			Cbuf_AddText( va ("color %i %i\n", top, bottom) );
 		m_entersound = true;
 		M_Menu_MultiPlayer_f ();
 		break;
 
 	case K_BACKSPACE:
-		if (setup_cursor == 0)
+		if (cursor == 0)
 		{
-			if (strlen(setup_hostname))
-				setup_hostname[strlen(setup_hostname)-1] = 0;
+			if (strlen(hostnameBuf))
+				hostnameBuf[strlen(hostnameBuf)-1] = 0;
 		}
 
-		if (setup_cursor == 1)
+		if (cursor == 1)
 		{
-			if (strlen(setup_myname))
-				setup_myname[strlen(setup_myname)-1] = 0;
+			if (strlen(nameBuf))
+				nameBuf[strlen(nameBuf)-1] = 0;
 		}
 		break;
 
 	default:
 		if (k < 32 || k > 127)
 			break;
-		if (setup_cursor == 0)
+		if (cursor == 0)
 		{
-			l = (int)strlen(setup_hostname);
+			l = (int)strlen(hostnameBuf);
 			if (l < 15)
 			{
-				setup_hostname[l+1] = 0;
-				setup_hostname[l] = k;
+				hostnameBuf[l+1] = 0;
+				hostnameBuf[l] = k;
 			}
 		}
-		if (setup_cursor == 1)
+		if (cursor == 1)
 		{
-			l = (int)strlen(setup_myname);
+			l = (int)strlen(nameBuf);
 			if (l < 15)
 			{
-				setup_myname[l+1] = 0;
-				setup_myname[l] = k;
+				nameBuf[l+1] = 0;
+				nameBuf[l] = k;
 			}
 		}
 	}
 
-	if (setup_top > 13)
-		setup_top = 0;
-	if (setup_top < 0)
-		setup_top = 13;
-	if (setup_bottom > 13)
-		setup_bottom = 0;
-	if (setup_bottom < 0)
-		setup_bottom = 13;
+	if (top > 13)
+		top = 0;
+	if (top < 0)
+		top = 13;
+	if (bottom > 13)
+		bottom = 0;
+	if (bottom < 0)
+		bottom = 13;
 }
 
 //=============================================================================
 /* NET MENU */
 
-int	m_net_cursor;
-int m_net_items;
-int m_net_saveHeight;
+class NetMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	int items = 0;
+	int saveHeight = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+NetMenu netMenu;
 
 const char *net_helpMessage [] =
 {
@@ -919,16 +924,16 @@ void M_Menu_Net_f (void)
 	key_dest = key_menu;
 	m_state = m_net;
 	m_entersound = true;
-	m_net_items = 4;
+	netMenu.items = 4;
 
-	if (m_net_cursor >= m_net_items)
-		m_net_cursor = 0;
-	m_net_cursor--;
-	M_Net_Key (K_DOWNARROW);
+	if (netMenu.cursor >= netMenu.items)
+		netMenu.cursor = 0;
+	netMenu.cursor--;
+	netMenu.Key (K_DOWNARROW);
 }
 
 
-void M_Net_Draw (void)
+void NetMenu::Draw (void)
 {
 	int		f;
 	qpic_t	*p;
@@ -987,7 +992,7 @@ void M_Net_Draw (void)
 		p = Draw_CachePic ("gfx/dim_tcp.lmp");
 	M_DrawTransPic (72, f, p);
 
-	if (m_net_items == 5)	// JDC, could just be removed
+	if (items == 5)	// JDC, could just be removed
 	{
 		f += 19;
 		p = Draw_CachePic ("gfx/netmen5.lmp");
@@ -997,17 +1002,17 @@ void M_Net_Draw (void)
 	f = (320-26*8)/2;
 	M_DrawTextBox (f, 134, 24, 4);
 	f += 8;
-	M_Print (f, 142, net_helpMessage[m_net_cursor*4+0]);
-	M_Print (f, 150, net_helpMessage[m_net_cursor*4+1]);
-	M_Print (f, 158, net_helpMessage[m_net_cursor*4+2]);
-	M_Print (f, 166, net_helpMessage[m_net_cursor*4+3]);
+	M_Print (f, 142, net_helpMessage[cursor*4+0]);
+	M_Print (f, 150, net_helpMessage[cursor*4+1]);
+	M_Print (f, 158, net_helpMessage[cursor*4+2]);
+	M_Print (f, 166, net_helpMessage[cursor*4+3]);
 
 	f = (int)(host_time * 10)%6;
-	M_DrawTransPic (54, 32 + m_net_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
 
-void M_Net_Key (int k)
+void NetMenu::Key (int k)
 {
 again:
 	switch (k)
@@ -1018,20 +1023,20 @@ again:
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (++m_net_cursor >= m_net_items)
-			m_net_cursor = 0;
+		if (++cursor >= items)
+			cursor = 0;
 		break;
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (--m_net_cursor < 0)
-			m_net_cursor = m_net_items - 1;
+		if (--cursor < 0)
+			cursor = items - 1;
 		break;
 
 	case K_ENTER:
 		m_entersound = true;
 
-		switch (m_net_cursor)
+		switch (cursor)
 		{
 		case 0:
 			M_Menu_SerialConfig_f ();
@@ -1055,13 +1060,13 @@ again:
 		}
 	}
 
-	if (m_net_cursor == 0 && !net.serialAvailable)
+	if (cursor == 0 && !net.serialAvailable)
 		goto again;
-	if (m_net_cursor == 1 && !net.serialAvailable)
+	if (cursor == 1 && !net.serialAvailable)
 		goto again;
-	if (m_net_cursor == 2 && !net.ipxAvailable)
+	if (cursor == 2 && !net.ipxAvailable)
 		goto again;
-	if (m_net_cursor == 3 && !net.tcpipAvailable)
+	if (cursor == 3 && !net.tcpipAvailable)
 		goto again;
 }
 
@@ -1508,6 +1513,14 @@ void KeysMenu::Key (int k)
 //=============================================================================
 /* VIDEO MENU */
 
+class VideoMenu : public MenuScreen
+{
+public:
+	void Draw () override;
+	void Key (int key) override;
+};
+VideoMenu videoMenu;
+
 void M_Menu_Video_f (void)
 {
 	key_dest = key_menu;
@@ -1516,13 +1529,13 @@ void M_Menu_Video_f (void)
 }
 
 
-void M_Video_Draw (void)
+void VideoMenu::Draw (void)
 {
 	(*vid_menudrawfn) ();
 }
 
 
-void M_Video_Key (int key)
+void VideoMenu::Key (int key)
 {
 	(*vid_menukeyfn) (key);
 }
@@ -1530,27 +1543,34 @@ void M_Video_Key (int key)
 //=============================================================================
 /* HELP MENU */
 
-int		help_page;
 #define	NUM_HELP_PAGES	6
 
+class HelpMenu : public MenuScreen
+{
+public:
+	int page = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+HelpMenu helpMenu;
 
 void M_Menu_Help_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_help;
 	m_entersound = true;
-	help_page = 0;
+	helpMenu.page = 0;
 }
 
 
 
-void M_Help_Draw (void)
+void HelpMenu::Draw (void)
 {
-	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
+	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", page)) );
 }
 
 
-void M_Help_Key (int key)
+void HelpMenu::Key (int key)
 {
 	switch (key)
 	{
@@ -1561,15 +1581,15 @@ void M_Help_Key (int key)
 	case K_UPARROW:
 	case K_RIGHTARROW:
 		m_entersound = true;
-		if (++help_page >= NUM_HELP_PAGES)
-			help_page = 0;
+		if (++page >= NUM_HELP_PAGES)
+			page = 0;
 		break;
 
 	case K_DOWNARROW:
 	case K_LEFTARROW:
 		m_entersound = true;
-		if (--help_page < 0)
-			help_page = NUM_HELP_PAGES-1;
+		if (--page < 0)
+			page = NUM_HELP_PAGES-1;
 		break;
 	}
 
@@ -1726,7 +1746,6 @@ void QuitMenu::Draw (void)
 
 /* SERIAL CONFIG MENU */
 
-int		serialConfig_cursor;
 int		serialConfig_cursor_table[] = {48, 64, 80, 96, 112, 132};
 #define	NUM_SERIALCONFIG_CMDS	6
 
@@ -1734,10 +1753,18 @@ static int ISA_uarts[]	= {0x3f8,0x2f8,0x3e8,0x2e8};
 static int ISA_IRQs[]	= {4,3,4,3};
 int serialConfig_baudrate[] = {9600,14400,19200,28800,38400,57600};
 
-int		serialConfig_comport;
-int		serialConfig_irq ;
-int		serialConfig_baud;
-char	serialConfig_phone[16];
+class SerialConfigMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	int comport = 0;
+	int irq = 0;
+	int baud = 0;
+	char phone[16] = {0};
+	void Draw () override;
+	void Key (int key) override;
+};
+SerialConfigMenu serialConfigMenu;
 
 void M_Menu_SerialConfig_f (void)
 {
@@ -1750,11 +1777,11 @@ void M_Menu_SerialConfig_f (void)
 	m_state = m_serialconfig;
 	m_entersound = true;
 	if (JoiningGame && SerialConfig)
-		serialConfig_cursor = 4;
+		serialConfigMenu.cursor = 4;
 	else
-		serialConfig_cursor = 5;
+		serialConfigMenu.cursor = 5;
 
-	(*GetComPortConfig) (0, &port, &serialConfig_irq, &baudrate, &useModem);
+	(*GetComPortConfig) (0, &port, &serialConfigMenu.irq, &baudrate, &useModem);
 
 	// map uart's port to COMx
 	for (n = 0; n < 4; n++)
@@ -1763,9 +1790,9 @@ void M_Menu_SerialConfig_f (void)
 	if (n == 4)
 	{
 		n = 0;
-		serialConfig_irq = 4;
+		serialConfigMenu.irq = 4;
 	}
-	serialConfig_comport = n + 1;
+	serialConfigMenu.comport = n + 1;
 
 	// map baudrate to index
 	for (n = 0; n < 6; n++)
@@ -1773,14 +1800,14 @@ void M_Menu_SerialConfig_f (void)
 			break;
 	if (n == 6)
 		n = 5;
-	serialConfig_baud = n;
+	serialConfigMenu.baud = n;
 
 	m_return_onerror = false;
 	m_return_reason[0] = 0;
 }
 
 
-void M_SerialConfig_Draw (void)
+void SerialConfigMenu::Draw (void)
 {
 	qpic_t	*p;
 	int		basex;
@@ -1805,15 +1832,15 @@ void M_SerialConfig_Draw (void)
 
 	M_Print (basex, serialConfig_cursor_table[0], "Port");
 	M_DrawTextBox (160, 40, 4, 1);
-	M_Print (168, serialConfig_cursor_table[0], va("COM%u", serialConfig_comport));
+	M_Print (168, serialConfig_cursor_table[0], va("COM%u", comport));
 
 	M_Print (basex, serialConfig_cursor_table[1], "IRQ");
 	M_DrawTextBox (160, serialConfig_cursor_table[1]-8, 1, 1);
-	M_Print (168, serialConfig_cursor_table[1], va("%u", serialConfig_irq));
+	M_Print (168, serialConfig_cursor_table[1], va("%u", irq));
 
 	M_Print (basex, serialConfig_cursor_table[2], "Baud");
 	M_DrawTextBox (160, serialConfig_cursor_table[2]-8, 5, 1);
-	M_Print (168, serialConfig_cursor_table[2], va("%u", serialConfig_baudrate[serialConfig_baud]));
+	M_Print (168, serialConfig_cursor_table[2], va("%u", serialConfig_baudrate[baud]));
 
 	if (SerialConfig)
 	{
@@ -1822,7 +1849,7 @@ void M_SerialConfig_Draw (void)
 		{
 			M_Print (basex, serialConfig_cursor_table[4], "Phone number");
 			M_DrawTextBox (160, serialConfig_cursor_table[4]-8, 16, 1);
-			M_Print (168, serialConfig_cursor_table[4], serialConfig_phone);
+			M_Print (168, serialConfig_cursor_table[4], phone);
 		}
 	}
 
@@ -1837,17 +1864,17 @@ void M_SerialConfig_Draw (void)
 		M_Print (basex+8, serialConfig_cursor_table[5], "OK");
 	}
 
-	M_DrawCharacter (basex-8, serialConfig_cursor_table [serialConfig_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (basex-8, serialConfig_cursor_table [cursor], 12+((int)(realtime*4)&1));
 
-	if (serialConfig_cursor == 4)
-		M_DrawCharacter (168 + 8*(int)strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
+	if (cursor == 4)
+		M_DrawCharacter (168 + 8*(int)strlen(phone), serialConfig_cursor_table [cursor], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
 }
 
 
-void M_SerialConfig_Key (int key)
+void SerialConfigMenu::Key (int key)
 {
 	int		l;
 
@@ -1859,103 +1886,103 @@ void M_SerialConfig_Key (int key)
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		serialConfig_cursor--;
-		if (serialConfig_cursor < 0)
-			serialConfig_cursor = NUM_SERIALCONFIG_CMDS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = NUM_SERIALCONFIG_CMDS-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		serialConfig_cursor++;
-		if (serialConfig_cursor >= NUM_SERIALCONFIG_CMDS)
-			serialConfig_cursor = 0;
+		cursor++;
+		if (cursor >= NUM_SERIALCONFIG_CMDS)
+			cursor = 0;
 		break;
 
 	case K_LEFTARROW:
-		if (serialConfig_cursor > 2)
+		if (cursor > 2)
 			break;
 		S_LocalSound ("misc/menu3.wav");
 
-		if (serialConfig_cursor == 0)
+		if (cursor == 0)
 		{
-			serialConfig_comport--;
-			if (serialConfig_comport == 0)
-				serialConfig_comport = 4;
-			serialConfig_irq = ISA_IRQs[serialConfig_comport-1];
+			comport--;
+			if (comport == 0)
+				comport = 4;
+			irq = ISA_IRQs[comport-1];
 		}
 
-		if (serialConfig_cursor == 1)
+		if (cursor == 1)
 		{
-			serialConfig_irq--;
-			if (serialConfig_irq == 6)
-				serialConfig_irq = 5;
-			if (serialConfig_irq == 1)
-				serialConfig_irq = 7;
+			irq--;
+			if (irq == 6)
+				irq = 5;
+			if (irq == 1)
+				irq = 7;
 		}
 
-		if (serialConfig_cursor == 2)
+		if (cursor == 2)
 		{
-			serialConfig_baud--;
-			if (serialConfig_baud < 0)
-				serialConfig_baud = 5;
+			baud--;
+			if (baud < 0)
+				baud = 5;
 		}
 
 		break;
 
 	case K_RIGHTARROW:
-		if (serialConfig_cursor > 2)
+		if (cursor > 2)
 			break;
 forward:
 		S_LocalSound ("misc/menu3.wav");
 
-		if (serialConfig_cursor == 0)
+		if (cursor == 0)
 		{
-			serialConfig_comport++;
-			if (serialConfig_comport > 4)
-				serialConfig_comport = 1;
-			serialConfig_irq = ISA_IRQs[serialConfig_comport-1];
+			comport++;
+			if (comport > 4)
+				comport = 1;
+			irq = ISA_IRQs[comport-1];
 		}
 
-		if (serialConfig_cursor == 1)
+		if (cursor == 1)
 		{
-			serialConfig_irq++;
-			if (serialConfig_irq == 6)
-				serialConfig_irq = 7;
-			if (serialConfig_irq == 8)
-				serialConfig_irq = 2;
+			irq++;
+			if (irq == 6)
+				irq = 7;
+			if (irq == 8)
+				irq = 2;
 		}
 
-		if (serialConfig_cursor == 2)
+		if (cursor == 2)
 		{
-			serialConfig_baud++;
-			if (serialConfig_baud > 5)
-				serialConfig_baud = 0;
+			baud++;
+			if (baud > 5)
+				baud = 0;
 		}
 
 		break;
 
 	case K_ENTER:
-		if (serialConfig_cursor < 3)
+		if (cursor < 3)
 			goto forward;
 
 		m_entersound = true;
 
-		if (serialConfig_cursor == 3)
+		if (cursor == 3)
 		{
-			(*SetComPortConfig) (0, ISA_uarts[serialConfig_comport-1], serialConfig_irq, serialConfig_baudrate[serialConfig_baud], SerialConfig);
+			(*SetComPortConfig) (0, ISA_uarts[comport-1], irq, serialConfig_baudrate[baud], SerialConfig);
 
 			M_Menu_ModemConfig_f ();
 			break;
 		}
 
-		if (serialConfig_cursor == 4)
+		if (cursor == 4)
 		{
-			serialConfig_cursor = 5;
+			cursor = 5;
 			break;
 		}
 
-		// serialConfig_cursor == 5 (OK/CONNECT)
-		(*SetComPortConfig) (0, ISA_uarts[serialConfig_comport-1], serialConfig_irq, serialConfig_baudrate[serialConfig_baud], SerialConfig);
+		// cursor == 5 (OK/CONNECT)
+		(*SetComPortConfig) (0, ISA_uarts[comport-1], irq, serialConfig_baudrate[baud], SerialConfig);
 
 		M_ConfigureNetSubsystem ();
 
@@ -1971,68 +1998,75 @@ forward:
 		m_state = m_none;
 
 		if (SerialConfig)
-			Cbuf_AddText (va ("connect \"%s\"\n", serialConfig_phone));
+			Cbuf_AddText (va ("connect \"%s\"\n", phone));
 		else
 			Cbuf_AddText ("connect\n");
 		break;
 
 	case K_BACKSPACE:
-		if (serialConfig_cursor == 4)
+		if (cursor == 4)
 		{
-			if (strlen(serialConfig_phone))
-				serialConfig_phone[strlen(serialConfig_phone)-1] = 0;
+			if (strlen(phone))
+				phone[strlen(phone)-1] = 0;
 		}
 		break;
 
 	default:
 		if (key < 32 || key > 127)
 			break;
-		if (serialConfig_cursor == 4)
+		if (cursor == 4)
 		{
-			l = (int)strlen(serialConfig_phone);
+			l = (int)strlen(phone);
 			if (l < 15)
 			{
-				serialConfig_phone[l+1] = 0;
-				serialConfig_phone[l] = key;
+				phone[l+1] = 0;
+				phone[l] = key;
 			}
 		}
 	}
 
-	if (DirectConfig && (serialConfig_cursor == 3 || serialConfig_cursor == 4))
+	if (DirectConfig && (cursor == 3 || cursor == 4))
 		if (key == K_UPARROW)
-			serialConfig_cursor = 2;
+			cursor = 2;
 		else
-			serialConfig_cursor = 5;
+			cursor = 5;
 
-	if (SerialConfig && StartingGame && serialConfig_cursor == 4)
+	if (SerialConfig && StartingGame && cursor == 4)
 		if (key == K_UPARROW)
-			serialConfig_cursor = 3;
+			cursor = 3;
 		else
-			serialConfig_cursor = 5;
+			cursor = 5;
 }
 
 //=============================================================================
 /* MODEM CONFIG MENU */
 
-int		modemConfig_cursor;
 int		modemConfig_cursor_table [] = {40, 56, 88, 120, 156};
 #define NUM_MODEMCONFIG_CMDS	5
 
-char	modemConfig_dialing;
-char	modemConfig_clear [16];
-char	modemConfig_init [32];
-char	modemConfig_hangup [16];
+class ModemConfigMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	char dialing = 0;
+	char clearStr [16] = {0};
+	char initStr [32] = {0};
+	char hangup [16] = {0};
+	void Draw () override;
+	void Key (int key) override;
+};
+ModemConfigMenu modemConfigMenu;
 
 void M_Menu_ModemConfig_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_modemconfig;
 	m_entersound = true;
-	(*GetModemConfig) (0, &modemConfig_dialing, modemConfig_clear, modemConfig_init, modemConfig_hangup);
+	(*GetModemConfig) (0, &modemConfigMenu.dialing, modemConfigMenu.clearStr, modemConfigMenu.initStr, modemConfigMenu.hangup);
 }
 
 
-void M_ModemConfig_Draw (void)
+void ModemConfigMenu::Draw (void)
 {
 	qpic_t	*p;
 	int		basex;
@@ -2043,37 +2077,37 @@ void M_ModemConfig_Draw (void)
 	M_DrawPic (basex, 4, p);
 	basex += 8;
 
-	if (modemConfig_dialing == 'P')
+	if (dialing == 'P')
 		M_Print (basex, modemConfig_cursor_table[0], "Pulse Dialing");
 	else
 		M_Print (basex, modemConfig_cursor_table[0], "Touch Tone Dialing");
 
 	M_Print (basex, modemConfig_cursor_table[1], "Clear");
 	M_DrawTextBox (basex, modemConfig_cursor_table[1]+4, 16, 1);
-	M_Print (basex+8, modemConfig_cursor_table[1]+12, modemConfig_clear);
-	if (modemConfig_cursor == 1)
-		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_clear), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
+	M_Print (basex+8, modemConfig_cursor_table[1]+12, clearStr);
+	if (cursor == 1)
+		M_DrawCharacter (basex+8 + 8*(int)strlen(clearStr), modemConfig_cursor_table[1]+12, 10+((int)(realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[2], "Init");
 	M_DrawTextBox (basex, modemConfig_cursor_table[2]+4, 30, 1);
-	M_Print (basex+8, modemConfig_cursor_table[2]+12, modemConfig_init);
-	if (modemConfig_cursor == 2)
-		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_init), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
+	M_Print (basex+8, modemConfig_cursor_table[2]+12, initStr);
+	if (cursor == 2)
+		M_DrawCharacter (basex+8 + 8*(int)strlen(initStr), modemConfig_cursor_table[2]+12, 10+((int)(realtime*4)&1));
 
 	M_Print (basex, modemConfig_cursor_table[3], "Hangup");
 	M_DrawTextBox (basex, modemConfig_cursor_table[3]+4, 16, 1);
-	M_Print (basex+8, modemConfig_cursor_table[3]+12, modemConfig_hangup);
-	if (modemConfig_cursor == 3)
-		M_DrawCharacter (basex+8 + 8*(int)strlen(modemConfig_hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
+	M_Print (basex+8, modemConfig_cursor_table[3]+12, hangup);
+	if (cursor == 3)
+		M_DrawCharacter (basex+8 + 8*(int)strlen(hangup), modemConfig_cursor_table[3]+12, 10+((int)(realtime*4)&1));
 
 	M_DrawTextBox (basex, modemConfig_cursor_table[4]-8, 2, 1);
 	M_Print (basex+8, modemConfig_cursor_table[4], "OK");
 
-	M_DrawCharacter (basex-8, modemConfig_cursor_table [modemConfig_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (basex-8, modemConfig_cursor_table [cursor], 12+((int)(realtime*4)&1));
 }
 
 
-void M_ModemConfig_Key (int key)
+void ModemConfigMenu::Key (int key)
 {
 	int		l;
 
@@ -2085,65 +2119,65 @@ void M_ModemConfig_Key (int key)
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		modemConfig_cursor--;
-		if (modemConfig_cursor < 0)
-			modemConfig_cursor = NUM_MODEMCONFIG_CMDS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = NUM_MODEMCONFIG_CMDS-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		modemConfig_cursor++;
-		if (modemConfig_cursor >= NUM_MODEMCONFIG_CMDS)
-			modemConfig_cursor = 0;
+		cursor++;
+		if (cursor >= NUM_MODEMCONFIG_CMDS)
+			cursor = 0;
 		break;
 
 	case K_LEFTARROW:
 	case K_RIGHTARROW:
-		if (modemConfig_cursor == 0)
+		if (cursor == 0)
 		{
-			if (modemConfig_dialing == 'P')
-				modemConfig_dialing = 'T';
+			if (dialing == 'P')
+				dialing = 'T';
 			else
-				modemConfig_dialing = 'P';
+				dialing = 'P';
 			S_LocalSound ("misc/menu1.wav");
 		}
 		break;
 
 	case K_ENTER:
-		if (modemConfig_cursor == 0)
+		if (cursor == 0)
 		{
-			if (modemConfig_dialing == 'P')
-				modemConfig_dialing = 'T';
+			if (dialing == 'P')
+				dialing = 'T';
 			else
-				modemConfig_dialing = 'P';
+				dialing = 'P';
 			m_entersound = true;
 		}
 
-		if (modemConfig_cursor == 4)
+		if (cursor == 4)
 		{
-			(*SetModemConfig) (0, va ("%c", modemConfig_dialing), modemConfig_clear, modemConfig_init, modemConfig_hangup);
+			(*SetModemConfig) (0, va ("%c", dialing), clearStr, initStr, hangup);
 			m_entersound = true;
 			M_Menu_SerialConfig_f ();
 		}
 		break;
 
 	case K_BACKSPACE:
-		if (modemConfig_cursor == 1)
+		if (cursor == 1)
 		{
-			if (strlen(modemConfig_clear))
-				modemConfig_clear[strlen(modemConfig_clear)-1] = 0;
+			if (strlen(clearStr))
+				clearStr[strlen(clearStr)-1] = 0;
 		}
 
-		if (modemConfig_cursor == 2)
+		if (cursor == 2)
 		{
-			if (strlen(modemConfig_init))
-				modemConfig_init[strlen(modemConfig_init)-1] = 0;
+			if (strlen(initStr))
+				initStr[strlen(initStr)-1] = 0;
 		}
 
-		if (modemConfig_cursor == 3)
+		if (cursor == 3)
 		{
-			if (strlen(modemConfig_hangup))
-				modemConfig_hangup[strlen(modemConfig_hangup)-1] = 0;
+			if (strlen(hangup))
+				hangup[strlen(hangup)-1] = 0;
 		}
 		break;
 
@@ -2151,33 +2185,33 @@ void M_ModemConfig_Key (int key)
 		if (key < 32 || key > 127)
 			break;
 
-		if (modemConfig_cursor == 1)
+		if (cursor == 1)
 		{
-			l = (int)strlen(modemConfig_clear);
+			l = (int)strlen(clearStr);
 			if (l < 15)
 			{
-				modemConfig_clear[l+1] = 0;
-				modemConfig_clear[l] = key;
+				clearStr[l+1] = 0;
+				clearStr[l] = key;
 			}
 		}
 
-		if (modemConfig_cursor == 2)
+		if (cursor == 2)
 		{
-			l = (int)strlen(modemConfig_init);
+			l = (int)strlen(initStr);
 			if (l < 29)
 			{
-				modemConfig_init[l+1] = 0;
-				modemConfig_init[l] = key;
+				initStr[l+1] = 0;
+				initStr[l] = key;
 			}
 		}
 
-		if (modemConfig_cursor == 3)
+		if (cursor == 3)
 		{
-			l = (int)strlen(modemConfig_hangup);
+			l = (int)strlen(hangup);
 			if (l < 15)
 			{
-				modemConfig_hangup[l+1] = 0;
-				modemConfig_hangup[l] = key;
+				hangup[l+1] = 0;
+				hangup[l] = key;
 			}
 		}
 	}
@@ -2186,37 +2220,44 @@ void M_ModemConfig_Key (int key)
 //=============================================================================
 /* LAN CONFIG MENU */
 
-int		lanConfig_cursor = -1;
 int		lanConfig_cursor_table [] = {72, 92, 124};
 #define NUM_LANCONFIG_CMDS	3
 
-int 	lanConfig_port;
-char	lanConfig_portname[6];
-char	lanConfig_joinname[22];
+class LanConfigMenu : public MenuScreen
+{
+public:
+	int cursor = -1;
+	int port = 0;
+	char portname[6] = {0};
+	char joinname[22] = {0};
+	void Draw () override;
+	void Key (int key) override;
+};
+LanConfigMenu lanConfigMenu;
 
 void M_Menu_LanConfig_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_lanconfig;
 	m_entersound = true;
-	if (lanConfig_cursor == -1)
+	if (lanConfigMenu.cursor == -1)
 	{
 		if (JoiningGame && TCPIPConfig)
-			lanConfig_cursor = 2;
+			lanConfigMenu.cursor = 2;
 		else
-			lanConfig_cursor = 1;
+			lanConfigMenu.cursor = 1;
 	}
-	if (StartingGame && lanConfig_cursor == 2)
-		lanConfig_cursor = 1;
-	lanConfig_port = DEFAULTnet_hostport;
-	sprintf(lanConfig_portname, "%u", lanConfig_port);
+	if (StartingGame && lanConfigMenu.cursor == 2)
+		lanConfigMenu.cursor = 1;
+	lanConfigMenu.port = DEFAULTnet_hostport;
+	sprintf(lanConfigMenu.portname, "%u", lanConfigMenu.port);
 
 	m_return_onerror = false;
 	m_return_reason[0] = 0;
 }
 
 
-void M_LanConfig_Draw (void)
+void LanConfigMenu::Draw (void)
 {
 	qpic_t	*p;
 	int		basex;
@@ -2247,14 +2288,14 @@ void M_LanConfig_Draw (void)
 
 	M_Print (basex, lanConfig_cursor_table[0], "Port");
 	M_DrawTextBox (basex+8*8, lanConfig_cursor_table[0]-8, 6, 1);
-	M_Print (basex+9*8, lanConfig_cursor_table[0], lanConfig_portname);
+	M_Print (basex+9*8, lanConfig_cursor_table[0], portname);
 
 	if (JoiningGame)
 	{
 		M_Print (basex, lanConfig_cursor_table[1], "Search for local games...");
 		M_Print (basex, 108, "Join game at:");
 		M_DrawTextBox (basex+8, lanConfig_cursor_table[2]-8, 22, 1);
-		M_Print (basex+16, lanConfig_cursor_table[2], lanConfig_joinname);
+		M_Print (basex+16, lanConfig_cursor_table[2], joinname);
 	}
 	else
 	{
@@ -2262,20 +2303,20 @@ void M_LanConfig_Draw (void)
 		M_Print (basex+8, lanConfig_cursor_table[1], "OK");
 	}
 
-	M_DrawCharacter (basex-8, lanConfig_cursor_table [lanConfig_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (basex-8, lanConfig_cursor_table [cursor], 12+((int)(realtime*4)&1));
 
-	if (lanConfig_cursor == 0)
-		M_DrawCharacter (basex+9*8 + 8*(int)strlen(lanConfig_portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
+	if (cursor == 0)
+		M_DrawCharacter (basex+9*8 + 8*(int)strlen(portname), lanConfig_cursor_table [0], 10+((int)(realtime*4)&1));
 
-	if (lanConfig_cursor == 2)
-		M_DrawCharacter (basex+16 + 8*(int)strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
+	if (cursor == 2)
+		M_DrawCharacter (basex+16 + 8*(int)strlen(joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
 }
 
 
-void M_LanConfig_Key (int key)
+void LanConfigMenu::Key (int key)
 {
 	int		l;
 
@@ -2287,27 +2328,27 @@ void M_LanConfig_Key (int key)
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		lanConfig_cursor--;
-		if (lanConfig_cursor < 0)
-			lanConfig_cursor = NUM_LANCONFIG_CMDS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = NUM_LANCONFIG_CMDS-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		lanConfig_cursor++;
-		if (lanConfig_cursor >= NUM_LANCONFIG_CMDS)
-			lanConfig_cursor = 0;
+		cursor++;
+		if (cursor >= NUM_LANCONFIG_CMDS)
+			cursor = 0;
 		break;
 
 	case K_ENTER:
-		if (lanConfig_cursor == 0)
+		if (cursor == 0)
 			break;
 
 		m_entersound = true;
 
 		M_ConfigureNetSubsystem ();
 
-		if (lanConfig_cursor == 1)
+		if (cursor == 1)
 		{
 			if (StartingGame)
 			{
@@ -2318,29 +2359,29 @@ void M_LanConfig_Key (int key)
 			break;
 		}
 
-		if (lanConfig_cursor == 2)
+		if (cursor == 2)
 		{
 			m_return_state = m_state;
 			m_return_onerror = true;
 			key_dest = key_game;
 			m_state = m_none;
-			Cbuf_AddText ( va ("connect \"%s\"\n", lanConfig_joinname) );
+			Cbuf_AddText ( va ("connect \"%s\"\n", joinname) );
 			break;
 		}
 
 		break;
 
 	case K_BACKSPACE:
-		if (lanConfig_cursor == 0)
+		if (cursor == 0)
 		{
-			if (strlen(lanConfig_portname))
-				lanConfig_portname[strlen(lanConfig_portname)-1] = 0;
+			if (strlen(portname))
+				portname[strlen(portname)-1] = 0;
 		}
 
-		if (lanConfig_cursor == 2)
+		if (cursor == 2)
 		{
-			if (strlen(lanConfig_joinname))
-				lanConfig_joinname[strlen(lanConfig_joinname)-1] = 0;
+			if (strlen(joinname))
+				joinname[strlen(joinname)-1] = 0;
 		}
 		break;
 
@@ -2348,41 +2389,41 @@ void M_LanConfig_Key (int key)
 		if (key < 32 || key > 127)
 			break;
 
-		if (lanConfig_cursor == 2)
+		if (cursor == 2)
 		{
-			l = (int)strlen(lanConfig_joinname);
+			l = (int)strlen(joinname);
 			if (l < 21)
 			{
-				lanConfig_joinname[l+1] = 0;
-				lanConfig_joinname[l] = key;
+				joinname[l+1] = 0;
+				joinname[l] = key;
 			}
 		}
 
 		if (key < '0' || key > '9')
 			break;
-		if (lanConfig_cursor == 0)
+		if (cursor == 0)
 		{
-			l = (int)strlen(lanConfig_portname);
+			l = (int)strlen(portname);
 			if (l < 5)
 			{
-				lanConfig_portname[l+1] = 0;
-				lanConfig_portname[l] = key;
+				portname[l+1] = 0;
+				portname[l] = key;
 			}
 		}
 	}
 
-	if (StartingGame && lanConfig_cursor == 2)
+	if (StartingGame && cursor == 2)
 		if (key == K_UPARROW)
-			lanConfig_cursor = 1;
+			cursor = 1;
 		else
-			lanConfig_cursor = 0;
+			cursor = 0;
 
-	l =  Q_atoi(lanConfig_portname);
+	l =  Q_atoi(portname);
 	if (l > 65535)
-		l = lanConfig_port;
+		l = port;
 	else
-		lanConfig_port = l;
-	sprintf(lanConfig_portname, "%u", lanConfig_port);
+		port = l;
+	sprintf(portname, "%u", port);
 }
 
 //=============================================================================
@@ -2532,29 +2573,37 @@ episode_t	rogueepisodes[] =
 	{"Deathmatch Arena", 16, 1}
 };
 
-int	startepisode;
-int	startlevel;
-int maxplayers;
-qboolean m_serverInfoMessage = false;
-double m_serverInfoMessageTime;
+int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 88, 96, 112, 120};
+#define	NUM_GAMEOPTIONS	9
+
+class GameOptionsMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	int startepisode = 0;
+	int startlevel = 0;
+	int maxplayers = 0;
+	qboolean serverInfoMessage = false;
+	double serverInfoMessageTime = 0;
+	void Draw () override;
+	void Key (int key) override;
+	void NetStartChange (int dir);
+};
+GameOptionsMenu gameOptionsMenu;
 
 void M_Menu_GameOptions_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_gameoptions;
 	m_entersound = true;
-	if (maxplayers == 0)
-		maxplayers = SV_NumClients();
-	if (maxplayers < 2)
-		maxplayers = SV_MaxClientsLimit();
+	if (gameOptionsMenu.maxplayers == 0)
+		gameOptionsMenu.maxplayers = SV_NumClients();
+	if (gameOptionsMenu.maxplayers < 2)
+		gameOptionsMenu.maxplayers = SV_MaxClientsLimit();
 }
 
 
-int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 88, 96, 112, 120};
-#define	NUM_GAMEOPTIONS	9
-int		gameoptions_cursor;
-
-void M_GameOptions_Draw (void)
+void GameOptionsMenu::Draw (void)
 {
 	qpic_t	*p;
 	int		x;
@@ -2657,11 +2706,11 @@ void M_GameOptions_Draw (void)
    }
 
 // line cursor
-	M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], 12+((int)(realtime*4)&1));
+	M_DrawCharacter (144, gameoptions_cursor_table[cursor], 12+((int)(realtime*4)&1));
 
-	if (m_serverInfoMessage)
+	if (serverInfoMessage)
 	{
-		if ((realtime - m_serverInfoMessageTime) < 5.0)
+		if ((realtime - serverInfoMessageTime) < 5.0)
 		{
 			x = (320-26*8)/2;
 			M_DrawTextBox (x, 138, 24, 4);
@@ -2673,25 +2722,25 @@ void M_GameOptions_Draw (void)
 		}
 		else
 		{
-			m_serverInfoMessage = false;
+			serverInfoMessage = false;
 		}
 	}
 }
 
 
-void M_NetStart_Change (int dir)
+void GameOptionsMenu::NetStartChange (int dir)
 {
 	int count;
 
-	switch (gameoptions_cursor)
+	switch (cursor)
 	{
 	case 1:
 		maxplayers += dir;
 		if (maxplayers > SV_MaxClientsLimit())
 		{
 			maxplayers = SV_MaxClientsLimit();
-			m_serverInfoMessage = true;
-			m_serverInfoMessageTime = realtime;
+			serverInfoMessage = true;
+			serverInfoMessageTime = realtime;
 		}
 		if (maxplayers < 2)
 			maxplayers = 2;
@@ -2781,7 +2830,7 @@ void M_NetStart_Change (int dir)
 	}
 }
 
-void M_GameOptions_Key (int key)
+void GameOptionsMenu::Key (int key)
 {
 	switch (key)
 	{
@@ -2791,35 +2840,35 @@ void M_GameOptions_Key (int key)
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		gameoptions_cursor--;
-		if (gameoptions_cursor < 0)
-			gameoptions_cursor = NUM_GAMEOPTIONS-1;
+		cursor--;
+		if (cursor < 0)
+			cursor = NUM_GAMEOPTIONS-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		gameoptions_cursor++;
-		if (gameoptions_cursor >= NUM_GAMEOPTIONS)
-			gameoptions_cursor = 0;
+		cursor++;
+		if (cursor >= NUM_GAMEOPTIONS)
+			cursor = 0;
 		break;
 
 	case K_LEFTARROW:
-		if (gameoptions_cursor == 0)
+		if (cursor == 0)
 			break;
 		S_LocalSound ("misc/menu3.wav");
-		M_NetStart_Change (-1);
+		NetStartChange (-1);
 		break;
 
 	case K_RIGHTARROW:
-		if (gameoptions_cursor == 0)
+		if (cursor == 0)
 			break;
 		S_LocalSound ("misc/menu3.wav");
-		M_NetStart_Change (1);
+		NetStartChange (1);
 		break;
 
 	case K_ENTER:
 		S_LocalSound ("misc/menu2.wav");
-		if (gameoptions_cursor == 0)
+		if (cursor == 0)
 		{
 			if (SV_Active())
 				Cbuf_AddText ("disconnect\n");
@@ -2837,7 +2886,7 @@ void M_GameOptions_Key (int key)
 			return;
 		}
 
-		M_NetStart_Change (1);
+		NetStartChange (1);
 		break;
 	}
 }
@@ -2845,8 +2894,15 @@ void M_GameOptions_Key (int key)
 //=============================================================================
 /* SEARCH MENU */
 
-qboolean	searchComplete = false;
-double		searchCompleteTime;
+class SearchMenu : public MenuScreen
+{
+public:
+	qboolean complete = false;
+	double completeTime = 0;
+	void Draw () override;
+	void Key (int key) override;
+};
+SearchMenu searchMenu;
 
 void M_Menu_Search_f (void)
 {
@@ -2855,13 +2911,13 @@ void M_Menu_Search_f (void)
 	m_entersound = false;
 	slistSilent = true;
 	slistLocal = false;
-	searchComplete = false;
+	searchMenu.complete = false;
 	NET_Slist_f();
 
 }
 
 
-void M_Search_Draw (void)
+void SearchMenu::Draw (void)
 {
 	qpic_t	*p;
 	int x;
@@ -2878,10 +2934,10 @@ void M_Search_Draw (void)
 		return;
 	}
 
-	if (! searchComplete)
+	if (! complete)
 	{
-		searchComplete = true;
-		searchCompleteTime = realtime;
+		complete = true;
+		completeTime = realtime;
 	}
 
 	if (hostCacheCount)
@@ -2891,42 +2947,49 @@ void M_Search_Draw (void)
 	}
 
 	M_PrintWhite ((320/2) - ((22*8)/2), 64, "No Quake servers found");
-	if ((realtime - searchCompleteTime) < 3.0)
+	if ((realtime - completeTime) < 3.0)
 		return;
 
 	M_Menu_LanConfig_f ();
 }
 
 
-void M_Search_Key (int key)
+void SearchMenu::Key (int key)
 {
 }
 
 //=============================================================================
 /* SLIST MENU */
 
-int		slist_cursor;
-qboolean slist_sorted;
+class ServerListMenu : public MenuScreen
+{
+public:
+	int cursor = 0;
+	qboolean sorted = false;
+	void Draw () override;
+	void Key (int key) override;
+};
+ServerListMenu serverListMenu;
 
 void M_Menu_ServerList_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_slist;
 	m_entersound = true;
-	slist_cursor = 0;
+	serverListMenu.cursor = 0;
 	m_return_onerror = false;
 	m_return_reason[0] = 0;
-	slist_sorted = false;
+	serverListMenu.sorted = false;
 }
 
 
-void M_ServerList_Draw (void)
+void ServerListMenu::Draw (void)
 {
 	int		n;
 	char	string [64];
 	qpic_t	*p;
 
-	if (!slist_sorted)
+	if (!sorted)
 	{
 		if (hostCacheCount > 1)
 		{
@@ -2941,7 +3004,7 @@ void M_ServerList_Draw (void)
 						Q_memcpy(&hostcache[i], &temp, sizeof(hostcache_t));
 					}
 		}
-		slist_sorted = true;
+		sorted = true;
 	}
 
 	p = Draw_CachePic ("gfx/p_multi.lmp");
@@ -2954,14 +3017,14 @@ void M_ServerList_Draw (void)
 			sprintf(string, "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
 		M_Print (16, 32 + 8*n, string);
 	}
-	M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(realtime*4)&1));
+	M_DrawCharacter (0, 32 + cursor*8, 12+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
 		M_PrintWhite (16, 148, m_return_reason);
 }
 
 
-void M_ServerList_Key (int k)
+void ServerListMenu::Key (int k)
 {
 	switch (k)
 	{
@@ -2976,27 +3039,27 @@ void M_ServerList_Key (int k)
 	case K_UPARROW:
 	case K_LEFTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		slist_cursor--;
-		if (slist_cursor < 0)
-			slist_cursor = hostCacheCount - 1;
+		cursor--;
+		if (cursor < 0)
+			cursor = hostCacheCount - 1;
 		break;
 
 	case K_DOWNARROW:
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		slist_cursor++;
-		if (slist_cursor >= hostCacheCount)
-			slist_cursor = 0;
+		cursor++;
+		if (cursor >= hostCacheCount)
+			cursor = 0;
 		break;
 
 	case K_ENTER:
 		S_LocalSound ("misc/menu2.wav");
 		m_return_state = m_state;
 		m_return_onerror = true;
-		slist_sorted = false;
+		sorted = false;
 		key_dest = key_game;
 		m_state = m_none;
-		Cbuf_AddText ( va ("connect \"%s\"\n", hostcache[slist_cursor].cname) );
+		Cbuf_AddText ( va ("connect \"%s\"\n", hostcache[cursor].cname) );
 		break;
 
 	default:
@@ -3033,17 +3096,32 @@ void M_Init (void)
 // back to the old per-screen free functions for those until they're
 // converted too (temporary scaffolding, removed once all screens are
 // converted).
+// All 18 screens are now MenuScreen subtypes; this is the sole dispatch
+// point resolving m_state (still the authoritative, externally-writable
+// dispatch key -- see the MenuScreen class comment) to the active screen.
 MenuScreen *M_ScreenForState (m_state_t state)
 {
 	switch (state)
 	{
-	case m_main:    return &mainMenu;
-	case m_options: return &optionsMenu;
-	case m_keys:    return &keysMenu;
-	case m_load:    return &loadGameMenu;
-	case m_save:    return &saveMenu;
-	case m_quit:    return &quitMenu;
-	default:        return NULL;
+	case m_main:          return &mainMenu;
+	case m_singleplayer:  return &singlePlayerMenu;
+	case m_load:          return &loadGameMenu;
+	case m_save:          return &saveMenu;
+	case m_multiplayer:   return &multiPlayerMenu;
+	case m_setup:         return &setupMenu;
+	case m_net:           return &netMenu;
+	case m_options:       return &optionsMenu;
+	case m_keys:          return &keysMenu;
+	case m_video:         return &videoMenu;
+	case m_help:          return &helpMenu;
+	case m_quit:          return &quitMenu;
+	case m_serialconfig:  return &serialConfigMenu;
+	case m_modemconfig:   return &modemConfigMenu;
+	case m_lanconfig:     return &lanConfigMenu;
+	case m_gameoptions:   return &gameOptionsMenu;
+	case m_search:        return &searchMenu;
+	case m_slist:         return &serverListMenu;
+	default:              return NULL;	// m_none
 	}
 }
 
@@ -3076,65 +3154,7 @@ void M_Draw (void)
 
 	MenuScreen *screen = M_ScreenForState (m_state);
 	if (screen)
-	{
 		screen->Draw ();
-	}
-	else switch (m_state)
-	{
-	case m_none:
-		break;
-
-	case m_singleplayer:
-		M_SinglePlayer_Draw ();
-		break;
-
-	case m_multiplayer:
-		M_MultiPlayer_Draw ();
-		break;
-
-	case m_setup:
-		M_Setup_Draw ();
-		break;
-
-	case m_net:
-		M_Net_Draw ();
-		break;
-
-	case m_video:
-		M_Video_Draw ();
-		break;
-
-	case m_help:
-		M_Help_Draw ();
-		break;
-
-	case m_serialconfig:
-		M_SerialConfig_Draw ();
-		break;
-
-	case m_modemconfig:
-		M_ModemConfig_Draw ();
-		break;
-
-	case m_lanconfig:
-		M_LanConfig_Draw ();
-		break;
-
-	case m_gameoptions:
-		M_GameOptions_Draw ();
-		break;
-
-	case m_search:
-		M_Search_Draw ();
-		break;
-
-	case m_slist:
-		M_ServerList_Draw ();
-		break;
-
-	default:
-		break;	// m_main/m_load/m_save/m_options/m_keys/m_quit handled above
-	}
 
 	if (m_entersound)
 	{
@@ -3152,67 +3172,7 @@ void M_Keydown (int key)
 {
 	MenuScreen *screen = M_ScreenForState (m_state);
 	if (screen)
-	{
 		screen->Key (key);
-		return;
-	}
-
-	switch (m_state)
-	{
-	case m_none:
-		return;
-
-	case m_singleplayer:
-		M_SinglePlayer_Key (key);
-		return;
-
-	case m_multiplayer:
-		M_MultiPlayer_Key (key);
-		return;
-
-	case m_setup:
-		M_Setup_Key (key);
-		return;
-
-	case m_net:
-		M_Net_Key (key);
-		return;
-
-	case m_video:
-		M_Video_Key (key);
-		return;
-
-	case m_help:
-		M_Help_Key (key);
-		return;
-
-	case m_serialconfig:
-		M_SerialConfig_Key (key);
-		return;
-
-	case m_modemconfig:
-		M_ModemConfig_Key (key);
-		return;
-
-	case m_lanconfig:
-		M_LanConfig_Key (key);
-		return;
-
-	case m_gameoptions:
-		M_GameOptions_Key (key);
-		return;
-
-	case m_search:
-		M_Search_Key (key);
-		break;
-
-	case m_slist:
-		M_ServerList_Key (key);
-		return;
-
-	default:
-		return;	// m_main/m_load/m_save/m_options/m_keys/m_quit handled above
-	}
 }
 
 
@@ -3227,5 +3187,5 @@ void M_ConfigureNetSubsystem(void)
 	}
 
 	if (IPXConfig || TCPIPConfig)
-		net_hostport = lanConfig_port;
+		net_hostport = lanConfigMenu.port;
 }
