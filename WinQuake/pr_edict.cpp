@@ -1101,11 +1101,45 @@ edict_t *EDICT_NUM(int n)
 int NUM_FOR_EDICT(edict_t *e)
 {
 	int		b;
-	
+
 	b = (byte *)e - (byte *)sv.edicts;
 	b = b / pr_edict_size;
-	
+
 	if (b < 0 || b >= sv.num_edicts)
 		Sys_Error ("NUM_FOR_EDICT: bad pointer");
 	return b;
+}
+
+edict_t *PROG_TO_EDICT (int prog)
+{
+	if (prog < 0 || prog >= sv.max_edicts * pr_edict_size)
+		Sys_Error ("PROG_TO_EDICT: bad prog offset %i", prog);
+	return (edict_t *)((byte *)sv.edicts + prog);
+}
+
+int EDICT_TO_PROG (edict_t *e)
+{
+	int b = (byte *)e - (byte *)sv.edicts;
+	if (b < 0 || b >= sv.max_edicts * pr_edict_size)
+		Sys_Error ("EDICT_TO_PROG: bad edict pointer");
+	return b;
+}
+
+edict_t *G_EDICT (int ofs)
+{
+	return PROG_TO_EDICT (*(int *)&pr_globals[ofs]);
+}
+
+int G_EDICTNUM (int ofs)
+{
+	return NUM_FOR_EDICT (G_EDICT (ofs));
+}
+
+edict_t *NEXT_EDICT (edict_t *e)
+{
+	edict_t *n = (edict_t *)((byte *)e + pr_edict_size);
+	int b = (byte *)n - (byte *)sv.edicts;
+	if (b < 0 || b > sv.max_edicts * pr_edict_size)
+		Sys_Error ("NEXT_EDICT: walked off the edict array");
+	return n;
 }

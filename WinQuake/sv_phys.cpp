@@ -68,7 +68,7 @@ void SV_CheckAllEnts (void)
 
 // see if any solid entities are inside the final position
 	check = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
+	for (e=1 ; e<SV_NumEdicts() ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
 			continue;
@@ -476,7 +476,7 @@ void SV_PushMove (edict_t *pusher, float movetime)
 // see if any solid entities are inside the final position
 	num_moved = 0;
 	check = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
+	for (e=1 ; e<SV_NumEdicts() ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
 			continue;
@@ -604,7 +604,7 @@ void SV_PushRotate (edict_t *pusher, float movetime)
 // see if any solid entities are inside the final position
 	num_moved = 0;
 	check = NEXT_EDICT(sv.edicts);
-	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
+	for (e=1 ; e<SV_NumEdicts() ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
 			continue;
@@ -1524,7 +1524,7 @@ void SV_Physics (void)
 // treat each object in turn
 //
 	ent = sv.edicts;
-	for (i=0 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	for (i=0 ; i<SV_NumEdicts() ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;

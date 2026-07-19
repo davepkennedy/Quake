@@ -98,18 +98,16 @@ void ED_LoadFromFile (const char *data);
 
 edict_t *EDICT_NUM(int n);
 int NUM_FOR_EDICT(edict_t *e);
-
-#define	NEXT_EDICT(e) ((edict_t *)( (byte *)e + pr_edict_size))
-
-#define	EDICT_TO_PROG(e) ((int)((byte *)(e) - (byte *)sv.edicts))
-#define PROG_TO_EDICT(e) ((edict_t *)((byte *)sv.edicts + e))
+edict_t *PROG_TO_EDICT(int prog);
+int EDICT_TO_PROG(edict_t *e);
+edict_t *NEXT_EDICT(edict_t *e);
 
 //============================================================================
 
 #define	G_FLOAT(o) (pr_globals[o])
 #define	G_INT(o) (*(int *)&pr_globals[o])
-#define	G_EDICT(o) ((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
-#define G_EDICTNUM(o) NUM_FOR_EDICT(G_EDICT(o))
+edict_t *G_EDICT(int ofs);
+int G_EDICTNUM(int ofs);
 #define	G_VECTOR(o) (&pr_globals[o])
 #define	G_STRING(o) (pr_strings + *(string_t *)&pr_globals[o])
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])

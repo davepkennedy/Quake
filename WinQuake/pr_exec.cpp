@@ -355,6 +355,23 @@ int PR_LeaveFunction (void)
 
 /*
 ====================
+PR_FieldAddress
+
+Bounds-checked resolution of a raw field-slot byte offset (as computed by
+OP_ADDRESS) into a pointer, for the OP_STOREP_* indirect-store opcodes.
+Not edict-aligned like PROG_TO_EDICT, since it addresses a specific field
+within an edict rather than the edict itself.
+====================
+*/
+static eval_t *PR_FieldAddress (int ofs)
+{
+	if (ofs < 0 || ofs >= sv.max_edicts * pr_edict_size)
+		Sys_Error ("PR_FieldAddress: bad offset %i", ofs);
+	return (eval_t *)((byte *)sv.edicts + ofs);
+}
+
+/*
+====================
 PR_ExecuteProgram
 ====================
 */
@@ -548,11 +565,11 @@ while (1)
 	case OP_STOREP_FLD:		// integers
 	case OP_STOREP_S:
 	case OP_STOREP_FNC:		// pointers
-		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
+		ptr = PR_FieldAddress (b->_int);
 		ptr->_int = a->_int;
 		break;
 	case OP_STOREP_V:
-		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
+		ptr = PR_FieldAddress (b->_int);
 		ptr->vector[0] = a->vector[0];
 		ptr->vector[1] = a->vector[1];
 		ptr->vector[2] = a->vector[2];
@@ -560,9 +577,6 @@ while (1)
 		
 	case OP_ADDRESS:
 		ed = PROG_TO_EDICT(a->edict);
-#ifdef PARANOID
-		NUM_FOR_EDICT(ed);		// make sure it's in range
-#endif
 		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 			PR_RunError ("assignment to world entity");
 		c->_int = (int)((byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts);
@@ -574,18 +588,12 @@ while (1)
 	case OP_LOAD_S:
 	case OP_LOAD_FNC:
 		ed = PROG_TO_EDICT(a->edict);
-#ifdef PARANOID
-		NUM_FOR_EDICT(ed);		// make sure it's in range
-#endif
 		a = (eval_t *)((int *)&ed->v + b->_int);
 		c->_int = a->_int;
 		break;
 
 	case OP_LOAD_V:
 		ed = PROG_TO_EDICT(a->edict);
-#ifdef PARANOID
-		NUM_FOR_EDICT(ed);		// make sure it's in range
-#endif
 		a = (eval_t *)((int *)&ed->v + b->_int);
 		c->vector[0] = a->vector[0];
 		c->vector[1] = a->vector[1];
