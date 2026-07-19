@@ -287,7 +287,7 @@ void MainMenu::Draw (void)
 
 	f = (int)(host_time * 10)%6;
 
-	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot{}.lmp", f+1 ) ) );
 }
 
 
@@ -378,7 +378,7 @@ void SinglePlayerMenu::Draw (void)
 
 	f = (int)(host_time * 10)%6;
 
-	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot{}.lmp", f+1 ) ) );
 }
 
 
@@ -562,7 +562,7 @@ void LoadGameMenu::Key (int k)
 		SCR_BeginLoadingPlaque ();
 
 	// issue the load command
-		Cbuf_AddText (va ("load s%i\n", load_cursor) );
+		Cbuf_AddText (va ("load s{}\n", load_cursor) );
 		return;
 
 	case K_UPARROW:
@@ -595,7 +595,7 @@ void SaveMenu::Key (int k)
 	case K_ENTER:
 		m_state = m_none;
 		key_dest = key_game;
-		Cbuf_AddText (va("save s%i\n", load_cursor));
+		Cbuf_AddText (va("save s{}\n", load_cursor));
 		return;
 
 	case K_UPARROW:
@@ -651,7 +651,7 @@ void MultiPlayerMenu::Draw (void)
 
 	f = (int)(host_time * 10)%6;
 
-	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot{}.lmp", f+1 ) ) );
 
 	if (net.serialAvailable || net.ipxAvailable || net.tcpipAvailable)
 		return;
@@ -825,11 +825,11 @@ forward:
 
 		// cursor == 4 (OK)
 		if (Q_strcmp(cl_name.string.c_str(), nameBuf) != 0)
-			Cbuf_AddText ( va ("name \"%s\"\n", nameBuf) );
+			Cbuf_AddText ( va ("name \"{}\"\n", nameBuf) );
 		if (Q_strcmp(hostname.string.c_str(), hostnameBuf) != 0)
 			Cvar_Set("hostname", hostnameBuf);
 		if (top != oldTop || bottom != oldBottom)
-			Cbuf_AddText( va ("color %i %i\n", top, bottom) );
+			Cbuf_AddText( va ("color {} {}\n", top, bottom) );
 		m_entersound = true;
 		M_Menu_MultiPlayer_f ();
 		break;
@@ -1008,7 +1008,7 @@ void NetMenu::Draw (void)
 	M_Print (f, 166, net_helpMessage[cursor*4+3]);
 
 	f = (int)(host_time * 10)%6;
-	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
+	M_DrawTransPic (54, 32 + cursor * 20,Draw_CachePic( va("gfx/menudot{}.lmp", f+1 ) ) );
 }
 
 
@@ -1566,7 +1566,7 @@ void M_Menu_Help_f (void)
 
 void HelpMenu::Draw (void)
 {
-	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", page)) );
+	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help{}.lmp", page)) );
 }
 
 
@@ -1827,20 +1827,20 @@ void SerialConfigMenu::Draw (void)
 		directModem = "Modem";
 	else
 		directModem = "Direct Connect";
-	M_Print (basex, 32, va ("%s - %s", startJoin, directModem));
+	M_Print (basex, 32, va ("{} - {}", startJoin, directModem));
 	basex += 8;
 
 	M_Print (basex, serialConfig_cursor_table[0], "Port");
 	M_DrawTextBox (160, 40, 4, 1);
-	M_Print (168, serialConfig_cursor_table[0], va("COM%u", comport));
+	M_Print (168, serialConfig_cursor_table[0], va("COM{}", comport));
 
 	M_Print (basex, serialConfig_cursor_table[1], "IRQ");
 	M_DrawTextBox (160, serialConfig_cursor_table[1]-8, 1, 1);
-	M_Print (168, serialConfig_cursor_table[1], va("%u", irq));
+	M_Print (168, serialConfig_cursor_table[1], va("{}", irq));
 
 	M_Print (basex, serialConfig_cursor_table[2], "Baud");
 	M_DrawTextBox (160, serialConfig_cursor_table[2]-8, 5, 1);
-	M_Print (168, serialConfig_cursor_table[2], va("%u", serialConfig_baudrate[baud]));
+	M_Print (168, serialConfig_cursor_table[2], va("{}", serialConfig_baudrate[baud]));
 
 	if (SerialConfig)
 	{
@@ -1998,7 +1998,7 @@ forward:
 		m_state = m_none;
 
 		if (SerialConfig)
-			Cbuf_AddText (va ("connect \"%s\"\n", phone));
+			Cbuf_AddText (va ("connect \"{}\"\n", phone));
 		else
 			Cbuf_AddText ("connect\n");
 		break;
@@ -2155,7 +2155,7 @@ void ModemConfigMenu::Key (int key)
 
 		if (cursor == 4)
 		{
-			(*SetModemConfig) (0, va ("%c", dialing), clearStr, initStr, hangup);
+			(*SetModemConfig) (0, va ("{}", dialing), clearStr, initStr, hangup);
 			m_entersound = true;
 			M_Menu_SerialConfig_f ();
 		}
@@ -2277,7 +2277,7 @@ void LanConfigMenu::Draw (void)
 		protocol = "IPX";
 	else
 		protocol = "TCP/IP";
-	M_Print (basex, 32, va ("%s - %s", startJoin, protocol));
+	M_Print (basex, 32, va ("{} - {}", startJoin, protocol));
 	basex += 8;
 
 	M_Print (basex, 52, "Address:");
@@ -2365,7 +2365,7 @@ void LanConfigMenu::Key (int key)
 			m_return_onerror = true;
 			key_dest = key_game;
 			m_state = m_none;
-			Cbuf_AddText ( va ("connect \"%s\"\n", joinname) );
+			Cbuf_AddText ( va ("connect \"{}\"\n", joinname) );
 			break;
 		}
 
@@ -2616,7 +2616,7 @@ void GameOptionsMenu::Draw (void)
 	M_Print (160, 40, "begin game");
 
 	M_Print (0, 56, "      Max players");
-	M_Print (160, 56, va("%i", maxplayers) );
+	M_Print (160, 56, va("{}", maxplayers) );
 
 	M_Print (0, 64, "        Game Type");
 	if (coop.value)
@@ -2668,13 +2668,13 @@ void GameOptionsMenu::Draw (void)
 	if (fraglimit.value == 0)
 		M_Print (160, 88, "none");
 	else
-		M_Print (160, 88, va("%i frags", (int)fraglimit.value));
+		M_Print (160, 88, va("{} frags", (int)fraglimit.value));
 
 	M_Print (0, 96, "       Time Limit");
 	if (timelimit.value == 0)
 		M_Print (160, 96, "none");
 	else
-		M_Print (160, 96, va("%i minutes", (int)timelimit.value));
+		M_Print (160, 96, va("{} minutes", (int)timelimit.value));
 
 	M_Print (0, 112, "         Episode");
    //MED 01/06/97 added hipnotic episodes
@@ -2873,15 +2873,15 @@ void GameOptionsMenu::Key (int key)
 			if (SV_Active())
 				Cbuf_AddText ("disconnect\n");
 			Cbuf_AddText ("listen 0\n");	// so host_netport will be re-examined
-			Cbuf_AddText ( va ("maxplayers %u\n", maxplayers) );
+			Cbuf_AddText ( va ("maxplayers {}\n", maxplayers) );
 			SCR_BeginLoadingPlaque ();
 
 			if (hipnotic)
-				Cbuf_AddText ( va ("map %s\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
+				Cbuf_AddText ( va ("map {}\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
 			else if (rogue)
-				Cbuf_AddText ( va ("map %s\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
+				Cbuf_AddText ( va ("map {}\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
 			else
-				Cbuf_AddText ( va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
+				Cbuf_AddText ( va ("map {}\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
 
 			return;
 		}
@@ -3059,7 +3059,7 @@ void ServerListMenu::Key (int k)
 		sorted = false;
 		key_dest = key_game;
 		m_state = m_none;
-		Cbuf_AddText ( va ("connect \"%s\"\n", hostcache[cursor].cname) );
+		Cbuf_AddText ( va ("connect \"{}\"\n", hostcache[cursor].cname) );
 		break;
 
 	default:

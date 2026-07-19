@@ -156,7 +156,11 @@ Cvar_SetValue
 */
 void Cvar_SetValue (const char *var_name, float value)
 {
-	Cvar_Set (var_name, va("%f", value));
+	// {:f} matches printf's %f exactly (fixed 6 decimal places); a bare {}
+	// would use std::format's shortest-round-trip float representation
+	// instead ("200" instead of "200.000000"), silently changing what
+	// gets written into this cvar's serialized string value.
+	Cvar_Set (var_name, va("{:f}", value));
 }
 
 

@@ -114,8 +114,8 @@ void Sbar_Init (void)
 
 	for (i=0 ; i<10 ; i++)
 	{
-		sb_nums[0][i] = Draw_PicFromWad (va("num_%i",i));
-		sb_nums[1][i] = Draw_PicFromWad (va("anum_%i",i));
+		sb_nums[0][i] = Draw_PicFromWad (va("num_{}",i));
+		sb_nums[1][i] = Draw_PicFromWad (va("anum_{}",i));
 	}
 
 	sb_nums[0][10] = Draw_PicFromWad ("num_minus");
@@ -142,13 +142,13 @@ void Sbar_Init (void)
 
 	for (i=0 ; i<5 ; i++)
 	{
-		sb_weapons[2+i][0] = Draw_PicFromWad (va("inva%i_shotgun",i+1));
-		sb_weapons[2+i][1] = Draw_PicFromWad (va("inva%i_sshotgun",i+1));
-		sb_weapons[2+i][2] = Draw_PicFromWad (va("inva%i_nailgun",i+1));
-		sb_weapons[2+i][3] = Draw_PicFromWad (va("inva%i_snailgun",i+1));
-		sb_weapons[2+i][4] = Draw_PicFromWad (va("inva%i_rlaunch",i+1));
-		sb_weapons[2+i][5] = Draw_PicFromWad (va("inva%i_srlaunch",i+1));
-		sb_weapons[2+i][6] = Draw_PicFromWad (va("inva%i_lightng",i+1));
+		sb_weapons[2+i][0] = Draw_PicFromWad (va("inva{}_shotgun",i+1));
+		sb_weapons[2+i][1] = Draw_PicFromWad (va("inva{}_sshotgun",i+1));
+		sb_weapons[2+i][2] = Draw_PicFromWad (va("inva{}_nailgun",i+1));
+		sb_weapons[2+i][3] = Draw_PicFromWad (va("inva{}_snailgun",i+1));
+		sb_weapons[2+i][4] = Draw_PicFromWad (va("inva{}_rlaunch",i+1));
+		sb_weapons[2+i][5] = Draw_PicFromWad (va("inva{}_srlaunch",i+1));
+		sb_weapons[2+i][6] = Draw_PicFromWad (va("inva{}_lightng",i+1));
 	}
 
 	sb_ammo[0] = Draw_PicFromWad ("sb_shells");
@@ -212,11 +212,11 @@ void Sbar_Init (void)
 
 	  for (i=0 ; i<5 ; i++)
 	  {
-		 hsb_weapons[2+i][0] = Draw_PicFromWad (va("inva%i_laser",i+1));
-		 hsb_weapons[2+i][1] = Draw_PicFromWad (va("inva%i_mjolnir",i+1));
-		 hsb_weapons[2+i][2] = Draw_PicFromWad (va("inva%i_gren_prox",i+1));
-		 hsb_weapons[2+i][3] = Draw_PicFromWad (va("inva%i_prox_gren",i+1));
-		 hsb_weapons[2+i][4] = Draw_PicFromWad (va("inva%i_prox",i+1));
+		 hsb_weapons[2+i][0] = Draw_PicFromWad (va("inva{}_laser",i+1));
+		 hsb_weapons[2+i][1] = Draw_PicFromWad (va("inva{}_mjolnir",i+1));
+		 hsb_weapons[2+i][2] = Draw_PicFromWad (va("inva{}_gren_prox",i+1));
+		 hsb_weapons[2+i][3] = Draw_PicFromWad (va("inva{}_prox_gren",i+1));
+		 hsb_weapons[2+i][4] = Draw_PicFromWad (va("inva{}_prox",i+1));
 	  }
 
 	  hsb_items[0] = Draw_PicFromWad ("sb_wsuit");

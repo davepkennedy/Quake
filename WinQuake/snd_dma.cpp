@@ -823,20 +823,15 @@ void S_Play(void)
 {
 	static int hash=345;
 	int 	i;
-	char name[256];
 	sfx_t	*sfx;
-	
+
 	i = 1;
 	while (i<Cmd_Argc())
 	{
+		std::string name = Cmd_Argv(i);
 		if (!Q_strrchr(Cmd_Argv(i), '.'))
-		{
-			Q_strcpy(name, Cmd_Argv(i));
-			Q_strcat(name, ".wav");
-		}
-		else
-			Q_strcpy(name, Cmd_Argv(i));
-		sfx = S_PrecacheSound(name);
+			name += ".wav";
+		sfx = S_PrecacheSound(name.c_str());
 		S_StartSound(hash++, 0, sfx, sound.listener_origin, 1.0, 1.0);
 		i++;
 	}
@@ -847,20 +842,15 @@ void S_PlayVol(void)
 	static int hash=543;
 	int i;
 	float vol;
-	char name[256];
 	sfx_t	*sfx;
-	
+
 	i = 1;
 	while (i<Cmd_Argc())
 	{
+		std::string name = Cmd_Argv(i);
 		if (!Q_strrchr(Cmd_Argv(i), '.'))
-		{
-			Q_strcpy(name, Cmd_Argv(i));
-			Q_strcat(name, ".wav");
-		}
-		else
-			Q_strcpy(name, Cmd_Argv(i));
-		sfx = S_PrecacheSound(name);
+			name += ".wav";
+		sfx = S_PrecacheSound(name.c_str());
 		vol = Q_atof(Cmd_Argv(i+1));
 		S_StartSound(hash++, 0, sfx, sound.listener_origin, vol, 1.0);
 		i+=2;

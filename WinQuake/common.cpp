@@ -1188,28 +1188,6 @@ std::string COM_FormatVA (const char *fmt, va_list argptr)
 	return msg;
 }
 
-/*
-============
-va
-
-does a varargs printf into a temp buffer, so I don't need to have
-varargs versions of all text functions. The buffer is sized exactly to
-fit each call (see COM_FormatVA) -- no fixed size, can't overflow.
-============
-*/
-const char *va(const char *format, ...)
-{
-	va_list         argptr;
-	static std::string      string;
-
-	va_start (argptr, format);
-	string = COM_FormatVA (format, argptr);
-	va_end (argptr);
-
-	return string.c_str();
-}
-
-
 /// just for debugging
 int     memsearch (byte *start, int count, int search)
 {
@@ -1805,12 +1783,12 @@ void COM_InitFilesystem (void)
 //
 // start up with GAMENAME by default (id1)
 //
-	COM_AddGameDirectory (va("%s/" GAMENAME, basedir) );
+	COM_AddGameDirectory (va("{}/" GAMENAME, basedir) );
 
 	if (COM_CheckParm ("-rogue"))
-		COM_AddGameDirectory (va("%s/rogue", basedir) );
+		COM_AddGameDirectory (va("{}/rogue", basedir) );
 	if (COM_CheckParm ("-hipnotic"))
-		COM_AddGameDirectory (va("%s/hipnotic", basedir) );
+		COM_AddGameDirectory (va("{}/hipnotic", basedir) );
 
 //
 // -game <gamedir>
@@ -1820,7 +1798,7 @@ void COM_InitFilesystem (void)
 	if (i && i < com_argc-1)
 	{
 		com_modified = true;
-		COM_AddGameDirectory (va("%s/%s", basedir, com_argv[i+1]));
+		COM_AddGameDirectory (va("{}/{}", basedir, com_argv[i+1]));
 	}
 
 //

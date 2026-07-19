@@ -97,7 +97,6 @@ S_LoadSound
 */
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
-    char	namebuffer[256];
 	byte	*data;
 	wavinfo_t	info;
 	int		len;
@@ -112,16 +111,16 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 //Con_Printf ("S_LoadSound: %x\n", (int)stackbuf);
 // load it in
-    Q_strcpy(namebuffer, "sound/");
-    Q_strcat(namebuffer, s->name);
+	std::string namebuffer = "sound/";
+	namebuffer += s->name;
 
-//	Con_Printf ("loading %s\n",namebuffer);
+//	Con_Printf ("loading %s\n",namebuffer.c_str());
 
-	data = COM_LoadStackFile(namebuffer, stackbuf, sizeof(stackbuf));
+	data = COM_LoadStackFile(namebuffer.c_str(), stackbuf, sizeof(stackbuf));
 
 	if (!data)
 	{
-		Con_Printf ("Couldn't load %s\n", namebuffer);
+		Con_Printf ("Couldn't load %s\n", namebuffer.c_str());
 		return NULL;
 	}
 

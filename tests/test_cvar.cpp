@@ -50,7 +50,15 @@ TEST_CASE ("Cvar_Set / Cvar_SetValue update value and string together")
 
 	Cvar_SetValue ("__test_cvar_set", 3.5f);
 	CHECK (testCvar.value == doctest::Approx (3.5f));
-	CHECK (std::string (Cvar_VariableString ("__test_cvar_set")).find ("3.5") != std::string::npos);
+	// Exact match, not just a substring check: Cvar_SetValue formats via
+	// va("{:f}", value) to match printf's old %f exactly (fixed 6 decimal
+	// places). A bare {} would use std::format's shortest-round-trip
+	// float representation instead ("3.5" rather than "3.500000") --
+	// silently changing what gets written into a cvar's serialized
+	// string value. A substring check like .find("3.5") wouldn't catch
+	// that regression since both outputs contain "3.5"; this must be an
+	// exact match.
+	CHECK (std::string (Cvar_VariableString ("__test_cvar_set")) == "3.500000");
 }
 
 TEST_CASE ("Cvar_Set on an unregistered name reports an error, does not crash")

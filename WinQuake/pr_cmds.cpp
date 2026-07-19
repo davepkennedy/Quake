@@ -1626,9 +1626,9 @@ void PF_changelevel (void)
 	s2 = G_STRING(OFS_PARM1);
 
 	if ((int)pr_global_struct->serverflags & (SFL_NEW_UNIT | SFL_NEW_EPISODE))
-		Cbuf_AddText (va("changelevel %s %s\n",s1, s2));
+		Cbuf_AddText (va("changelevel {} {}\n",s1, s2));
 	else
-		Cbuf_AddText (va("changelevel2 %s %s\n",s1, s2));
+		Cbuf_AddText (va("changelevel2 {} {}\n",s1, s2));
 #else
 	char	*s;
 
@@ -1637,7 +1637,7 @@ void PF_changelevel (void)
 		return;
 
 	s = G_STRING(OFS_PARM0);
-	Cbuf_AddText (va("changelevel %s\n",s));
+	Cbuf_AddText (va("changelevel {}\n",s));
 #endif
 }
 

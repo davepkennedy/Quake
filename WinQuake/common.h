@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <string>
 #include <cstdarg>
+#include <format>
+#include <utility>
 
 #include "qlimits.h"	// MAX_OSPATH
 
@@ -163,8 +165,17 @@ void COM_StripExtension (const char *in, char *out);
 void COM_FileBase (const char *in, char *out);
 void COM_DefaultExtension (char *path, const char *extension);
 
-const char	*va(const char *format, ...);
-// does a varargs printf into a temp buffer
+// Formats into a temp buffer, returning a pointer valid until the next
+// va() call. std::format_string gives compile-time checking of the
+// format string against the argument types, unlike the old printf-style
+// version. A template, so it has to live here rather than common.cpp.
+template <typename... Args>
+const char *va (std::format_string<Args...> format, Args&&... args)
+{
+	static std::string string;
+	string = std::format (format, std::forward<Args> (args)...);
+	return string.c_str ();
+}
 
 std::string COM_FormatVA (const char *fmt, va_list argptr);
 // formats fmt/argptr into a string sized exactly to fit -- no fixed buffer,

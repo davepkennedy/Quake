@@ -1097,7 +1097,6 @@ void Host_Tell_f(void)
 	int		j;
 	char	pbuf[256];
 	char	*p;
-	char	text[64];
 
 	if (cmd_source == src_command)
 	{
@@ -1107,9 +1106,6 @@ void Host_Tell_f(void)
 
 	if (Cmd_Argc () < 3)
 		return;
-
-	Q_strcpy(text, host_client->name);
-	Q_strcat(text, ": ");
 
 	Q_strncpy(pbuf, Cmd_Args(), sizeof(pbuf)-1);
 	pbuf[sizeof(pbuf)-1] = 0;
@@ -1122,13 +1118,13 @@ void Host_Tell_f(void)
 		p[Q_strlen(p)-1] = 0;
 	}
 
-// check length & truncate if necessary
-	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
-	if (Q_strlen(p) > j)
-		p[j] = 0;
-
-	strcat (text, p);
-	strcat (text, "\n");
+	// std::string has no fixed size, so unlike the old char text[64] this
+	// no longer truncates long messages -- a deliberate behavior change,
+	// not just a safety fix.
+	std::string text = host_client->name;
+	text += ": ";
+	text += p;
+	text += "\n";
 
 	save = host_client;
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
@@ -1138,7 +1134,7 @@ void Host_Tell_f(void)
 		if (Q_strcasecmp(client->name, Cmd_Argv(1)))
 			continue;
 		host_client = client;
-		SV_ClientPrintf("%s", text);
+		SV_ClientPrintf("%s", text.c_str());
 		break;
 	}
 	host_client = save;
