@@ -774,16 +774,16 @@ void R_LoadSkys (void)
 {
 	int		i;
 	FILE	*f;
-	char	name[64];
+	std::string	name;
 
 	for (i=0 ; i<6 ; i++)
 	{
 		GL_Bind (SKY_TEX + i);
-		sprintf (name, "gfx/env/bkgtst%s.tga", suf[i]);
-		COM_FOpenFile (name, &f);
+		name = std::format ("gfx/env/bkgtst{}.tga", suf[i]);
+		COM_FOpenFile (name.c_str (), &f);
 		if (!f)
 		{
-			Con_Printf ("Couldn't load %s\n", name);
+			Con_Printf ("Couldn't load %s\n", name.c_str ());
 			continue;
 		}
 		LoadTGA (f);

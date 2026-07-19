@@ -283,7 +283,7 @@ An svc_signonnum has been received, perform a client side setup
 */
 void CL_SignonReply (void)
 {
-	char 	str[8192];
+	std::string	str;
 
 Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 
@@ -302,8 +302,8 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		MSG_WriteString (&cls.message, va("color {} {}\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		sprintf (str, "spawn %s", cls.spawnparms);
-		MSG_WriteString (&cls.message, str);
+		str = std::format ("spawn {}", cls.spawnparms);
+		MSG_WriteString (&cls.message, str.c_str ());
 		break;
 		
 	case 3:	
@@ -327,7 +327,7 @@ Called to play the next demo in the demo loop
 */
 void CL_NextDemo (void)
 {
-	char	str[1024];
+	std::string	str;
 
 	if (cls.demonum == -1)
 		return;		// don't play demos
@@ -345,8 +345,8 @@ void CL_NextDemo (void)
 		}
 	}
 
-	sprintf (str,"playdemo %s\n", cls.demos[cls.demonum]);
-	Cbuf_InsertText (str);
+	str = std::format ("playdemo {}\n", cls.demos[cls.demonum]);
+	Cbuf_InsertText (str.c_str ());
 	cls.demonum++;
 }
 

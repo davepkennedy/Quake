@@ -373,19 +373,19 @@ int WIPX_GetNameFromAddr (struct qsockaddr *addr, char *name)
 int WIPX_GetAddrFromName(const char *name, struct qsockaddr *addr)
 {
 	int n;
-	char buf[32];
+	std::string buf;
 
 	n = Q_strlen(name);
 
 	if (n == 12)
 	{
-		sprintf(buf, "00000000:%s:%u", name, net_hostport);
-		return WIPX_StringToAddr (buf, addr);
+		buf = std::format ("00000000:{}:{}", name, net_hostport);
+		return WIPX_StringToAddr (buf.c_str (), addr);
 	}
 	if (n == 21)
 	{
-		sprintf(buf, "%s:%u", name, net_hostport);
-		return WIPX_StringToAddr (buf, addr);
+		buf = std::format ("{}:{}", name, net_hostport);
+		return WIPX_StringToAddr (buf.c_str (), addr);
 	}
 	if (n > 21 && n <= 27)
 		return WIPX_StringToAddr (name, addr);

@@ -343,18 +343,18 @@ void R_ReadPointFile_f (void)
 	int		r;
 	int		c;
 	particle_t	*p;
-	char	name[MAX_OSPATH];
-	
-	sprintf (name,"maps/%s.pts", sv.name);
+	std::string	name;
 
-	COM_FOpenFile (name, &f);
+	name = std::format ("maps/{}.pts", sv.name);
+
+	COM_FOpenFile (name.c_str (), &f);
 	if (!f)
 	{
-		Con_Printf ("couldn't open %s\n", name);
+		Con_Printf ("couldn't open %s\n", name.c_str ());
 		return;
 	}
-	
-	Con_Printf ("Reading %s...\n", name);
+
+	Con_Printf ("Reading %s...\n", name.c_str ());
 	c = 0;
 	for ( ;; )
 	{

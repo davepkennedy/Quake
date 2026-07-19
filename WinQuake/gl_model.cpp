@@ -1212,12 +1212,12 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 
 		if (i < mod->numsubmodels-1)
 		{	// duplicate the basic information
-			char	name[10];
+			std::string	name;
 
-			sprintf (name, "*%i", i+1);
-			loadmodel = Mod_FindName (name);
+			name = std::format ("*{}", i+1);
+			loadmodel = Mod_FindName (name.c_str ());
 			*loadmodel = *mod;
-			strcpy (loadmodel->name, name);
+			strcpy (loadmodel->name, name.c_str ());
 			mod = loadmodel;
 		}
 	}
@@ -1411,7 +1411,7 @@ Mod_LoadAllSkins
 void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 {
 	int		i, j, k;
-	char	name[32];
+	std::string	name;
 	int		s;
 	byte	*skin;
 	byte	*texels;
@@ -1437,12 +1437,12 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 				pheader->texels[i] = texels - (byte *)pheader;
 				memcpy (texels, (byte *)(pskintype + 1), s);
 	//		}
-			sprintf (name, "%s_%i", loadmodel->name, i);
+			name = std::format ("{}_{}", loadmodel->name, i);
 			pheader->gl_texturenum[i][0] =
 			pheader->gl_texturenum[i][1] =
 			pheader->gl_texturenum[i][2] =
 			pheader->gl_texturenum[i][3] =
-				GL_LoadTexture (name, pheader->skinwidth, 
+				GL_LoadTexture (name.c_str (), pheader->skinwidth,
 				pheader->skinheight, (byte *)(pskintype + 1), true, false);
 			pskintype = (daliasskintype_t *)((byte *)(pskintype+1) + s);
 		} else {
@@ -1462,9 +1462,9 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 						pheader->texels[i] = texels - (byte *)pheader;
 						memcpy (texels, (byte *)(pskintype), s);
 					}
-					sprintf (name, "%s_%i_%i", loadmodel->name, i,j);
-					pheader->gl_texturenum[i][j&3] = 
-						GL_LoadTexture (name, pheader->skinwidth, 
+					name = std::format ("{}_{}_{}", loadmodel->name, i, j);
+					pheader->gl_texturenum[i][j&3] =
+						GL_LoadTexture (name.c_str (), pheader->skinwidth,
 						pheader->skinheight, (byte *)(pskintype), true, false);
 					pskintype = (daliasskintype_t *)((byte *)(pskintype) + s);
 			}
@@ -1656,7 +1656,7 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	dspriteframe_t		*pinframe;
 	mspriteframe_t		*pspriteframe;
 	int					width, height, size, origin[2];
-	char				name[64];
+	std::string			name;
 
 	pinframe = (dspriteframe_t *)pin;
 
@@ -1680,8 +1680,8 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
-	sprintf (name, "%s_%i", loadmodel->name, framenum);
-	pspriteframe->gl_texturenum = GL_LoadTexture (name, width, height, (byte *)(pinframe + 1), true, true);
+	name = std::format ("{}_{}", loadmodel->name, framenum);
+	pspriteframe->gl_texturenum = GL_LoadTexture (name.c_str (), width, height, (byte *)(pinframe + 1), true, true);
 
 	return (void *)((byte *)pinframe + sizeof (dspriteframe_t) + size);
 }

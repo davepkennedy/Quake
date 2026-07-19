@@ -483,7 +483,7 @@ void Draw_Init (void)
 	qpic_t	*cb;
 	byte	*dest;
 	int		x, y;
-	char	ver[40];
+	std::string	ver;
 	glpic_t	*gl;
 	size_t	start;
 	byte	*ncdata;
@@ -527,10 +527,10 @@ void Draw_Init (void)
 #if defined(__linux__)
 	sprintf (ver, "(Linux %2.2f, gl %4.2f) %4.2f", (float)LINUX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
 #else
-	sprintf (ver, "(gl %4.2f) %4.2f", (float)GLQUAKE_VERSION, (float)VERSION);
+	ver = std::format ("(gl {:4.2f}) {:4.2f}", (float)GLQUAKE_VERSION, (float)VERSION);
 #endif
-	dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
-	y = (int)strlen(ver);
+	dest = cb->data + 320*186 + 320 - 11 - 8*ver.size ();
+	y = (int)ver.size ();
 	for (x=0 ; x<y ; x++)
 		Draw_CharToConback (ver[x], dest+(x<<3));
 

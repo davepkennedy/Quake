@@ -292,7 +292,8 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	int		i, j;
 	int			*cmds;
 	trivertx_t	*verts;
-	char	cache[MAX_QPATH], fullpath[MAX_OSPATH];
+	char	cache[MAX_QPATH];
+	std::string	fullpath;
 	FILE	*f;
 
 	aliasmodel = m;
@@ -326,8 +327,8 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 		//
 		// save out the cached version
 		//
-		sprintf (fullpath, "%s/%s", com_gamedir, cache);
-		f = fopen (fullpath, "wb");
+		fullpath = std::format ("{}/{}", com_gamedir, cache);
+		f = fopen (fullpath.c_str (), "wb");
 		if (f)
 		{
 			fwrite (&numcommands, 4, 1, f);

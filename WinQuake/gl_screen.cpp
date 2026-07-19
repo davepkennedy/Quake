@@ -591,8 +591,8 @@ SCR_ScreenShot_f
 void SCR_ScreenShot_f (void) 
 {
 	byte		*buffer;
-	char		pcxname[80]; 
-	char		checkname[MAX_OSPATH];
+	char		pcxname[80];
+	std::string	checkname;
 	int			i, c, temp;
 // 
 // find a file name to save it to 
@@ -603,8 +603,8 @@ void SCR_ScreenShot_f (void)
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
-		if (Sys_FileTime(checkname) == -1)
+		checkname = std::format ("{}/{}", com_gamedir, pcxname);
+		if (Sys_FileTime(checkname.c_str ()) == -1)
 			break;	// file doesn't exist
 	} 
 	if (i==100) 
