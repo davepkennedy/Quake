@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "hunk_resource.h"
+#include <list>
 
 #define	DYNAMIC_SIZE	0xc000
 
@@ -51,7 +52,8 @@ typedef struct cache_system_s
 	cache_user_t			*user;
 	char					name[16];
 	struct cache_system_s	*prev, *next;
-	struct cache_system_s	*lru_prev, *lru_next;	// for LRU flushing
+	bool					inLRU;		// tracked in zone_state_t::cacheLRU instead of an
+										// intrusive list -- see Cache_MakeLRU/Cache_UnlinkLRU
 } cache_system_t;
 
 // State for all three of this file's allocators (zone/hunk/cache) --
@@ -73,6 +75,7 @@ struct zone_state_t
 	size_t			hunk_tempmark = 0;
 
 	cache_system_t	cache_head;
+	std::list<cache_system_t*>	cacheLRU;	// recency order, most-recent at front
 };
 
 static zone_state_t mem;
@@ -697,24 +700,20 @@ void Cache_FreeHigh (int new_high_hunk)
 
 void Cache_UnlinkLRU (cache_system_t *cs)
 {
-	if (!cs->lru_next || !cs->lru_prev)
+	if (!cs->inLRU)
 		Sys_Error ("Cache_UnlinkLRU: NULL link");
 
-	cs->lru_next->lru_prev = cs->lru_prev;
-	cs->lru_prev->lru_next = cs->lru_next;
-	
-	cs->lru_prev = cs->lru_next = NULL;
+	mem.cacheLRU.remove (cs);
+	cs->inLRU = false;
 }
 
 void Cache_MakeLRU (cache_system_t *cs)
 {
-	if (cs->lru_next || cs->lru_prev)
+	if (cs->inLRU)
 		Sys_Error ("Cache_MakeLRU: active link");
 
-	mem.cache_head.lru_next->lru_prev = cs;
-	cs->lru_next = mem.cache_head.lru_next;
-	cs->lru_prev = &mem.cache_head;
-	mem.cache_head.lru_next = cs;
+	mem.cacheLRU.push_front (cs);
+	cs->inLRU = true;
 }
 
 /*
@@ -857,7 +856,7 @@ Cache_Init
 void Cache_Init (void)
 {
 	mem.cache_head.next = mem.cache_head.prev = &mem.cache_head;
-	mem.cache_head.lru_next = mem.cache_head.lru_prev = &mem.cache_head;
+	mem.cacheLRU.clear ();
 
 	Cmd_AddCommand ("flush", Cache_Flush);
 }
@@ -941,11 +940,11 @@ void *Cache_Alloc (cache_user_t *c, int size, const char *name)
 		}
 	
 	// free the least recently used cahedat
-		if (mem.cache_head.lru_prev == &mem.cache_head)
+		if (mem.cacheLRU.empty ())
 			Sys_Error ("Cache_Alloc: out of memory");
 													// not enough memory at all
-		Cache_Free ( mem.cache_head.lru_prev->user );
-	} 
+		Cache_Free ( mem.cacheLRU.back ()->user );
+	}
 	
 	return Cache_Check (c);
 }

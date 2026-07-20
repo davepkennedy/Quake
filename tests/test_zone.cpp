@@ -154,6 +154,43 @@ TEST_CASE ("Cache_Alloc on an already-allocated cache_user_t throws")
 	Hunk_FreeToLowMark (mark);
 }
 
+TEST_CASE ("Cache_Alloc evicts the least-recently-used entry, not just any entry")
+{
+	EnsureMemoryInit ();
+
+	size_t mark = Hunk_LowMark ();
+
+	// Cache lives in the gap between the low and high hunk marks (see
+	// zone.cpp's Cache_TryAlloc) -- compute what's left of that gap right
+	// now so this works regardless of what earlier test cases have already
+	// consumed from the shared EnsureMemoryInit backing buffer (4MB, see
+	// test_stubs.cpp). Reading Hunk_HighMark ()/Hunk_LowMark () rather than
+	// hardcoding a size keeps this accurate no matter which order tests run in.
+	constexpr size_t totalHunk = 4 * 1024 * 1024;
+	size_t available = totalHunk - Hunk_HighMark () - Hunk_LowMark ();
+	int entrySize = (int)((available - 4096) / 2);
+	REQUIRE (entrySize > 1024);
+
+	cache_user_t a{}, b{}, c{};
+	REQUIRE (Cache_Alloc (&a, entrySize, "__test_lru_a") != nullptr);
+	REQUIRE (Cache_Alloc (&b, entrySize, "__test_lru_b") != nullptr);
+
+	// touch 'a' so it becomes the most-recently-used, leaving 'b' as the
+	// genuinely least-recently-used entry
+	CHECK (Cache_Check (&a) != nullptr);
+
+	// doesn't fit alongside a+b -- forces Cache_Alloc to evict the LRU
+	// entry (should be 'b', not 'a') and retry
+	REQUIRE (Cache_Alloc (&c, entrySize, "__test_lru_c") != nullptr);
+
+	CHECK (Cache_Check (&a) != nullptr);	// survived -- was touched
+	CHECK (Cache_Check (&b) == nullptr);	// evicted -- was the real LRU entry
+
+	Cache_Free (&a);
+	Cache_Free (&c);
+	Hunk_FreeToLowMark (mark);
+}
+
 // HunkMemoryResource (hunk_resource.h/zone.cpp) is a std::pmr facade over
 // this same low-hunk bump allocator -- do_allocate forwards straight to
 // Hunk_AllocName, so these tests focus on what's new/risky about that:
