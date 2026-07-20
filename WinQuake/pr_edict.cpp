@@ -277,9 +277,9 @@ PR_ValueString
 Returns a string describing *data in a type specific manner
 =============
 */
-char *PR_ValueString (etype_t type, eval_t *val)
+std::string PR_ValueString (etype_t type, eval_t *val)
 {
-	static char	line[256];
+	std::string	line;
 	ddef_t		*def;
 	dfunction_t	*f;
 
@@ -288,36 +288,36 @@ char *PR_ValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		sprintf (line, "%s", pr_strings + val->string);
+		line = pr_strings + val->string;
 		break;
-	case ev_entity:	
-		sprintf (line, "entity %i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)) );
+	case ev_entity:
+		line = std::format ("entity {}", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)) );
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		sprintf (line, "%s()", pr_strings + f->s_name);
+		line = std::format ("{}()", pr_strings + f->s_name);
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		sprintf (line, ".%s", pr_strings + def->s_name);
+		line = std::format (".{}", pr_strings + def->s_name);
 		break;
 	case ev_void:
-		sprintf (line, "void");
+		line = "void";
 		break;
 	case ev_float:
-		sprintf (line, "%5.1f", val->_float);
+		line = std::format ("{:5.1f}", val->_float);
 		break;
 	case ev_vector:
-		sprintf (line, "'%5.1f %5.1f %5.1f'", val->vector[0], val->vector[1], val->vector[2]);
+		line = std::format ("'{:5.1f} {:5.1f} {:5.1f}'", val->vector[0], val->vector[1], val->vector[2]);
 		break;
 	case ev_pointer:
-		sprintf (line, "pointer");
+		line = "pointer";
 		break;
 	default:
-		sprintf (line, "bad type %i", type);
+		line = std::format ("bad type {}", (int)type);
 		break;
 	}
-	
+
 	return line;
 }
 
@@ -329,9 +329,9 @@ Returns a string describing *data in a type specific manner
 Easier to parse than PR_ValueString
 =============
 */
-char *PR_UglyValueString (etype_t type, eval_t *val)
+std::string PR_UglyValueString (etype_t type, eval_t *val)
 {
-	static char	line[256];
+	std::string	line;
 	ddef_t		*def;
 	dfunction_t	*f;
 
@@ -340,33 +340,33 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		sprintf (line, "%s", pr_strings + val->string);
+		line = pr_strings + val->string;
 		break;
-	case ev_entity:	
-		sprintf (line, "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
+	case ev_entity:
+		line = std::format ("{}", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		sprintf (line, "%s", pr_strings + f->s_name);
+		line = pr_strings + f->s_name;
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		sprintf (line, "%s", pr_strings + def->s_name);
+		line = pr_strings + def->s_name;
 		break;
 	case ev_void:
-		sprintf (line, "void");
+		line = "void";
 		break;
 	case ev_float:
-		sprintf (line, "%f", val->_float);
+		line = std::format ("{:f}", val->_float);
 		break;
 	case ev_vector:
-		sprintf (line, "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
+		line = std::format ("{:f} {:f} {:f}", val->vector[0], val->vector[1], val->vector[2]);
 		break;
 	default:
-		sprintf (line, "bad type %i", type);
+		line = std::format ("bad type {}", (int)type);
 		break;
 	}
-	
+
 	return line;
 }
 
@@ -378,49 +378,41 @@ Returns a string with a description and the contents of a global,
 padded to 20 field width
 ============
 */
-const char *PR_GlobalString (int ofs)
+std::string PR_GlobalString (int ofs)
 {
-	char	*s;
-	int		i;
 	ddef_t	*def;
 	eval_t	*val;
-	static char	line[128];
+	std::string	line;
 
 	val = (eval_t *)&pr_globals[ofs];
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
-		sprintf (line,"%i(???)", ofs);
+		line = std::format ("{}(???)", ofs);
 	else
-	{
-		s = PR_ValueString ((etype_t)def->type, val);
-		sprintf (line,"%i(%s)%s", ofs, pr_strings + def->s_name, s);
-	}
-	
-	i = (int)strlen(line);
-	for ( ; i<20 ; i++)
-		strcat (line," ");
-	strcat (line," ");
+		line = std::format ("{}({}){}", ofs, pr_strings + def->s_name, PR_ValueString ((etype_t)def->type, val));
+
+	while (line.size () < 20)
+		line += ' ';
+	line += ' ';
 
 	return line;
 }
 
-const char *PR_GlobalStringNoContents (int ofs)
+std::string PR_GlobalStringNoContents (int ofs)
 {
-	int		i;
 	ddef_t	*def;
-	static char	line[128];
-	
+	std::string	line;
+
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
-		sprintf (line,"%i(???)", ofs);
+		line = std::format ("{}(???)", ofs);
 	else
-		sprintf (line,"%i(%s)", ofs, pr_strings + def->s_name);
-	
-	i = (int)strlen(line);
-	for ( ; i<20 ; i++)
-		strcat (line," ");
-	strcat (line," ");
-		
+		line = std::format ("{}({})", ofs, pr_strings + def->s_name);
+
+	while (line.size () < 20)
+		line += ' ';
+	line += ' ';
+
 	return line;
 }
 
@@ -471,7 +463,7 @@ void ED_Print (edict_t *ed)
 		while (l++ < 15)
 			Con_Printf (" ");
 
-		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v));
+		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v).c_str ());
 	}
 }
 
@@ -516,7 +508,7 @@ void ED_Write (FILE *f, edict_t *ed)
 			continue;
 	
 		fprintf (f,"\"%s\" ",name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)d->type, (eval_t *)v));
+		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)d->type, (eval_t *)v).c_str ());
 	}
 
 	fprintf (f, "}\n");
@@ -636,7 +628,7 @@ void ED_WriteGlobals (FILE *f)
 
 		name = pr_strings + def->s_name;		
 		fprintf (f,"\"%s\" ", name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)type, (eval_t *)&pr_globals[def->ofs]));
+		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)type, (eval_t *)&pr_globals[def->ofs]).c_str ());
 	}
 	fprintf (f,"}\n");
 }
@@ -871,9 +863,8 @@ if (!strcmp(com_token, "light"))
 
 if (anglehack)
 {
-char	temp[32];
-strcpy (temp, com_token);
-sprintf (com_token, "0 %s 0", temp);
+	std::string temp = std::format ("0 {} 0", com_token);
+	strcpy (com_token, temp.c_str ());
 }
 
 		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))

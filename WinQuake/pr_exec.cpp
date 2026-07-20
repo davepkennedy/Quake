@@ -136,8 +136,8 @@ const char *pr_opnames[] =
 "BITOR"
 };
 
-const char *PR_GlobalString (int ofs);
-const char *PR_GlobalStringNoContents (int ofs);
+std::string PR_GlobalString (int ofs);
+std::string PR_GlobalStringNoContents (int ofs);
 
 
 //=============================================================================
@@ -160,24 +160,24 @@ void PR_PrintStatement (dstatement_t *s)
 	}
 		
 	if (s->op == OP_IF || s->op == OP_IFNOT)
-		Con_Printf ("%sbranch %i",PR_GlobalString(s->a),s->b);
+		Con_Printf ("%sbranch %i",PR_GlobalString(s->a).c_str (),s->b);
 	else if (s->op == OP_GOTO)
 	{
 		Con_Printf ("branch %i",s->a);
 	}
 	else if ( (unsigned)(s->op - OP_STORE_F) < 6)
 	{
-		Con_Printf ("%s",PR_GlobalString(s->a));
-		Con_Printf ("%s", PR_GlobalStringNoContents(s->b));
+		Con_Printf ("%s",PR_GlobalString(s->a).c_str ());
+		Con_Printf ("%s", PR_GlobalStringNoContents(s->b).c_str ());
 	}
 	else
 	{
 		if (s->a)
-			Con_Printf ("%s",PR_GlobalString(s->a));
+			Con_Printf ("%s",PR_GlobalString(s->a).c_str ());
 		if (s->b)
-			Con_Printf ("%s",PR_GlobalString(s->b));
+			Con_Printf ("%s",PR_GlobalString(s->b).c_str ());
 		if (s->c)
-			Con_Printf ("%s", PR_GlobalStringNoContents(s->c));
+			Con_Printf ("%s", PR_GlobalStringNoContents(s->c).c_str ());
 	}
 	Con_Printf ("\n");
 }
