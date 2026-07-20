@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include "hunk_resource.h"
+#include <vector>
 
 #define MAX_PARTICLES			2048	// default max # of particles at one
 										//  time
@@ -31,7 +33,7 @@ int		ramp3[8] = {0x6d, 0x6b, 6, 5, 4, 3};
 
 particle_t	*active_particles, *free_particles;
 
-particle_t	*particles;
+std::pmr::vector<particle_t>	particles;
 int			r_numparticles;
 
 vec3_t			r_pright, r_pup, r_ppn;
@@ -203,8 +205,7 @@ void R_InitParticles (void)
 		r_numparticles = MAX_PARTICLES;
 	}
 
-	particles = (particle_t *)
-			Hunk_AllocName (r_numparticles * sizeof(particle_t), "particles");
+	particles = std::pmr::vector<particle_t> (r_numparticles, Hunk_GetResource ());
 }
 
 #ifdef QUAKE2
@@ -330,8 +331,13 @@ void R_ClearParticles (void)
 	free_particles = &particles[0];
 	active_particles = NULL;
 
+	// particles.data() + (i+1) rather than &particles[i+1]: the last
+	// iteration computes a one-past-the-end address (immediately
+	// overwritten below, never dereferenced) -- fine for raw pointer
+	// arithmetic, but std::vector::operator[] bounds-checks in debug
+	// builds and would assert on the out-of-range index.
 	for (i=0 ;i<r_numparticles ; i++)
-		particles[i].next = &particles[i+1];
+		particles[i].next = particles.data() + (i+1);
 	particles[r_numparticles-1].next = NULL;
 }
 

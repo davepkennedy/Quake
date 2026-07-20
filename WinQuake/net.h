@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qlimits.h"	// MAX_DATAGRAM
 #include "common.h"	// byte, qboolean, sizebuf_t
 #include "cvar.h"	// cvar_t
+#include "hunk_resource.h"
+#include <vector>
 
 struct qsockaddr
 {
@@ -168,6 +170,7 @@ struct net_state_t
 	qsocket_t	*activeSockets = nullptr;
 	qsocket_t	*freeSockets = nullptr;
 	int			numsockets = 0;
+	std::pmr::vector<qsocket_t>	socketPool;	// backing storage for freeSockets' initial pool
 
 	qboolean	serialAvailable = false;
 	qboolean	ipxAvailable = false;

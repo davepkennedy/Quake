@@ -820,9 +820,10 @@ void NET_Init (void)
 
 	SetNetTime();
 
+	net.socketPool = std::pmr::vector<qsocket_t> (net.numsockets, Hunk_GetResource ());
 	for (i = 0; i < net.numsockets; i++)
 	{
-		s = (qsocket_t *)Hunk_AllocName(sizeof(qsocket_t), "qsocket");
+		s = &net.socketPool[i];
 		s->next = net.freeSockets;
 		net.freeSockets = s;
 		s->disconnected = true;
