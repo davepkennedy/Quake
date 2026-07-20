@@ -442,6 +442,7 @@ void M_ScanSaves (void)
 {
 	int		i, j;
 	char	name[MAX_OSPATH];
+	std::string	path;
 	FILE	*f;
 	int		version;
 
@@ -449,8 +450,8 @@ void M_ScanSaves (void)
 	{
 		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
-		sprintf (name, "%s/s%i.sav", com_gamedir, i);
-		f = fopen (name, "r");
+		path = std::format ("{}/s{}.sav", com_gamedir, i);
+		f = fopen (path.c_str (), "r");
 		if (!f)
 			continue;
 		fscanf (f, "%i\n", &version);
@@ -1452,7 +1453,7 @@ void KeysMenu::Draw (void)
 
 void KeysMenu::Key (int k)
 {
-	char	cmd[80];
+	std::string	cmd;
 	int		keys[2];
 
 	if (bindGrab)
@@ -1464,8 +1465,8 @@ void KeysMenu::Key (int k)
 		}
 		else if (k != '`')
 		{
-			sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[cursor][0]);
-			Cbuf_InsertText (cmd);
+			cmd = std::format ("bind \"{}\" \"{}\"\n", Key_KeynumToString (k), bindnames[cursor][0]);
+			Cbuf_InsertText (cmd.c_str ());
 		}
 
 		bindGrab = false;
@@ -2986,7 +2987,7 @@ void M_Menu_ServerList_f (void)
 void ServerListMenu::Draw (void)
 {
 	int		n;
-	char	string [64];
+	std::string	string;
 	qpic_t	*p;
 
 	if (!sorted)
@@ -3012,10 +3013,10 @@ void ServerListMenu::Draw (void)
 	for (n = 0; n < hostCacheCount; n++)
 	{
 		if (hostcache[n].maxusers)
-			sprintf(string, "%-15.15s %-15.15s %2u/%2u\n", hostcache[n].name, hostcache[n].map, hostcache[n].users, hostcache[n].maxusers);
+			string = std::format ("{:<15.15} {:<15.15} {:2}/{:2}\n", hostcache[n].name, hostcache[n].map, hostcache[n].users, hostcache[n].maxusers);
 		else
-			sprintf(string, "%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
-		M_Print (16, 32 + 8*n, string);
+			string = std::format ("{:<15.15} {:<15.15}\n", hostcache[n].name, hostcache[n].map);
+		M_Print (16, 32 + 8*n, string.c_str ());
 	}
 	M_DrawCharacter (0, 32 + cursor*8, 12+((int)(realtime*4)&1));
 
