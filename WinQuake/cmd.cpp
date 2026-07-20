@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include <string>
+#include <vector>
 #include <map>
 #include <algorithm>
 #include <cctype>
@@ -124,29 +125,21 @@ FIXME: actually change the command buffer to do less copying
 */
 void Cbuf_InsertText (const char *text)
 {
-	char	*temp;
-	int		templen;
+	std::vector<char>	temp;
 
 // copy off any commands still remaining in the exec buffer
-	templen = cmd_text.cursize;
-	if (templen)
+	if (cmd_text.cursize)
 	{
-		temp = (char *)Z_Malloc (templen);
-		Q_memcpy (temp, cmd_text.data, templen);
+		temp.assign (cmd_text.data, cmd_text.data + cmd_text.cursize);
 		SZ_Clear (&cmd_text);
 	}
-	else
-		temp = NULL;	// shut up compiler
-		
+
 // add the entire text of the file
 	Cbuf_AddText (text);
-	
+
 // add the copied off data
-	if (templen)
-	{
-		SZ_Write (&cmd_text, temp, templen);
-		Z_Free (temp);
-	}
+	if (!temp.empty ())
+		SZ_Write (&cmd_text, temp.data (), (int)temp.size ());
 }
 
 /*
@@ -227,9 +220,8 @@ quake -nosound +cmd amlev1
 void Cmd_StuffCmds_f (void)
 {
 	int		i, j;
-	int		s;
-	char	*text, *build, c;
-		
+	std::string	text, build;
+
 	if (Cmd_Argc () != 1)
 	{
 		Con_Printf ("stuffcmds : execute command line parameters\n");
@@ -237,55 +229,35 @@ void Cmd_StuffCmds_f (void)
 	}
 
 // build the combined string to parse from
-	s = 0;
 	for (i=1 ; i<com_argc ; i++)
 	{
 		if (!com_argv[i])
 			continue;		// NEXTSTEP nulls out -NXHost
-		s += Q_strlen (com_argv[i]) + 1;
+		if (!text.empty ())
+			text += " ";
+		text += com_argv[i];
 	}
-	if (!s)
+	if (text.empty ())
 		return;
-		
-	text = (char *)Z_Malloc (s+1);
-	text[0] = 0;
-	for (i=1 ; i<com_argc ; i++)
-	{
-		if (!com_argv[i])
-			continue;		// NEXTSTEP nulls out -NXHost
-		Q_strcat (text,com_argv[i]);
-		if (i != com_argc-1)
-			Q_strcat (text, " ");
-	}
 
 // pull out the commands
-	build = (char *)Z_Malloc (s+1);
-	build[0] = 0;
-	
-	for (i=0 ; i<s-1 ; i++)
+	for (i=0 ; i<(int)text.size () ; i++)
 	{
 		if (text[i] == '+')
 		{
 			i++;
 
-			for (j=i ; (text[j] != '+') && (text[j] != '-') && (text[j] != 0) ; j++)
+			for (j=i ; j < (int)text.size () && text[j] != '+' && text[j] != '-' ; j++)
 				;
 
-			c = text[j];
-			text[j] = 0;
-			
-			Q_strcat (build, text+i);
-			Q_strcat (build, "\n");
-			text[j] = c;
+			build += text.substr (i, j-i);
+			build += "\n";
 			i = j-1;
 		}
 	}
-	
-	if (build[0])
-		Cbuf_InsertText (build);
-	
-	Z_Free (text);
-	Z_Free (build);
+
+	if (!build.empty ())
+		Cbuf_InsertText (build.c_str ());
 }
 
 
