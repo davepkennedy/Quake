@@ -920,10 +920,18 @@ void PF_ftos (void)
 	float	v;
 	v = G_FLOAT(OFS_PARM0);
 
+	// pr_string_temp is a fixed 128-byte hunk buffer (see PR_LoadProgs) -- must
+	// stay bounds-checked since v comes straight from QuakeC and can be huge.
 	if (v == (int)v)
-		sprintf (pr_string_temp, "%d",(int)v);
+	{
+		auto result = std::format_to_n (pr_string_temp, 127, "{}", (int)v);
+		*result.out = '\0';
+	}
 	else
-		sprintf (pr_string_temp, "%5.1f",v);
+	{
+		auto result = std::format_to_n (pr_string_temp, 127, "{:5.1f}", v);
+		*result.out = '\0';
+	}
 	G_INT(OFS_RETURN) = (int)(pr_string_temp - pr_strings);
 }
 
@@ -936,7 +944,8 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
-	sprintf (pr_string_temp, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	auto result = std::format_to_n (pr_string_temp, 127, "'{:5.1f} {:5.1f} {:5.1f}'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	*result.out = '\0';
 	G_INT(OFS_RETURN) = (int)(pr_string_temp - pr_strings);
 }
 
