@@ -60,7 +60,7 @@ typedef struct {
 	int			fullscreen;
 	int			bpp;
 	int			halfscreen;
-	char		modedesc[17];
+	std::string	modedesc;
 } vmode_t;
 
 typedef struct {
@@ -1276,7 +1276,7 @@ char *VID_GetModeDescription (int mode)
 {
 	char		*pinfo;
 	vmode_t		*pv;
-	static char	temp[100];
+	static std::string	temp;
 
 	if ((mode < 0) || (mode >= nummodes))
 		return NULL;
@@ -1284,14 +1284,14 @@ char *VID_GetModeDescription (int mode)
 	if (!leavecurrentmode)
 	{
 		pv = VID_GetModePtr (mode);
-		pinfo = pv->modedesc;
+		pinfo = pv->modedesc.data ();
 	}
 	else
 	{
-		sprintf (temp, "Desktop resolution (%dx%d)",
+		temp = std::format ("Desktop resolution ({}x{})",
 				 modelist[MODE_FULLSCREEN_DEFAULT].width,
 				 modelist[MODE_FULLSCREEN_DEFAULT].height);
-		pinfo = temp;
+		pinfo = temp.data ();
 	}
 
 	return pinfo;
@@ -1302,7 +1302,7 @@ char *VID_GetModeDescription (int mode)
 
 char *VID_GetExtModeDescription (int mode)
 {
-	static char	pinfo[40];
+	static std::string	pinfo;
 	vmode_t		*pv;
 
 	if ((mode < 0) || (mode >= nummodes))
@@ -1313,11 +1313,11 @@ char *VID_GetExtModeDescription (int mode)
 	{
 		if (!leavecurrentmode)
 		{
-			sprintf(pinfo,"%s fullscreen", pv->modedesc);
+			pinfo = std::format ("{} fullscreen", pv->modedesc);
 		}
 		else
 		{
-			sprintf (pinfo, "Desktop resolution (%dx%d)",
+			pinfo = std::format ("Desktop resolution ({}x{})",
 					 modelist[MODE_FULLSCREEN_DEFAULT].width,
 					 modelist[MODE_FULLSCREEN_DEFAULT].height);
 		}
@@ -1325,12 +1325,12 @@ char *VID_GetExtModeDescription (int mode)
 	else
 	{
 		if (modestate == MS_WINDOWED)
-			sprintf(pinfo, "%s windowed", pv->modedesc);
+			pinfo = std::format ("{} windowed", pv->modedesc);
 		else
-			sprintf(pinfo, "windowed");
+			pinfo = "windowed";
 	}
 
-	return pinfo;
+	return pinfo.data ();
 }
 
 
@@ -1444,7 +1444,7 @@ void VID_InitDIB (HINSTANCE hInstance)
 	if (modelist[0].height < 240)
 		modelist[0].height = 240;
 
-	sprintf (modelist[0].modedesc, "%dx%d",
+	modelist[0].modedesc = std::format ("{}x{}",
 			 modelist[0].width, modelist[0].height);
 
 	modelist[0].modenum = MODE_WINDOWED;
@@ -1497,7 +1497,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 				modelist[nummodes].dib = 1;
 				modelist[nummodes].fullscreen = 1;
 				modelist[nummodes].bpp = devmode.dmBitsPerPel;
-				sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+				modelist[nummodes].modedesc = std::format ("{}x{}x{}",
 						 devmode.dmPelsWidth, devmode.dmPelsHeight,
 						 devmode.dmBitsPerPel);
 
@@ -1509,7 +1509,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 					{
 						modelist[nummodes].width >>= 1;
 						modelist[nummodes].halfscreen = 1;
-						sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+						modelist[nummodes].modedesc = std::format ("{}x{}x{}",
 								 modelist[nummodes].width,
 								 modelist[nummodes].height,
 								 modelist[nummodes].bpp);
@@ -1562,7 +1562,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 				modelist[nummodes].dib = 1;
 				modelist[nummodes].fullscreen = 1;
 				modelist[nummodes].bpp = devmode.dmBitsPerPel;
-				sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+				modelist[nummodes].modedesc = std::format ("{}x{}x{}",
 						 devmode.dmPelsWidth, devmode.dmPelsHeight,
 						 devmode.dmBitsPerPel);
 
@@ -1674,7 +1674,7 @@ void	VID_Init (unsigned char *palette)
 {
 	int		i, existingmode;
 	int		basenummodes, width, height, bpp, findbpp, done;
-	char	gldir[MAX_OSPATH];
+	std::string	gldir;
 	HDC		hdc;
 	DEVMODE	devmode;
 
@@ -1789,7 +1789,7 @@ void	VID_Init (unsigned char *palette)
 					modelist[nummodes].dib = 1;
 					modelist[nummodes].fullscreen = 1;
 					modelist[nummodes].bpp = bpp;
-					sprintf (modelist[nummodes].modedesc, "%dx%dx%d",
+					modelist[nummodes].modedesc = std::format ("{}x{}x{}",
 							 devmode.dmPelsWidth, devmode.dmPelsHeight,
 							 devmode.dmBitsPerPel);
 
@@ -1966,8 +1966,8 @@ void	VID_Init (unsigned char *palette)
 
 	GL_Init ();
 
-	sprintf (gldir, "%s/glquake", com_gamedir);
-	Sys_mkdir (gldir);
+	gldir = std::format ("{}/glquake", com_gamedir);
+	Sys_mkdir (gldir.c_str ());
 
 	vid_realmode = vid_modenum;
 
@@ -1977,7 +1977,7 @@ void	VID_Init (unsigned char *palette)
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;
 
-	strcpy (badmode.modedesc, "Bad mode");
+	badmode.modedesc = "Bad mode";
 	vid_canalttab = true;
 
 	if (COM_CheckParm("-fullsbar"))
