@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <fcntl.h>
 #include <string>
 #include "quakedef.h"
+#include "hunk_resource.h"
 
 console_state_t	con;
 
@@ -78,8 +79,8 @@ Con_Clear_f
 */
 void Con_Clear_f (void)
 {
-	if (con.text)
-		Q_memset (con.text, ' ', CON_TEXTSIZE);
+	if (!con.text.empty ())
+		Q_memset (con.text.data (), ' ', CON_TEXTSIZE);
 }
 
 						
@@ -145,7 +146,7 @@ void Con_CheckResize (void)
 		width = 38;
 		con.linewidth = width;
 		con.totallines = CON_TEXTSIZE / con.linewidth;
-		Q_memset (con.text, ' ', CON_TEXTSIZE);
+		Q_memset (con.text.data (), ' ', CON_TEXTSIZE);
 	}
 	else
 	{
@@ -163,8 +164,8 @@ void Con_CheckResize (void)
 		if (con.linewidth < numchars)
 			numchars = con.linewidth;
 
-		Q_memcpy (tbuf, con.text, CON_TEXTSIZE);
-		Q_memset (con.text, ' ', CON_TEXTSIZE);
+		Q_memcpy (tbuf, con.text.data (), CON_TEXTSIZE);
+		Q_memset (con.text.data (), ' ', CON_TEXTSIZE);
 
 		for (i=0 ; i<numlines ; i++)
 		{
@@ -206,8 +207,7 @@ void Con_Init (void)
 		}
 	}
 
-	con.text = (char *)Hunk_AllocName (CON_TEXTSIZE, "context");
-	Q_memset (con.text, ' ', CON_TEXTSIZE);
+	con.text = std::pmr::vector<char> (CON_TEXTSIZE, ' ', Hunk_GetResource ());
 	con.linewidth = -1;
 	Con_CheckResize ();
 	
@@ -511,8 +511,8 @@ void Con_DrawNotify (void)
 		time = realtime - time;
 		if (time > con_notifytime.value)
 			continue;
-		text = con.text + (i % con.totallines)*con.linewidth;
-		
+		text = con.text.data () + (i % con.totallines)*con.linewidth;
+
 		clearnotify = 0;
 		scr_copytop = 1;
 
@@ -576,7 +576,7 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 		j = i - con.backscroll;
 		if (j<0)
 			j = 0;
-		text = con.text + (j % con.totallines)*con.linewidth;
+		text = con.text.data () + (j % con.totallines)*con.linewidth;
 
 		for (x=0 ; x<con.linewidth ; x++)
 			Draw_Character ( (x+1)<<3, y, text[x]);

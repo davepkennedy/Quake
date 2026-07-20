@@ -2,8 +2,10 @@
 
 #include "quakedef.h"
 #include "test_stubs.h"
+#include "hunk_resource.h"
 
 #include <cstring>
+#include <vector>
 
 // zone.cpp's entire allocator state (memzone_t, hunk marks, cache LRU
 // list) is private to that file -- confirmed by reading the whole file,
@@ -149,5 +151,66 @@ TEST_CASE ("Cache_Alloc on an already-allocated cache_user_t throws")
 	CHECK_THROWS_AS (Cache_Alloc (&user, 64, "__test_cache_dup"), SysErrorException);
 
 	Cache_Free (&user);
+	Hunk_FreeToLowMark (mark);
+}
+
+// HunkMemoryResource (hunk_resource.h/zone.cpp) is a std::pmr facade over
+// this same low-hunk bump allocator -- do_allocate forwards straight to
+// Hunk_AllocName, so these tests focus on what's new/risky about that:
+// a std::pmr container actually working end-to-end against it, mark/rewind
+// correctly bounding pmr-sourced allocations the same as legacy ones, and
+// Hunk_Check()'s sentinel walk (a real, exercised safety net -- see
+// cl_parse.cpp) tolerating a legacy and a pmr allocation back-to-back.
+
+TEST_CASE ("std::pmr::vector allocated via Hunk_GetResource works end-to-end")
+{
+	EnsureMemoryInit ();
+
+	size_t mark = Hunk_LowMark ();
+
+	{
+		std::pmr::vector<char> v (256, 'Q', Hunk_GetResource ());
+		CHECK (v.size () == 256);
+		CHECK (v[0] == 'Q');
+		CHECK (v[255] == 'Q');
+
+		v[10] = 'X';
+		CHECK (v[10] == 'X');
+	}
+
+	Hunk_FreeToLowMark (mark);
+}
+
+TEST_CASE ("Hunk_LowMark / Hunk_FreeToLowMark bound pmr-resource allocations")
+{
+	EnsureMemoryInit ();
+
+	size_t markBefore = Hunk_LowMark ();
+
+	{
+		std::pmr::vector<char> a (128, 0, Hunk_GetResource ());
+		std::pmr::vector<char> b (512, 0, Hunk_GetResource ());
+		CHECK (Hunk_LowMark () > markBefore);
+	}
+
+	// The vectors above are never destroyed -- Hunk_FreeToLowMark rewinds
+	// the pointer directly, matching Hunk_Alloc's own "never freed
+	// individually" contract exactly.
+	Hunk_FreeToLowMark (markBefore);
+	CHECK (Hunk_LowMark () == markBefore);
+}
+
+TEST_CASE ("Hunk_Check tolerates a legacy Hunk_AllocName and a pmr allocation back-to-back")
+{
+	EnsureMemoryInit ();
+
+	size_t mark = Hunk_LowMark ();
+
+	Hunk_AllocName (64, "__test_legacy");
+	std::pmr::vector<char> v (64, 0, Hunk_GetResource ());
+	(void)v;
+
+	CHECK_NOTHROW (Hunk_Check ());
+
 	Hunk_FreeToLowMark (mark);
 }

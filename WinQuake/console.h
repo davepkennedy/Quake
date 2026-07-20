@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include "common.h"	// qboolean
+#include <vector>
+#include <memory_resource>
 
 //
 // console
@@ -37,7 +39,7 @@ struct console_state_t
 	int			backscroll;		// lines up from bottom to display
 	int			current;		// where next message will be printed
 	int			x;				// offset in current line for next print
-	char		*text = nullptr;
+	std::pmr::vector<char>	text;
 
 	float		times[NUM_CON_TIMES];	// realtime time the line was generated
 										// for transparent notify lines

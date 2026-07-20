@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Z_zone.c
 
 #include "quakedef.h"
+#include "hunk_resource.h"
 
 #define	DYNAMIC_SIZE	0xc000
 
@@ -457,6 +458,41 @@ Hunk_Alloc
 void *Hunk_Alloc (int size)
 {
 	return Hunk_AllocName (size, "unknown");
+}
+
+/*
+===================
+HunkMemoryResource
+
+std::pmr facade over the low-hunk bump allocator -- see hunk_resource.h.
+===================
+*/
+void *HunkMemoryResource::do_allocate (size_t bytes, size_t alignment)
+{
+	// Hunk_AllocName already rounds every allocation to a 16-byte boundary
+	// and hands back memory right after its own 16-byte header, so every
+	// allocation here is naturally 16-byte aligned already.
+	if (alignment > 16)
+		Sys_Error ("HunkMemoryResource::do_allocate: alignment %zu not supported", alignment);
+	return Hunk_AllocName ((int)bytes, "pmr");
+}
+
+void HunkMemoryResource::do_deallocate (void *, size_t, size_t)
+{
+	// Hunk memory is never freed individually, only bulk-reset via
+	// Hunk_FreeToLowMark -- matches Hunk_Alloc's own contract exactly.
+}
+
+bool HunkMemoryResource::do_is_equal (const std::pmr::memory_resource &other) const noexcept
+{
+	return this == &other;
+}
+
+static HunkMemoryResource hunkResourceInstance;
+
+HunkMemoryResource *Hunk_GetResource (void)
+{
+	return &hunkResourceInstance;
 }
 
 size_t	Hunk_LowMark (void)

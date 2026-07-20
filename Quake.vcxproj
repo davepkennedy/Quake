@@ -235,6 +235,7 @@
     <ClInclude Include="WinQuake\wad.h" />
     <ClInclude Include="WinQuake\winquake.h" />
     <ClInclude Include="WinQuake\world.h" />
+    <ClInclude Include="WinQuake\hunk_resource.h" />
     <ClInclude Include="WinQuake\zone.h" />
   </ItemGroup>
 
