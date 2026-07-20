@@ -77,9 +77,9 @@ void Host_Status_f (void)
 	print ("host:    %s\n", Cvar_VariableString ("hostname"));
 	print ("version: %4.2f\n", VERSION);
 	if (net.tcpipAvailable)
-		print ("tcp/ip:  %s\n", my_tcpip_address);
+		print ("tcp/ip:  %s\n", NET_TCPIPAddressString ());
 	if (net.ipxAvailable)
-		print ("ipx:     %s\n", my_ipx_address);
+		print ("ipx:     %s\n", NET_IPXAddressString ());
 	print ("map:     %s\n", sv.name);
 	print ("players: %i active (%i max)\n\n", net.activeconnections, svs.maxclients);
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)

@@ -344,8 +344,8 @@ typedef struct _PollProcedure
 
 void SchedulePollProcedure(PollProcedure *pp, double timeOffset);
 
-extern	char		my_ipx_address[NET_NAMELEN];
-extern	char		my_tcpip_address[NET_NAMELEN];
+const char *NET_IPXAddressString (void);
+const char *NET_TCPIPAddressString (void);
 extern void (*GetComPortConfig) (int portNumber, int *port, int *irq, int *baud, qboolean *useModem);
 extern void (*SetComPortConfig) (int portNumber, int port, int irq, int baud, qboolean useModem);
 extern void (*GetModemConfig) (int portNumber, char *dialType, char *clear, char *init, char *hangup);

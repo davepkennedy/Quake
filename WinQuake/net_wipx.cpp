@@ -40,6 +40,13 @@ extern WSADATA		winsockdata;
 static int ipxsocket[IPXSOCKETS];
 static int sequence[IPXSOCKETS];
 
+static std::string my_ipx_address;
+
+const char *NET_IPXAddressString (void)
+{
+	return my_ipx_address.c_str ();
+}
+
 //=============================================================================
 
 int WIPX_Init (void)
@@ -112,10 +119,12 @@ int WIPX_Init (void)
 	((struct sockaddr_ipx *)&broadcastaddr)->sa_socket = htons((unsigned short)net_hostport);
 
 	WIPX_GetSocketAddr (net_controlsocket, &addr);
-	Q_strcpy(my_ipx_address,  WIPX_AddrToString (&addr));
-	p = Q_strrchr (my_ipx_address, ':');
-	if (p)
-		*p = 0;
+	my_ipx_address = WIPX_AddrToString (&addr);
+	{
+		size_t colon = my_ipx_address.rfind (':');
+		if (colon != std::string::npos)
+			my_ipx_address.resize (colon);
+	}
 
 	Con_Printf("Winsock IPX Initialized\n");
 	net.ipxAvailable = true;

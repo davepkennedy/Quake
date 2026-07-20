@@ -27,9 +27,6 @@ net_state_t net;
 int			net_hostport;
 int			DEFAULTnet_hostport = 26000;
 
-char		my_ipx_address[NET_NAMELEN];
-char		my_tcpip_address[NET_NAMELEN];
-
 void (*GetComPortConfig) (int portNumber, int *port, int *irq, int *baud, qboolean *useModem);
 void (*SetComPortConfig) (int portNumber, int port, int irq, int baud, qboolean useModem);
 void (*GetModemConfig) (int portNumber, char *dialType, char *clear, char *init, char *hangup);
@@ -865,10 +862,10 @@ void NET_Init (void)
 			net_drivers[net_driverlevel].Listen (true);
 		}
 
-	if (*my_ipx_address)
-		Con_DPrintf("IPX address %s\n", my_ipx_address);
-	if (*my_tcpip_address)
-		Con_DPrintf("TCP/IP address %s\n", my_tcpip_address);
+	if (*NET_IPXAddressString ())
+		Con_DPrintf("IPX address %s\n", NET_IPXAddressString ());
+	if (*NET_TCPIPAddressString ())
+		Con_DPrintf("TCP/IP address %s\n", NET_TCPIPAddressString ());
 }
 
 /*

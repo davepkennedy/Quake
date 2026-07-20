@@ -33,6 +33,12 @@ static int net_broadcastsocket = 0;
 static struct qsockaddr broadcastaddr;
 
 static unsigned long myAddr;
+static std::string my_tcpip_address;
+
+const char *NET_TCPIPAddressString (void)
+{
+	return my_tcpip_address.c_str ();
+}
 
 qboolean	winsock_lib_initialized;
 
@@ -111,7 +117,7 @@ void WINS_GetLocalAddress()
 	myAddr = *(int *)local->h_addr_list[0];
 
 	addr = ntohl(myAddr);
-	sprintf(my_tcpip_address, "%d.%d.%d.%d", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
+	my_tcpip_address = std::format ("{}.{}.{}.{}", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
 }
 
 
@@ -214,7 +220,7 @@ int WINS_Init (void)
 			myAddr = inet_addr(com_argv[i+1]);
 			if (myAddr == INADDR_NONE)
 				Sys_Error ("%s is not a valid IP address", com_argv[i+1]);
-			strcpy(my_tcpip_address, com_argv[i+1]);
+			my_tcpip_address = com_argv[i+1];
 		}
 		else
 		{
@@ -224,7 +230,7 @@ int WINS_Init (void)
 	else
 	{
 		myAddr = INADDR_ANY;
-		strcpy(my_tcpip_address, "INADDR_ANY");
+		my_tcpip_address = "INADDR_ANY";
 	}
 
 	if ((net_controlsocket = WINS_OpenSocket (0)) == -1)

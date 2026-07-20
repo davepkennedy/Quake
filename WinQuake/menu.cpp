@@ -2282,9 +2282,9 @@ void LanConfigMenu::Draw (void)
 
 	M_Print (basex, 52, "Address:");
 	if (IPXConfig)
-		M_Print (basex+9*8, 52, my_ipx_address);
+		M_Print (basex+9*8, 52, NET_IPXAddressString ());
 	else
-		M_Print (basex+9*8, 52, my_tcpip_address);
+		M_Print (basex+9*8, 52, NET_TCPIPAddressString ());
 
 	M_Print (basex, lanConfig_cursor_table[0], "Port");
 	M_DrawTextBox (basex+8*8, lanConfig_cursor_table[0]-8, 6, 1);
