@@ -161,10 +161,7 @@ typedef struct qsocket_s
 // no way to test a real multiplayer connection in this environment).
 // This holds just the actively-used cross-cutting state. Left as
 // standalone globals: the driver-selection tables (net_landrivers/
-// net_drivers), modem/serial dial-up config (dead on any modern system,
-// same category as the GL_EXT_paletted_texture code left alone during
-// the Core Profile work), the LAN server-browser hostcache, and VCR
-// record/playback.
+// net_drivers), the LAN server-browser hostcache, and VCR record/playback.
 struct net_state_t
 {
 	qsocket_t	*activeSockets = nullptr;
@@ -172,7 +169,6 @@ struct net_state_t
 	int			numsockets = 0;
 	std::pmr::vector<qsocket_t>	socketPool;	// backing storage for freeSockets' initial pool
 
-	qboolean	serialAvailable = false;
 	qboolean	ipxAvailable = false;
 	qboolean	tcpipAvailable = false;
 
@@ -349,10 +345,6 @@ void SchedulePollProcedure(PollProcedure *pp, double timeOffset);
 
 const char *NET_IPXAddressString (void);
 const char *NET_TCPIPAddressString (void);
-extern void (*GetComPortConfig) (int portNumber, int *port, int *irq, int *baud, qboolean *useModem);
-extern void (*SetComPortConfig) (int portNumber, int port, int irq, int baud, qboolean useModem);
-extern void (*GetModemConfig) (int portNumber, char *dialType, char *clear, char *init, char *hangup);
-extern void (*SetModemConfig) (int portNumber, const char *dialType, const char *clear, const char *init, const char *hangup);
 
 extern	qboolean	slistInProgress;
 extern	qboolean	slistSilent;

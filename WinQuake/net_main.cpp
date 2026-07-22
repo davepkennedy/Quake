@@ -27,11 +27,6 @@ net_state_t net;
 int			net_hostport;
 int			DEFAULTnet_hostport = 26000;
 
-void (*GetComPortConfig) (int portNumber, int *port, int *irq, int *baud, qboolean *useModem);
-void (*SetComPortConfig) (int portNumber, int port, int irq, int baud, qboolean useModem);
-void (*GetModemConfig) (int portNumber, char *dialType, char *clear, char *init, char *hangup);
-void (*SetModemConfig) (int portNumber, const char *dialType, const char *clear, const char *init, const char *hangup);
-
 static qboolean	listening = false;
 
 qboolean	slistInProgress = false;
@@ -48,16 +43,6 @@ PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
 
 cvar_t	net_messagetimeout = {"net_messagetimeout","300"};
 cvar_t	hostname = {"hostname", "UNNAMED"};
-
-qboolean	configRestored = false;
-cvar_t	config_com_port = {"_config_com_port", "0x3f8", true};
-cvar_t	config_com_irq = {"_config_com_irq", "4", true};
-cvar_t	config_com_baud = {"_config_com_baud", "57600", true};
-cvar_t	config_com_modem = {"_config_com_modem", "1", true};
-cvar_t	config_modem_dialtype = {"_config_modem_dialtype", "T", true};
-cvar_t	config_modem_clear = {"_config_modem_clear", "ATZ", true};
-cvar_t	config_modem_init = {"_config_modem_init", "", true};
-cvar_t	config_modem_hangup = {"_config_modem_hangup", "AT H", true};
 
 #ifdef IDGODS
 cvar_t	idgods = {"idgods", "0"};
@@ -834,14 +819,6 @@ void NET_Init (void)
 
 	Cvar_RegisterVariable (&net_messagetimeout);
 	Cvar_RegisterVariable (&hostname);
-	Cvar_RegisterVariable (&config_com_port);
-	Cvar_RegisterVariable (&config_com_irq);
-	Cvar_RegisterVariable (&config_com_baud);
-	Cvar_RegisterVariable (&config_com_modem);
-	Cvar_RegisterVariable (&config_modem_dialtype);
-	Cvar_RegisterVariable (&config_modem_clear);
-	Cvar_RegisterVariable (&config_modem_init);
-	Cvar_RegisterVariable (&config_modem_hangup);
 #ifdef IDGODS
 	Cvar_RegisterVariable (&idgods);
 #endif
@@ -909,21 +886,6 @@ static PollProcedure *pollProcedureList = NULL;
 void NET_Poll(void)
 {
 	PollProcedure *pp;
-	qboolean	useModem;
-
-	if (!configRestored)
-	{
-		if (net.serialAvailable)
-		{
-			if (config_com_modem.value == 1.0)
-				useModem = true;
-			else
-				useModem = false;
-			SetComPortConfig (0, (int)config_com_port.value, (int)config_com_irq.value, (int)config_com_baud.value, useModem);
-			SetModemConfig (0, config_modem_dialtype.string.c_str(), config_modem_clear.string.c_str(), config_modem_init.string.c_str(), config_modem_hangup.string.c_str());
-		}
-		configRestored = true;
-	}
 
 	SetNetTime();
 
