@@ -19,16 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // winquake.h: Win32-specific Quake header file
 
-#pragma warning(disable : 4229) // mgraph gets this
-
 #include <windows.h>
 #define WM_MOUSEWHEEL 0x020A
-
-#ifndef SERVERONLY
-#ifndef GLQUAKE
-#include <mgraph.h>
-#endif
-#endif
 
 extern HINSTANCE global_hInstance;
 extern int global_nCmdShow;
