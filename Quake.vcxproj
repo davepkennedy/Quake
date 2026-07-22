@@ -214,7 +214,6 @@
     <ClInclude Include="WinQuake\net_loop.h" />
     <ClInclude Include="WinQuake\net_vcr.h" />
     <ClInclude Include="WinQuake\net_wins.h" />
-    <ClInclude Include="WinQuake\net_wins_internal.h" />
     <ClInclude Include="WinQuake\net_wipx.h" />
     <ClInclude Include="WinQuake\pr_comp.h" />
     <ClInclude Include="WinQuake\progdefs.h" />
