@@ -47,9 +47,9 @@ vec3_t			r_pright, r_pup, r_ppn;
 // particle, modulated with the shared dot-texture's alpha channel.
 // -------------------------------------------------------------------------
 
-static GLuint particle_vao   = 0;
-static GLuint particle_vbo   = 0;
-static GLuint particle_prog  = 0;
+static GLVertexArray particle_vao;
+static GLBuffer      particle_vbo;
+static GLProgram     particle_prog;
 static GLint  u_particle_mvp = -1;
 static GLint  u_particle_tex = -1;
 
@@ -96,8 +96,8 @@ static void Particle_InitRenderer (void)
 	u_particle_tex = qglGetUniformLocation (particle_prog, "u_tex");
 	qglUseProgram (0);
 
-	qglGenVertexArrays (1, &particle_vao);
-	qglGenBuffers (1, &particle_vbo);
+	particle_vao = GLVertexArray::Create ();
+	particle_vbo = GLBuffer::Create ();
 	qglBindVertexArray (particle_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, particle_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(particle_stream), nullptr, GL_STREAM_DRAW);
@@ -112,6 +112,16 @@ static void Particle_InitRenderer (void)
 	qglEnableVertexAttribArray (2);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+// Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
+// the GL context -- see gl_shader.h's comment on why this can't be left to
+// these globals' own (static-duration) destructors.
+void R_Part_Shutdown (void)
+{
+	particle_vao.Release ();
+	particle_vbo.Release ();
+	particle_prog.Release ();
 }
 
 static void Particle_BeginDraw (void)

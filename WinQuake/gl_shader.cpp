@@ -29,7 +29,7 @@ GLuint GL_CompileShader(GLenum type, const char *src)
     return s;
 }
 
-GLuint GL_BuildProgram(const char *vert_src, const char *frag_src)
+GLProgram GL_BuildProgram(const char *vert_src, const char *frag_src)
 {
     GLuint vert = GL_CompileShader(GL_VERTEX_SHADER,   vert_src);
     GLuint frag = GL_CompileShader(GL_FRAGMENT_SHADER, frag_src);
@@ -38,7 +38,7 @@ GLuint GL_BuildProgram(const char *vert_src, const char *frag_src)
     {
         if (vert) qglDeleteShader(vert);
         if (frag) qglDeleteShader(frag);
-        return 0;
+        return GLProgram();
     }
 
     GLuint prog = qglCreateProgram();
@@ -60,7 +60,7 @@ GLuint GL_BuildProgram(const char *vert_src, const char *frag_src)
         Con_Printf("Shader link error:\n%s\n", log);
         delete[] log;
         qglDeleteProgram(prog);
-        return 0;
+        return GLProgram();
     }
-    return prog;
+    return GLProgram(prog);
 }

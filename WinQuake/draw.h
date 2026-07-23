@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern	qpic_t		*draw_disc;	// also used on sbar
 
 void Draw_Init (void);
+void Draw2D_Shutdown (void);
 void Draw_Character (int x, int y, int num);
 void Draw_DebugChar (char num);
 void Draw_Pic (int x, int y, qpic_t *pic);

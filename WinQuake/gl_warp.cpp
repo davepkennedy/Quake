@@ -192,9 +192,9 @@ float	turbsin[] =
 // unmodified; only the texture coordinates vary per effect.
 // -------------------------------------------------------------------------
 
-static GLuint warp_vao  = 0;
-static GLuint warp_vbo  = 0;
-static GLuint warp_prog = 0;
+static GLVertexArray warp_vao;
+static GLBuffer      warp_vbo;
+static GLProgram     warp_prog;
 static GLint  u_warp_mvp   = -1;
 static GLint  u_warp_tex   = -1;
 static GLint  u_warp_alpha = -1;
@@ -239,8 +239,8 @@ static void Warp_InitRenderer (void)
 	u_warp_alpha = qglGetUniformLocation (warp_prog, "u_alpha");
 	qglUseProgram (0);
 
-	qglGenVertexArrays (1, &warp_vao);
-	qglGenBuffers (1, &warp_vbo);
+	warp_vao = GLVertexArray::Create ();
+	warp_vbo = GLBuffer::Create ();
 	qglBindVertexArray (warp_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, warp_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(warp_stream), nullptr, GL_STREAM_DRAW);
@@ -252,6 +252,16 @@ static void Warp_InitRenderer (void)
 	qglEnableVertexAttribArray (1);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+// Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
+// the GL context -- see gl_shader.h's comment on why this can't be left to
+// these globals' own (static-duration) destructors.
+void GL_Warp_Shutdown (void)
+{
+	warp_vao.Release ();
+	warp_vbo.Release ();
+	warp_prog.Release ();
 }
 
 static void Warp_BeginDraw (void)

@@ -61,9 +61,9 @@ msurface_t  *waterchain = NULL;
 // World surface renderer state (VAO / VBO / GLSL shader)
 // -------------------------------------------------------------------------
 
-static GLuint world_vao      = 0;
-static GLuint world_vbo      = 0;
-static GLuint world_prog     = 0;
+static GLVertexArray world_vao;
+static GLBuffer      world_vbo;
+static GLProgram     world_prog;
 static GLint  u_world_mvp    = -1;
 static GLint  u_world_tex    = -1;
 static GLint  u_world_lm     = -1;
@@ -391,8 +391,8 @@ void R_World_InitRenderer (void)
 	u_world_alpha  = qglGetUniformLocation (world_prog, "u_alpha");
 	qglUseProgram (0);
 
-	qglGenVertexArrays (1, &world_vao);
-	qglGenBuffers (1, &world_vbo);
+	world_vao = GLVertexArray::Create ();
+	world_vbo = GLBuffer::Create ();
 	qglBindVertexArray (world_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, world_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(world_stream), nullptr, GL_STREAM_DRAW);
@@ -407,6 +407,16 @@ void R_World_InitRenderer (void)
 	qglEnableVertexAttribArray (2);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+// Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
+// the GL context -- see gl_shader.h's comment on why this can't be left to
+// these globals' own (static-duration) destructors.
+void R_World_Shutdown (void)
+{
+	world_vao.Release ();
+	world_vbo.Release ();
+	world_prog.Release ();
 }
 
 static void R_World_SetMVP (void)

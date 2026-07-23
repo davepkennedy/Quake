@@ -77,9 +77,9 @@ void AddLightBlend (float r, float g, float b, float a2)
 // camera-facing radial-gradient triangle fan: bright center, black rim.
 // -------------------------------------------------------------------------
 
-static GLuint dlight_vao   = 0;
-static GLuint dlight_vbo   = 0;
-static GLuint dlight_prog  = 0;
+static GLVertexArray dlight_vao;
+static GLBuffer      dlight_vbo;
+static GLProgram     dlight_prog;
 static GLint  u_dlight_mvp = -1;
 
 #define DLIGHT_FAN_VERTS 18   // 1 center + 17 rim verts
@@ -116,8 +116,8 @@ static void Dlight_InitRenderer (void)
 	u_dlight_mvp = qglGetUniformLocation (dlight_prog, "u_mvp");
 	qglUseProgram (0);
 
-	qglGenVertexArrays (1, &dlight_vao);
-	qglGenBuffers (1, &dlight_vbo);
+	dlight_vao = GLVertexArray::Create ();
+	dlight_vbo = GLBuffer::Create ();
 	qglBindVertexArray (dlight_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, dlight_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, DLIGHT_FAN_VERTS*6*sizeof(float), nullptr, GL_STREAM_DRAW);
@@ -129,6 +129,16 @@ static void Dlight_InitRenderer (void)
 	qglEnableVertexAttribArray (1);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+// Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
+// the GL context -- see gl_shader.h's comment on why this can't be left to
+// these globals' own (static-duration) destructors.
+void GL_Dlight_Shutdown (void)
+{
+	dlight_vao.Release ();
+	dlight_vbo.Release ();
+	dlight_prog.Release ();
 }
 
 void R_RenderDlight (dlight_t *light)

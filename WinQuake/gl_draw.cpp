@@ -61,10 +61,10 @@ int		texels;
 // 2D rendering state (VAO/VBO + shader)
 // -------------------------------------------------------------------------
 
-static GLuint draw2d_vao     = 0;
-static GLuint draw2d_vbo     = 0;
-static GLuint draw2d_prog    = 0;
-static GLuint draw2d_sampler = 0;  // GL_NEAREST sampler for all 2D draws
+static GLVertexArray draw2d_vao;
+static GLBuffer      draw2d_vbo;
+static GLProgram     draw2d_prog;
+static GLSampler     draw2d_sampler;  // GL_NEAREST sampler for all 2D draws
 
 static GLint u_proj_loc    = -1;
 static GLint u_tex_loc     = -1;
@@ -444,10 +444,10 @@ void main()
     u_color_loc   = qglGetUniformLocation(draw2d_prog, "u_color");
     u_has_tex_loc = qglGetUniformLocation(draw2d_prog, "u_has_texture");
 
-    qglGenVertexArrays(1, &draw2d_vao);
+    draw2d_vao = GLVertexArray::Create();
     qglBindVertexArray(draw2d_vao);
 
-    qglGenBuffers(1, &draw2d_vbo);
+    draw2d_vbo = GLBuffer::Create();
     qglBindBuffer(GL_ARRAY_BUFFER, draw2d_vbo);
     qglBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), nullptr, GL_STREAM_DRAW);
 
@@ -467,9 +467,20 @@ void main()
     qglUseProgram(0);
 
     // Sampler object: always GL_NEAREST for 2D — overrides per-texture filter state
-    qglGenSamplers(1, &draw2d_sampler);
+    draw2d_sampler = GLSampler::Create();
     qglSamplerParameteri(draw2d_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     qglSamplerParameteri(draw2d_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+// Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
+// the GL context -- see gl_shader.h's comment on why this can't be left to
+// these globals' own (static-duration) destructors.
+void Draw2D_Shutdown (void)
+{
+    draw2d_vao.Release ();
+    draw2d_vbo.Release ();
+    draw2d_prog.Release ();
+    draw2d_sampler.Release ();
 }
 
 /*

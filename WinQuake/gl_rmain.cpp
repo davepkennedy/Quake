@@ -203,9 +203,9 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
 // the in-shader discard is the only alpha test left).
 // -------------------------------------------------------------------------
 
-static GLuint billboard_vao  = 0;
-static GLuint billboard_vbo  = 0;
-static GLuint billboard_prog = 0;
+static GLVertexArray billboard_vao;
+static GLBuffer      billboard_vbo;
+static GLProgram     billboard_prog;
 static GLint  u_billboard_mvp   = -1;
 static GLint  u_billboard_tex   = -1;
 static GLint  u_billboard_color = -1;
@@ -256,8 +256,8 @@ static void Billboard_InitRenderer (void)
 	u_billboard_flat  = qglGetUniformLocation (billboard_prog, "u_flat");
 	qglUseProgram (0);
 
-	qglGenVertexArrays (1, &billboard_vao);
-	qglGenBuffers (1, &billboard_vbo);
+	billboard_vao = GLVertexArray::Create ();
+	billboard_vbo = GLBuffer::Create ();
 	qglBindVertexArray (billboard_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, billboard_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, 6 * 5 * sizeof(float), nullptr, GL_STREAM_DRAW);
@@ -407,9 +407,9 @@ int	lastposenum;
 // instead of the sampled+shaded skin texture.
 // -------------------------------------------------------------------------
 
-static GLuint alias_vao  = 0;
-static GLuint alias_vbo  = 0;
-static GLuint alias_prog = 0;
+static GLVertexArray alias_vao;
+static GLBuffer      alias_vbo;
+static GLProgram     alias_prog;
 static GLint  u_alias_mvp   = -1;
 static GLint  u_alias_tex   = -1;
 static GLint  u_alias_color = -1;
@@ -466,8 +466,8 @@ static void Alias_InitRenderer (void)
 	u_alias_flat  = qglGetUniformLocation (alias_prog, "u_flat");
 	qglUseProgram (0);
 
-	qglGenVertexArrays (1, &alias_vao);
-	qglGenBuffers (1, &alias_vbo);
+	alias_vao = GLVertexArray::Create ();
+	alias_vbo = GLBuffer::Create ();
 	qglBindVertexArray (alias_vao);
 	qglBindBuffer (GL_ARRAY_BUFFER, alias_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(alias_stream), nullptr, GL_STREAM_DRAW);
@@ -482,6 +482,21 @@ static void Alias_InitRenderer (void)
 	qglEnableVertexAttribArray (2);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
+}
+
+// Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
+// the GL context -- see gl_shader.h's comment on why this can't be left to
+// these globals' own (static-duration) destructors. Covers both the
+// billboard and alias-model renderers, this file's two trios.
+void GL_RMain_Shutdown (void)
+{
+	billboard_vao.Release ();
+	billboard_vbo.Release ();
+	billboard_prog.Release ();
+
+	alias_vao.Release ();
+	alias_vbo.Release ();
+	alias_prog.Release ();
 }
 
 static void Alias_BeginDraw (void)

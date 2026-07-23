@@ -120,6 +120,11 @@ extern	struct texture_s	*r_notexture_mip;
 
 
 void R_Init (void);
+void GL_RMain_Shutdown (void);
+void R_World_Shutdown (void);
+void GL_Dlight_Shutdown (void);
+void GL_Warp_Shutdown (void);
+void R_Part_Shutdown (void);
 void R_InitTextures (void);
 void R_InitEfrags (void);
 void R_RenderView (void);		// must set r_refdef first

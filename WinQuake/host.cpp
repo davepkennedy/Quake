@@ -957,6 +957,17 @@ void Host_Shutdown(void)
 
 	if (cls.state != ca_dedicated)
 	{
+		// Release owned GL objects (shader programs, VAOs, VBOs) explicitly
+		// while a context is still current -- VID_Shutdown() below destroys
+		// it, and these globals' own destructors run at static-storage-duration
+		// teardown, strictly after that (see gl_shader.h).
+		Draw2D_Shutdown ();
+		GL_RMain_Shutdown ();
+		R_World_Shutdown ();
+		GL_Dlight_Shutdown ();
+		GL_Warp_Shutdown ();
+		R_Part_Shutdown ();
+
 		VID_Shutdown();
 	}
 }
