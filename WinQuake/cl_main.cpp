@@ -123,7 +123,7 @@ int CL_GameType (void)
 	return cl.gametype;
 }
 
-char *CL_LevelName (void)
+std::string CL_LevelName (void)
 {
 	return cl.levelname;
 }

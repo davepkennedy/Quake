@@ -1343,7 +1343,7 @@ void KeysMenu::Draw (void)
 {
 	int		i, l;
 	int		keys[2];
-	const char	*name;
+	std::string	name;
 	int		x, y;
 	qpic_t	*p;
 
@@ -1373,12 +1373,12 @@ void KeysMenu::Draw (void)
 		else
 		{
 			name = Key_KeynumToString (keys[0]);
-			M_Print (140, y, name);
-			x = (int)strlen(name) * 8;
+			M_Print (140, y, name.c_str());
+			x = (int)name.length() * 8;
 			if (keys[1] != -1)
 			{
 				M_Print (140 + x + 8, y, "or");
-				M_Print (140 + x + 32, y, Key_KeynumToString (keys[1]));
+				M_Print (140 + x + 32, y, Key_KeynumToString (keys[1]).c_str());
 			}
 		}
 	}
@@ -1747,9 +1747,9 @@ void LanConfigMenu::Draw (void)
 
 	M_Print (basex, 52, "Address:");
 	if (IPXConfig)
-		M_Print (basex+9*8, 52, NET_IPXAddressString ());
+		M_Print (basex+9*8, 52, NET_IPXAddressString ().c_str());
 	else
-		M_Print (basex+9*8, 52, NET_TCPIPAddressString ());
+		M_Print (basex+9*8, 52, NET_TCPIPAddressString ().c_str());
 
 	M_Print (basex, lanConfig_cursor_table[0], "Port");
 	M_DrawTextBox (basex+8*8, lanConfig_cursor_table[0]-8, 6, 1);

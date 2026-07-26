@@ -423,9 +423,9 @@ const char	*Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-const char	*Cmd_Args (void)
+std::string	Cmd_Args (void)
 {
-	return cmd_args;
+	return cmd_args ? cmd_args : "";
 }
 
 
@@ -521,19 +521,19 @@ qboolean	Cmd_Exists (const char *cmd_name)
 Cmd_CompleteCommand
 ============
 */
-const char *Cmd_CompleteCommand (const char *partial)
+std::optional<std::string> Cmd_CompleteCommand (const char *partial)
 {
 	size_t len = Q_strlen (partial);
 
 	if (!len)
-		return NULL;
+		return std::nullopt;
 
 	std::string lowerPartial = ToLower (partial);
 	auto it = cmd_functions.lower_bound (lowerPartial);
 	if (it != cmd_functions.end () && it->first.compare (0, len, lowerPartial) == 0)
-		return it->first.c_str ();	// map entries are never erased, so this stays valid
+		return it->first;
 
-	return NULL;
+	return std::nullopt;
 }
 
 /*
@@ -603,7 +603,7 @@ void Cmd_ForwardToServer (void)
 		SZ_Print (&cls.message, " ");
 	}
 	if (Cmd_Argc() > 1)
-		SZ_Print (&cls.message, Cmd_Args());
+		SZ_Print (&cls.message, Cmd_Args().c_str());
 	else
 		SZ_Print (&cls.message, "\n");
 }

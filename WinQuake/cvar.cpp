@@ -33,10 +33,12 @@ const char	*cvar_null_string = "";
 Cvar_FindVar
 ============
 */
-cvar_t *Cvar_FindVar (const char *var_name)
+std::optional<cvar_t*> Cvar_FindVar (const char *var_name)
 {
 	auto it = cvar_vars.find (var_name);
-	return it != cvar_vars.end () ? it->second : NULL;
+	if (it == cvar_vars.end ())
+		return std::nullopt;
+	return it->second;
 }
 
 /*
@@ -46,12 +48,10 @@ Cvar_VariableValue
 */
 float	Cvar_VariableValue (const char *var_name)
 {
-	cvar_t	*var;
-
-	var = Cvar_FindVar (var_name);
+	auto var = Cvar_FindVar (var_name);
 	if (!var)
 		return 0;
-	return Q_atof (var->string.c_str());
+	return Q_atof ((*var)->string.c_str());
 }
 
 
@@ -60,14 +60,12 @@ float	Cvar_VariableValue (const char *var_name)
 Cvar_VariableString
 ============
 */
-const char *Cvar_VariableString (const char *var_name)
+std::string Cvar_VariableString (const char *var_name)
 {
-	cvar_t *var;
-
-	var = Cvar_FindVar (var_name);
+	auto var = Cvar_FindVar (var_name);
 	if (!var)
 		return cvar_null_string;
-	return var->string.c_str();
+	return (*var)->string;
 }
 
 
@@ -76,18 +74,18 @@ const char *Cvar_VariableString (const char *var_name)
 Cvar_CompleteVariable
 ============
 */
-const char *Cvar_CompleteVariable (const char *partial)
+std::optional<std::string> Cvar_CompleteVariable (const char *partial)
 {
 	size_t len = Q_strlen (partial);
 
 	if (!len)
-		return NULL;
+		return std::nullopt;
 
 	auto it = cvar_vars.lower_bound (partial);
 	if (it != cvar_vars.end () && it->first.compare (0, len, partial) == 0)
 		return it->second->name;
 
-	return NULL;
+	return std::nullopt;
 }
 
 
@@ -128,15 +126,15 @@ Cvar_Set
 */
 void Cvar_Set (const char *var_name, const char *value)
 {
-	cvar_t	*var;
 	qboolean changed;
 
-	var = Cvar_FindVar (var_name);
-	if (!var)
+	auto found = Cvar_FindVar (var_name);
+	if (!found)
 	{	// there is an error in C code if this happens
 		Con_Printf ("Cvar_Set: variable %s not found\n", var_name);
 		return;
 	}
+	cvar_t *var = *found;
 
 	changed = var->string != value;
 
@@ -201,12 +199,11 @@ Handles variable inspection and changing from the console
 */
 qboolean	Cvar_Command (void)
 {
-	cvar_t			*v;
-
 // check variables
-	v = Cvar_FindVar (Cmd_Argv(0));
-	if (!v)
+	auto found = Cvar_FindVar (Cmd_Argv(0));
+	if (!found)
 		return false;
+	cvar_t *v = *found;
 
 // perform a variable print or set
 	if (Cmd_Argc() == 1)

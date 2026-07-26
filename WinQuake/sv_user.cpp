@@ -483,7 +483,7 @@ qboolean SV_ReadClientMessage (void)
 {
 	int		ret;
 	int		cmd;
-	char		*s;
+	std::string	s;
 	
 	do
 	{
@@ -525,56 +525,56 @@ nextmsg:
 //				Sys_Printf ("clc_nop\n");
 				break;
 				
-			case clc_stringcmd:	
+			case clc_stringcmd:
 				s = MSG_ReadString ();
 				if (host_client->privileged)
 					ret = 2;
 				else
 					ret = 0;
-				if (Q_strncasecmp(s, "status", 6) == 0)
+				if (Q_strncasecmp(s.c_str(), "status", 6) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "god", 3) == 0)
+				else if (Q_strncasecmp(s.c_str(), "god", 3) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "notarget", 8) == 0)
+				else if (Q_strncasecmp(s.c_str(), "notarget", 8) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "fly", 3) == 0)
+				else if (Q_strncasecmp(s.c_str(), "fly", 3) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "name", 4) == 0)
+				else if (Q_strncasecmp(s.c_str(), "name", 4) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "noclip", 6) == 0)
+				else if (Q_strncasecmp(s.c_str(), "noclip", 6) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "say", 3) == 0)
+				else if (Q_strncasecmp(s.c_str(), "say", 3) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "say_team", 8) == 0)
+				else if (Q_strncasecmp(s.c_str(), "say_team", 8) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "tell", 4) == 0)
+				else if (Q_strncasecmp(s.c_str(), "tell", 4) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "color", 5) == 0)
+				else if (Q_strncasecmp(s.c_str(), "color", 5) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "kill", 4) == 0)
+				else if (Q_strncasecmp(s.c_str(), "kill", 4) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "pause", 5) == 0)
+				else if (Q_strncasecmp(s.c_str(), "pause", 5) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "spawn", 5) == 0)
+				else if (Q_strncasecmp(s.c_str(), "spawn", 5) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "begin", 5) == 0)
+				else if (Q_strncasecmp(s.c_str(), "begin", 5) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "prespawn", 8) == 0)
+				else if (Q_strncasecmp(s.c_str(), "prespawn", 8) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "kick", 4) == 0)
+				else if (Q_strncasecmp(s.c_str(), "kick", 4) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "ping", 4) == 0)
+				else if (Q_strncasecmp(s.c_str(), "ping", 4) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "give", 4) == 0)
+				else if (Q_strncasecmp(s.c_str(), "give", 4) == 0)
 					ret = 1;
-				else if (Q_strncasecmp(s, "ban", 3) == 0)
+				else if (Q_strncasecmp(s.c_str(), "ban", 3) == 0)
 					ret = 1;
 				if (ret == 2)
-					Cbuf_InsertText (s);
+					Cbuf_InsertText (s.c_str());
 				else if (ret == 1)
-					Cmd_ExecuteString (s, src_client);
+					Cmd_ExecuteString (s.c_str(), src_client);
 				else
-					Con_DPrintf("%s tried to %s\n", host_client->name, s);
+					Con_DPrintf("%s tried to %s\n", host_client->name, s.c_str());
 				break;
 				
 			case clc_disconnect:

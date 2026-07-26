@@ -41,9 +41,9 @@ static int sequence[IPXSOCKETS];
 
 static std::string my_ipx_address;
 
-const char *NET_IPXAddressString (void)
+std::string NET_IPXAddressString (void)
 {
-	return my_ipx_address.c_str ();
+	return my_ipx_address;
 }
 
 //=============================================================================
@@ -295,9 +295,9 @@ int WIPX_Write (int handle, byte *buf, int len, struct qsockaddr *addr)
 
 //=============================================================================
 
-char *WIPX_AddrToString (struct qsockaddr *addr)
+std::string WIPX_AddrToString (struct qsockaddr *addr)
 {
-	static char buf[28];
+	char buf[28];
 
 	sprintf(buf, "%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%u",
 		((struct sockaddr_ipx *)addr)->sa_netnum[0] & 0xff,
@@ -368,7 +368,7 @@ int WIPX_GetSocketAddr (int handle, struct qsockaddr *addr)
 
 int WIPX_GetNameFromAddr (struct qsockaddr *addr, char *name)
 {
-	Q_strcpy(name, WIPX_AddrToString(addr));
+	Q_strcpy(name, WIPX_AddrToString(addr).c_str());
 	return 0;
 }
 

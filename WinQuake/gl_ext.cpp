@@ -108,7 +108,7 @@ void GL_LoadExtensions(void)
     qglBindSampler            = (PFNGLBINDSAMPLERPROC)            LoadProc("glBindSampler",            true);
     qglSamplerParameteri      = (PFNGLSAMPLERPARAMETERIPROC)      LoadProc("glSamplerParameteri",      true);
 
-    if (strstr(gl_extensions, "GL_EXT_texture_filter_anisotropic"))
+    if (gl_extensions.find("GL_EXT_texture_filter_anisotropic") != std::string::npos)
     {
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max_anisotropy);
         Con_Printf("Anisotropic filtering: %.0fx\n", gl_max_anisotropy);

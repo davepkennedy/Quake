@@ -85,9 +85,9 @@ extern char m_return_reason[32];
 
 
 #ifdef DEBUG
-char *StrAddr (struct qsockaddr *addr)
+std::string StrAddr (struct qsockaddr *addr)
 {
-	static char buf[34];
+	char buf[34];
 	byte *p = (byte *)addr;
 	int n;
 
@@ -345,8 +345,8 @@ int	Datagram_GetMessage (qsocket_t *sock)
 		{
 #ifdef DEBUG
 			Con_DPrintf("Forged packet received\n");
-			Con_DPrintf("Expected: %s\n", StrAddr (&sock->addr));
-			Con_DPrintf("Received: %s\n", StrAddr (&readaddr));
+			Con_DPrintf("Expected: %s\n", StrAddr (&sock->addr).c_str());
+			Con_DPrintf("Received: %s\n", StrAddr (&readaddr).c_str());
 #endif
 			continue;
 		}
@@ -555,11 +555,11 @@ static void Test_Poll(void)
 			Sys_Error("Unexpected repsonse to Player Info request\n");
 
 		playerNumber = MSG_ReadByte();
-		Q_strcpy(name, MSG_ReadString());
+		Q_strcpy(name, MSG_ReadString().c_str());
 		colors = MSG_ReadLong();
 		frags = MSG_ReadLong();
 		connectTime = MSG_ReadLong();
-		Q_strcpy(address, MSG_ReadString());
+		Q_strcpy(address, MSG_ReadString().c_str());
 
 		Con_Printf("%s\n  frags:%3i  colors:%u %u  time:%u\n  %s\n", name, frags, colors >> 4, colors & 0x0f, connectTime / 60, address);
 	}
@@ -677,10 +677,10 @@ static void Test2_Poll(void)
 	if (MSG_ReadByte() != CCREP_RULE_INFO)
 		goto Error;
 
-	Q_strcpy(name, MSG_ReadString());
+	Q_strcpy(name, MSG_ReadString().c_str());
 	if (name[0] == 0)
 		goto Done;
-	Q_strcpy(value, MSG_ReadString());
+	Q_strcpy(value, MSG_ReadString().c_str());
 
 	Con_Printf("%-16.16s  %-16.16s\n", name, value);
 
@@ -864,7 +864,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 	command = MSG_ReadByte();
 	if (command == CCREQ_SERVER_INFO)
 	{
-		if (Q_strcmp(MSG_ReadString(), "QUAKE") != 0)
+		if (Q_strcmp(MSG_ReadString().c_str(), "QUAKE") != 0)
 			return NULL;
 
 		SZ_Clear(&net.message);
@@ -872,7 +872,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		MSG_WriteLong(&net.message, 0);
 		MSG_WriteByte(&net.message, CCREP_SERVER_INFO);
 		dfunc.GetSocketAddr(acceptsock, &newaddr);
-		MSG_WriteString(&net.message, dfunc.AddrToString(&newaddr));
+		MSG_WriteString(&net.message, dfunc.AddrToString(&newaddr).c_str());
 		MSG_WriteString(&net.message, hostname.string.c_str());
 		MSG_WriteString(&net.message, sv.name);
 		MSG_WriteByte(&net.message, net.activeconnections);
@@ -924,7 +924,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 
 	if (command == CCREQ_RULE_INFO)
 	{
-		char	*prevCvarName;
+		std::string	prevCvarName;
 		cvar_t	*var;
 
 		// find the next server cvar after prevCvarName ("" means start
@@ -934,9 +934,9 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		// (empty) reply below; Cvar_NextServerVar's own NULL doesn't
 		// distinguish those, so check validity here first.
 		prevCvarName = MSG_ReadString();
-		if (*prevCvarName && !Cvar_FindVar (prevCvarName))
+		if (!prevCvarName.empty() && !Cvar_FindVar (prevCvarName.c_str()))
 			return NULL;
-		var = Cvar_NextServerVar (prevCvarName);
+		var = Cvar_NextServerVar (prevCvarName.c_str());
 
 		// send the response
 
@@ -959,7 +959,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 	if (command != CCREQ_CONNECT)
 		return NULL;
 
-	if (Q_strcmp(MSG_ReadString(), "QUAKE") != 0)
+	if (Q_strcmp(MSG_ReadString().c_str(), "QUAKE") != 0)
 		return NULL;
 
 	if (MSG_ReadByte() != NET_PROTOCOL_VERSION)
@@ -1062,7 +1062,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 	sock->socket = newsock;
 	sock->landriver = net_landriverlevel;
 	sock->addr = clientaddr;
-	Q_strcpy(sock->address, dfunc.AddrToString(&clientaddr));
+	Q_strcpy(sock->address, dfunc.AddrToString(&clientaddr).c_str());
 
 	// send him back the info about the server connection he has been allocated
 	SZ_Clear(&net.message);
@@ -1141,7 +1141,7 @@ static void _Datagram_SearchForHosts (qboolean xmit)
 		if (MSG_ReadByte() != CCREP_SERVER_INFO)
 			continue;
 
-		dfunc.GetAddrFromName(MSG_ReadString(), &readaddr);
+		dfunc.GetAddrFromName(MSG_ReadString().c_str(), &readaddr);
 		// search the cache for this server
 		for (n = 0; n < hostCacheCount; n++)
 			if (dfunc.AddrCompare(&readaddr, &hostcache[n].addr) == 0)
@@ -1153,8 +1153,8 @@ static void _Datagram_SearchForHosts (qboolean xmit)
 
 		// add it
 		hostCacheCount++;
-		Q_strcpy(hostcache[n].name, MSG_ReadString());
-		Q_strcpy(hostcache[n].map, MSG_ReadString());
+		Q_strcpy(hostcache[n].name, MSG_ReadString().c_str());
+		Q_strcpy(hostcache[n].map, MSG_ReadString().c_str());
 		hostcache[n].users = MSG_ReadByte();
 		hostcache[n].maxusers = MSG_ReadByte();
 		if (MSG_ReadByte() != NET_PROTOCOL_VERSION)
@@ -1167,7 +1167,7 @@ static void _Datagram_SearchForHosts (qboolean xmit)
 		Q_memcpy(&hostcache[n].addr, &readaddr, sizeof(struct qsockaddr));
 		hostcache[n].driver = net_driverlevel;
 		hostcache[n].ldriver = net_landriverlevel;
-		Q_strcpy(hostcache[n].cname, dfunc.AddrToString(&readaddr));
+		Q_strcpy(hostcache[n].cname, dfunc.AddrToString(&readaddr).c_str());
 
 		// check for a name conflict
 		for (i = 0; i < hostCacheCount; i++)
@@ -1213,6 +1213,7 @@ static qsocket_t *_Datagram_Connect (const char *host)
 	double		start_time;
 	int			control;
 	const char	*reason;
+	std::string	rejectReason;
 
 	// see if we can resolve the host name
 	if (dfunc.GetAddrFromName(host, &sendaddr) == -1)
@@ -1258,8 +1259,8 @@ static qsocket_t *_Datagram_Connect (const char *host)
 				{
 #ifdef DEBUG
 					Con_Printf("wrong reply address\n");
-					Con_Printf("Expected: %s\n", StrAddr (&sendaddr));
-					Con_Printf("Received: %s\n", StrAddr (&readaddr));
+					Con_Printf("Expected: %s\n", StrAddr (&sendaddr).c_str());
+					Con_Printf("Received: %s\n", StrAddr (&readaddr).c_str());
 					SCR_UpdateScreen ();
 #endif
 					ret = 0;
@@ -1320,9 +1321,9 @@ static qsocket_t *_Datagram_Connect (const char *host)
 	ret = MSG_ReadByte();
 	if (ret == CCREP_REJECT)
 	{
-		reason = MSG_ReadString();
-		Con_Printf(reason);
-		Q_strncpy(m_return_reason, reason, 31);
+		rejectReason = MSG_ReadString();
+		Con_Printf("%s", rejectReason.c_str());
+		Q_strncpy(m_return_reason, rejectReason.c_str(), 31);
 		goto ErrorReturn;
 	}
 

@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string>
 #include <format>
 #include <utility>
+#include <optional>
 
 //
 // file IO
@@ -72,7 +73,7 @@ void Sys_Quit (void);
 
 double Sys_FloatTime (void);
 
-char *Sys_ConsoleInput (void);
+std::optional<std::string> Sys_ConsoleInput (void);
 
 void Sys_Sleep (void);
 // called to yield for a little bit so as

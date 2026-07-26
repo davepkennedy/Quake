@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string>
 #include <cstdio>	// FILE
 #include <map>
+#include <optional>
 
 #include "common.h"	// qboolean
 
@@ -82,12 +83,12 @@ void	Cvar_SetValue (const char *var_name, float value);
 float	Cvar_VariableValue (const char *var_name);
 // returns 0 if not defined or non numeric
 
-const char	*Cvar_VariableString (const char *var_name);
+std::string	Cvar_VariableString (const char *var_name);
 // returns an empty string if not defined
 
-const char 	*Cvar_CompleteVariable (const char *partial);
+std::optional<std::string> 	Cvar_CompleteVariable (const char *partial);
 // attempts to match a partial variable name for command line completion
-// returns NULL if nothing fits
+// returns std::nullopt if nothing fits
 
 qboolean Cvar_Command (void);
 // called by Cmd_ExecuteString when Cmd_Argv(0) doesn't match a known
@@ -98,7 +99,7 @@ void 	Cvar_WriteVariables (FILE *f);
 // Writes lines containing "set variable value" for all variables
 // with the archive flag set to true.
 
-cvar_t *Cvar_FindVar (const char *var_name);
+std::optional<cvar_t*> Cvar_FindVar (const char *var_name);
 
 cvar_t *Cvar_NextServerVar (const char *afterName);
 // iterator-based enumeration of .server-flagged cvars, in map order;

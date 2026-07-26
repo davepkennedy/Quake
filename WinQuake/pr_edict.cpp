@@ -35,7 +35,7 @@ unsigned short		pr_crc;
 
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,1};
 
-ddef_t *ED_FieldAtOfs (int ofs);
+std::optional<ddef_t*> ED_FieldAtOfs (int ofs);
 qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s);
 
 cvar_t	nomonsters = {"nomonsters", "0"};
@@ -145,18 +145,18 @@ void ED_Free (edict_t *ed)
 ED_GlobalAtOfs
 ============
 */
-ddef_t *ED_GlobalAtOfs (int ofs)
+std::optional<ddef_t*> ED_GlobalAtOfs (int ofs)
 {
 	ddef_t		*def;
 	int			i;
-	
+
 	for (i=0 ; i<progs->numglobaldefs ; i++)
 	{
 		def = &pr_globaldefs[i];
 		if (def->ofs == ofs)
 			return def;
 	}
-	return NULL;
+	return std::nullopt;
 }
 
 /*
@@ -164,18 +164,18 @@ ddef_t *ED_GlobalAtOfs (int ofs)
 ED_FieldAtOfs
 ============
 */
-ddef_t *ED_FieldAtOfs (int ofs)
+std::optional<ddef_t*> ED_FieldAtOfs (int ofs)
 {
 	ddef_t		*def;
 	int			i;
-	
+
 	for (i=0 ; i<progs->numfielddefs ; i++)
 	{
 		def = &pr_fielddefs[i];
 		if (def->ofs == ofs)
 			return def;
 	}
-	return NULL;
+	return std::nullopt;
 }
 
 /*
@@ -280,7 +280,6 @@ Returns a string describing *data in a type specific manner
 std::string PR_ValueString (etype_t type, eval_t *val)
 {
 	std::string	line;
-	ddef_t		*def;
 	dfunction_t	*f;
 
 	type = (etype_t)(type & ~DEF_SAVEGLOBAL);
@@ -298,8 +297,10 @@ std::string PR_ValueString (etype_t type, eval_t *val)
 		line = std::format ("{}()", pr_strings + f->s_name);
 		break;
 	case ev_field:
-		def = ED_FieldAtOfs ( val->_int );
-		line = std::format (".{}", pr_strings + def->s_name);
+		{
+			auto fdef = ED_FieldAtOfs ( val->_int );
+			line = fdef ? std::format (".{}", pr_strings + (*fdef)->s_name) : ".<bad field>";
+		}
 		break;
 	case ev_void:
 		line = "void";
@@ -332,7 +333,6 @@ Easier to parse than PR_ValueString
 std::string PR_UglyValueString (etype_t type, eval_t *val)
 {
 	std::string	line;
-	ddef_t		*def;
 	dfunction_t	*f;
 
 	type = (etype_t)(type & ~DEF_SAVEGLOBAL);
@@ -350,8 +350,10 @@ std::string PR_UglyValueString (etype_t type, eval_t *val)
 		line = pr_strings + f->s_name;
 		break;
 	case ev_field:
-		def = ED_FieldAtOfs ( val->_int );
-		line = pr_strings + def->s_name;
+		{
+			auto fdef = ED_FieldAtOfs ( val->_int );
+			line = fdef ? std::string (pr_strings + (*fdef)->s_name) : "<bad field>";
+		}
 		break;
 	case ev_void:
 		line = "void";
@@ -380,16 +382,15 @@ padded to 20 field width
 */
 std::string PR_GlobalString (int ofs)
 {
-	ddef_t	*def;
 	eval_t	*val;
 	std::string	line;
 
 	val = (eval_t *)&pr_globals[ofs];
-	def = ED_GlobalAtOfs(ofs);
+	auto def = ED_GlobalAtOfs(ofs);
 	if (!def)
 		line = std::format ("{}(???)", ofs);
 	else
-		line = std::format ("{}({}){}", ofs, pr_strings + def->s_name, PR_ValueString ((etype_t)def->type, val));
+		line = std::format ("{}({}){}", ofs, pr_strings + (*def)->s_name, PR_ValueString ((etype_t)(*def)->type, val));
 
 	while (line.size () < 20)
 		line += ' ';
@@ -400,14 +401,13 @@ std::string PR_GlobalString (int ofs)
 
 std::string PR_GlobalStringNoContents (int ofs)
 {
-	ddef_t	*def;
 	std::string	line;
 
-	def = ED_GlobalAtOfs(ofs);
+	auto def = ED_GlobalAtOfs(ofs);
 	if (!def)
 		line = std::format ("{}(???)", ofs);
 	else
-		line = std::format ("{}({})", ofs, pr_strings + def->s_name);
+		line = std::format ("{}({})", ofs, pr_strings + (*def)->s_name);
 
 	while (line.size () < 20)
 		line += ' ';

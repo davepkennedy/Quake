@@ -22,17 +22,17 @@ TEST_CASE ("Cvar_RegisterVariable / Cvar_FindVar round trip")
 
 	Cvar_RegisterVariable (&testCvar);
 
-	cvar_t *found = Cvar_FindVar ("__test_cvar_roundtrip");
-	REQUIRE (found != nullptr);
-	CHECK (found == &testCvar);
-	CHECK (found->value == doctest::Approx (1.0f));
+	auto found = Cvar_FindVar ("__test_cvar_roundtrip");
+	REQUIRE (found.has_value ());
+	CHECK (*found == &testCvar);
+	CHECK ((*found)->value == doctest::Approx (1.0f));
 	CHECK (Cvar_VariableValue ("__test_cvar_roundtrip") == doctest::Approx (1.0f));
 	CHECK (std::string (Cvar_VariableString ("__test_cvar_roundtrip")) == "1");
 }
 
 TEST_CASE ("Cvar_FindVar / Cvar_VariableValue / Cvar_VariableString on unknown name")
 {
-	CHECK (Cvar_FindVar ("__test_cvar_does_not_exist") == nullptr);
+	CHECK (Cvar_FindVar ("__test_cvar_does_not_exist") == std::nullopt);
 	CHECK (Cvar_VariableValue ("__test_cvar_does_not_exist") == doctest::Approx (0.0f));
 	CHECK (std::string (Cvar_VariableString ("__test_cvar_does_not_exist")) == "");
 }
@@ -99,7 +99,7 @@ TEST_CASE ("Cvar_RegisterVariable rejects a name already used by a command")
 	Cvar_RegisterVariable (&testCvar);
 
 	CHECK (g_lastConPrint.find ("is a command") != std::string::npos);
-	CHECK (Cvar_FindVar ("__test_cvar_cmd_collision") == nullptr);
+	CHECK (Cvar_FindVar ("__test_cvar_cmd_collision") == std::nullopt);
 }
 
 TEST_CASE ("Cvar_WriteVariables writes archived cvars, skips non-archived")
@@ -170,12 +170,12 @@ TEST_CASE ("Cvar_CompleteVariable prefix matching")
 	testCvar.string = "1";
 	Cvar_RegisterVariable (&testCvar);
 
-	const char *match = Cvar_CompleteVariable ("__test_cvar_complet");
-	REQUIRE (match != nullptr);
-	CHECK (std::string (match) == "__test_cvar_completeme");
+	auto match = Cvar_CompleteVariable ("__test_cvar_complet");
+	REQUIRE (match.has_value ());
+	CHECK (*match == "__test_cvar_completeme");
 
-	CHECK (Cvar_CompleteVariable ("__test_cvar_nomatch_prefix_xyz") == nullptr);
-	CHECK (Cvar_CompleteVariable ("") == nullptr);
+	CHECK (Cvar_CompleteVariable ("__test_cvar_nomatch_prefix_xyz") == std::nullopt);
+	CHECK (Cvar_CompleteVariable ("") == std::nullopt);
 }
 
 TEST_CASE ("Cvar_Command prints or sets via the console dispatch path")

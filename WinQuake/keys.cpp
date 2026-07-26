@@ -171,8 +171,6 @@ Interactive line editing and console scrollback
 */
 void Key_Console (int key)
 {
-	const char	*cmd;
-	
 	if (key == K_ENTER)
 	{
 		Cbuf_AddText (key_lines[edit_line]+1);	// skip the >
@@ -190,13 +188,13 @@ void Key_Console (int key)
 
 	if (key == K_TAB)
 	{	// command completion
-		cmd = Cmd_CompleteCommand (key_lines[edit_line]+1);
+		auto cmd = Cmd_CompleteCommand (key_lines[edit_line]+1);
 		if (!cmd)
 			cmd = Cvar_CompleteVariable (key_lines[edit_line]+1);
 		if (cmd)
 		{
-			Q_strcpy (key_lines[edit_line]+1, cmd);
-			key_linepos = Q_strlen(cmd)+1;
+			Q_strcpy (key_lines[edit_line]+1, cmd->c_str());
+			key_linepos = (int)cmd->length()+1;
 			key_lines[edit_line][key_linepos] = ' ';
 			key_linepos++;
 			key_lines[edit_line][key_linepos] = 0;
@@ -377,11 +375,11 @@ given keynum.
 FIXME: handle quote special (general escape sequence?)
 ===================
 */
-const char *Key_KeynumToString (int keynum)
+std::string Key_KeynumToString (int keynum)
 {
-	keyname_t	*kn;	
-	static	char	tinystr[2];
-	
+	keyname_t	*kn;
+	char	tinystr[2];
+
 	if (keynum == -1)
 		return "<KEY NOT FOUND>";
 	if (keynum > 32 && keynum < 127)
@@ -390,7 +388,7 @@ const char *Key_KeynumToString (int keynum)
 		tinystr[1] = 0;
 		return tinystr;
 	}
-	
+
 	for (kn=keynames ; kn->name ; kn++)
 		if (keynum == kn->keynum)
 			return kn->name;
@@ -596,7 +594,7 @@ void Key_WriteBindings (FILE *f)
 
 	for (i=0 ; i<256 ; i++)
 		if (!keybindings[i].empty())
-			fprintf (f, "bind \"%s\" \"%s\"\n", Key_KeynumToString(i), keybindings[i].c_str());
+			fprintf (f, "bind \"%s\" \"%s\"\n", Key_KeynumToString(i).c_str(), keybindings[i].c_str());
 }
 
 
@@ -711,7 +709,7 @@ void Key_Event (int key, qboolean down)
 		}
 			
 		if (key >= 200 && keybindings[key].empty())
-			Con_Printf ("%s is unbound, hit F4 to set.\n", Key_KeynumToString (key) );
+			Con_Printf ("%s is unbound, hit F4 to set.\n", Key_KeynumToString (key).c_str() );
 	}
 
 	if (key == K_SHIFT)

@@ -308,7 +308,7 @@ entity_t *CL_ViewEnt (void);						// &cl.viewent
 scoreboard_t *CL_Score (int index);				// &cl.scores[index]
 struct model_s *CL_ModelPrecache (int index);		// cl.model_precache[index]
 int CL_GameType (void);							// cl.gametype
-char *CL_LevelName (void);							// cl.levelname
+std::string CL_LevelName (void);							// cl.levelname
 float CL_ItemGetTime (int index);					// cl.item_gettime[index]
 int CL_CompletedTime (void);						// cl.completed_time
 float CL_FaceAnimTime (void);						// cl.faceanimtime
@@ -387,7 +387,7 @@ void CL_BaseMove (usercmd_t *cmd);
 
 
 float CL_KeyState (kbutton_t *key);
-const char *Key_KeynumToString (int keynum);
+std::string Key_KeynumToString (int keynum);
 
 //
 // cl_demo.c

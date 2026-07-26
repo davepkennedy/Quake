@@ -30,11 +30,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ===============================================================================
 */
 
-char *PF_VarString (int	first)
+std::string PF_VarString (int	first)
 {
 	int		i;
-	static char out[256];
-	
+	char out[256];
+
 	out[0] = 0;
 	for (i=first ; i<pr_argc ; i++)
 	{
@@ -56,12 +56,12 @@ error(value)
 */
 void PF_error (void)
 {
-	char	*s;
+	std::string	s;
 	edict_t	*ed;
-	
+
 	s = PF_VarString(0);
 	Con_Printf ("======SERVER ERROR in %s:\n%s\n"
-	,pr_strings + pr_xfunction->s_name,s);
+	,pr_strings + pr_xfunction->s_name,s.c_str());
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 
@@ -80,12 +80,12 @@ objerror(value)
 */
 void PF_objerror (void)
 {
-	char	*s;
+	std::string	s;
 	edict_t	*ed;
-	
+
 	s = PF_VarString(0);
 	Con_Printf ("======OBJECT ERROR in %s:\n%s\n"
-	,pr_strings + pr_xfunction->s_name,s);
+	,pr_strings + pr_xfunction->s_name,s.c_str());
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 	ED_Free (ed);
@@ -268,10 +268,10 @@ bprint(value)
 */
 void PF_bprint (void)
 {
-	char		*s;
+	std::string		s;
 
 	s = PF_VarString(0);
-	SV_BroadcastPrintf ("%s", s);
+	SV_BroadcastPrintf ("%s", s.c_str());
 }
 
 /*
@@ -285,10 +285,10 @@ sprint(clientent, value)
 */
 void PF_sprint (void)
 {
-	char		*s;
+	std::string	s;
 	client_t	*client;
 	int			entnum;
-	
+
 	entnum = G_EDICTNUM(OFS_PARM0);
 	s = PF_VarString(1);
 
@@ -300,7 +300,7 @@ void PF_sprint (void)
 	}
 
 	MSG_WriteChar (&client->message,svc_print);
-	MSG_WriteString (&client->message, s );
+	MSG_WriteString (&client->message, s.c_str() );
 }
 
 
@@ -315,10 +315,10 @@ centerprint(clientent, value)
 */
 void PF_centerprint (void)
 {
-	char		*s;
+	std::string	s;
 	client_t	*client;
 	int			entnum;
-	
+
 	entnum = G_EDICTNUM(OFS_PARM0);
 	s = PF_VarString(1);
 
@@ -330,7 +330,7 @@ void PF_centerprint (void)
 	}
 
 	MSG_WriteChar (&client->message,svc_centerprint);
-	MSG_WriteString (&client->message, s );
+	MSG_WriteString (&client->message, s.c_str() );
 }
 
 
@@ -910,7 +910,7 @@ PF_dprint
 */
 void PF_dprint (void)
 {
-	Con_DPrintf ("%s",PF_VarString(0));
+	Con_DPrintf ("%s",PF_VarString(0).c_str());
 }
 
 char	*pr_string_temp;	// allocated from hunk in PR_LoadProgs so offset from pr_strings fits in int

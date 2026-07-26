@@ -74,12 +74,12 @@ void Host_Status_f (void)
 	else
 		print = SV_ClientPrintf;
 
-	print ("host:    %s\n", Cvar_VariableString ("hostname"));
+	print ("host:    %s\n", Cvar_VariableString ("hostname").c_str());
 	print ("version: %4.2f\n", VERSION);
 	if (net.tcpipAvailable)
-		print ("tcp/ip:  %s\n", NET_TCPIPAddressString ());
+		print ("tcp/ip:  %s\n", NET_TCPIPAddressString ().c_str());
 	if (net.ipxAvailable)
-		print ("ipx:     %s\n", NET_IPXAddressString ());
+		print ("ipx:     %s\n", NET_IPXAddressString ().c_str());
 	print ("map:     %s\n", sv.name);
 	print ("players: %i active (%i max)\n\n", net.activeconnections, svs.maxclients);
 	for (j=0, client = svs.clients ; j<svs.maxclients ; j++, client++)
@@ -924,7 +924,7 @@ void Host_Name_f (void)
 	if (Cmd_Argc () == 2)
 		Q_strncpy(newNameBuf, Cmd_Argv(1), sizeof(newNameBuf)-1);
 	else
-		Q_strncpy(newNameBuf, Cmd_Args(), sizeof(newNameBuf)-1);
+		Q_strncpy(newNameBuf, Cmd_Args().c_str(), sizeof(newNameBuf)-1);
 	newNameBuf[sizeof(newNameBuf)-1] = 0;
 	newName[15] = 0;
 
@@ -1040,7 +1040,7 @@ void Host_Say(qboolean teamonly)
 
 	save = host_client;
 
-	Q_strncpy(pbuf, Cmd_Args(), sizeof(pbuf)-1);
+	Q_strncpy(pbuf, Cmd_Args().c_str(), sizeof(pbuf)-1);
 	pbuf[sizeof(pbuf)-1] = 0;
 	p = pbuf;
 // remove quotes if present
@@ -1107,7 +1107,7 @@ void Host_Tell_f(void)
 	if (Cmd_Argc () < 3)
 		return;
 
-	Q_strncpy(pbuf, Cmd_Args(), sizeof(pbuf)-1);
+	Q_strncpy(pbuf, Cmd_Args().c_str(), sizeof(pbuf)-1);
 	pbuf[sizeof(pbuf)-1] = 0;
 	p = pbuf;
 
@@ -1433,6 +1433,7 @@ void Host_Kick_f (void)
 {
 	const char	*who;
 	const char	*message = NULL;
+	std::string	kickArgs;
 	client_t	*save;
 	int			i;
 	qboolean	byNumber = false;
@@ -1487,7 +1488,8 @@ void Host_Kick_f (void)
 
 		if (Cmd_Argc() > 2)
 		{
-			message = COM_Parse(Cmd_Args());
+			kickArgs = Cmd_Args();
+			message = COM_Parse(kickArgs.c_str());
 			if (byNumber)
 			{
 				message++;							// skip the #
@@ -1675,11 +1677,11 @@ void Host_Give_f (void)
     }
 }
 
-edict_t	*FindViewthing (void)
+std::optional<edict_t*>	FindViewthing (void)
 {
 	int		i;
 	edict_t	*e;
-	
+
 	for (i=0 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
@@ -1687,7 +1689,7 @@ edict_t	*FindViewthing (void)
 			return e;
 	}
 	Con_Printf ("No viewthing on map\n");
-	return NULL;
+	return std::nullopt;
 }
 
 /*
@@ -1697,12 +1699,12 @@ Host_Viewmodel_f
 */
 void Host_Viewmodel_f (void)
 {
-	edict_t	*e;
 	model_t	*m;
 
-	e = FindViewthing ();
-	if (!e)
+	auto viewthing = FindViewthing ();
+	if (!viewthing)
 		return;
+	edict_t	*e = *viewthing;
 
 	m = Mod_ForName (Cmd_Argv(1), false);
 	if (!m)
@@ -1722,13 +1724,13 @@ Host_Viewframe_f
 */
 void Host_Viewframe_f (void)
 {
-	edict_t	*e;
 	int		f;
 	model_t	*m;
 
-	e = FindViewthing ();
-	if (!e)
+	auto viewthing = FindViewthing ();
+	if (!viewthing)
 		return;
+	edict_t	*e = *viewthing;
 	m = cl.model_precache[(int)e->v.modelindex];
 
 	f = atoi(Cmd_Argv(1));
@@ -1759,12 +1761,12 @@ Host_Viewnext_f
 */
 void Host_Viewnext_f (void)
 {
-	edict_t	*e;
 	model_t	*m;
-	
-	e = FindViewthing ();
-	if (!e)
+
+	auto viewthing = FindViewthing ();
+	if (!viewthing)
 		return;
+	edict_t	*e = *viewthing;
 	m = cl.model_precache[(int)e->v.modelindex];
 
 	e->v.frame = e->v.frame + 1;
@@ -1781,12 +1783,12 @@ Host_Viewprev_f
 */
 void Host_Viewprev_f (void)
 {
-	edict_t	*e;
 	model_t	*m;
 
-	e = FindViewthing ();
-	if (!e)
+	auto viewthing = FindViewthing ();
+	if (!viewthing)
 		return;
+	edict_t	*e = *viewthing;
 
 	m = cl.model_precache[(int)e->v.modelindex];
 

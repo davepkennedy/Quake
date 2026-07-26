@@ -34,9 +34,9 @@ static struct qsockaddr broadcastaddr;
 static unsigned long myAddr;
 static std::string my_tcpip_address;
 
-const char *NET_TCPIPAddressString (void)
+std::string NET_TCPIPAddressString (void)
 {
-	return my_tcpip_address.c_str ();
+	return my_tcpip_address;
 }
 
 #include "net_wins.h"
@@ -243,7 +243,7 @@ int WINS_OpenSocket (int port)
 	if( bind (newsocket, (const sockaddr *)&address, sizeof(address)) == 0)
 		return newsocket;
 
-	Sys_Error ("Unable to bind to %s", WINS_AddrToString((struct qsockaddr *)&address));
+	Sys_Error ("Unable to bind to %s", WINS_AddrToString((struct qsockaddr *)&address).c_str());
 ErrorReturn:
 	closesocket (newsocket);
 	return -1;
@@ -410,9 +410,9 @@ int WINS_Write (int socket, byte *buf, int len, struct qsockaddr *addr)
 
 //=============================================================================
 
-char *WINS_AddrToString (struct qsockaddr *addr)
+std::string WINS_AddrToString (struct qsockaddr *addr)
 {
-	static char buffer[22];
+	char buffer[22];
 	int haddr;
 
 	haddr = ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr);
@@ -465,7 +465,7 @@ int WINS_GetNameFromAddr (struct qsockaddr *addr, char *name)
 		return 0;
 	}
 
-	Q_strcpy (name, WINS_AddrToString (addr));
+	Q_strcpy (name, WINS_AddrToString (addr).c_str());
 	return 0;
 }
 

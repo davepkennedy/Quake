@@ -75,10 +75,10 @@ lmode_t	lowresmodes[] = {
 	{512, 384},
 };
 
-const char *gl_vendor;
-const char *gl_renderer;
-const char *gl_version;
-const char *gl_extensions;
+std::string gl_vendor;
+std::string gl_renderer;
+std::string gl_version;
+std::string gl_extensions;
 
 qboolean		scr_skipupdate;
 
@@ -135,7 +135,7 @@ void VID_MenuKey (int key);
 
 LRESULT WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void AppActivate(BOOL fActive, BOOL minimize);
-char *VID_GetModeDescription (int mode);
+std::optional<std::string> VID_GetModeDescription (int mode);
 void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
 void GL_Init (void);
@@ -490,7 +490,10 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	ClearAllStates ();
 
 	if (!msg_suppress_1)
-		Con_SafePrintf ("Video mode %s initialized.\n", VID_GetModeDescription (vid_modenum));
+	{
+		auto desc = VID_GetModeDescription (vid_modenum);
+		Con_SafePrintf ("Video mode %s initialized.\n", desc ? desc->c_str () : "unknown");
+	}
 
 	VID_SetPalette (palette);
 
@@ -623,7 +626,7 @@ void GL_ReserveTextureNames (int count)
 #ifdef _WIN32
 void CheckMultiTextureExtensions(void)
 {
-	if (strstr(gl_extensions, "GL_SGIS_multitexture ") && !COM_CheckParm("-nomtex")) {
+	if (gl_extensions.find("GL_SGIS_multitexture ") != std::string::npos && !COM_CheckParm("-nomtex")) {
 		Con_Printf("Multitexture extensions found.\n");
 		qglMTexCoord2fSGIS = (lpMTexFUNC) wglGetProcAddress("glMTexCoord2fSGIS");
 		qglSelectTextureSGIS = (lpSelTexFUNC) wglGetProcAddress("glSelectTextureSGIS");
@@ -646,9 +649,9 @@ typedef const GLubyte* (APIENTRY *PFNGLGETSTRINGIPROC)(GLenum name, GLuint index
 // per-index glGetStringi query and rebuild the same space-separated format
 // (each entry followed by a space) that the strstr(gl_extensions, "...")
 // checks elsewhere in this file and in gl_ext.cpp expect.
-static const char *GL_BuildExtensionsString (void)
+static std::string GL_BuildExtensionsString (void)
 {
-	static char buf[16384];
+	char buf[16384];
 
 	// glGetString(GL_EXTENSIONS) itself raises GL_INVALID_ENUM under a core
 	// context (not just returning NULL), so check the version first rather
@@ -695,22 +698,31 @@ GL_Init
 */
 void GL_Init (void)
 {
-	gl_vendor = (const char *)glGetString (GL_VENDOR);
-	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
-	gl_renderer = (const char *)glGetString (GL_RENDERER);
-	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
+	{
+		const char *vendor = (const char *)glGetString (GL_VENDOR);
+		gl_vendor = vendor ? vendor : "";
+	}
+	Con_Printf ("GL_VENDOR: %s\n", gl_vendor.c_str());
+	{
+		const char *renderer = (const char *)glGetString (GL_RENDERER);
+		gl_renderer = renderer ? renderer : "";
+	}
+	Con_Printf ("GL_RENDERER: %s\n", gl_renderer.c_str());
 
-	gl_version = (const char *)glGetString (GL_VERSION);
-	Con_Printf ("GL_VERSION: %s\n", gl_version);
+	{
+		const char *version = (const char *)glGetString (GL_VERSION);
+		gl_version = version ? version : "";
+	}
+	Con_Printf ("GL_VERSION: %s\n", gl_version.c_str());
 	gl_extensions = GL_BuildExtensionsString ();
-	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
+	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions.c_str());
 
 //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
 
-    if (_strnicmp(gl_renderer,"PowerVR",7)==0)
+    if (_strnicmp(gl_renderer.c_str(),"PowerVR",7)==0)
          fullsbardraw = true;
 
-    if (_strnicmp(gl_renderer,"Permedia",8)==0)
+    if (_strnicmp(gl_renderer.c_str(),"Permedia",8)==0)
          isPermedia = true;
 
 	CheckTextureExtensions ();
@@ -1272,52 +1284,44 @@ vmode_t *VID_GetModePtr (int modenum)
 VID_GetModeDescription
 =================
 */
-char *VID_GetModeDescription (int mode)
+std::optional<std::string> VID_GetModeDescription (int mode)
 {
-	char		*pinfo;
 	vmode_t		*pv;
-	static std::string	temp;
 
 	if ((mode < 0) || (mode >= nummodes))
-		return NULL;
+		return std::nullopt;
 
 	if (!leavecurrentmode)
 	{
 		pv = VID_GetModePtr (mode);
-		pinfo = pv->modedesc.data ();
-	}
-	else
-	{
-		temp = std::format ("Desktop resolution ({}x{})",
-				 modelist[MODE_FULLSCREEN_DEFAULT].width,
-				 modelist[MODE_FULLSCREEN_DEFAULT].height);
-		pinfo = temp.data ();
+		return pv->modedesc;
 	}
 
-	return pinfo;
+	return std::format ("Desktop resolution ({}x{})",
+			 modelist[MODE_FULLSCREEN_DEFAULT].width,
+			 modelist[MODE_FULLSCREEN_DEFAULT].height);
 }
 
 
 // KJB: Added this to return the mode driver name in description for console
 
-char *VID_GetExtModeDescription (int mode)
+std::optional<std::string> VID_GetExtModeDescription (int mode)
 {
-	static std::string	pinfo;
 	vmode_t		*pv;
 
 	if ((mode < 0) || (mode >= nummodes))
-		return NULL;
+		return std::nullopt;
 
 	pv = VID_GetModePtr (mode);
 	if (modelist[mode].type == MS_FULLDIB)
 	{
 		if (!leavecurrentmode)
 		{
-			pinfo = std::format ("{} fullscreen", pv->modedesc);
+			return std::format ("{} fullscreen", pv->modedesc);
 		}
 		else
 		{
-			pinfo = std::format ("Desktop resolution ({}x{})",
+			return std::format ("Desktop resolution ({}x{})",
 					 modelist[MODE_FULLSCREEN_DEFAULT].width,
 					 modelist[MODE_FULLSCREEN_DEFAULT].height);
 		}
@@ -1325,12 +1329,10 @@ char *VID_GetExtModeDescription (int mode)
 	else
 	{
 		if (modestate == MS_WINDOWED)
-			pinfo = std::format ("{} windowed", pv->modedesc);
+			return std::format ("{} windowed", pv->modedesc);
 		else
-			pinfo = "windowed";
+			return std::string ("windowed");
 	}
-
-	return pinfo.data ();
 }
 
 
@@ -1341,7 +1343,8 @@ VID_DescribeCurrentMode_f
 */
 void VID_DescribeCurrentMode_f (void)
 {
-	Con_Printf ("%s\n", VID_GetExtModeDescription (vid_modenum));
+	auto desc = VID_GetExtModeDescription (vid_modenum);
+	Con_Printf ("%s\n", desc ? desc->c_str () : "unknown");
 }
 
 
@@ -1374,7 +1377,8 @@ void VID_DescribeMode_f (void)
 	t = leavecurrentmode;
 	leavecurrentmode = 0;
 
-	Con_Printf ("%s\n", VID_GetExtModeDescription (modenum));
+	auto desc = VID_GetExtModeDescription (modenum);
+	Con_Printf ("%s\n", desc ? desc->c_str () : "invalid mode");
 
 	leavecurrentmode = t;
 }
@@ -1388,7 +1392,6 @@ VID_DescribeModes_f
 void VID_DescribeModes_f (void)
 {
 	int			i, lnummodes, t;
-	char		*pinfo;
 	vmode_t		*pv;
 
 	lnummodes = VID_NumModes ();
@@ -1399,8 +1402,8 @@ void VID_DescribeModes_f (void)
 	for (i=1 ; i<lnummodes ; i++)
 	{
 		pv = VID_GetModePtr (i);
-		pinfo = VID_GetExtModeDescription (i);
-		Con_Printf ("%2d: %s\n", i, pinfo);
+		auto pinfo = VID_GetExtModeDescription (i);
+		Con_Printf ("%2d: %s\n", i, pinfo ? pinfo->c_str () : "unknown");
 	}
 
 	leavecurrentmode = t;
@@ -1617,7 +1620,7 @@ void VID_Init8bitPalette()
 	char *oldPalette, *newPalette;
 
 	glColorTableEXT = (lp3DFXFUNC)wglGetProcAddress("glColorTableEXT");
-    if (!glColorTableEXT || strstr(gl_extensions, "GL_EXT_shared_texture_palette") ||
+    if (!glColorTableEXT || gl_extensions.find("GL_EXT_shared_texture_palette") != std::string::npos ||
 		COM_CheckParm("-no8bit"))
 		return;
 
@@ -1643,8 +1646,8 @@ static void Check_Gamma (unsigned char *pal)
 	int		i;
 
 	if ((i = COM_CheckParm("-gamma")) == 0) {
-		if ((gl_renderer && strstr(gl_renderer, "Voodoo")) ||
-			(gl_vendor && strstr(gl_vendor, "3Dfx")))
+		if (gl_renderer.find("Voodoo") != std::string::npos ||
+			gl_vendor.find("3Dfx") != std::string::npos)
 			vid_gamma = 1;
 		else
 			vid_gamma = 0.7f; // default to 0.7 on non-3dfx hardware
@@ -2001,7 +2004,7 @@ static int	vid_line, vid_wmodes;
 typedef struct
 {
 	int		modenum;
-	char	*desc;
+	std::string	desc;
 	int		iscur;
 } modedesc_t;
 
@@ -2019,7 +2022,6 @@ VID_MenuDraw
 void VID_MenuDraw (void)
 {
 	qpic_t		*p;
-	char		*ptr;
 	int			lnummodes, i, k, column, row;
 	vmode_t		*pv;
 
@@ -2031,13 +2033,13 @@ void VID_MenuDraw (void)
 	
 	for (i=1 ; (i<lnummodes) && (vid_wmodes < MAX_MODEDESCS) ; i++)
 	{
-		ptr = VID_GetModeDescription (i);
+		auto ptr = VID_GetModeDescription (i);
 		pv = VID_GetModePtr (i);
 
 		k = vid_wmodes;
 
 		modedescs[k].modenum = i;
-		modedescs[k].desc = ptr;
+		modedescs[k].desc = ptr ? *ptr : "unknown";
 		modedescs[k].iscur = 0;
 
 		if (i == vid_modenum)
@@ -2057,9 +2059,9 @@ void VID_MenuDraw (void)
 		for (i=0 ; i<vid_wmodes ; i++)
 		{
 			if (modedescs[i].iscur)
-				M_PrintWhite (column, row, modedescs[i].desc);
+				M_PrintWhite (column, row, modedescs[i].desc.c_str ());
 			else
-				M_Print (column, row, modedescs[i].desc);
+				M_Print (column, row, modedescs[i].desc.c_str ());
 
 			column += 13*8;
 

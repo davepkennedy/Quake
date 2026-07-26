@@ -64,12 +64,12 @@ TEST_CASE ("Cmd_CompleteCommand prefix matching")
 {
 	Cmd_AddCommand ("__test_cmd_completeme", [] () {});
 
-	const char *match = Cmd_CompleteCommand ("__test_cmd_complet");
-	REQUIRE (match != nullptr);
-	CHECK (std::string (match) == "__test_cmd_completeme");
+	auto match = Cmd_CompleteCommand ("__test_cmd_complet");
+	REQUIRE (match.has_value ());
+	CHECK (*match == "__test_cmd_completeme");
 
-	CHECK (Cmd_CompleteCommand ("__test_cmd_nomatch_xyz") == nullptr);
-	CHECK (Cmd_CompleteCommand ("") == nullptr);
+	CHECK (Cmd_CompleteCommand ("__test_cmd_nomatch_xyz") == std::nullopt);
+	CHECK (Cmd_CompleteCommand ("") == std::nullopt);
 }
 
 TEST_CASE ("alias defines and dispatches a command, case-insensitively, end to end")

@@ -559,7 +559,7 @@ void Sys_InitFloatTime (void)
 }
 
 
-char *Sys_ConsoleInput (void)
+std::optional<std::string> Sys_ConsoleInput (void)
 {
 	static char	text[256];
 	static int		len;
@@ -568,7 +568,7 @@ char *Sys_ConsoleInput (void)
 	DWORD	dummy, numread, numevents;
 
 	if (!isDedicated)
-		return NULL;
+		return std::nullopt;
 
 
 	for ( ;; )
@@ -600,14 +600,14 @@ char *Sys_ConsoleInput (void)
 						{
 							text[len] = 0;
 							len = 0;
-							return text;
+							return std::string (text);
 						}
 						else if (sc_return_on_enter)
 						{
 						// special case to allow exiting from the error handler on Enter
 							text[0] = '\r';
 							len = 0;
-							return text;
+							return std::string (text, 1);
 						}
 
 						break;
@@ -635,7 +635,7 @@ char *Sys_ConsoleInput (void)
 		}
 	}
 
-	return NULL;
+	return std::nullopt;
 }
 
 void Sys_Sleep (void)

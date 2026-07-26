@@ -199,7 +199,7 @@ typedef struct
 	int 		(*Read) (int socket, byte *buf, int len, struct qsockaddr *addr);
 	int 		(*Write) (int socket, byte *buf, int len, struct qsockaddr *addr);
 	int 		(*Broadcast) (int socket, byte *buf, int len);
-	char *		(*AddrToString) (struct qsockaddr *addr);
+	std::string	(*AddrToString) (struct qsockaddr *addr);
 	int 		(*StringToAddr) (const char *string, struct qsockaddr *addr);
 	int 		(*GetSocketAddr) (int socket, struct qsockaddr *addr);
 	int 		(*GetNameFromAddr) (struct qsockaddr *addr, char *name);
@@ -343,8 +343,8 @@ typedef struct _PollProcedure
 
 void SchedulePollProcedure(PollProcedure *pp, double timeOffset);
 
-const char *NET_IPXAddressString (void);
-const char *NET_TCPIPAddressString (void);
+std::string NET_IPXAddressString (void);
+std::string NET_TCPIPAddressString (void);
 
 extern	qboolean	slistInProgress;
 extern	qboolean	slistSilent;

@@ -218,13 +218,13 @@ int Q_strlen (const char *str)
 	return count;
 }
 
-char *Q_strrchr(const char *s, char c)
+std::optional<std::string> Q_strrchr(const char *s, char c)
 {
     int len = Q_strlen(s);
-    s += len;
+    const char *end = s + len;
     while (len--)
-	if (*--s == c) return (char *)s;
-    return 0;
+	if (*--end == c) return std::string (end);
+    return std::nullopt;
 }
 
 void Q_strcat (char *dest, const char *src)
@@ -705,11 +705,11 @@ float MSG_ReadFloat (void)
 	return dat.f;   
 }
 
-char *MSG_ReadString (void)
+std::string MSG_ReadString (void)
 {
-	static char     string[2048];
+	char    string[2048];
 	int             l,c;
-	
+
 	l = 0;
 	do
 	{
@@ -719,10 +719,10 @@ char *MSG_ReadString (void)
 		string[l] = c;
 		l++;
 	} while (l < sizeof(string)-1);
-	
+
 	string[l] = 0;
-	
-	return string;
+
+	return std::string(string, l);
 }
 
 float MSG_ReadCoord (void)
@@ -843,9 +843,9 @@ void COM_StripExtension (const char *in, char *out)
 COM_FileExtension
 ============
 */
-const char *COM_FileExtension (const char *in)
+std::string COM_FileExtension (const char *in)
 {
-	static char exten[8];
+	char exten[8];
 	int             i;
 
 	while (*in && *in != '.')
@@ -1814,7 +1814,7 @@ void COM_InitFilesystem (void)
 				break;
 			
 			search = (searchpath_t *)Hunk_Alloc (sizeof(searchpath_t));
-			if ( !strcmp(COM_FileExtension(com_argv[i]), "pak") )
+			if ( COM_FileExtension(com_argv[i]) == "pak" )
 			{
 				search->pack = COM_LoadPackFile (com_argv[i]);
 				if (!search->pack)

@@ -298,7 +298,7 @@ void Sbar_DrawCharacter (int x, int y, int num)
 Sbar_DrawString
 ================
 */
-void Sbar_DrawString (int x, int y, char *str)
+void Sbar_DrawString (int x, int y, const char *str)
 {
 	if (CL_GameType() == GAME_DEATHMATCH)
 		Draw_String (x /*+ ((vid.width - 320)>>1)*/, y+ vid.height-SBAR_HEIGHT, str);
@@ -475,8 +475,9 @@ void Sbar_SoloScoreboard (void)
 	Sbar_DrawString (184, 4, str.data ());
 
 // draw level name
-	l = (int)strlen (CL_LevelName());
-	Sbar_DrawString (232 - l*4, 12, CL_LevelName());
+	std::string levelName = CL_LevelName();
+	l = (int)levelName.length();
+	Sbar_DrawString (232 - l*4, 12, levelName.c_str());
 }
 
 /*

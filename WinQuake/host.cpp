@@ -530,14 +530,12 @@ Add them exactly as if they had been typed at the console
 */
 void Host_GetConsoleCommands (void)
 {
-	char	*cmd;
-
 	while (1)
 	{
-		cmd = Sys_ConsoleInput ();
+		auto cmd = Sys_ConsoleInput ();
 		if (!cmd)
 			break;
-		Cbuf_AddText (cmd);
+		Cbuf_AddText (cmd->c_str ());
 	}
 }
 

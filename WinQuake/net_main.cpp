@@ -840,10 +840,12 @@ void NET_Init (void)
 			net_drivers[net_driverlevel].Listen (true);
 		}
 
-	if (*NET_IPXAddressString ())
-		Con_DPrintf("IPX address %s\n", NET_IPXAddressString ());
-	if (*NET_TCPIPAddressString ())
-		Con_DPrintf("TCP/IP address %s\n", NET_TCPIPAddressString ());
+	std::string ipxAddress = NET_IPXAddressString ();
+	if (!ipxAddress.empty ())
+		Con_DPrintf("IPX address %s\n", ipxAddress.c_str ());
+	std::string tcpipAddress = NET_TCPIPAddressString ();
+	if (!tcpipAddress.empty ())
+		Con_DPrintf("TCP/IP address %s\n", tcpipAddress.c_str ());
 }
 
 /*

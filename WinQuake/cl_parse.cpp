@@ -203,7 +203,7 @@ CL_ParseServerInfo
 */
 void CL_ParseServerInfo (void)
 {
-	char	*str;
+	std::string str;
 	int		i;
 	int		nummodels, numsounds;
 	char	model_precache[MAX_MODELS][MAX_QPATH];
@@ -237,11 +237,11 @@ void CL_ParseServerInfo (void)
 
 // parse signon message
 	str = MSG_ReadString ();
-	strncpy (cl.levelname, str, sizeof(cl.levelname)-1);
+	strncpy (cl.levelname, str.c_str(), sizeof(cl.levelname)-1);
 
 // seperate the printfs so the server message can have a color
 	Con_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-	Con_Printf ("%c%s\n", 2, str);
+	Con_Printf ("%c%s\n", 2, str.c_str());
 
 //
 // first we go through and touch all of the precache data that still
@@ -254,15 +254,15 @@ void CL_ParseServerInfo (void)
 	for (nummodels=1 ; ; nummodels++)
 	{
 		str = MSG_ReadString ();
-		if (!str[0])
+		if (str.empty())
 			break;
 		if (nummodels==MAX_MODELS)
 		{
 			Con_Printf ("Server sent too many model precaches\n");
 			return;
 		}
-		Q_strlcpy (model_precache[nummodels], str, sizeof(model_precache[nummodels]));
-		Mod_TouchModel (str);
+		Q_strlcpy (model_precache[nummodels], str.c_str(), sizeof(model_precache[nummodels]));
+		Mod_TouchModel (str.c_str());
 	}
 
 // precache sounds
@@ -270,15 +270,15 @@ void CL_ParseServerInfo (void)
 	for (numsounds=1 ; ; numsounds++)
 	{
 		str = MSG_ReadString ();
-		if (!str[0])
+		if (str.empty())
 			break;
 		if (numsounds==MAX_SOUNDS)
 		{
 			Con_Printf ("Server sent too many sound precaches\n");
 			return;
 		}
-		Q_strlcpy (sound_precache[numsounds], str, sizeof(sound_precache[numsounds]));
-		S_TouchSound (str);
+		Q_strlcpy (sound_precache[numsounds], str.c_str(), sizeof(sound_precache[numsounds]));
+		S_TouchSound (str.c_str());
 	}
 
 //
@@ -790,15 +790,15 @@ void CL_ParseServerMessage (void)
 			Host_EndGame ("Server disconnected\n");
 
 		case svc_print:
-			Con_Printf ("%s", MSG_ReadString ());
+			Con_Printf ("%s", MSG_ReadString ().c_str());
 			break;
-			
+
 		case svc_centerprint:
-			SCR_CenterPrint (MSG_ReadString ());
+			SCR_CenterPrint (MSG_ReadString ().c_str());
 			break;
-			
+
 		case svc_stufftext:
-			Cbuf_AddText (MSG_ReadString ());
+			Cbuf_AddText (MSG_ReadString ().c_str());
 			break;
 			
 		case svc_damage:
@@ -823,7 +823,7 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadByte ();
 			if (i >= MAX_LIGHTSTYLES)
 				Sys_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-			Q_strlcpy (cl_lightstyle[i].map, MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+			Q_strlcpy (cl_lightstyle[i].map, MSG_ReadString().c_str(), sizeof(cl_lightstyle[i].map));
 			cl_lightstyle[i].length = Q_strlen(cl_lightstyle[i].map);
 			break;
 			
@@ -841,7 +841,7 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadByte ();
 			if (i >= cl.maxclients)
 				Host_Error ("CL_ParseServerMessage: svc_updatename > MAX_SCOREBOARD");
-			Q_strlcpy (cl.scores[i].name, MSG_ReadString (), sizeof(cl.scores[i].name));
+			Q_strlcpy (cl.scores[i].name, MSG_ReadString ().c_str(), sizeof(cl.scores[i].name));
 			break;
 			
 		case svc_updatefrags:
@@ -944,14 +944,14 @@ void CL_ParseServerMessage (void)
 			cl.intermission = 2;
 			cl.completed_time = cl.time;
 			vid.recalc_refdef = true;	// go to full screen
-			SCR_CenterPrint (MSG_ReadString ());			
+			SCR_CenterPrint (MSG_ReadString ().c_str());
 			break;
 
 		case svc_cutscene:
 			cl.intermission = 3;
 			cl.completed_time = cl.time;
 			vid.recalc_refdef = true;	// go to full screen
-			SCR_CenterPrint (MSG_ReadString ());			
+			SCR_CenterPrint (MSG_ReadString ().c_str());
 			break;
 
 		case svc_sellscreen:

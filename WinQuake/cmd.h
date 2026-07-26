@@ -92,13 +92,13 @@ void	Cmd_AddCommand (const char *cmd_name, xcommand_t function);
 qboolean Cmd_Exists (const char *cmd_name);
 // used by the cvar code to check for cvar / command name overlap
 
-const char 	*Cmd_CompleteCommand (const char *partial);
+std::optional<std::string> 	Cmd_CompleteCommand (const char *partial);
 // attempts to match a partial command for automatic command line completion
-// returns NULL if nothing fits
+// returns std::nullopt if nothing fits
 
 int			Cmd_Argc (void);
 const char	*Cmd_Argv (int arg);
-const char	*Cmd_Args (void);
+std::string	Cmd_Args (void);
 // The functions that execute commands get their parameters with these
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are allways safe.

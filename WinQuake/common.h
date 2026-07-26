@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <cstdarg>
 #include <format>
 #include <utility>
+#include <optional>
 
 #include "qlimits.h"	// MAX_OSPATH
 
@@ -119,7 +120,7 @@ int MSG_ReadByte (void);
 int MSG_ReadShort (void);
 int MSG_ReadLong (void);
 float MSG_ReadFloat (void);
-char *MSG_ReadString (void);
+std::string MSG_ReadString (void);
 
 float MSG_ReadCoord (void);
 float MSG_ReadAngle (void);
@@ -136,7 +137,7 @@ void Q_strlcpy (char *dest, const char *src, size_t destsize);
 // within it (BSD strlcpy semantics) -- the safe replacement for strcpy
 // into a fixed-size buffer with unbounded/untrusted source data.
 int Q_strlen (const char *str);
-char *Q_strrchr (const char *s, char c);
+std::optional<std::string> Q_strrchr (const char *s, char c);
 void Q_strcat (char *dest, const char *src);
 int Q_strcmp (const char *s1, const char *s2);
 int Q_strncmp (const char *s1, const char *s2, int count);

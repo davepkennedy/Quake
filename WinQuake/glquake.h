@@ -242,10 +242,10 @@ extern	glm::mat4	r_world_matrix;
 extern	glm::mat4	r_proj_matrix;
 extern	glm::mat4	r_entity_matrix;
 
-extern	const char *gl_vendor;
-extern	const char *gl_renderer;
-extern	const char *gl_version;
-extern	const char *gl_extensions;
+extern	std::string gl_vendor;
+extern	std::string gl_renderer;
+extern	std::string gl_version;
+extern	std::string gl_extensions;
 
 void R_TranslatePlayerSkin (int playernum);
 void GL_Bind (int texnum);
