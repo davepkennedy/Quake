@@ -1527,7 +1527,7 @@ void Host_Give_f (void)
 {
 	const char	*t;
 	int		v;
-	eval_t	*val;
+	std::optional<eval_t*>	val;
 
 	if (cmd_source == src_command)
 	{
@@ -1582,7 +1582,7 @@ void Host_Give_f (void)
 		{
 	        val = GetEdictFieldValue(sv_player, "ammo_shells1");
 		    if (val)
-			    val->_float = v;
+			    (*val)->_float = v;
 		}
 
         sv_player->v.ammo_shells = v;
@@ -1593,7 +1593,7 @@ void Host_Give_f (void)
 			val = GetEdictFieldValue(sv_player, "ammo_nails1");
 			if (val)
 			{
-				val->_float = v;
+				(*val)->_float = v;
 				if (sv_player->v.weapon <= IT_LIGHTNING)
 					sv_player->v.ammo_nails = v;
 			}
@@ -1609,7 +1609,7 @@ void Host_Give_f (void)
 			val = GetEdictFieldValue(sv_player, "ammo_lava_nails");
 			if (val)
 			{
-				val->_float = v;
+				(*val)->_float = v;
 				if (sv_player->v.weapon > IT_LIGHTNING)
 					sv_player->v.ammo_nails = v;
 			}
@@ -1621,7 +1621,7 @@ void Host_Give_f (void)
 			val = GetEdictFieldValue(sv_player, "ammo_rockets1");
 			if (val)
 			{
-				val->_float = v;
+				(*val)->_float = v;
 				if (sv_player->v.weapon <= IT_LIGHTNING)
 					sv_player->v.ammo_rockets = v;
 			}
@@ -1637,7 +1637,7 @@ void Host_Give_f (void)
 			val = GetEdictFieldValue(sv_player, "ammo_multi_rockets");
 			if (val)
 			{
-				val->_float = v;
+				(*val)->_float = v;
 				if (sv_player->v.weapon > IT_LIGHTNING)
 					sv_player->v.ammo_rockets = v;
 			}
@@ -1652,7 +1652,7 @@ void Host_Give_f (void)
 			val = GetEdictFieldValue(sv_player, "ammo_cells1");
 			if (val)
 			{
-				val->_float = v;
+				(*val)->_float = v;
 				if (sv_player->v.weapon <= IT_LIGHTNING)
 					sv_player->v.ammo_cells = v;
 			}
@@ -1668,7 +1668,7 @@ void Host_Give_f (void)
 			val = GetEdictFieldValue(sv_player, "ammo_plasma");
 			if (val)
 			{
-				val->_float = v;
+				(*val)->_float = v;
 				if (sv_player->v.weapon > IT_LIGHTNING)
 					sv_player->v.ammo_cells = v;
 			}

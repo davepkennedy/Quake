@@ -383,11 +383,11 @@ void SV_AddGravity (edict_t *ent)
 	else
 		ent_gravity = 1.0;
 #else
-	eval_t	*val;
+	std::optional<eval_t*>	val;
 
 	val = GetEdictFieldValue(ent, "gravity");
-	if (val && val->_float)
-		ent_gravity = val->_float;
+	if (val && (*val)->_float)
+		ent_gravity = (*val)->_float;
 	else
 		ent_gravity = 1.0;
 #endif

@@ -183,18 +183,18 @@ std::optional<ddef_t*> ED_FieldAtOfs (int ofs)
 ED_FindField
 ============
 */
-ddef_t *ED_FindField (const char *name)
+std::optional<ddef_t*> ED_FindField (const char *name)
 {
 	ddef_t		*def;
 	int			i;
-	
+
 	for (i=0 ; i<progs->numfielddefs ; i++)
 	{
 		def = &pr_fielddefs[i];
 		if (!strcmp(pr_strings + def->s_name,name) )
 			return def;
 	}
-	return NULL;
+	return std::nullopt;
 }
 
 
@@ -203,18 +203,18 @@ ddef_t *ED_FindField (const char *name)
 ED_FindGlobal
 ============
 */
-ddef_t *ED_FindGlobal (char *name)
+std::optional<ddef_t*> ED_FindGlobal (char *name)
 {
 	ddef_t		*def;
 	int			i;
-	
+
 	for (i=0 ; i<progs->numglobaldefs ; i++)
 	{
 		def = &pr_globaldefs[i];
 		if (!strcmp(pr_strings + def->s_name,name) )
 			return def;
 	}
-	return NULL;
+	return std::nullopt;
 }
 
 
@@ -223,22 +223,22 @@ ddef_t *ED_FindGlobal (char *name)
 ED_FindFunction
 ============
 */
-dfunction_t *ED_FindFunction (const char *name)
+std::optional<dfunction_t*> ED_FindFunction (const char *name)
 {
 	dfunction_t		*func;
 	int				i;
-	
+
 	for (i=0 ; i<progs->numfunctions ; i++)
 	{
 		func = &pr_functions[i];
 		if (!strcmp(pr_strings + func->s_name,name) )
 			return func;
 	}
-	return NULL;
+	return std::nullopt;
 }
 
 
-eval_t *GetEdictFieldValue(edict_t *ed, const char *field)
+std::optional<eval_t*> GetEdictFieldValue(edict_t *ed, const char *field)
 {
 	ddef_t			*def = NULL;
 	int				i;
@@ -253,7 +253,7 @@ eval_t *GetEdictFieldValue(edict_t *ed, const char *field)
 		}
 	}
 
-	def = ED_FindField (field);
+	def = ED_FindField (field).value_or (nullptr);
 
 	if (strlen(field) < MAX_FIELD_LEN)
 	{
@@ -264,7 +264,7 @@ eval_t *GetEdictFieldValue(edict_t *ed, const char *field)
 
 Done:
 	if (!def)
-		return NULL;
+		return std::nullopt;
 
 	return (eval_t *)((char *)&ed->v + def->ofs*4);
 }
@@ -641,7 +641,7 @@ ED_ParseGlobals
 void ED_ParseGlobals (const char *data)
 {
 	char	keyname[64];
-	ddef_t	*key;
+	std::optional<ddef_t*>	key;
 
 	while (1)
 	{	
@@ -669,7 +669,7 @@ void ED_ParseGlobals (const char *data)
 			continue;
 		}
 
-		if (!ED_ParseEpair ((void *)pr_globals, key, com_token))
+		if (!ED_ParseEpair ((void *)pr_globals, *key, com_token))
 			Host_Error ("ED_ParseGlobals: parse error");
 	}
 }
@@ -721,11 +721,9 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 {
 	int		i;
 	char	string[128];
-	ddef_t	*def;
 	char	*v, *w;
 	void	*d;
-	dfunction_t	*func;
-	
+
 	d = (void *)((int *)base + key->ofs);
 	
 	switch (key->type & ~DEF_SAVEGLOBAL)
@@ -757,23 +755,27 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 		break;
 		
 	case ev_field:
-		def = ED_FindField (s);
-		if (!def)
 		{
-			Con_Printf ("Can't find field %s\n", s);
-			return false;
+			std::optional<ddef_t*> def = ED_FindField (s);
+			if (!def)
+			{
+				Con_Printf ("Can't find field %s\n", s);
+				return false;
+			}
+			*(int *)d = G_INT((*def)->ofs);
 		}
-		*(int *)d = G_INT(def->ofs);
 		break;
-	
+
 	case ev_function:
-		func = ED_FindFunction (s);
-		if (!func)
 		{
-			Con_Printf ("Can't find function %s\n", s);
-			return false;
+			std::optional<dfunction_t*> func = ED_FindFunction (s);
+			if (!func)
+			{
+				Con_Printf ("Can't find function %s\n", s);
+				return false;
+			}
+			*(func_t *)d = *func - pr_functions;
 		}
-		*(func_t *)d = func - pr_functions;
 		break;
 		
 	default:
@@ -793,7 +795,7 @@ Used for initial level load and for savegames.
 */
 const char *ED_ParseEdict (const char *data, edict_t *ent)
 {
-	ddef_t		*key;
+	std::optional<ddef_t*>	key;
 	qboolean	anglehack;
 	qboolean	init;
 	char		keyname[256];
@@ -867,7 +869,7 @@ if (anglehack)
 	strcpy (com_token, temp.c_str ());
 }
 
-		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))
+		if (!ED_ParseEpair ((void *)&ent->v, *key, com_token))
 			Host_Error ("ED_ParseEdict: parse error");
 	}
 
@@ -897,8 +899,8 @@ void ED_LoadFromFile (const char *data)
 {	
 	edict_t		*ent;
 	int			inhibit;
-	dfunction_t	*func;
-	
+	std::optional<dfunction_t*>	func;
+
 	ent = NULL;
 	inhibit = 0;
 	pr_global_struct->time = sv.time;
@@ -961,7 +963,7 @@ void ED_LoadFromFile (const char *data)
 		}
 
 		pr_global_struct->self = EDICT_TO_PROG(ent);
-		PR_ExecuteProgram (func - pr_functions);
+		PR_ExecuteProgram (*func - pr_functions);
 	}	
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);

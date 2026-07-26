@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 
+#include <optional>
+
 #include "common.h"	// qboolean, link_t, STRUCT_FROM_LINK
 #include "entity_state.h"	// entity_state_t
 
@@ -84,8 +86,8 @@ char	*ED_NewString (const char *string);
 
 void ED_Print (edict_t *ed);
 void ED_Write (FILE *f, edict_t *ed);
-ddef_t *ED_FindField (const char *name);
-dfunction_t *ED_FindFunction (const char *name);
+std::optional<ddef_t*> ED_FindField (const char *name);
+std::optional<dfunction_t*> ED_FindFunction (const char *name);
 const char *ED_ParseEdict (const char *data, edict_t *ent);
 
 void ED_WriteGlobals (FILE *f);
@@ -136,5 +138,5 @@ void PR_RunError (const char *error, ...);
 void ED_PrintEdicts (void);
 void ED_PrintNum (int ent);
 
-eval_t *GetEdictFieldValue(edict_t *ed, const char *field);
+std::optional<eval_t*> GetEdictFieldValue(edict_t *ed, const char *field);
 
