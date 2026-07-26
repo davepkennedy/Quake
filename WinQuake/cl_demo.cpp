@@ -165,7 +165,7 @@ stop recording a demo
 */
 void CL_Stop_f (void)
 {
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	if (!cls.demorecording)
@@ -199,7 +199,7 @@ void CL_Record_f (void)
 	char	name[MAX_OSPATH];
 	int		track;
 
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	c = Cmd_Argc();
@@ -236,7 +236,7 @@ void CL_Record_f (void)
 // start the map up
 //
 	if (c > 2)
-		Cmd_ExecuteString ( va("map {}", Cmd_Argv(2)), src_command);
+		Cmd_ExecuteString ( va("map {}", Cmd_Argv(2)), cmd_source_t::src_command);
 	
 //
 // open the demo file
@@ -271,7 +271,7 @@ void CL_PlayDemo_f (void)
 	int c;
 	qboolean neg = false;
 
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	if (Cmd_Argc() != 2)
@@ -346,7 +346,7 @@ timedemo [demoname]
 */
 void CL_TimeDemo_f (void)
 {
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	if (Cmd_Argc() != 2)

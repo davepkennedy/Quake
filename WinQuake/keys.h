@@ -139,7 +139,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 
-typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
+enum class keydest_t {key_game, key_console, key_message, key_menu};
 
 // widely-polled UI-focus routing flag -- read/written from ~10 files across
 // client, server, and video code as ordinary coordination state, not an

@@ -108,7 +108,7 @@ void NET_Ban_f (void)
 	char	maskStr [32];
 	void	(*print) (const char *fmt, ...);
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		if (!sv.active)
 		{
@@ -1363,7 +1363,7 @@ ErrorReturn2:
 	dfunc.CloseSocket(newsock);
 	if (m_return_onerror)
 	{
-		key_dest = key_menu;
+		key_dest = keydest_t::key_menu;
 		m_state = (m_state_t)m_return_state;
 		m_return_onerror = false;
 	}

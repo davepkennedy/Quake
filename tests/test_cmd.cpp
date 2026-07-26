@@ -34,7 +34,7 @@ TEST_CASE ("Cmd_AddCommand / Cmd_Exists / dispatch through Cmd_ExecuteString")
 	CHECK (Cmd_Exists ("__test_cmd_basic") == true);
 	CHECK (Cmd_Exists ("__test_cmd_never_registered") == false);
 
-	Cmd_ExecuteString ("__test_cmd_basic", src_command);
+	Cmd_ExecuteString ("__test_cmd_basic", cmd_source_t::src_command);
 	CHECK (fired == true);
 }
 
@@ -53,9 +53,9 @@ TEST_CASE ("Command dispatch is case-insensitive")
 	callCount = 0;
 	Cmd_AddCommand ("__test_cmd_case", [] () { callCount++; });
 
-	Cmd_ExecuteString ("__TEST_CMD_CASE", src_command);
-	Cmd_ExecuteString ("__Test_Cmd_Case", src_command);
-	Cmd_ExecuteString ("__test_cmd_case", src_command);
+	Cmd_ExecuteString ("__TEST_CMD_CASE", cmd_source_t::src_command);
+	Cmd_ExecuteString ("__Test_Cmd_Case", cmd_source_t::src_command);
+	Cmd_ExecuteString ("__test_cmd_case", cmd_source_t::src_command);
 
 	CHECK (callCount == 3);
 }
@@ -82,10 +82,10 @@ TEST_CASE ("alias defines and dispatches a command, case-insensitively, end to e
 
 	// "alias <name> <command>" -- reaches Cmd_Alias_f (registered under
 	// "alias" by the real Cmd_Init above) through ordinary dispatch.
-	Cmd_ExecuteString ("alias __test_cmd_myalias __test_cmd_alias_target", src_command);
+	Cmd_ExecuteString ("alias __test_cmd_myalias __test_cmd_alias_target", cmd_source_t::src_command);
 
 	// invoke the alias in a different case than it was defined
-	Cmd_ExecuteString ("__TEST_CMD_MYALIAS", src_command);
+	Cmd_ExecuteString ("__TEST_CMD_MYALIAS", cmd_source_t::src_command);
 	// Cmd_ExecuteString only inserts the alias's expansion into the
 	// command buffer (Cbuf_InsertText) -- Cbuf_Execute is what actually
 	// runs it, proving the aliased command really fires, not just that
@@ -98,7 +98,7 @@ TEST_CASE ("alias defines and dispatches a command, case-insensitively, end to e
 TEST_CASE ("unknown command falls through to Cvar_Command, then reports Unknown command")
 {
 	ClearConPrint ();
-	Cmd_ExecuteString ("__test_cmd_totally_unknown_xyz", src_command);
+	Cmd_ExecuteString ("__test_cmd_totally_unknown_xyz", cmd_source_t::src_command);
 	CHECK (g_lastConPrint.find ("Unknown command") != std::string::npos);
 }
 
@@ -110,7 +110,7 @@ TEST_CASE ("a real cvar shadows an unknown-command report when typed at the cons
 	Cvar_RegisterVariable (&testCvar);
 
 	ClearConPrint ();
-	Cmd_ExecuteString ("__test_cmd_cvar_dispatch 10", src_command);
+	Cmd_ExecuteString ("__test_cmd_cvar_dispatch 10", cmd_source_t::src_command);
 
 	CHECK (g_lastConPrint.find ("Unknown command") == std::string::npos);
 	CHECK (std::string (testCvar.string) == "10");

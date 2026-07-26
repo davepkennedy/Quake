@@ -269,7 +269,7 @@ void R_TranslatePlayerSkin (int playernum)
 	model = currententity->model;
 	if (!model)
 		return;		// player doesn't have a model yet
-	if (model->type != mod_alias)
+	if (model->type != modtype_t::mod_alias)
 		return; // only translate skins on alias models
 
 	paliashdr = (aliashdr_t *)Mod_Extradata (model);

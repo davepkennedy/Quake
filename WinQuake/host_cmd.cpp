@@ -37,7 +37,7 @@ extern void M_Menu_Quit_f (void);
 
 void Host_Quit_f (void)
 {
-	if (key_dest != key_console && cls.state != ca_dedicated)
+	if (key_dest != keydest_t::key_console && cls.state != ca_dedicated)
 	{
 		M_Menu_Quit_f ();
 		return;
@@ -62,7 +62,7 @@ void Host_Status_f (void)
 	int			j;
 	void		(*print) (const char *fmt, ...);
 	
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		if (!sv.active)
 		{
@@ -112,7 +112,7 @@ Sets client to godmode
 */
 void Host_God_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -130,7 +130,7 @@ void Host_God_f (void)
 
 void Host_Notarget_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -150,7 +150,7 @@ qboolean noclip_anglehack;
 
 void Host_Noclip_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -182,7 +182,7 @@ Sets client to flymode
 */
 void Host_Fly_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -216,7 +216,7 @@ void Host_Ping_f (void)
 	float	total;
 	client_t	*client;
 	
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -258,7 +258,7 @@ void Host_Map_f (void)
 	int		i;
 	char	name[MAX_QPATH];
 
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	cls.demonum = -1;		// stop demo loop in case this fails
@@ -266,7 +266,7 @@ void Host_Map_f (void)
 	CL_Disconnect ();
 	Host_ShutdownServer(false);		
 
-	key_dest = key_game;			// remove console or menu
+	key_dest = keydest_t::key_game;			// remove console or menu
 	SCR_BeginLoadingPlaque ();
 
 	{
@@ -300,7 +300,7 @@ void Host_Map_f (void)
 		}
 		Q_strlcpy (cls.spawnparms, spawnparms.c_str(), sizeof(cls.spawnparms));
 
-		Cmd_ExecuteString ("connect local", src_command);
+		Cmd_ExecuteString ("connect local", cmd_source_t::src_command);
 	}
 }
 
@@ -376,7 +376,7 @@ void Host_Restart_f (void)
 	if (cls.demoplayback || !sv.active)
 		return;
 
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 	Q_strlcpy (mapname, sv.name, sizeof(mapname));	// must copy out, because it gets cleared
 								// in sv_spawnserver
@@ -472,7 +472,7 @@ void Host_Savegame_f (void)
 	int		i;
 	char	comment[SAVEGAME_COMMENT_LENGTH+1];
 
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	if (!sv.active)
@@ -575,7 +575,7 @@ void Host_Loadgame_f (void)
 	int		version;
 	float			spawn_parms[NUM_SPAWN_PARMS];
 
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	if (Cmd_Argc() != 2)
@@ -928,7 +928,7 @@ void Host_Name_f (void)
 	newNameBuf[sizeof(newNameBuf)-1] = 0;
 	newName[15] = 0;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		if (Q_strcmp(cl_name.string.c_str(), newName) == 0)
 			return;
@@ -964,7 +964,7 @@ void Host_Please_f (void)
 	client_t *cl;
 	int			j;
 	
-	if (cmd_source != src_command)
+	if (cmd_source != cmd_source_t::src_command)
 		return;
 
 	if ((Cmd_Argc () == 3) && Q_strcmp(Cmd_Argv(1), "#") == 0)
@@ -1021,7 +1021,7 @@ void Host_Say(qboolean teamonly)
 	char	text[64];
 	qboolean	fromServer = false;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		if (cls.state == ca_dedicated)
 		{
@@ -1098,7 +1098,7 @@ void Host_Tell_f(void)
 	char	pbuf[256];
 	char	*p;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -1175,7 +1175,7 @@ void Host_Color_f(void)
 	
 	playercolor = top*16 + bottom;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cvar_SetValue ("_cl_color", playercolor);
 		if (cls.state == ca_connected)
@@ -1199,7 +1199,7 @@ Host_Kill_f
 */
 void Host_Kill_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -1225,7 +1225,7 @@ Host_Pause_f
 void Host_Pause_f (void)
 {
 	
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;
@@ -1261,7 +1261,7 @@ Host_PreSpawn_f
 */
 void Host_PreSpawn_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Con_Printf ("prespawn is not valid from the console\n");
 		return;
@@ -1290,7 +1290,7 @@ void Host_Spawn_f (void)
 	client_t	*client;
 	edict_t	*ent;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Con_Printf ("spawn is not valid from the console\n");
 		return;
@@ -1410,7 +1410,7 @@ Host_Begin_f
 */
 void Host_Begin_f (void)
 {
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Con_Printf ("begin is not valid from the console\n");
 		return;
@@ -1438,7 +1438,7 @@ void Host_Kick_f (void)
 	int			i;
 	qboolean	byNumber = false;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		if (!sv.active)
 		{
@@ -1474,7 +1474,7 @@ void Host_Kick_f (void)
 
 	if (i < svs.maxclients)
 	{
-		if (cmd_source == src_command)
+		if (cmd_source == cmd_source_t::src_command)
 			if (cls.state == ca_dedicated)
 				who = "Console";
 			else
@@ -1529,7 +1529,7 @@ void Host_Give_f (void)
 	int		v;
 	std::optional<eval_t*>	val;
 
-	if (cmd_source == src_command)
+	if (cmd_source == cmd_source_t::src_command)
 	{
 		Cmd_ForwardToServer ();
 		return;

@@ -1070,7 +1070,7 @@ void PF_precache_sound (void)
 {
 	char	*s;
 
-	if (SV_State() != ss_loading)
+	if (SV_State() != server_state_t::ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
 
 	s = G_STRING(OFS_PARM0);
@@ -1085,7 +1085,7 @@ void PF_precache_model (void)
 {
 	char	*s;
 
-	if (SV_State() != ss_loading)
+	if (SV_State() != server_state_t::ss_loading)
 		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
 
 	s = G_STRING(OFS_PARM0);
@@ -1213,7 +1213,7 @@ void PF_lightstyle (void)
 	sv.lightstyles[style] = val;
 	
 // send message to all clients on this server
-	if (SV_State() != ss_active)
+	if (SV_State() != server_state_t::ss_active)
 		return;
 	
 	for (j=1 ; j<=SV_NumClients() ; j++)

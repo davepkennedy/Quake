@@ -206,9 +206,9 @@ void R_StoreEfrags (efrag_t **ppefrag)
 
 		switch (clmodel->type)
 		{
-		case mod_alias:
-		case mod_brush:
-		case mod_sprite:
+		case modtype_t::mod_alias:
+		case modtype_t::mod_brush:
+		case modtype_t::mod_sprite:
 			pent = pefrag->entity;
 
 			if ((pent->visframe != r_framecount) &&

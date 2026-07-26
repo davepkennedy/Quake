@@ -303,7 +303,7 @@ void Key_Message (int key)
 		Cbuf_AddText(chat_buffer);
 		Cbuf_AddText("\"\n");
 
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 		chat_bufferlen = 0;
 		chat_buffer[0] = 0;
 		return;
@@ -311,7 +311,7 @@ void Key_Message (int key)
 
 	if (key == K_ESCAPE)
 	{
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 		chat_bufferlen = 0;
 		chat_buffer[0] = 0;
 		return;
@@ -724,14 +724,14 @@ void Key_Event (int key, qboolean down)
 			return;
 		switch (key_dest)
 		{
-		case key_message:
+		case keydest_t::key_message:
 			Key_Message (key);
 			break;
-		case key_menu:
+		case keydest_t::key_menu:
 			M_Keydown (key);
 			break;
-		case key_game:
-		case key_console:
+		case keydest_t::key_game:
+		case keydest_t::key_console:
 			M_ToggleMenu_f ();
 			break;
 		default:
@@ -770,7 +770,7 @@ void Key_Event (int key, qboolean down)
 //
 // during demo playback, most keys bring up the main menu
 //
-	if (cls.demoplayback && down && consolekeys[key] && key_dest == key_game)
+	if (cls.demoplayback && down && consolekeys[key] && key_dest == keydest_t::key_game)
 	{
 		M_ToggleMenu_f ();
 		return;
@@ -779,9 +779,9 @@ void Key_Event (int key, qboolean down)
 //
 // if not a consolekey, send to the interpreter no matter what mode is
 //
-	if ( (key_dest == key_menu && menubound[key])
-	|| (key_dest == key_console && !consolekeys[key])
-	|| (key_dest == key_game && ( !con.forcedup || !consolekeys[key] ) ) )
+	if ( (key_dest == keydest_t::key_menu && menubound[key])
+	|| (key_dest == keydest_t::key_console && !consolekeys[key])
+	|| (key_dest == keydest_t::key_game && ( !con.forcedup || !consolekeys[key] ) ) )
 	{
 		kb = &keybindings[key];
 		if (!kb->empty())
@@ -810,15 +810,15 @@ void Key_Event (int key, qboolean down)
 
 	switch (key_dest)
 	{
-	case key_message:
+	case keydest_t::key_message:
 		Key_Message (key);
 		break;
-	case key_menu:
+	case keydest_t::key_menu:
 		M_Keydown (key);
 		break;
 
-	case key_game:
-	case key_console:
+	case keydest_t::key_game:
+	case keydest_t::key_console:
 		Key_Console (key);
 		break;
 	default:

@@ -1149,7 +1149,7 @@ void SV_SendReconnect (void)
 #ifdef QUAKE2
 		Cbuf_InsertText ("reconnect\n");
 #else
-		Cmd_ExecuteString ("reconnect\n", src_command);
+		Cmd_ExecuteString ("reconnect\n", cmd_source_t::src_command);
 #endif
 }
 
@@ -1271,7 +1271,7 @@ void SV_SpawnServer (char *server)
 		svs.clients[i].edict = ent;
 	}
 	
-	sv.state = ss_loading;
+	sv.state = server_state_t::ss_loading;
 	sv.paused = false;
 
 	sv.time = 1.0;
@@ -1339,7 +1339,7 @@ void SV_SpawnServer (char *server)
 	sv.active = true;
 
 // all setup is completed, any further precache statements are errors
-	sv.state = ss_active;
+	sv.state = server_state_t::ss_active;
 	
 // run two frames to allow everything to settle
 	host_frametime = 0.1;

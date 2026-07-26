@@ -38,7 +38,7 @@ typedef struct
 
 //=============================================================================
 
-typedef enum {ss_loading, ss_active} server_state_t;
+enum class server_state_t {ss_loading, ss_active};
 
 struct server_t
 {

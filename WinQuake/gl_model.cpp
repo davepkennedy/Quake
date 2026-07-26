@@ -171,7 +171,7 @@ void Mod_ClearAll (void)
 	model_t	*mod;
 	
 	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
-		if (mod->type != mod_alias)
+		if (mod->type != modtype_t::mod_alias)
 			mod->needload = true;
 }
 
@@ -222,7 +222,7 @@ void Mod_TouchModel (const char *name)
 	
 	if (!mod->needload)
 	{
-		if (mod->type == mod_alias)
+		if (mod->type == modtype_t::mod_alias)
 			Cache_Check (&mod->cache);
 	}
 }
@@ -242,7 +242,7 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 
 	if (!mod->needload)
 	{
-		if (mod->type == mod_alias)
+		if (mod->type == modtype_t::mod_alias)
 		{
 			d = Cache_Check (&mod->cache);
 			if (d)
@@ -1150,7 +1150,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	dheader_t	*header;
 	dmodel_t 	*bm;
 	
-	loadmodel->type = mod_brush;
+	loadmodel->type = modtype_t::mod_brush;
 	
 	header = (dheader_t *)buffer;
 
@@ -1619,7 +1619,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 	pheader->numposes = posenum;
 
-	mod->type = mod_alias;
+	mod->type = modtype_t::mod_alias;
 
 // FIXME: do this right
 	mod->mins[0] = mod->mins[1] = mod->mins[2] = -16;
@@ -1812,7 +1812,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 		}
 	}
 
-	mod->type = mod_sprite;
+	mod->type = modtype_t::mod_sprite;
 }
 
 //=============================================================================

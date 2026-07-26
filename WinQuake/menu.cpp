@@ -221,18 +221,18 @@ void M_ToggleMenu_f (void)
 {
 	m_entersound = true;
 
-	if (key_dest == key_menu)
+	if (key_dest == keydest_t::key_menu)
 	{
 		if (m_state != m_main)
 		{
 			M_Menu_Main_f ();
 			return;
 		}
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 		m_state = m_none;
 		return;
 	}
-	if (key_dest == key_console)
+	if (key_dest == keydest_t::key_console)
 	{
 		Con_ToggleConsole_f ();
 	}
@@ -260,12 +260,12 @@ MainMenu mainMenu;
 
 void M_Menu_Main_f (void)
 {
-	if (key_dest != key_menu)
+	if (key_dest != keydest_t::key_menu)
 	{
 		m_save_demonum = cls.demonum;
 		cls.demonum = -1;
 	}
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_main;
 	m_entersound = true;
 }
@@ -292,7 +292,7 @@ void MainMenu::Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 		m_state = m_none;
 		cls.demonum = m_save_demonum;
 		if (cls.demonum != -1 && !cls.demoplayback && cls.state != ca_connected)
@@ -356,7 +356,7 @@ SinglePlayerMenu singlePlayerMenu;
 
 void M_Menu_SinglePlayer_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_singleplayer;
 	m_entersound = true;
 }
@@ -407,7 +407,7 @@ void SinglePlayerMenu::Key (int key)
 			if (SV_Active())
 				if (!SCR_ModalMessage("Are you sure you want to\nstart a new game?\n"))
 					break;
-			key_dest = key_game;
+			key_dest = keydest_t::key_game;
 			if (SV_Active())
 				Cbuf_AddText ("disconnect\n");
 			Cbuf_AddText ("maxplayers 1\n");
@@ -487,7 +487,7 @@ void M_Menu_Load_f (void)
 {
 	m_entersound = true;
 	m_state = m_load;
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	M_ScanSaves ();
 }
 
@@ -502,7 +502,7 @@ void M_Menu_Save_f (void)
 		return;
 	m_entersound = true;
 	m_state = m_save;
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	M_ScanSaves ();
 }
 
@@ -552,7 +552,7 @@ void LoadGameMenu::Key (int k)
 		if (!loadable[load_cursor])
 			return;
 		m_state = m_none;
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 
 	// Host_Loadgame_f can't bring up the loading plaque because too much
 	// stack space has been used, so do it now
@@ -591,7 +591,7 @@ void SaveMenu::Key (int k)
 
 	case K_ENTER:
 		m_state = m_none;
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 		Cbuf_AddText (va("save s{}\n", load_cursor));
 		return;
 
@@ -630,7 +630,7 @@ MultiPlayerMenu multiPlayerMenu;
 
 void M_Menu_MultiPlayer_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_multiplayer;
 	m_entersound = true;
 }
@@ -721,7 +721,7 @@ SetupMenu setupMenu;
 
 void M_Menu_Setup_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_setup;
 	m_entersound = true;
 	Q_strlcpy(setupMenu.nameBuf, cl_name.string.c_str(), sizeof(setupMenu.nameBuf));
@@ -908,7 +908,7 @@ const char *net_helpMessage [] =
 
 void M_Menu_Net_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_net;
 	m_entersound = true;
 	netMenu.items = 2;
@@ -1033,7 +1033,7 @@ OptionsMenu optionsMenu;
 
 void M_Menu_Options_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_options;
 	m_entersound = true;
 
@@ -1333,7 +1333,7 @@ KeysMenu keysMenu;
 
 void M_Menu_Keys_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_keys;
 	m_entersound = true;
 }
@@ -1463,7 +1463,7 @@ VideoMenu videoMenu;
 
 void M_Menu_Video_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_video;
 	m_entersound = true;
 }
@@ -1496,7 +1496,7 @@ HelpMenu helpMenu;
 
 void M_Menu_Help_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_help;
 	m_entersound = true;
 	helpMenu.page = 0;
@@ -1599,8 +1599,8 @@ void M_Menu_Quit_f (void)
 {
 	if (m_state == m_quit)
 		return;
-	quitMenu.wasInMenus = (key_dest == key_menu);
-	key_dest = key_menu;
+	quitMenu.wasInMenus = (key_dest == keydest_t::key_menu);
+	key_dest = keydest_t::key_menu;
 	quitMenu.prevState = m_state;
 	m_state = m_quit;
 	m_entersound = true;
@@ -1622,14 +1622,14 @@ void QuitMenu::Key (int key)
 		}
 		else
 		{
-			key_dest = key_game;
+			key_dest = keydest_t::key_game;
 			m_state = m_none;
 		}
 		break;
 
 	case 'Y':
 	case 'y':
-		key_dest = key_console;
+		key_dest = keydest_t::key_console;
 		Host_Quit_f ();
 		break;
 
@@ -1702,7 +1702,7 @@ LanConfigMenu lanConfigMenu;
 
 void M_Menu_LanConfig_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_lanconfig;
 	m_entersound = true;
 	if (lanConfigMenu.cursor == -1)
@@ -1828,7 +1828,7 @@ void LanConfigMenu::Key (int key)
 		{
 			m_return_state = m_state;
 			m_return_onerror = true;
-			key_dest = key_game;
+			key_dest = keydest_t::key_game;
 			m_state = m_none;
 			Cbuf_AddText ( va ("connect \"{}\"\n", joinname) );
 			break;
@@ -2058,7 +2058,7 @@ GameOptionsMenu gameOptionsMenu;
 
 void M_Menu_GameOptions_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_gameoptions;
 	m_entersound = true;
 	if (gameOptionsMenu.maxplayers == 0)
@@ -2371,7 +2371,7 @@ SearchMenu searchMenu;
 
 void M_Menu_Search_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_search;
 	m_entersound = false;
 	slistSilent = true;
@@ -2438,7 +2438,7 @@ ServerListMenu serverListMenu;
 
 void M_Menu_ServerList_f (void)
 {
-	key_dest = key_menu;
+	key_dest = keydest_t::key_menu;
 	m_state = m_slist;
 	m_entersound = true;
 	serverListMenu.cursor = 0;
@@ -2522,7 +2522,7 @@ void ServerListMenu::Key (int k)
 		m_return_state = m_state;
 		m_return_onerror = true;
 		sorted = false;
-		key_dest = key_game;
+		key_dest = keydest_t::key_game;
 		m_state = m_none;
 		Cbuf_AddText ( va ("connect \"{}\"\n", hostcache[cursor].cname) );
 		break;
@@ -2591,7 +2591,7 @@ MenuScreen *M_ScreenForState (m_state_t state)
 
 void M_Draw (void)
 {
-	if (m_state == m_none || key_dest != key_menu)
+	if (m_state == m_none || key_dest != keydest_t::key_menu)
 		return;
 
 	if (!m_recursiveDraw)

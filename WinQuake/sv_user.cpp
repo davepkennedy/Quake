@@ -572,7 +572,7 @@ nextmsg:
 				if (ret == 2)
 					Cbuf_InsertText (s.c_str());
 				else if (ret == 1)
-					Cmd_ExecuteString (s.c_str(), src_client);
+					Cmd_ExecuteString (s.c_str(), cmd_source_t::src_client);
 				else
 					Con_DPrintf("%s tried to %s\n", host_client->name, s.c_str());
 				break;
@@ -622,7 +622,7 @@ void SV_RunClients (void)
 		}
 
 // always pause in single player if in console or menus
-		if (!sv.paused && (svs.maxclients > 1 || key_dest == key_game) )
+		if (!sv.paused && (svs.maxclients > 1 || key_dest == keydest_t::key_game) )
 			SV_ClientThink ();
 	}
 }

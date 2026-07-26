@@ -577,7 +577,7 @@ while (1)
 		
 	case OP_ADDRESS:
 		ed = PROG_TO_EDICT(a->edict);
-		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
+		if (ed == (edict_t *)sv.edicts && sv.state == server_state_t::ss_active)
 			PR_RunError ("assignment to world entity");
 		c->_int = (int)((byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts);
 		break;

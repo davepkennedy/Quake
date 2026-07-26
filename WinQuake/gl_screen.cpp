@@ -216,7 +216,7 @@ void SCR_CheckDrawCenterString (void)
 	
 	if (scr_centertime_off <= 0 && !CL_Intermission())
 		return;
-	if (key_dest != key_game)
+	if (key_dest != keydest_t::key_game)
 		return;
 
 	SCR_DrawCenterString ();
@@ -517,7 +517,7 @@ void SCR_SetUpToDrawConsole (void)
 		scr_conlines = vid.height;		// full screen
 		scr_con_current = scr_conlines;
 	}
-	else if (key_dest == key_console)
+	else if (key_dest == keydest_t::key_console)
 		scr_conlines = vid.height/2;	// half screen
 	else
 		scr_conlines = 0;				// none visible
@@ -562,7 +562,7 @@ void SCR_DrawConsole (void)
 	}
 	else
 	{
-		if (key_dest == key_game || key_dest == key_message)
+		if (key_dest == keydest_t::key_game || key_dest == keydest_t::key_message)
 			Con_DrawNotify ();	// only draw notify in game
 	}
 }
@@ -890,11 +890,11 @@ void SCR_UpdateScreen (void)
 		SCR_DrawLoading ();
 		Sbar_Draw ();
 	}
-	else if (CL_Intermission() == 1 && key_dest == key_game)
+	else if (CL_Intermission() == 1 && key_dest == keydest_t::key_game)
 	{
 		Sbar_IntermissionOverlay ();
 	}
-	else if (CL_Intermission() == 2 && key_dest == key_game)
+	else if (CL_Intermission() == 2 && key_dest == keydest_t::key_game)
 	{
 		Sbar_FinaleOverlay ();
 		SCR_CheckDrawCenterString ();

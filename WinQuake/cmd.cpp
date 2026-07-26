@@ -188,7 +188,7 @@ void Cbuf_Execute (void)
 		}
 
 // execute the command line
-		Cmd_ExecuteString (line, src_command);
+		Cmd_ExecuteString (line, cmd_source_t::src_command);
 		
 		if (cmd_wait)
 		{	// skip out while text still remains in buffer, leaving it

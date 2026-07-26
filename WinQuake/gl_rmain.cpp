@@ -888,11 +888,11 @@ void R_DrawEntitiesOnList (void)
 
 		switch (currententity->model->type)
 		{
-		case mod_alias:
+		case modtype_t::mod_alias:
 			R_DrawAliasModel (currententity);
 			break;
 
-		case mod_brush:
+		case modtype_t::mod_brush:
 			R_DrawBrushModel (currententity);
 			break;
 
@@ -907,7 +907,7 @@ void R_DrawEntitiesOnList (void)
 
 		switch (currententity->model->type)
 		{
-		case mod_sprite:
+		case modtype_t::mod_sprite:
 			R_DrawSpriteModel (currententity);
 			break;
 		}

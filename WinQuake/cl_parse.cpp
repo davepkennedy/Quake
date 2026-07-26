@@ -955,7 +955,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_sellscreen:
-			Cmd_ExecuteString ("help", src_command);
+			Cmd_ExecuteString ("help", cmd_source_t::src_command);
 			break;
 		}
 	}
