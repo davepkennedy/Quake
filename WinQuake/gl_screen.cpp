@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // screen.c -- master for refresh, status bar, console, chat, notify, etc
 
+#include <vector>
+
 #include "quakedef.h"
 
 /*
@@ -590,7 +592,6 @@ SCR_ScreenShot_f
 */  
 void SCR_ScreenShot_f (void) 
 {
-	byte		*buffer;
 	char		pcxname[80];
 	std::string	checkname;
 	int			i, c, temp;
@@ -614,8 +615,7 @@ void SCR_ScreenShot_f (void)
  	}
 
 
-	buffer = (byte *)malloc(glwidth*glheight*3 + 18);
-	memset (buffer, 0, 18);
+	std::vector<byte> buffer (glwidth*glheight*3 + 18, 0);
 	buffer[2] = 2;		// uncompressed type
 	buffer[12] = glwidth&255;
 	buffer[13] = glwidth>>8;
@@ -623,7 +623,8 @@ void SCR_ScreenShot_f (void)
 	buffer[15] = glheight>>8;
 	buffer[16] = 24;	// pixel size
 
-	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer+18 ); 
+	glPixelStorei (GL_PACK_ALIGNMENT, 1);	// buffer is sized tightly-packed; GL's default 4-byte row alignment would overrun it
+	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer.data()+18 );
 
 	// swap rgb to bgr
 	c = 18+glwidth*glheight*3;
@@ -633,11 +634,10 @@ void SCR_ScreenShot_f (void)
 		buffer[i] = buffer[i+2];
 		buffer[i+2] = temp;
 	}
-	COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
+	COM_WriteFile (pcxname, buffer.data(), glwidth*glheight*3 + 18 );
 
-	free (buffer);
 	Con_Printf ("Wrote %s\n", pcxname);
-} 
+}
 
 
 //=============================================================================
