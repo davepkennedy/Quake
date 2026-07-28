@@ -114,7 +114,7 @@ void Z_ClearZone (memzone_t *zone, int size)
 // set the entire zone to one free block
 
 	zone->blocklist.next = zone->blocklist.prev = block =
-		(memblock_t *)( (byte *)zone + sizeof(memzone_t) );
+		(memblock_t *)( reinterpret_cast<byte*>(zone) + sizeof(memzone_t) );
 	zone->blocklist.tag = 1;	// in use block
 	zone->blocklist.id = 0;
 	zone->blocklist.size = 0;
@@ -139,7 +139,7 @@ void Z_Free (void *ptr)
 	if (!ptr)
 		Sys_Error ("Z_Free: nullptr pointer");
 
-	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
+	block = (memblock_t *) ( reinterpret_cast<byte*>(ptr) - sizeof(memblock_t));
 	if (block->id != ZONEID)
 		Sys_Error ("Z_Free: freed a pointer without ZONEID");
 	if (block->tag == 0)
@@ -223,7 +223,7 @@ void *Z_TagMalloc (int size, int tag)
 	extra = base->size - size;
 	if (extra >  MINFRAGMENT)
 	{	// there will be a free fragment after the allocated block
-		newblock = (memblock_t *) ((byte *)base + size );
+		newblock = (memblock_t *) (reinterpret_cast<byte*>(base) + size );
 		newblock->size = extra;
 		newblock->tag = 0;			// free block
 		newblock->prev = base;
@@ -241,9 +241,9 @@ void *Z_TagMalloc (int size, int tag)
 	base->id = ZONEID;
 
 // marker for memory trash testing
-	*(int *)((byte *)base + base->size - 4) = ZONEID;
+	*(int *)(reinterpret_cast<byte*>(base) + base->size - 4) = ZONEID;
 
-	return (void *) ((byte *)base + sizeof(memblock_t));
+	return static_cast<void*>(reinterpret_cast<byte*>(base) + sizeof(memblock_t));
 }
 
 
@@ -265,7 +265,7 @@ void Z_Print (memzone_t *zone)
 		
 		if (block->next == &zone->blocklist)
 			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
+		if ( reinterpret_cast<byte*>(block) + block->size != reinterpret_cast<byte*>(block->next))
 			Con_Printf ("ERROR: block size does not touch the next block\n");
 		if ( block->next->prev != block)
 			Con_Printf ("ERROR: next block doesn't have proper back link\n");
@@ -288,7 +288,7 @@ void Z_CheckHeap (void)
 	{
 		if (block->next == &mem.mainzone->blocklist)
 			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
+		if ( reinterpret_cast<byte*>(block) + block->size != reinterpret_cast<byte*>(block->next))
 			Sys_Error ("Z_CheckHeap: block size does not touch the next block\n");
 		if ( block->next->prev != block)
 			Sys_Error ("Z_CheckHeap: next block doesn't have proper back link\n");
@@ -321,13 +321,13 @@ void Hunk_Check (void)
 {
 	hunk_t	*h;
 	
-	for (h = (hunk_t *)mem.hunk_base ; (byte *)h != mem.hunk_base + mem.hunk_low_used ; )
+	for (h = (hunk_t *)mem.hunk_base ; reinterpret_cast<byte*>(h) != mem.hunk_base + mem.hunk_low_used ; )
 	{
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
-		if (h->size < 16 || (size_t)(h->size + (byte *)h - mem.hunk_base) > mem.hunk_size)
+		if (h->size < 16 || (size_t)(h->size + reinterpret_cast<byte*>(h) - mem.hunk_base) > mem.hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
-		h = (hunk_t *)((byte *)h+h->size);
+		h = (hunk_t *)(reinterpret_cast<byte*>(h)+h->size);
 	}
 }
 
@@ -383,10 +383,10 @@ void Hunk_Print (qboolean all)
 	//
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
-		if (h->size < 16 || (size_t)(h->size + (byte *)h - mem.hunk_base) > mem.hunk_size)
+		if (h->size < 16 || (size_t)(h->size + reinterpret_cast<byte*>(h) - mem.hunk_base) > mem.hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 			
-		next = (hunk_t *)((byte *)h+h->size);
+		next = (hunk_t *)(reinterpret_cast<byte*>(h)+h->size);
 		count++;
 		totalblocks++;
 		sum += h->size;
@@ -450,7 +450,7 @@ void *Hunk_AllocName (int size, const char *name)
 	h->sentinal = HUNK_SENTINAL;
 	Q_strncpy (h->name, name, 8);
 	
-	return (void *)(h+1);
+	return static_cast<void*>(h+1);
 }
 
 /*
@@ -576,7 +576,7 @@ void *Hunk_HighAllocName (int size, const char *name)
 	h->sentinal = HUNK_SENTINAL;
 	Q_strncpy (h->name, name, 8);
 
-	return (void *)(h+1);
+	return static_cast<void*>(h+1);
 }
 
 
@@ -637,7 +637,7 @@ void Cache_Move ( cache_system_t *c)
 		newcs->user = c->user;
 		Q_memcpy (newcs->name, c->name, sizeof(newcs->name));
 		Cache_Free (c->user);
-		newcs->user->data = (void *)(newcs+1);
+		newcs->user->data = static_cast<void*>(newcs+1);
 	}
 	else
 	{
@@ -663,7 +663,7 @@ void Cache_FreeLow (int new_low_hunk)
 		c = mem.cache_head.next;
 		if (c == &mem.cache_head)
 			return;		// nothing in cache at all
-		if ((byte *)c >= mem.hunk_base + new_low_hunk)
+		if (reinterpret_cast<byte*>(c) >= mem.hunk_base + new_low_hunk)
 			return;		// there is space to grow the hunk
 		Cache_Move ( c );	// reclaim the space
 	}
@@ -686,7 +686,7 @@ void Cache_FreeHigh (int new_high_hunk)
 		c = mem.cache_head.prev;
 		if (c == &mem.cache_head)
 			return;		// nothing in cache at all
-		if ( (byte *)c + c->size <= mem.hunk_base + mem.hunk_size - new_high_hunk)
+		if ( reinterpret_cast<byte*>(c) + c->size <= mem.hunk_base + mem.hunk_size - new_high_hunk)
 			return;		// there is space to grow the hunk
 		if (c == prev)
 			Cache_Free (c->user);	// didn't move out of the way
@@ -755,7 +755,7 @@ cache_system_t *Cache_TryAlloc (int size, qboolean nobottom)
 	{
 		if (!nobottom || cs != mem.cache_head.next)
 		{
-			if ( (byte *)cs - (byte *)newcs >= size)
+			if ( reinterpret_cast<byte*>(cs) - reinterpret_cast<byte*>(newcs) >= size)
 			{	// found space
 				memset (newcs, 0, sizeof(*newcs));
 				newcs->size = size;
@@ -772,13 +772,13 @@ cache_system_t *Cache_TryAlloc (int size, qboolean nobottom)
 		}
 
 	// continue looking
-		newcs = (cache_system_t *)((byte *)cs + cs->size);
+		newcs = (cache_system_t *)(reinterpret_cast<byte*>(cs) + cs->size);
 		cs = cs->next;
 
 	} while (cs != &mem.cache_head);
 
 // try to allocate one at the very end
-	if ( mem.hunk_base + mem.hunk_size - mem.hunk_high_used - (byte *)newcs >= size)
+	if ( mem.hunk_base + mem.hunk_size - mem.hunk_high_used - reinterpret_cast<byte*>(newcs) >= size)
 	{
 		memset (newcs, 0, sizeof(*newcs));
 		newcs->size = size;
@@ -934,7 +934,7 @@ void *Cache_Alloc (cache_user_t *c, int size, const char *name)
 		if (cs)
 		{
 			strncpy (cs->name, name, sizeof(cs->name)-1);
-			c->data = (void *)(cs+1);
+			c->data = static_cast<void*>(cs+1);
 			cs->user = c;
 			break;
 		}
@@ -962,7 +962,7 @@ void Memory_Init (void *buf, size_t size)
 	int p;
 	int zonesize = DYNAMIC_SIZE;
 
-	mem.hunk_base = (byte *)buf;
+	mem.hunk_base = static_cast<byte*>(buf);
 	mem.hunk_size = size;
 	mem.hunk_low_used = 0;
 	mem.hunk_high_used = 0;

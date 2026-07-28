@@ -245,10 +245,10 @@ static void Warp_InitRenderer (void)
 	qglBindBuffer (GL_ARRAY_BUFFER, warp_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(warp_stream), nullptr, GL_STREAM_DRAW);
 	// location 0: xyz  (3 floats, offset 0, stride 5*4=20)
-	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), nullptr);
 	qglEnableVertexAttribArray (0);
 	// location 1: uv  (2 floats, offset 12)
-	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), reinterpret_cast<void*>(3*sizeof(float)));
 	qglEnableVertexAttribArray (1);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
@@ -488,7 +488,7 @@ void R_InitSky (texture_t *mt)
 	unsigned	*rgba;
 	extern	int			skytexturenum;
 
-	src = (byte *)mt + mt->offsets[0];
+	src = reinterpret_cast<byte*>(mt) + mt->offsets[0];
 
 	// make an average value for the back to avoid
 	// a fringe on the top level
@@ -500,15 +500,15 @@ void R_InitSky (texture_t *mt)
 			p = src[i*256 + j + 128];
 			rgba = &d_8to24table[p];
 			trans[(i*128) + j] = *rgba;
-			r += ((byte *)rgba)[0];
-			g += ((byte *)rgba)[1];
-			b += ((byte *)rgba)[2];
+			r += (reinterpret_cast<byte*>(rgba))[0];
+			g += (reinterpret_cast<byte*>(rgba))[1];
+			b += (reinterpret_cast<byte*>(rgba))[2];
 		}
 
-	((byte *)&transpix)[0] = r/(128*128);
-	((byte *)&transpix)[1] = g/(128*128);
-	((byte *)&transpix)[2] = b/(128*128);
-	((byte *)&transpix)[3] = 0;
+	(reinterpret_cast<byte*>(&transpix))[0] = r/(128*128);
+	(reinterpret_cast<byte*>(&transpix))[1] = g/(128*128);
+	(reinterpret_cast<byte*>(&transpix))[2] = b/(128*128);
+	(reinterpret_cast<byte*>(&transpix))[3] = 0;
 
 
 	if (!solidskytexture)

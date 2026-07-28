@@ -1635,7 +1635,7 @@ void VID_Init8bitPalette()
 		oldPalette++;
 	}
 	glColorTableEXT(GL_SHARED_TEXTURE_PALETTE_EXT, GL_RGB, 256, GL_RGB, GL_UNSIGNED_BYTE,
-		(void *) thePalette);
+		static_cast<void*>(thePalette));
 	is8bit = TRUE;
 }
 

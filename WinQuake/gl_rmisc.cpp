@@ -44,7 +44,7 @@ void	R_InitTextures (void)
 	
 	for (m=0 ; m<4 ; m++)
 	{
-		dest = (byte *)r_notexture_mip + r_notexture_mip->offsets[m];
+		dest = reinterpret_cast<byte*>(r_notexture_mip) + r_notexture_mip->offsets[m];
 		for (y=0 ; y< (16>>m) ; y++)
 			for (x=0 ; x< (16>>m) ; x++)
 			{
@@ -276,9 +276,9 @@ void R_TranslatePlayerSkin (int playernum)
 	s = paliashdr->skinwidth * paliashdr->skinheight;
 	if (currententity->skinnum < 0 || currententity->skinnum >= paliashdr->numskins) {
 		Con_Printf("(%d): Invalid player skin #%d\n", playernum, currententity->skinnum);
-		original = (byte *)paliashdr + paliashdr->texels[0];
+		original = reinterpret_cast<byte*>(paliashdr) + paliashdr->texels[0];
 	} else
-		original = (byte *)paliashdr + paliashdr->texels[currententity->skinnum];
+		original = reinterpret_cast<byte*>(paliashdr) + paliashdr->texels[currententity->skinnum];
 	if (s & 3)
 		Sys_Error ("R_TranslateSkin: s&3");
 
@@ -314,7 +314,7 @@ void R_TranslatePlayerSkin (int playernum)
 	if (VID_Is8bit()) { // 8bit texture upload
 		byte *out2;
 
-		out2 = (byte *)pixels;
+		out2 = reinterpret_cast<byte*>(pixels);
 		memset(pixels, 0, sizeof(pixels));
 		fracstep = inwidth*0x10000/scaled_width;
 		for (i=0 ; i<scaled_height ; i++, out2 += scaled_width)
@@ -334,7 +334,7 @@ void R_TranslatePlayerSkin (int playernum)
 			}
 		}
 
-		GL_Upload8_EXT ((byte *)pixels, scaled_width, scaled_height, false, false);
+		GL_Upload8_EXT (reinterpret_cast<byte*>(pixels), scaled_width, scaled_height, false, false);
 		return;
 	}
 

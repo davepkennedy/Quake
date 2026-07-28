@@ -148,7 +148,7 @@ void Q_memset (void *dest, int fill, int count)
 	}
 	else
 		for (i=0 ; i<count ; i++)
-			((byte *)dest)[i] = fill;
+			(static_cast<byte*>(dest))[i] = fill;
 }
 
 void Q_memcpy (void *dest, const void *src, int count)
@@ -163,7 +163,7 @@ void Q_memcpy (void *dest, const void *src, int count)
 	}
 	else
 		for (i=0 ; i<count ; i++)
-			((byte *)dest)[i] = ((byte *)src)[i];
+			(static_cast<byte*>(dest))[i] = (static_cast<const byte*>(src))[i];
 }
 
 int Q_memcmp (const void *m1, const void *m2, int count)
@@ -171,7 +171,7 @@ int Q_memcmp (const void *m1, const void *m2, int count)
 	while(count)
 	{
 		count--;
-		if (((byte *)m1)[count] != ((byte *)m2)[count])
+		if ((static_cast<const byte*>(m1))[count] != (static_cast<const byte*>(m2))[count])
 			return -1;
 	}
 	return 0;
@@ -527,7 +527,7 @@ void MSG_WriteChar (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteChar: range error");
 #endif
 
-	buf = (byte *)SZ_GetSpace (sb, 1);
+	buf = static_cast<byte*>(SZ_GetSpace (sb, 1));
 	buf[0] = c;
 }
 
@@ -540,7 +540,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteByte: range error");
 #endif
 
-	buf = (byte *)SZ_GetSpace (sb, 1);
+	buf = static_cast<byte*>(SZ_GetSpace (sb, 1));
 	buf[0] = c;
 }
 
@@ -553,7 +553,7 @@ void MSG_WriteShort (sizebuf_t *sb, int c)
 		Sys_Error ("MSG_WriteShort: range error");
 #endif
 
-	buf = (byte *)SZ_GetSpace (sb, 2);
+	buf = static_cast<byte*>(SZ_GetSpace (sb, 2));
 	buf[0] = c&0xff;
 	buf[1] = c>>8;
 }
@@ -562,7 +562,7 @@ void MSG_WriteLong (sizebuf_t *sb, int c)
 {
 	byte    *buf;
 
-	buf = (byte *)SZ_GetSpace (sb, 4);
+	buf = static_cast<byte*>(SZ_GetSpace (sb, 4));
 	buf[0] = c&0xff;
 	buf[1] = (c>>8)&0xff;
 	buf[2] = (c>>16)&0xff;
@@ -743,7 +743,7 @@ void SZ_Alloc (sizebuf_t *buf, int startsize)
 {
 	if (startsize < 256)
 		startsize = 256;
-	buf->data = (byte *)Hunk_AllocName (startsize, "sizebuf");
+	buf->data = static_cast<byte*>(Hunk_AllocName (startsize, "sizebuf"));
 	buf->maxsize = startsize;
 	buf->cursize = 0;
 }
@@ -798,9 +798,9 @@ void SZ_Print (sizebuf_t *buf, const char *data)
 
 // byte * cast to keep VC++ happy
 	if (buf->data[buf->cursize-1])
-		Q_memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
+		Q_memcpy (static_cast<byte*>(SZ_GetSpace(buf, len)),data,len); // no trailing 0
 	else
-		Q_memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+		Q_memcpy (static_cast<byte*>(SZ_GetSpace(buf, len-1))-1,data,len); // write over trailing 0
 }
 
 
@@ -1555,17 +1555,17 @@ byte *COM_LoadFile (const char *path, int usehunk)
 	COM_FileBase (path, base);
 	
 	if (usehunk == 1)
-		buf = (byte *)Hunk_AllocName (len+1, base);
+		buf = static_cast<byte*>(Hunk_AllocName (len+1, base));
 	else if (usehunk == 2)
-		buf = (byte *)Hunk_TempAlloc (len+1);
+		buf = static_cast<byte*>(Hunk_TempAlloc (len+1));
 	else if (usehunk == 0)
-		buf = (byte *)Z_Malloc (len+1);
+		buf = static_cast<byte*>(Z_Malloc (len+1));
 	else if (usehunk == 3)
-		buf = (byte *)Cache_Alloc (loadcache, len+1, base);
+		buf = static_cast<byte*>(Cache_Alloc (loadcache, len+1, base));
 	else if (usehunk == 4)
 	{
 		if (len+1 > loadsize)
-			buf = (byte *)Hunk_TempAlloc (len+1);
+			buf = static_cast<byte*>(Hunk_TempAlloc (len+1));
 		else
 			buf = loadbuf;
 	}
@@ -1575,7 +1575,7 @@ byte *COM_LoadFile (const char *path, int usehunk)
 	if (!buf)
 		Sys_Error ("COM_LoadFile: not enough space for %s", path);
 		
-	((byte *)buf)[len] = 0;
+	buf[len] = 0;
 
 	Draw_BeginDisc ();
 	Sys_FileRead (h, buf, len);                     
@@ -1606,7 +1606,7 @@ byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize)
 {
 	byte    *buf;
 	
-	loadbuf = (byte *)buffer;
+	loadbuf = static_cast<byte*>(buffer);
 	loadsize = bufsize;
 	buf = COM_LoadFile (path, 4);
 	
@@ -1639,7 +1639,7 @@ pack_t *COM_LoadPackFile (const char *packfile)
 //              Con_Printf ("Couldn't open %s\n", packfile);
 		return nullptr;
 	}
-	Sys_FileRead (packhandle, (void *)&header, sizeof(header));
+	Sys_FileRead (packhandle, static_cast<void*>(&header), sizeof(header));
 	if (header.id[0] != 'P' || header.id[1] != 'A'
 	|| header.id[2] != 'C' || header.id[3] != 'K')
 		Sys_Error ("%s is not a packfile", packfile);
@@ -1654,15 +1654,15 @@ pack_t *COM_LoadPackFile (const char *packfile)
 	if (numpackfiles != PAK0_COUNT)
 		com_modified = true;    // not the original file
 
-	newfiles = (packfile_t *)Hunk_AllocName (numpackfiles * sizeof(packfile_t), "packfile");
+	newfiles = static_cast<packfile_t*>(Hunk_AllocName (numpackfiles * sizeof(packfile_t), "packfile"));
 
 	Sys_FileSeek (packhandle, header.dirofs);
-	Sys_FileRead (packhandle, (void *)info, header.dirlen);
+	Sys_FileRead (packhandle, static_cast<void*>(info), header.dirlen);
 
 // crc the directory to check for modifications
 	CRC_Init (&crc);
 	for (i=0 ; i<header.dirlen ; i++)
-		CRC_ProcessByte (&crc, ((byte *)info)[i]);
+		CRC_ProcessByte (&crc, (reinterpret_cast<byte*>(info))[i]);
 	if (crc != PAK0_CRC)
 		com_modified = true;
 

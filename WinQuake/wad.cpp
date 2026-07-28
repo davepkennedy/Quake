@@ -128,7 +128,7 @@ void *W_GetLumpName (const char *name)
 	
 	lump = W_GetLumpinfo (name);
 	
-	return (void *)(wad_base + lump->filepos);
+	return static_cast<void*>(wad_base + lump->filepos);
 }
 
 void *W_GetLumpNum (int num)
@@ -140,7 +140,7 @@ void *W_GetLumpNum (int num)
 		
 	lump = wad_lumps + num;
 	
-	return (void *)(wad_base + lump->filepos);
+	return static_cast<void*>(wad_base + lump->filepos);
 }
 
 /*

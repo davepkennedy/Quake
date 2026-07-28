@@ -122,10 +122,10 @@ static void Dlight_InitRenderer (void)
 	qglBindBuffer (GL_ARRAY_BUFFER, dlight_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, DLIGHT_FAN_VERTS*6*sizeof(float), nullptr, GL_STREAM_DRAW);
 	// location 0: xyz  (3 floats, offset 0, stride 6*4=24)
-	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), nullptr);
 	qglEnableVertexAttribArray (0);
 	// location 1: color  (3 floats, offset 12)
-	qglVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	qglVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), reinterpret_cast<void*>(3*sizeof(float)));
 	qglEnableVertexAttribArray (1);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);

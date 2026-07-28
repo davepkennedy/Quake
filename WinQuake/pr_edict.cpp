@@ -669,7 +669,7 @@ void ED_ParseGlobals (const char *data)
 			continue;
 		}
 
-		if (!ED_ParseEpair ((void *)pr_globals, *key, com_token))
+		if (!ED_ParseEpair (static_cast<void*>(pr_globals), *key, com_token))
 			Host_Error ("ED_ParseGlobals: parse error");
 	}
 }
@@ -724,7 +724,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 	char	*v, *w;
 	void	*d;
 
-	d = (void *)((int *)base + key->ofs);
+	d = static_cast<void*>((int *)base + key->ofs);
 	
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
@@ -869,7 +869,7 @@ if (anglehack)
 	strcpy (com_token, temp.c_str ());
 }
 
-		if (!ED_ParseEpair ((void *)&ent->v, *key, com_token))
+		if (!ED_ParseEpair (static_cast<void*>(&ent->v), *key, com_token))
 			Host_Error ("ED_ParseEdict: parse error");
 	}
 
@@ -991,7 +991,7 @@ void PR_LoadProgs (void)
 	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);
 
 	for (i=0 ; i<com_filesize ; i++)
-		CRC_ProcessByte (&pr_crc, ((byte *)progs)[i]);
+		CRC_ProcessByte (&pr_crc, (reinterpret_cast<byte*>(progs))[i]);
 
 // byte swap the header
 	for (i=0 ; i<sizeof(*progs)/4 ; i++)
@@ -1002,13 +1002,13 @@ void PR_LoadProgs (void)
 	if (progs->crc != PROGHEADER_CRC)
 		Sys_Error ("progs.dat system vars have been modified, progdefs.h is out of date");
 
-	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
+	pr_functions = (dfunction_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_functions);
 	pr_strings = (char *)progs + progs->ofs_strings;
-	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
-	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
-	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
+	pr_globaldefs = (ddef_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_globaldefs);
+	pr_fielddefs = (ddef_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_fielddefs);
+	pr_statements = (dstatement_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_statements);
 
-	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
+	pr_global_struct = (globalvars_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;
 
 	// Allocate temp string buffer in the hunk so pr_string_temp - pr_strings fits in int on x64.
@@ -1088,14 +1088,14 @@ edict_t *EDICT_NUM(int n)
 {
 	if (n < 0 || n >= sv.max_edicts)
 		Sys_Error ("EDICT_NUM: bad number %i", n);
-	return (edict_t *)((byte *)sv.edicts+ (n)*pr_edict_size);
+	return (edict_t *)(reinterpret_cast<byte*>(sv.edicts)+ (n)*pr_edict_size);
 }
 
 int NUM_FOR_EDICT(edict_t *e)
 {
 	int		b;
 
-	b = (byte *)e - (byte *)sv.edicts;
+	b = reinterpret_cast<byte*>(e) - reinterpret_cast<byte*>(sv.edicts);
 	b = b / pr_edict_size;
 
 	if (b < 0 || b >= sv.num_edicts)
@@ -1107,12 +1107,12 @@ edict_t *PROG_TO_EDICT (int prog)
 {
 	if (prog < 0 || prog >= sv.max_edicts * pr_edict_size)
 		Sys_Error ("PROG_TO_EDICT: bad prog offset %i", prog);
-	return (edict_t *)((byte *)sv.edicts + prog);
+	return (edict_t *)(reinterpret_cast<byte*>(sv.edicts) + prog);
 }
 
 int EDICT_TO_PROG (edict_t *e)
 {
-	int b = (byte *)e - (byte *)sv.edicts;
+	int b = reinterpret_cast<byte*>(e) - reinterpret_cast<byte*>(sv.edicts);
 	if (b < 0 || b >= sv.max_edicts * pr_edict_size)
 		Sys_Error ("EDICT_TO_PROG: bad edict pointer");
 	return b;
@@ -1130,8 +1130,8 @@ int G_EDICTNUM (int ofs)
 
 edict_t *NEXT_EDICT (edict_t *e)
 {
-	edict_t *n = (edict_t *)((byte *)e + pr_edict_size);
-	int b = (byte *)n - (byte *)sv.edicts;
+	edict_t *n = (edict_t *)(reinterpret_cast<byte*>(e) + pr_edict_size);
+	int b = reinterpret_cast<byte*>(n) - reinterpret_cast<byte*>(sv.edicts);
 	if (b < 0 || b > sv.max_edicts * pr_edict_size)
 		Sys_Error ("NEXT_EDICT: walked off the edict array");
 	return n;

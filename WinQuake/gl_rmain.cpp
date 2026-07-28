@@ -262,10 +262,10 @@ static void Billboard_InitRenderer (void)
 	qglBindBuffer (GL_ARRAY_BUFFER, billboard_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, 6 * 5 * sizeof(float), nullptr, GL_STREAM_DRAW);
 	// location 0: xyz  (3 floats, offset 0, stride 5*4=20)
-	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), nullptr);
 	qglEnableVertexAttribArray (0);
 	// location 1: uv  (2 floats, offset 12)
-	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), reinterpret_cast<void*>(3*sizeof(float)));
 	qglEnableVertexAttribArray (1);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
@@ -472,13 +472,13 @@ static void Alias_InitRenderer (void)
 	qglBindBuffer (GL_ARRAY_BUFFER, alias_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(alias_stream), nullptr, GL_STREAM_DRAW);
 	// location 0: xyz  (3 floats, offset 0, stride 6*4=24)
-	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), nullptr);
 	qglEnableVertexAttribArray (0);
 	// location 1: uv  (2 floats, offset 12)
-	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 6*sizeof(float), reinterpret_cast<void*>(3*sizeof(float)));
 	qglEnableVertexAttribArray (1);
 	// location 2: intensity  (1 float, offset 20)
-	qglVertexAttribPointer (2, 1, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(5*sizeof(float)));
+	qglVertexAttribPointer (2, 1, GL_FLOAT, GL_FALSE, 6*sizeof(float), reinterpret_cast<void*>(5*sizeof(float)));
 	qglEnableVertexAttribArray (2);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
@@ -578,9 +578,9 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 
 lastposenum = posenum;
 
-	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	verts = (trivertx_t *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
+	order = (int *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
 
 	Alias_BeginDraw ();
 	Alias_SetMVP ();
@@ -640,9 +640,9 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 
 	lheight = currententity->origin[2] - lightspot[2];
 
-	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	verts = (trivertx_t *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
+	order = (int *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
 
 	height = -lheight + 1.0;
 

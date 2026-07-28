@@ -367,7 +367,7 @@ static eval_t *PR_FieldAddress (int ofs)
 {
 	if (ofs < 0 || ofs >= sv.max_edicts * pr_edict_size)
 		Sys_Error ("PR_FieldAddress: bad offset %i", ofs);
-	return (eval_t *)((byte *)sv.edicts + ofs);
+	return (eval_t *)(reinterpret_cast<byte*>(sv.edicts) + ofs);
 }
 
 /*
@@ -579,7 +579,7 @@ while (1)
 		ed = PROG_TO_EDICT(a->edict);
 		if (ed == (edict_t *)sv.edicts && sv.state == server_state_t::ss_active)
 			PR_RunError ("assignment to world entity");
-		c->_int = (int)((byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts);
+		c->_int = (int)(reinterpret_cast<byte*>((int *)&ed->v + b->_int) - reinterpret_cast<byte*>(sv.edicts));
 		break;
 		
 	case OP_LOAD_F:

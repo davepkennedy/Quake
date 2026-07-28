@@ -158,7 +158,7 @@ qsocket_t *VCR_CheckNewConnections (void)
 	}
 
 	sock = NET_NewQSocket ();
-	sock->driverdata = (void *)(intptr_t)next.session;
+	sock->driverdata = reinterpret_cast<void*>(static_cast<intptr_t>(next.session));
 
 	Sys_FileRead (vcrFile, sock->address, NET_NAMELEN);
 	VCR_ReadNext ();

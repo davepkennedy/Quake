@@ -102,13 +102,13 @@ static void Particle_InitRenderer (void)
 	qglBindBuffer (GL_ARRAY_BUFFER, particle_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(particle_stream), nullptr, GL_STREAM_DRAW);
 	// location 0: xyz  (3 floats, offset 0, stride 8*4=32)
-	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), nullptr);
 	qglEnableVertexAttribArray (0);
 	// location 1: uv  (2 floats, offset 12)
-	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), reinterpret_cast<void*>(3*sizeof(float)));
 	qglEnableVertexAttribArray (1);
 	// location 2: color  (3 floats, offset 20)
-	qglVertexAttribPointer (2, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(5*sizeof(float)));
+	qglVertexAttribPointer (2, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), reinterpret_cast<void*>(5*sizeof(float)));
 	qglEnableVertexAttribArray (2);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);
@@ -161,7 +161,7 @@ static void Particle_AddTri (const vec3_t org, const vec3_t up, const vec3_t rig
 	if (particle_stream_n + 3 > PARTICLE_STREAM_VERTS)
 		Particle_Flush ();
 
-	byte *rgba = (byte *)&d_8to24table[color];
+	byte *rgba = reinterpret_cast<byte*>(&d_8to24table[color]);
 	float col[3] = { rgba[0]/255.f, rgba[1]/255.f, rgba[2]/255.f };
 
 	float *out = particle_stream + particle_stream_n * 8;

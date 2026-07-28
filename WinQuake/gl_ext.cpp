@@ -55,7 +55,7 @@ float gl_max_anisotropy = 1.0f;
 
 static void *LoadProc(const char *name, bool required)
 {
-    void *p = (void *)wglGetProcAddress(name);
+    void *p = reinterpret_cast<void*>(wglGetProcAddress(name));
     if (!p && required)
         Sys_Error("GL_LoadExtensions: required function %s not found", name);
     return p;

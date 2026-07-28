@@ -96,7 +96,7 @@ void ED_ParseGlobals (const char *data);
 void ED_LoadFromFile (const char *data);
 
 //define EDICT_NUM(n) ((edict_t *)(sv.edicts+ (n)*pr_edict_size))
-//define NUM_FOR_EDICT(e) (((byte *)(e) - sv.edicts)/pr_edict_size)
+//define NUM_FOR_EDICT(e) ((reinterpret_cast<byte*>(e) - sv.edicts)/pr_edict_size)
 
 edict_t *EDICT_NUM(int n);
 int NUM_FOR_EDICT(edict_t *e);

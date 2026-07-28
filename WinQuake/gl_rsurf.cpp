@@ -397,13 +397,13 @@ void R_World_InitRenderer (void)
 	qglBindBuffer (GL_ARRAY_BUFFER, world_vbo);
 	qglBufferData (GL_ARRAY_BUFFER, sizeof(world_stream), nullptr, GL_STREAM_DRAW);
 	// location 0: xyz  (3 floats, offset  0, stride 7*4=28)
-	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)0);
+	qglVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 7*sizeof(float), nullptr);
 	qglEnableVertexAttribArray (0);
 	// location 1: world UV  (2 floats, offset 12)
-	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)(3*sizeof(float)));
+	qglVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 7*sizeof(float), reinterpret_cast<void*>(3*sizeof(float)));
 	qglEnableVertexAttribArray (1);
 	// location 2: lightmap UV  (2 floats, offset 20)
-	qglVertexAttribPointer (2, 2, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)(5*sizeof(float)));
+	qglVertexAttribPointer (2, 2, GL_FLOAT, GL_FALSE, 7*sizeof(float), reinterpret_cast<void*>(5*sizeof(float)));
 	qglEnableVertexAttribArray (2);
 	qglBindVertexArray (0);
 	qglBindBuffer (GL_ARRAY_BUFFER, 0);

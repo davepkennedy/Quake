@@ -1137,7 +1137,7 @@ void SV_SendReconnect (void)
 	char	data[128];
 	sizebuf_t	msg;
 
-	msg.data = (byte *)data;
+	msg.data = reinterpret_cast<byte*>(data);
 	msg.cursize = 0;
 	msg.maxsize = sizeof(data);
 

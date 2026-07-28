@@ -451,9 +451,9 @@ void main()
     qglBindBuffer(GL_ARRAY_BUFFER, draw2d_vbo);
     qglBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), nullptr, GL_STREAM_DRAW);
 
-    qglVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+    qglVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     qglEnableVertexAttribArray(0);
-    qglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
+    qglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
     qglEnableVertexAttribArray(1);
 
     qglBindVertexArray(0);
@@ -515,7 +515,7 @@ void Draw_Init (void)
 	// by hand, because we need to write the version
 	// string into the background before turning
 	// it into a texture
-	draw_chars = (byte *)W_GetLumpName ("conchars");
+	draw_chars = static_cast<byte*>(W_GetLumpName ("conchars"));
 	for (i=0 ; i<256*64 ; i++)
 		if (draw_chars[i] == 0)
 			draw_chars[i] = 255;	// proper transparent color
@@ -1034,10 +1034,10 @@ void GL_MipMap8Bit (byte *in, int width, int height)
 	{
 		for (j=0 ; j<width ; j+=2, out+=1, in+=2)
 		{
-			at1 = (byte *) (d_8to24table + in[0]);
-			at2 = (byte *) (d_8to24table + in[1]);
-			at3 = (byte *) (d_8to24table + in[width+0]);
-			at4 = (byte *) (d_8to24table + in[width+1]);
+			at1 = reinterpret_cast<byte*>( (d_8to24table + in[0]));
+			at2 = reinterpret_cast<byte*>( (d_8to24table + in[1]));
+			at3 = reinterpret_cast<byte*>( (d_8to24table + in[width+0]));
+			at4 = reinterpret_cast<byte*>( (d_8to24table + in[width+1]));
 
  			r = (at1[0]+at2[0]+at3[0]+at4[0]); r>>=5;
  			g = (at1[1]+at2[1]+at3[1]+at4[1]); g>>=5;
@@ -1115,7 +1115,7 @@ texels += scaled_width * scaled_height;
 			int miplevel = 0;
 			while (scaled_width > 1 || scaled_height > 1)
 			{
-				GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
+				GL_MipMap (reinterpret_cast<byte*>(scaled), scaled_width, scaled_height);
 				scaled_width >>= 1;
 				scaled_height >>= 1;
 				if (scaled_width < 1)
@@ -1207,7 +1207,7 @@ void GL_Upload8_EXT (byte *data, int width, int height,  qboolean mipmap, qboole
 		miplevel = 0;
 		while (scaled_width > 1 || scaled_height > 1)
 		{
-			GL_MipMap8Bit ((byte *)scaled, scaled_width, scaled_height);
+			GL_MipMap8Bit (reinterpret_cast<byte*>(scaled), scaled_width, scaled_height);
 			scaled_width >>= 1;
 			scaled_height >>= 1;
 			if (scaled_width < 1)

@@ -345,12 +345,12 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	paliashdr->poseverts = numorder;
 
 	cmds = (int *)Hunk_Alloc (numcommands * 4);
-	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
+	paliashdr->commands = reinterpret_cast<byte*>(cmds) - reinterpret_cast<byte*>(paliashdr);
 	memcpy (cmds, commands, numcommands * 4);
 
 	verts = (trivertx_t *)Hunk_Alloc (paliashdr->numposes * paliashdr->poseverts
 		* sizeof(trivertx_t) );
-	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
+	paliashdr->posedata = reinterpret_cast<byte*>(verts) - reinterpret_cast<byte*>(paliashdr);
 	for (i=0 ; i<paliashdr->numposes ; i++)
 		for (j=0 ; j<numorder ; j++)
 			*verts++ = poseverts[i][vertexorder[j]];

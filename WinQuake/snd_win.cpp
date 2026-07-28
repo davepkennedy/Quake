@@ -163,7 +163,7 @@ static qboolean SNDDMA_InitWASAPI (void)
 	int				shadowFrames;
 
 	hr = CoCreateInstance (__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
-							__uuidof(IMMDeviceEnumerator), (void **)&pEnumerator);
+							__uuidof(IMMDeviceEnumerator), reinterpret_cast<void**>(&pEnumerator));
 	if (FAILED (hr))
 	{
 		Con_SafePrintf ("WASAPI: CoCreateInstance(MMDeviceEnumerator) failed\n");
@@ -177,7 +177,7 @@ static qboolean SNDDMA_InitWASAPI (void)
 		return false;
 	}
 
-	hr = pDevice->Activate (__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void **)&pAudioClient);
+	hr = pDevice->Activate (__uuidof(IAudioClient), CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&pAudioClient));
 	if (FAILED (hr))
 	{
 		Con_SafePrintf ("WASAPI: IAudioClient activation failed\n");
@@ -205,7 +205,7 @@ static qboolean SNDDMA_InitWASAPI (void)
 		return false;
 	}
 
-	hr = pAudioClient->GetService (__uuidof(IAudioRenderClient), (void **)&pRenderClient);
+	hr = pAudioClient->GetService (__uuidof(IAudioRenderClient), reinterpret_cast<void**>(&pRenderClient));
 	if (FAILED (hr))
 	{
 		Con_SafePrintf ("WASAPI: GetService(IAudioRenderClient) failed\n");

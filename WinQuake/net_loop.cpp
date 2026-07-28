@@ -95,8 +95,8 @@ qsocket_t *Loop_Connect (const char *host)
 	loop_server->sendMessageLength = 0;
 	loop_server->canSend = true;
 
-	loop_client->driverdata = (void *)loop_server;
-	loop_server->driverdata = (void *)loop_client;
+	loop_client->driverdata = static_cast<void*>(loop_server);
+	loop_server->driverdata = static_cast<void*>(loop_client);
 	
 	return loop_client;	
 }
