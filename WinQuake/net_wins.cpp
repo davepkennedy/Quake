@@ -92,7 +92,7 @@ void WINS_GetLocalAddress()
 	if (local == nullptr)
 		return;
 
-	myAddr = *(int *)local->h_addr_list[0];
+	myAddr = *reinterpret_cast<int*>(local->h_addr_list[0]);
 
 	addr = ntohl(myAddr);
 	my_tcpip_address = std::format ("{}.{}.{}.{}", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
@@ -484,7 +484,7 @@ int WINS_GetAddrFromName(const char *name, struct qsockaddr *addr)
 
 	addr->sa_family = AF_INET;
 	((struct sockaddr_in *)addr)->sin_port = htons((unsigned short)net_hostport);	
-	((struct sockaddr_in *)addr)->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];
+	((struct sockaddr_in *)addr)->sin_addr.s_addr = *reinterpret_cast<int*>(hostentry->h_addr_list[0]);
 
 	return 0;
 }

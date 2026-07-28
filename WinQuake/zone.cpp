@@ -241,7 +241,7 @@ void *Z_TagMalloc (int size, int tag)
 	base->id = ZONEID;
 
 // marker for memory trash testing
-	*(int *)(reinterpret_cast<byte*>(base) + base->size - 4) = ZONEID;
+	*reinterpret_cast<int*>(reinterpret_cast<byte*>(base) + base->size - 4) = ZONEID;
 
 	return static_cast<void*>(reinterpret_cast<byte*>(base) + sizeof(memblock_t));
 }

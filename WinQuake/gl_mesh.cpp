@@ -344,7 +344,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 
 	paliashdr->poseverts = numorder;
 
-	cmds = (int *)Hunk_Alloc (numcommands * 4);
+	cmds = static_cast<int*>(Hunk_Alloc (numcommands * 4));
 	paliashdr->commands = reinterpret_cast<byte*>(cmds) - reinterpret_cast<byte*>(paliashdr);
 	memcpy (cmds, commands, numcommands * 4);
 

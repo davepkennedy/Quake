@@ -307,7 +307,7 @@ int PR_EnterFunction (dfunction_t *f)
 		PR_RunError ("PR_ExecuteProgram: locals stack overflow\n");
 
 	for (i=0 ; i < c ; i++)
-		localstack[localstack_used+i] = ((int *)pr_globals)[f->parm_start + i];
+		localstack[localstack_used+i] = (reinterpret_cast<int*>(pr_globals))[f->parm_start + i];
 	localstack_used += c;
 
 // copy parameters
@@ -316,7 +316,7 @@ int PR_EnterFunction (dfunction_t *f)
 	{
 		for (j=0 ; j<f->parm_size[i] ; j++)
 		{
-			((int *)pr_globals)[o] = ((int *)pr_globals)[OFS_PARM0+i*3+j];
+			(reinterpret_cast<int*>(pr_globals))[o] = (reinterpret_cast<int*>(pr_globals))[OFS_PARM0+i*3+j];
 			o++;
 		}
 	}
@@ -344,7 +344,7 @@ int PR_LeaveFunction (void)
 		PR_RunError ("PR_ExecuteProgram: locals stack underflow\n");
 
 	for (i=0 ; i < c ; i++)
-		((int *)pr_globals)[pr_xfunction->parm_start + i] = localstack[localstack_used+i];
+		(reinterpret_cast<int*>(pr_globals))[pr_xfunction->parm_start + i] = localstack[localstack_used+i];
 
 // up stack
 	pr_depth--;
@@ -579,7 +579,7 @@ while (1)
 		ed = PROG_TO_EDICT(a->edict);
 		if (ed == (edict_t *)sv.edicts && sv.state == server_state_t::ss_active)
 			PR_RunError ("assignment to world entity");
-		c->_int = (int)(reinterpret_cast<byte*>((int *)&ed->v + b->_int) - reinterpret_cast<byte*>(sv.edicts));
+		c->_int = (int)(reinterpret_cast<byte*>(reinterpret_cast<int*>(&ed->v) + b->_int) - reinterpret_cast<byte*>(sv.edicts));
 		break;
 		
 	case OP_LOAD_F:
@@ -588,13 +588,13 @@ while (1)
 	case OP_LOAD_S:
 	case OP_LOAD_FNC:
 		ed = PROG_TO_EDICT(a->edict);
-		a = (eval_t *)((int *)&ed->v + b->_int);
+		a = (eval_t *)(reinterpret_cast<int*>(&ed->v) + b->_int);
 		c->_int = a->_int;
 		break;
 
 	case OP_LOAD_V:
 		ed = PROG_TO_EDICT(a->edict);
-		a = (eval_t *)((int *)&ed->v + b->_int);
+		a = (eval_t *)(reinterpret_cast<int*>(&ed->v) + b->_int);
 		c->vector[0] = a->vector[0];
 		c->vector[1] = a->vector[1];
 		c->vector[2] = a->vector[2];

@@ -280,7 +280,7 @@ int WIPX_Write (int handle, byte *buf, int len, struct qsockaddr *addr)
 	int ret;
 
 	// build packet with sequence number
-	*(int *)(&packetBuffer[0]) = sequence[handle];
+	*reinterpret_cast<int*>(&packetBuffer[0]) = sequence[handle];
 	sequence[handle]++;
 	memcpy(&packetBuffer[4], buf, len);
 	len += 4;

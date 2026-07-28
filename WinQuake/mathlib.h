@@ -39,7 +39,7 @@ extern vec3_t vec3_origin;
 // 255<<23 is the IEEE-754 exponent-all-ones bit pattern shared by every
 // NaN/Inf single-precision float; was a runtime global (nanmask) for no
 // reason, since it's a compile-time constant of the float format
-#define	IS_NAN(x) (((*(int *)&x)&(255<<23))==(255<<23))
+#define	IS_NAN(x) (((*reinterpret_cast<int*>(&x))&(255<<23))==(255<<23))
 
 #define DotProduct(x,y) (x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
 #define VectorSubtract(a,b,c) {c[0]=a[0]-b[0];c[1]=a[1]-b[1];c[2]=a[2]-b[2];}

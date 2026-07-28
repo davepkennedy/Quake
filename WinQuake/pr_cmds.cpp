@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
+#define	RETURN_EDICT(e) ((reinterpret_cast<int*>(pr_globals))[OFS_RETURN] = EDICT_TO_PROG(e))
 
 /*
 ===============================================================================
@@ -583,7 +583,7 @@ break()
 void PF_break (void)
 {
 Con_Printf ("break statement\n");
-*(int *)-4 = 0;	// dump to debugger
+*reinterpret_cast<int*>(-4) = 0;	// dump to debugger
 //	PR_RunError ("break statement");
 }
 

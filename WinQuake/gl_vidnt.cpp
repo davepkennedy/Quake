@@ -1914,7 +1914,7 @@ void	VID_Init (unsigned char *palette)
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host_colormap;
-	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
+	vid.fullbright = 256 - LittleLong (*(reinterpret_cast<int*>(vid.colormap) + 2048));
 
 	Sys_CloseSplashDialog ();
 

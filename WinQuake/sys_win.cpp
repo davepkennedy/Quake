@@ -109,8 +109,8 @@ void Sys_PageIn (void *ptr, size_t size)
 	{
 		for (m=0 ; m<(size - 16 * 0x1000) ; m += 4)
 		{
-			sys_checksum += *(int *)&x[m];
-			sys_checksum += *(int *)&x[m + 16 * 0x1000];
+			sys_checksum += *reinterpret_cast<int*>(&x[m]);
+			sys_checksum += *reinterpret_cast<int*>(&x[m + 16 * 0x1000]);
 		}
 	}
 }

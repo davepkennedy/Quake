@@ -144,7 +144,7 @@ void Q_memset (void *dest, int fill, int count)
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
 		for (i=0 ; i<count ; i++)
-			((int *)dest)[i] = fill;
+			(static_cast<int*>(dest))[i] = fill;
 	}
 	else
 		for (i=0 ; i<count ; i++)
@@ -159,7 +159,7 @@ void Q_memcpy (void *dest, const void *src, int count)
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
-			((int *)dest)[i] = ((int *)src)[i];
+			(static_cast<int*>(dest))[i] = (reinterpret_cast<const int*>(src))[i];
 	}
 	else
 		for (i=0 ; i<count ; i++)

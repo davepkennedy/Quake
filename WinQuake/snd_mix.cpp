@@ -71,7 +71,7 @@ void S_TransferStereo16 (int endtime)
 
 	snd_vol = volume.value*256;
 
-	snd_p = (int *) paintbuffer;
+	snd_p = reinterpret_cast<int*>( paintbuffer);
 	lpaintedtime = sound.paintedtime;
 
 	pbuf = (DWORD *)shm->buffer;
@@ -114,7 +114,7 @@ void S_TransferPaintBuffer(int endtime)
 		return;
 	}
 	
-	p = (int *) paintbuffer;
+	p = reinterpret_cast<int*>( paintbuffer);
 	count = (endtime - sound.paintedtime) * shm->channels;
 	out_mask = shm->samples - 1; 
 	out_idx = sound.paintedtime * shm->channels & out_mask;

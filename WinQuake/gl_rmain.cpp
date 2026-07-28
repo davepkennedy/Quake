@@ -580,7 +580,7 @@ lastposenum = posenum;
 
 	verts = (trivertx_t *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
-	order = (int *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
+	order = reinterpret_cast<int*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
 
 	Alias_BeginDraw ();
 	Alias_SetMVP ();
@@ -642,7 +642,7 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 
 	verts = (trivertx_t *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
-	order = (int *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
+	order = reinterpret_cast<int*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
 
 	height = -lheight + 1.0;
 

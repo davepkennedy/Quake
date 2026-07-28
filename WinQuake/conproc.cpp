@@ -108,7 +108,7 @@ DWORD RequestProc (DWORD dwNichts)
 		if (dwRet == WAIT_OBJECT_0 + 1)	
 			break;
 
-		pBuffer = (int *) GetMappedBuffer (hfileBuffer);
+		pBuffer = static_cast<int*>(GetMappedBuffer (hfileBuffer));
 		
 	// hfileBuffer is invalid.  Just leave.
 		if (!pBuffer)

@@ -107,7 +107,7 @@ edict_t *NEXT_EDICT(edict_t *e);
 //============================================================================
 
 #define	G_FLOAT(o) (pr_globals[o])
-#define	G_INT(o) (*(int *)&pr_globals[o])
+#define	G_INT(o) (*reinterpret_cast<int*>(&pr_globals[o]))
 edict_t *G_EDICT(int ofs);
 int G_EDICTNUM(int ofs);
 #define	G_VECTOR(o) (&pr_globals[o])
@@ -115,7 +115,7 @@ int G_EDICTNUM(int ofs);
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
 #define	E_FLOAT(e,o) (((float*)&e->v)[o])
-#define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
+#define	E_INT(e,o) (*reinterpret_cast<int*>(&((float*)&e->v)[o]))
 #define	E_VECTOR(e,o) (&((float*)&e->v)[o])
 #define	E_STRING(e,o) (pr_strings + *(string_t *)&((float*)&e->v)[o])
 

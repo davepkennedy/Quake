@@ -1069,11 +1069,11 @@ void Mod_LoadSurfedges (lump_t *l)
 	int		i, count;
 	int		*in, *out;
 	
-	in = (int *)(mod_base + l->fileofs);
+	in = reinterpret_cast<int*>(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = (int *)Hunk_AllocName ( count*sizeof(*out), loadname);
+	out = static_cast<int*>(Hunk_AllocName ( count*sizeof(*out), loadname));
 
 	loadmodel->surfedges = out;
 	loadmodel->numsurfedges = count;
@@ -1162,7 +1162,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	mod_base = reinterpret_cast<byte*>(header);
 
 	for (i=0 ; i<sizeof(dheader_t)/4 ; i++)
-		((int *)header)[i] = LittleLong ( ((int *)header)[i]);
+		(reinterpret_cast<int*>(header))[i] = LittleLong ( (reinterpret_cast<int*>(header))[i]);
 
 // load into heap
 	

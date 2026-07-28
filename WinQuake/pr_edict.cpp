@@ -447,7 +447,7 @@ void ED_Print (edict_t *ed)
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 			
-		v = (int *)((char *)&ed->v + d->ofs*4);
+		v = reinterpret_cast<int*>((char *)&ed->v + d->ofs*4);
 
 	// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
@@ -497,7 +497,7 @@ void ED_Write (FILE *f, edict_t *ed)
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 			
-		v = (int *)((char *)&ed->v + d->ofs*4);
+		v = reinterpret_cast<int*>((char *)&ed->v + d->ofs*4);
 
 	// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
@@ -724,7 +724,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 	char	*v, *w;
 	void	*d;
 
-	d = static_cast<void*>((int *)base + key->ofs);
+	d = static_cast<void*>(static_cast<int*>(base) + key->ofs);
 	
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
@@ -751,7 +751,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 		break;
 		
 	case ev_entity:
-		*(int *)d = EDICT_TO_PROG(EDICT_NUM(atoi (s)));
+		*static_cast<int*>(d) = EDICT_TO_PROG(EDICT_NUM(atoi (s)));
 		break;
 		
 	case ev_field:
@@ -762,7 +762,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 				Con_Printf ("Can't find field %s\n", s);
 				return false;
 			}
-			*(int *)d = G_INT((*def)->ofs);
+			*static_cast<int*>(d) = G_INT((*def)->ofs);
 		}
 		break;
 
@@ -995,7 +995,7 @@ void PR_LoadProgs (void)
 
 // byte swap the header
 	for (i=0 ; i<sizeof(*progs)/4 ; i++)
-		((int *)progs)[i] = LittleLong ( ((int *)progs)[i] );		
+		(reinterpret_cast<int*>(progs))[i] = LittleLong ( (reinterpret_cast<int*>(progs))[i] );		
 
 	if (progs->version != PROG_VERSION)
 		Sys_Error ("progs.dat has wrong version number (%i should be %i)", progs->version, PROG_VERSION);
@@ -1054,7 +1054,7 @@ void PR_LoadProgs (void)
 	}
 
 	for (i=0 ; i<progs->numglobals ; i++)
-		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
+		(reinterpret_cast<int*>(pr_globals))[i] = LittleLong ((reinterpret_cast<int*>(pr_globals))[i]);
 }
 
 
@@ -1120,7 +1120,7 @@ int EDICT_TO_PROG (edict_t *e)
 
 edict_t *G_EDICT (int ofs)
 {
-	return PROG_TO_EDICT (*(int *)&pr_globals[ofs]);
+	return PROG_TO_EDICT (*reinterpret_cast<int*>(&pr_globals[ofs]));
 }
 
 int G_EDICTNUM (int ofs)
