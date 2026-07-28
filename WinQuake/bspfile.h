@@ -103,12 +103,12 @@ struct dmiptexlump_t
 };
 
 #define	MIPLEVELS	4
-typedef struct miptex_s
+struct miptex_t
 {
 	char		name[16];
 	unsigned	width, height;
 	unsigned	offsets[MIPLEVELS];		// four mip maps stored
-} miptex_t;
+};
 
 
 struct dvertex_t
@@ -171,12 +171,12 @@ struct dclipnode_t
 };
 
 
-typedef struct texinfo_s
+struct texinfo_t
 {
 	float		vecs[2][4];		// [s/t][xyz offset]
 	int			miptex;
 	int			flags;
-} texinfo_t;
+};
 #define	TEX_SPECIAL		1		// sky or slime, no lightmap or 256 subdivision
 
 // note that edge 0 is never used, because negative edge nums are used for
@@ -293,12 +293,12 @@ void	PrintBSPFileSizes (void);
 //===============
 
 
-typedef struct epair_s
+struct epair_t
 {
-	struct epair_s	*next;
+	struct epair_t	*next;
 	char	*key;
 	char	*value;
-} epair_t;
+};
 
 struct entity_t
 {

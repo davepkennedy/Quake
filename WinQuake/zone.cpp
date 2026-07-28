@@ -28,14 +28,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
 
-typedef struct memblock_s
+struct memblock_t
 {
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
 	int     id;        		// should be ZONEID
-	struct memblock_s       *next, *prev;
+	struct memblock_t       *next, *prev;
 	int		pad;			// pad to 64 bit boundary
-} memblock_t;
+};
 
 struct memzone_t
 {
@@ -46,15 +46,15 @@ struct memzone_t
 
 // moved up from the CACHE MEMORY section below so zone_state_t can hold
 // cache_head by value.
-typedef struct cache_system_s
+struct cache_system_t
 {
 	int						size;		// including this header
 	cache_user_t			*user;
 	char					name[16];
-	struct cache_system_s	*prev, *next;
+	struct cache_system_t	*prev, *next;
 	bool					inLRU;		// tracked in zone_state_t::cacheLRU instead of an
 										// intrusive list -- see Cache_MakeLRU/Cache_UnlinkLRU
-} cache_system_t;
+};
 
 // State for all three of this file's allocators (zone/hunk/cache) --
 // entirely private to zone.cpp, nothing outside this file references any

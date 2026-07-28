@@ -37,14 +37,14 @@ using qboolean = bool;
 
 //============================================================================
 
-typedef struct sizebuf_s
+struct sizebuf_t
 {
 	qboolean	allowoverflow;	// if false, do a Sys_Error
 	qboolean	overflowed;		// set to true if the buffer size failed
 	byte	*data;
 	int		maxsize;
 	int		cursize;
-} sizebuf_t;
+};
 
 void SZ_Alloc (sizebuf_t *buf, int startsize);
 void SZ_Free (sizebuf_t *buf);
@@ -55,10 +55,10 @@ void SZ_Print (sizebuf_t *buf, const char *data);	// strcats onto the sizebuf
 
 //============================================================================
 
-typedef struct link_s
+struct link_t
 {
-	struct link_s	*prev, *next;
-} link_t;
+	struct link_t	*prev, *next;
+};
 
 
 void ClearLink (link_t *l);
@@ -188,7 +188,7 @@ std::string COM_FormatVA (const char *fmt, va_list argptr);
 //============================================================================
 
 extern int com_filesize;
-struct cache_user_s;
+struct cache_user_t;
 
 extern	char	com_gamedir[MAX_OSPATH];
 
@@ -200,9 +200,9 @@ void COM_CloseFile (int h);
 byte *COM_LoadStackFile (const char *path, void *buffer, int bufsize);
 byte *COM_LoadTempFile (const char *path);
 byte *COM_LoadHunkFile (const char *path);
-void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
+void COM_LoadCacheFile (const char *path, struct cache_user_t *cu);
 
 
-extern	struct cvar_s	registered;
+extern	struct cvar_t	registered;
 
 extern qboolean		standard_quake, rogue, hipnotic;

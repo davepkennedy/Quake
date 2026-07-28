@@ -99,7 +99,7 @@ struct dlight_t
 struct beam_t
 {
 	int		entity;
-	struct model_s	*model;
+	struct model_t	*model;
 	float	endtime;
 	vec3_t	start, end;
 };
@@ -146,7 +146,7 @@ struct client_static_t
 
 // connection information
 	int			signon;			// 0 to SIGNONS
-	struct qsocket_s	*netcon;
+	struct qsocket_t	*netcon;
 	sizebuf_t	message;		// writing buffer to send to server
 	
 };
@@ -224,8 +224,8 @@ struct client_state_t
 //
 // information that is static for the entire time connected to a server
 //
-	struct model_s		*model_precache[MAX_MODELS];
-	struct sfx_s		*sound_precache[MAX_SOUNDS];
+	struct model_t		*model_precache[MAX_MODELS];
+	struct sfx_t		*sound_precache[MAX_SOUNDS];
 
 	char		levelname[40];	// for display on solo scoreboard
 	int			viewentity;		// cl_entitites[cl.viewentity] = player
@@ -233,8 +233,8 @@ struct client_state_t
 	int			gametype;
 
 // refresh related state
-	struct model_s	*worldmodel;	// cl_entitites[0].model
-	struct efrag_s	*free_efrags;
+	struct model_t	*worldmodel;	// cl_entitites[0].model
+	struct efrag_t	*free_efrags;
 	int			num_entities;	// held in cl_entities array
 	int			num_statics;	// held in cl_staticentities array
 	entity_t	viewent;			// the gun model
@@ -295,7 +295,7 @@ extern	client_state_t	cl;
 // Narrow client-state accessors -- for rendering code (gl_*.cpp) that
 // needs to read cl.'s state without reaching into client_state_t's
 // representation directly.
-struct model_s *CL_WorldModel (void);				// cl.worldmodel
+struct model_t *CL_WorldModel (void);				// cl.worldmodel
 double CL_Time (void);								// cl.time
 int CL_MaxClients (void);							// cl.maxclients
 int CL_Intermission (void);						// cl.intermission
@@ -306,7 +306,7 @@ int CL_ViewEntity (void);							// cl.viewentity
 float CL_LastReceivedMessage (void);				// cl.last_received_message
 entity_t *CL_ViewEnt (void);						// &cl.viewent
 scoreboard_t *CL_Score (int index);				// &cl.scores[index]
-struct model_s *CL_ModelPrecache (int index);		// cl.model_precache[index]
+struct model_t *CL_ModelPrecache (int index);		// cl.model_precache[index]
 int CL_GameType (void);							// cl.gametype
 std::string CL_LevelName (void);							// cl.levelname
 float CL_ItemGetTime (int index);					// cl.item_gettime[index]
@@ -317,8 +317,8 @@ float CL_FaceAnimTime (void);						// cl.faceanimtime
 // active manager (cl_main.cpp only builds the initial list once), so these
 // are verbs for the two operations it actually performs, not a raw
 // getter/setter pair.
-struct efrag_s *CL_AllocEfrag (void);				// pop the free-list head, or NULL if empty
-void CL_FreeEfrag (struct efrag_s *ef);				// push ef onto the free-list head
+struct efrag_t *CL_AllocEfrag (void);				// pop the free-list head, or NULL if empty
+void CL_FreeEfrag (struct efrag_t *ef);				// push ef onto the free-list head
 
 // cl.cshifts[CSHIFT_CONTENTS] is otherwise owned entirely by view.cpp
 // (V_SetContentsColor writes it, V_UpdatePalette reads it); this is the one

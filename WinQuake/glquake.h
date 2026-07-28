@@ -115,19 +115,19 @@ void R_TimeRefresh_f (void);
 void R_ReadPointFile_f (void);
 texture_t *R_TextureAnimation (texture_t *base);
 
-typedef struct surfcache_s
+struct surfcache_t
 {
-	struct surfcache_s	*next;
-	struct surfcache_s 	**owner;		// NULL is an empty chunk of memory
+	struct surfcache_t	*next;
+	struct surfcache_t 	**owner;		// NULL is an empty chunk of memory
 	int					lightadj[MAXLIGHTMAPS]; // checked for strobe flush
 	int					dlight;
 	int					size;		// including header
 	unsigned			width;
 	unsigned			height;		// DEBUG only needed for debug
 	float				mipscale;
-	struct texture_s	*texture;	// checked for animating textures
+	struct texture_t	*texture;	// checked for animating textures
 	byte				data[4];	// width*height elements
-} surfcache_t;
+};
 
 
 struct drawsurf_t
@@ -149,18 +149,18 @@ typedef enum {
 } ptype_t;
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
-typedef struct particle_s
+struct particle_t
 {
 // driver-usable fields
 	vec3_t		org;
 	float		color;
 // drivers never touch the following fields
-	struct particle_s	*next;
+	struct particle_t	*next;
 	vec3_t		vel;
 	float		ramp;
 	float		die;
 	ptype_t		type;
-} particle_t;
+};
 
 
 //====================================================

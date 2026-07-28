@@ -112,10 +112,10 @@ void *Hunk_TempAlloc (int size);
 
 void Hunk_Check (void);
 
-typedef struct cache_user_s
+struct cache_user_t
 {
 	void	*data;
-} cache_user_t;
+};
 
 void Cache_Flush (void);
 

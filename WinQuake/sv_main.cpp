@@ -87,7 +87,7 @@ server_state_t SV_State (void)
 	return sv.state;
 }
 
-struct model_s *SV_WorldModel (void)
+struct model_t *SV_WorldModel (void)
 {
 	return sv.worldmodel;
 }
@@ -151,7 +151,7 @@ int SV_PrecacheModel (char *name)
 	return -1;
 }
 
-struct model_s *SV_ModelForIndex (int index)
+struct model_t *SV_ModelForIndex (int index)
 {
 	return sv.models[index];
 }
@@ -395,7 +395,7 @@ void SV_ConnectClient (int clientnum)
 	edict_t			*ent;
 	client_t		*client;
 	int				edictnum;
-	struct qsocket_s *netconnection;
+	struct qsocket_t *netconnection;
 	int				i;
 	float			spawn_parms[NUM_SPAWN_PARMS];
 
@@ -451,7 +451,7 @@ SV_CheckForNewClients
 */
 void SV_CheckForNewClients (void)
 {
-	struct qsocket_s	*ret;
+	struct qsocket_t	*ret;
 	int				i;
 		
 //

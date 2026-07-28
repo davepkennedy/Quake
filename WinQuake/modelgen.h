@@ -82,10 +82,10 @@ struct stvert_t {
 	int		t;
 };
 
-typedef struct dtriangle_s {
+struct dtriangle_t {
 	int					facesfront;
 	int					vertindex[3];
-} dtriangle_t;
+};
 
 #define DT_FACES_FRONT				0x0010
 

@@ -72,27 +72,27 @@ struct mvertex_t
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
-typedef struct mplane_s
+struct mplane_t
 {
 	vec3_t	normal;
 	float	dist;
 	byte	type;			// for texture axis selection and fast side tests
 	byte	signbits;		// signx + signy<<1 + signz<<1
 	byte	pad[2];
-} mplane_t;
+};
 
-typedef struct texture_s
+struct texture_t
 {
 	char		name[16];
 	unsigned	width, height;
 	int			gl_texturenum;
-	struct msurface_s	*texturechain;	// for gl_texsort drawing
+	struct msurface_t	*texturechain;	// for gl_texsort drawing
 	int			anim_total;				// total tenths in sequence ( 0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max
-	struct texture_s *anim_next;		// in the animation sequence
-	struct texture_s *alternate_anims;	// bmodels in frmae 1 use these
+	struct texture_t *anim_next;		// in the animation sequence
+	struct texture_t *alternate_anims;	// bmodels in frmae 1 use these
 	unsigned	offsets[MIPLEVELS];		// four mip maps stored
-} texture_t;
+};
 
 
 #define	SURF_PLANEBACK		2
@@ -120,16 +120,16 @@ struct mtexinfo_t
 
 #define	VERTEXSIZE	7
 
-typedef struct glpoly_s
+struct glpoly_t
 {
-	struct	glpoly_s	*next;
-	struct	glpoly_s	*chain;
+	struct	glpoly_t	*next;
+	struct	glpoly_t	*chain;
 	int		numverts;
 	int		flags;			// for SURF_UNDERWATER
 	float	verts[4][VERTEXSIZE];	// variable sized (xyz s1t1 s2t2)
-} glpoly_t;
+};
 
-typedef struct msurface_s
+struct msurface_t
 {
 	int			visframe;		// should be drawn when node is crossed
 
@@ -145,7 +145,7 @@ typedef struct msurface_s
 	int			light_s, light_t;	// gl lightmap coordinates
 
 	glpoly_t	*polys;				// multiple if warped
-	struct	msurface_s	*texturechain;
+	struct	msurface_t	*texturechain;
 
 	mtexinfo_t	*texinfo;
 	
@@ -158,9 +158,9 @@ typedef struct msurface_s
 	int			cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
 	qboolean	cached_dlight;				// true if dynamic light in cache
 	byte		*samples;		// [numstyles*surfsize]
-} msurface_t;
+};
 
-typedef struct mnode_s
+struct mnode_t
 {
 // common with leaf
 	int			contents;		// 0, to differentiate from leafs
@@ -168,19 +168,19 @@ typedef struct mnode_s
 	
 	float		minmaxs[6];		// for bounding box culling
 
-	struct mnode_s	*parent;
+	struct mnode_t	*parent;
 
 // node specific
 	mplane_t	*plane;
-	struct mnode_s	*children[2];	
+	struct mnode_t	*children[2];	
 
 	unsigned short		firstsurface;
 	unsigned short		numsurfaces;
-} mnode_t;
+};
 
 
 
-typedef struct mleaf_s
+struct mleaf_t
 {
 // common with node
 	int			contents;		// wil be a negative contents number
@@ -188,7 +188,7 @@ typedef struct mleaf_s
 
 	float		minmaxs[6];		// for bounding box culling
 
-	struct mnode_s	*parent;
+	struct mnode_t	*parent;
 
 // leaf specific
 	byte		*compressed_vis;
@@ -198,7 +198,7 @@ typedef struct mleaf_s
 	int			nummarksurfaces;
 	int			key;			// BSP sequence number for leaf's contents
 	byte		ambient_sound_level[NUM_AMBIENTS];
-} mleaf_t;
+};
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
 struct hull_t
@@ -221,13 +221,13 @@ SPRITE MODELS
 
 
 // FIXME: shorten these?
-typedef struct mspriteframe_s
+struct mspriteframe_t
 {
 	int		width;
 	int		height;
 	float	up, down, left, right;
 	int		gl_texturenum;
-} mspriteframe_t;
+};
 
 struct mspritegroup_t
 {
@@ -289,10 +289,10 @@ struct maliasgroup_t
 };
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct mtriangle_s {
+struct mtriangle_t {
 	int					facesfront;
 	int					vertindex[3];
-} mtriangle_t;
+};
 
 
 #define	MAX_SKINS	32
@@ -347,7 +347,7 @@ enum class modtype_t {mod_brush, mod_sprite, mod_alias};
 #define	EF_TRACER2	64			// orange split trail + rotate
 #define	EF_TRACER3	128			// purple trail
 
-typedef struct model_s
+struct model_t
 {
 	char		name[MAX_QPATH];
 	qboolean	needload;		// bmodels and sprites don't cache normally
@@ -422,7 +422,7 @@ typedef struct model_s
 //
 	cache_user_t	cache;		// only access through Mod_Extradata
 
-} model_t;
+};
 
 //============================================================================
 

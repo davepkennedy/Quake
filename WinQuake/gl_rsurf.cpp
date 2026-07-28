@@ -40,9 +40,9 @@ unsigned		blocklights[18*18];
 #define	MAX_LIGHTMAPS	64
 int			active_lightmaps;
 
-typedef struct glRect_s {
+struct glRect_t {
 	unsigned char l,t,w,h;
-} glRect_t;
+};
 
 qboolean	lightmap_modified[MAX_LIGHTMAPS];
 glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];

@@ -31,7 +31,7 @@ struct server_static_t
 {
 	int			maxclients;
 	int			maxclientslimit;
-	struct client_s	*clients;		// [maxclients]
+	struct client_t	*clients;		// [maxclients]
 	int			serverflags;		// episode completion information
 	qboolean	changelevel_issued;	// cleared when at SV_SpawnServer
 };
@@ -63,9 +63,9 @@ struct server_t
 	char		startspot[64];
 #endif
 	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
-	struct model_s 	*worldmodel;
+	struct model_t 	*worldmodel;
 	char		*model_precache[MAX_MODELS];	// NULL terminated
-	struct model_s	*models[MAX_MODELS];
+	struct model_t	*models[MAX_MODELS];
 	char		*sound_precache[MAX_SOUNDS];	// NULL terminated
 	char		*lightstyles[MAX_LIGHTSTYLES];
 	int			num_edicts;
@@ -89,7 +89,7 @@ struct server_t
 #define	NUM_PING_TIMES		16
 #define	NUM_SPAWN_PARMS		16
 
-typedef struct client_s
+struct client_t
 {
 	qboolean		active;				// false = client is free
 	qboolean		spawned;			// false = don't send datagrams
@@ -100,7 +100,7 @@ typedef struct client_s
 	double			last_message;		// reliable messages must be sent
 										// periodically
 
-	struct qsocket_s *netconnection;	// communications handle
+	struct qsocket_t *netconnection;	// communications handle
 
 	usercmd_t		cmd;				// movement
 	vec3_t			wishdir;			// intended motion calced from cmd
@@ -120,7 +120,7 @@ typedef struct client_s
 
 // client known data for deltas	
 	int				old_frags;
-} client_t;
+};
 
 
 //=============================================================================
@@ -246,12 +246,12 @@ void SV_SetLastCheckClient (int entnum, double time);	// sv.lastcheck/lastcheckt
 // the others: most are simple reads, but SV_TryIssueChangelevel is a
 // genuine check-and-set state transition, not a plain getter/setter.
 server_state_t SV_State (void);				// sv.state
-struct model_s *SV_WorldModel (void);			// sv.worldmodel
+struct model_t *SV_WorldModel (void);			// sv.worldmodel
 int SV_SoundPrecacheIndex (const char *name);	// find only; -1 if not precached
 int SV_PrecacheSound (char *name);				// find-or-register; -1 if table full
 int SV_ModelPrecacheIndex (const char *name);	// find only; -1 if not precached
 int SV_PrecacheModel (char *name);				// find-or-register (also loads the model); -1 if table full
-struct model_s *SV_ModelForIndex (int index);	// sv.models[index]
+struct model_t *SV_ModelForIndex (int index);	// sv.models[index]
 qboolean SV_TryIssueChangelevel (void);		// true if this call issued it, false if already issued this spawn
 qboolean SV_Active (void);						// sv.active
 int SV_MaxClientsLimit (void);					// svs.maxclientslimit
@@ -282,7 +282,7 @@ void SV_SetIdealPitch (void);
 void SV_AddUpdates (void);
 
 void SV_ClientThink (void);
-void SV_AddClientToServer (struct qsocket_s	*ret);
+void SV_AddClientToServer (struct qsocket_t	*ret);
 
 void SV_ClientPrintf (const char *fmt, ...);
 void SV_BroadcastPrintf (const char *fmt, ...);

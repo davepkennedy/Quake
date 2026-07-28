@@ -39,7 +39,7 @@ typedef union eval_s
 } eval_t;	
 
 #define	MAX_ENT_LEAFS	16
-typedef struct edict_s
+struct edict_t
 {
 	qboolean	free;
 	link_t		area;				// linked to a division node or leaf
@@ -52,7 +52,7 @@ typedef struct edict_s
 	float		freetime;			// sv.time when the object was freed
 	entvars_t	v;					// C exported fields from progs
 // other fields from progs come immediately after
-} edict_t;
+};
 #define	EDICT_FROM_AREA(l) STRUCT_FROM_LINK(l,edict_t,area)
 
 //============================================================================

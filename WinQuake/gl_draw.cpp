@@ -201,12 +201,12 @@ void Scrap_Upload (void)
 //=============================================================================
 /* Support Routines */
 
-typedef struct cachepic_s
+struct cachepic_t
 {
 	char		name[MAX_QPATH];
 	qpic_t		pic;
 	byte		padding[32];	// for appended glpic
-} cachepic_t;
+};
 
 #define	MAX_CACHED_PICS		128
 cachepic_t	menu_cachepics[MAX_CACHED_PICS];

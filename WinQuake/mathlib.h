@@ -32,7 +32,7 @@ typedef	int	fixed16_t;
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
 
-struct mplane_s;
+struct mplane_t;
 
 extern vec3_t vec3_origin;
 
@@ -67,7 +67,7 @@ fixed16_t Invert24To16(fixed16_t val);
 int GreatestCommonDivisor (int i1, int i2);
 
 void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *plane);
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_t *plane);
 float	anglemod(float a);
 void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
 

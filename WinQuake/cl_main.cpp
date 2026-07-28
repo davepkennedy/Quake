@@ -58,7 +58,7 @@ void client_state_t::Clear ()
 	memset (this, 0, sizeof(*this));
 }
 
-struct model_s *CL_WorldModel (void)
+struct model_t *CL_WorldModel (void)
 {
 	return cl.worldmodel;
 }
@@ -113,7 +113,7 @@ scoreboard_t *CL_Score (int index)
 	return &cl.scores[index];
 }
 
-struct model_s *CL_ModelPrecache (int index)
+struct model_t *CL_ModelPrecache (int index)
 {
 	return cl.model_precache[index];
 }
@@ -143,15 +143,15 @@ float CL_FaceAnimTime (void)
 	return cl.faceanimtime;
 }
 
-struct efrag_s *CL_AllocEfrag (void)
+struct efrag_t *CL_AllocEfrag (void)
 {
-	struct efrag_s *ef = cl.free_efrags;
+	struct efrag_t *ef = cl.free_efrags;
 	if (ef)
 		cl.free_efrags = ef->entnext;
 	return ef;
 }
 
-void CL_FreeEfrag (struct efrag_s *ef)
+void CL_FreeEfrag (struct efrag_t *ef)
 {
 	ef->entnext = cl.free_efrags;
 	cl.free_efrags = ef;

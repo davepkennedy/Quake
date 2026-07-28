@@ -28,11 +28,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // a pixel can be one, two, or four bytes
 typedef byte pixel_t;
 
-typedef struct vrect_s
+struct vrect_t
 {
 	int				x,y,width,height;
-	struct vrect_s	*pnext;
-} vrect_t;
+	struct vrect_t	*pnext;
+};
 
 struct viddef_t
 {

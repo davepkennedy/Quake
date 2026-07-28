@@ -123,9 +123,9 @@ struct qsockaddr
 #define CCREP_PLAYER_INFO	0x84
 #define CCREP_RULE_INFO		0x85
 
-typedef struct qsocket_s
+struct qsocket_t
 {
-	struct qsocket_s	*next;
+	struct qsocket_t	*next;
 	double			connecttime;
 	double			lastMessageTime;
 	double			lastSendTime;
@@ -153,7 +153,7 @@ typedef struct qsocket_s
 	struct qsockaddr	addr;
 	char				address[NET_NAMELEN];
 
-} qsocket_t;
+};
 
 // Core network connection state -- consolidated per an explicit scoping
 // decision (this subsystem is much larger/more cross-cutting than
@@ -293,25 +293,25 @@ qboolean IsID(struct qsockaddr *addr);
 void		NET_Init (void);
 void		NET_Shutdown (void);
 
-struct qsocket_s	*NET_CheckNewConnections (void);
+struct qsocket_t	*NET_CheckNewConnections (void);
 // returns a new connection number if there is one pending, else -1
 
-struct qsocket_s	*NET_Connect (const char *host);
+struct qsocket_t	*NET_Connect (const char *host);
 // called by client to connect to a host.  Returns -1 if not able to
 
 qboolean NET_CanSendMessage (qsocket_t *sock);
 // Returns true or false if the given qsocket can currently accept a
 // message to be transmitted.
 
-int			NET_GetMessage (struct qsocket_s *sock);
+int			NET_GetMessage (struct qsocket_t *sock);
 // returns data in net_message sizebuf
 // returns 0 if no data is waiting
 // returns 1 if a message was received
 // returns 2 if an unreliable message was received
 // returns -1 if the connection died
 
-int			NET_SendMessage (struct qsocket_s *sock, sizebuf_t *data);
-int			NET_SendUnreliableMessage (struct qsocket_s *sock, sizebuf_t *data);
+int			NET_SendMessage (struct qsocket_t *sock, sizebuf_t *data);
+int			NET_SendUnreliableMessage (struct qsocket_t *sock, sizebuf_t *data);
 // returns 0 if the message connot be delivered reliably, but the connection
 //		is still considered valid
 // returns 1 if the message was sent properly
@@ -321,7 +321,7 @@ int			NET_SendToAll(sizebuf_t *data, int blocktime);
 // This is a reliable *blocking* send to all attached clients.
 
 
-void		NET_Close (struct qsocket_s *sock);
+void		NET_Close (struct qsocket_t *sock);
 // if a dead connection is returned by a get or send function, this function
 // should be called when it is convenient
 
@@ -333,13 +333,13 @@ void		NET_Close (struct qsocket_s *sock);
 void NET_Poll(void);
 
 
-typedef struct _PollProcedure
+struct PollProcedure
 {
-	struct _PollProcedure	*next;
+	struct PollProcedure	*next;
 	double					nextTime;
 	void					(*procedure)();
 	void					*arg;
-} PollProcedure;
+};
 
 void SchedulePollProcedure(PollProcedure *pp, double timeOffset);
 

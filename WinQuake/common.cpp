@@ -1220,13 +1220,13 @@ struct packfile_t
 	int             filepos, filelen;
 };
 
-typedef struct pack_s
+struct pack_t
 {
 	char    filename[MAX_OSPATH];
 	int             handle;
 	int             numfiles;
 	packfile_t      *files;
-} pack_t;
+};
 
 //
 // on disk
@@ -1249,12 +1249,12 @@ struct dpackheader_t
 char    com_cachedir[MAX_OSPATH];
 char    com_gamedir[MAX_OSPATH];
 
-typedef struct searchpath_s
+struct searchpath_t
 {
 	char    filename[MAX_OSPATH];
 	pack_t  *pack;          // only one of filename / pack will be used
-	struct searchpath_s *next;
-} searchpath_t;
+	struct searchpath_t *next;
+};
 
 searchpath_t    *com_searchpaths;
 
@@ -1595,7 +1595,7 @@ byte *COM_LoadTempFile (const char *path)
 	return COM_LoadFile (path, 2);
 }
 
-void COM_LoadCacheFile (const char *path, struct cache_user_s *cu)
+void COM_LoadCacheFile (const char *path, struct cache_user_t *cu)
 {
 	loadcache = cu;
 	COM_LoadFile (path, 3);

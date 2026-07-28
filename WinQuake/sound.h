@@ -36,11 +36,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DEFAULT_SOUND_PACKET_VOLUME 255
 #define DEFAULT_SOUND_PACKET_ATTENUATION 1.0
 
-typedef struct sfx_s
+struct sfx_t
 {
 	char 	name[MAX_QPATH];
 	cache_user_t	cache;
-} sfx_t;
+};
 
 void S_Init (void);
 void S_Shutdown (void);
