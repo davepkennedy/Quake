@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cvar.h"	// cvar_t
 #include "render.h"	// entity_t, efrag_t
 
-typedef struct
+struct usercmd_t
 {
 	vec3_t	viewangles;
 
@@ -42,28 +42,28 @@ typedef struct
 #ifdef QUAKE2
 	byte	lightlevel;
 #endif
-} usercmd_t;
+};
 
-typedef struct
+struct lightstyle_t
 {
 	int		length;
 	char	map[MAX_STYLESTRING];
-} lightstyle_t;
+};
 
-typedef struct
+struct scoreboard_t
 {
 	char	name[MAX_SCOREBOARDNAME];
 	float	entertime;
 	int		frags;
 	int		colors;			// two 4 bit fields
 	byte	translations[VID_GRADES*256];
-} scoreboard_t;
+};
 
-typedef struct
+struct cshift_t
 {
 	int		destcolor[3];
 	int		percent;		// 0-256
-} cshift_t;
+};
 
 #define	CSHIFT_CONTENTS	0
 #define	CSHIFT_DAMAGE	1
@@ -81,7 +81,7 @@ typedef struct
 #define	SIGNONS		4			// signon messages to receive before connected
 
 #define	MAX_DLIGHTS		32
-typedef struct
+struct dlight_t
 {
 	vec3_t	origin;
 	float	radius;
@@ -92,17 +92,17 @@ typedef struct
 #ifdef QUAKE2
 	qboolean	dark;			// subtracts light instead of adding
 #endif
-} dlight_t;
+};
 
 
 #define	MAX_BEAMS	24
-typedef struct
+struct beam_t
 {
 	int		entity;
 	struct model_s	*model;
 	float	endtime;
 	vec3_t	start, end;
-} beam_t;
+};
 
 #define	MAX_EFRAGS		640
 
@@ -120,7 +120,7 @@ ca_connected		// valid netcon, talking to a server
 // the client_static_t structure is persistant through an arbitrary number
 // of server connections
 //
-typedef struct
+struct client_static_t
 {
 	cactive_t	state;
 
@@ -149,7 +149,7 @@ typedef struct
 	struct qsocket_s	*netcon;
 	sizebuf_t	message;		// writing buffer to send to server
 	
-} client_static_t;
+};
 
 extern client_static_t	cls;
 
@@ -361,11 +361,11 @@ extern	entity_t		*cl_visedicts[MAX_VISEDICTS];
 //
 // cl_input
 //
-typedef struct
+struct kbutton_t
 {
 	int		down[2];		// key nums holding it down
 	int		state;			// low bit is down state
-} kbutton_t;
+};
 
 extern	kbutton_t	in_mlook, in_klook;
 extern 	kbutton_t 	in_strafe;

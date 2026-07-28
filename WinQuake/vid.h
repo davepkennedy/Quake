@@ -34,7 +34,7 @@ typedef struct vrect_s
 	struct vrect_s	*pnext;
 } vrect_t;
 
-typedef struct
+struct viddef_t
 {
 	pixel_t			*buffer;		// invisible buffer
 	pixel_t			*colormap;		// 256 * VID_GRADES size
@@ -54,7 +54,7 @@ typedef struct
 	int				maxwarpheight;
 	pixel_t			*direct;		// direct drawing to framebuffer, if not
 									//  NULL
-} viddef_t;
+};
 
 extern	viddef_t	vid;				// global video state
 extern	unsigned short	d_8to16table[256];

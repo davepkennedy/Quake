@@ -76,7 +76,7 @@ typedef struct entity_s
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct
+struct refdef_t
 {
 	vrect_t		vrect;				// subwindow in video for refresh
 									// FIXME: not need vrect next field here?
@@ -104,7 +104,7 @@ typedef struct
 	float		fov_x, fov_y;
 
 	int			ambientlight;
-} refdef_t;
+};
 
 
 //

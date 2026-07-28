@@ -25,13 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "progs.h"	// edict_t
 #include "gl_model.h"	// hull_t
 
-typedef struct
+struct plane_t
 {
 	vec3_t	normal;
 	float	dist;
-} plane_t;
+};
 
-typedef struct
+struct trace_t
 {
 	qboolean	allsolid;	// if true, plane is not valid
 	qboolean	startsolid;	// if true, the initial point was in a solid area
@@ -40,7 +40,7 @@ typedef struct
 	vec3_t	endpos;			// final position
 	plane_t	plane;			// surface normal at impact
 	edict_t	*ent;			// entity the surface is on
-} trace_t;
+};
 
 
 #define	MOVE_NORMAL		0

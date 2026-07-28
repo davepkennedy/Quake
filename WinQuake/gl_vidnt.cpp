@@ -51,7 +51,7 @@ typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareC
 #define NO_MODE					(MODE_WINDOWED - 1)
 #define MODE_FULLSCREEN_DEFAULT	(MODE_WINDOWED + 1)
 
-typedef struct {
+struct vmode_t {
 	modestate_t	type;
 	int			width;
 	int			height;
@@ -61,12 +61,12 @@ typedef struct {
 	int			bpp;
 	int			halfscreen;
 	std::string	modedesc;
-} vmode_t;
+};
 
-typedef struct {
+struct lmode_t {
 	int			width;
 	int			height;
-} lmode_t;
+};
 
 lmode_t	lowresmodes[] = {
 	{320, 200},
@@ -2001,12 +2001,12 @@ extern void M_DrawPic (int x, int y, qpic_t *pic);
 
 static int	vid_line, vid_wmodes;
 
-typedef struct
+struct modedesc_t
 {
 	int		modenum;
 	std::string	desc;
 	int		iscur;
-} modedesc_t;
+};
 
 #define MAX_COLUMN_SIZE		9
 #define MODE_AREA_HEIGHT	(MAX_COLUMN_SIZE + 2)

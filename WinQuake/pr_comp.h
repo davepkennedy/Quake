@@ -124,18 +124,18 @@ typedef struct statement_s
 	short	a,b,c;
 } dstatement_t;
 
-typedef struct
+struct ddef_t
 {
 	unsigned short	type;		// if DEF_SAVEGLOBGAL bit is set
 								// the variable needs to be saved in savegames
 	unsigned short	ofs;
 	int			s_name;
-} ddef_t;
+};
 #define	DEF_SAVEGLOBAL	(1<<15)
 
 #define	MAX_PARMS	8
 
-typedef struct
+struct dfunction_t
 {
 	int		first_statement;	// negative numbers are builtins
 	int		parm_start;
@@ -148,11 +148,11 @@ typedef struct
 	
 	int		numparms;
 	byte	parm_size[MAX_PARMS];
-} dfunction_t;
+};
 
 
 #define	PROG_VERSION	6
-typedef struct
+struct dprograms_t
 {
 	int		version;
 	int		crc;			// check of header file
@@ -176,5 +176,5 @@ typedef struct
 	int		numglobals;
 	
 	int		entityfields;
-} dprograms_t;
+};
 

@@ -37,12 +37,12 @@ typedef struct memblock_s
 	int		pad;			// pad to 64 bit boundary
 } memblock_t;
 
-typedef struct
+struct memzone_t
 {
 	int		size;		// total bytes malloced, including header
 	memblock_t	blocklist;		// start / end cap for linked list
 	memblock_t	*rover;
-} memzone_t;
+};
 
 // moved up from the CACHE MEMORY section below so zone_state_t can hold
 // cache_head by value.
@@ -301,12 +301,12 @@ void Z_CheckHeap (void)
 
 #define	HUNK_SENTINAL	0x1df001ed
 
-typedef struct
+struct hunk_t
 {
 	int		sentinal;
 	int		size;		// including sizeof(hunk_t), -1 = not allocated
 	char	name[8];
-} hunk_t;
+};
 
 void R_FreeTextures (void);
 

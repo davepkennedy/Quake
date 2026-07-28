@@ -38,11 +38,11 @@ qpic_t		*draw_backtile;
 int			translate_texture;
 int			char_texture;
 
-typedef struct
+struct glpic_t
 {
 	int		texnum;
 	float	sl, tl, sh, th;
-} glpic_t;
+};
 
 byte		conback_buffer[sizeof(qpic_t) + sizeof(glpic_t)];
 qpic_t		*conback = (qpic_t *)&conback_buffer;
@@ -92,13 +92,13 @@ static void Draw2D_Quad(float x, float y, float w, float h,
 
 // -------------------------------------------------------------------------
 
-typedef struct
+struct gltexture_t
 {
 	int		texnum;
 	char	identifier[64];
 	int		width, height;
 	qboolean	mipmap;
-} gltexture_t;
+};
 
 #define	MAX_GLTEXTURES	1024
 gltexture_t	gltextures[MAX_GLTEXTURES];
@@ -333,11 +333,11 @@ void Draw_CharToConback (int num, byte *dest)
 
 }
 
-typedef struct
+struct glmode_t
 {
 	const char *name;
 	int	minimize, maximize;
-} glmode_t;
+};
 
 glmode_t modes[] = {
 	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},

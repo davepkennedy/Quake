@@ -58,10 +58,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define BSPVERSION	29
 #define	TOOLVERSION	2
 
-typedef struct
+struct lump_t
 {
 	int		fileofs, filelen;
-} lump_t;
+};
 
 #define	LUMP_ENTITIES	0
 #define	LUMP_PLANES		1
@@ -81,26 +81,26 @@ typedef struct
 
 #define	HEADER_LUMPS	15
 
-typedef struct
+struct dmodel_t
 {
 	float		mins[3], maxs[3];
 	float		origin[3];
 	int			headnode[MAX_MAP_HULLS];
 	int			visleafs;		// not including the solid leaf 0
 	int			firstface, numfaces;
-} dmodel_t;
+};
 
-typedef struct
+struct dheader_t
 {
 	int			version;	
 	lump_t		lumps[HEADER_LUMPS];
-} dheader_t;
+};
 
-typedef struct
+struct dmiptexlump_t
 {
 	int			nummiptex;
 	int			dataofs[4];		// [nummiptex]
-} dmiptexlump_t;
+};
 
 #define	MIPLEVELS	4
 typedef struct miptex_s
@@ -111,10 +111,10 @@ typedef struct miptex_s
 } miptex_t;
 
 
-typedef struct
+struct dvertex_t
 {
 	float	point[3];
-} dvertex_t;
+};
 
 
 // 0-2 are axial planes
@@ -127,12 +127,12 @@ typedef struct
 #define	PLANE_ANYY		4
 #define	PLANE_ANYZ		5
 
-typedef struct
+struct dplane_t
 {
 	float	normal[3];
 	float	dist;
 	int		type;		// PLANE_X - PLANE_ANYZ ?remove? trivial to regenerate
-} dplane_t;
+};
 
 
 
@@ -154,7 +154,7 @@ typedef struct
 
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
-typedef struct
+struct dnode_t
 {
 	int			planenum;
 	short		children[2];	// negative numbers are -(leafs+1), not nodes
@@ -162,13 +162,13 @@ typedef struct
 	short		maxs[3];
 	unsigned short	firstface;
 	unsigned short	numfaces;	// counting both sides
-} dnode_t;
+};
 
-typedef struct
+struct dclipnode_t
 {
 	int			planenum;
 	short		children[2];	// negative numbers are contents
-} dclipnode_t;
+};
 
 
 typedef struct texinfo_s
@@ -181,13 +181,13 @@ typedef struct texinfo_s
 
 // note that edge 0 is never used, because negative edge nums are used for
 // counterclockwise use of the edge in a face
-typedef struct
+struct dedge_t
 {
 	unsigned short	v[2];		// vertex numbers
-} dedge_t;
+};
 
 #define	MAXLIGHTMAPS	4
-typedef struct
+struct dface_t
 {
 	short		planenum;
 	short		side;
@@ -199,7 +199,7 @@ typedef struct
 // lighting info
 	byte		styles[MAXLIGHTMAPS];
 	int			lightofs;		// start of [numstyles*surfsize] samples
-} dface_t;
+};
 
 
 
@@ -212,7 +212,7 @@ typedef struct
 
 // leaf 0 is the generic CONTENTS_SOLID leaf, used for all solid areas
 // all other leafs need visibility info
-typedef struct
+struct dleaf_t
 {
 	int			contents;
 	int			visofs;				// -1 = no visibility info
@@ -224,7 +224,7 @@ typedef struct
 	unsigned short		nummarksurfaces;
 
 	byte		ambient_level[NUM_AMBIENTS];
-} dleaf_t;
+};
 
 
 //============================================================================
@@ -300,13 +300,13 @@ typedef struct epair_s
 	char	*value;
 } epair_t;
 
-typedef struct
+struct entity_t
 {
 	vec3_t		origin;
 	int			firstbrush;
 	int			numbrushes;
 	epair_t		*epairs;
-} entity_t;
+};
 
 extern	int			num_entities;
 extern	entity_t	entities[MAX_MAP_ENTITIES];

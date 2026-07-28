@@ -28,14 +28,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __SND_INTERNAL__
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
-typedef struct
+struct portable_samplepair_t
 {
 	int left;
 	int right;
-} portable_samplepair_t;
+};
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
-typedef struct
+struct sfxcache_t
 {
 	int 	length;
 	int 	loopstart;
@@ -43,9 +43,9 @@ typedef struct
 	int 	width;
 	int 	stereo;
 	byte	data[1];		// variable sized
-} sfxcache_t;
+};
 
-typedef struct
+struct dma_t
 {
 	qboolean		gamealive;
 	qboolean		soundalive;
@@ -57,10 +57,10 @@ typedef struct
 	int				samplebits;
 	int				speed;
 	unsigned char	*buffer;
-} dma_t;
+};
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
-typedef struct
+struct channel_t
 {
 	sfx_t	*sfx;			// sfx number
 	int		leftvol;		// 0-255 volume
@@ -73,9 +73,9 @@ typedef struct
 	vec3_t	origin;			// origin of sound effect
 	vec_t	dist_mult;		// distance multiplier (attenuation/clipK)
 	int		master_vol;		// 0-255 master volume
-} channel_t;
+};
 
-typedef struct
+struct wavinfo_t
 {
 	int		rate;
 	int		width;
@@ -83,7 +83,7 @@ typedef struct
 	int		loopstart;
 	int		samples;
 	int		dataofs;		// chunk starts this many bytes from file start
-} wavinfo_t;
+};
 
 #define	MAX_CHANNELS			128
 #define	MAX_DYNAMIC_CHANNELS	8

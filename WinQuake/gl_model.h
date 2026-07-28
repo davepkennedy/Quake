@@ -60,10 +60,10 @@ BRUSH MODELS
 // in memory representation
 //
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct
+struct mvertex_t
 {
 	vec3_t		position;
-} mvertex_t;
+};
 
 #define	SIDE_FRONT	0
 #define	SIDE_BACK	1
@@ -104,19 +104,19 @@ typedef struct texture_s
 #define SURF_UNDERWATER		0x80
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct
+struct medge_t
 {
 	unsigned short	v[2];
 	unsigned int	cachededgeoffset;
-} medge_t;
+};
 
-typedef struct
+struct mtexinfo_t
 {
 	float		vecs[2][4];
 	float		mipadjust;
 	texture_t	*texture;
 	int			flags;
-} mtexinfo_t;
+};
 
 #define	VERTEXSIZE	7
 
@@ -201,7 +201,7 @@ typedef struct mleaf_s
 } mleaf_t;
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
-typedef struct
+struct hull_t
 {
 	dclipnode_t	*clipnodes;
 	mplane_t	*planes;
@@ -209,7 +209,7 @@ typedef struct
 	int			lastclipnode;
 	vec3_t		clip_mins;
 	vec3_t		clip_maxs;
-} hull_t;
+};
 
 /*
 ==============================================================================
@@ -229,20 +229,20 @@ typedef struct mspriteframe_s
 	int		gl_texturenum;
 } mspriteframe_t;
 
-typedef struct
+struct mspritegroup_t
 {
 	int				numframes;
 	float			*intervals;
 	mspriteframe_t	*frames[1];
-} mspritegroup_t;
+};
 
-typedef struct
+struct mspriteframedesc_t
 {
 	spriteframetype_t	type;
 	mspriteframe_t		*frameptr;
-} mspriteframedesc_t;
+};
 
-typedef struct
+struct msprite_t
 {
 	int					type;
 	int					maxwidth;
@@ -251,7 +251,7 @@ typedef struct
 	float				beamlength;		// remove?
 	void				*cachespot;		// remove?
 	mspriteframedesc_t	frames[1];
-} msprite_t;
+};
 
 
 /*
@@ -263,7 +263,7 @@ Alias models are position independent, so the cache manager can move them.
 ==============================================================================
 */
 
-typedef struct
+struct maliasframedesc_t
 {
 	int					firstpose;
 	int					numposes;
@@ -272,21 +272,21 @@ typedef struct
 	trivertx_t			bboxmax;
 	int					frame;
 	char				name[16];
-} maliasframedesc_t;
+};
 
-typedef struct
+struct maliasgroupframedesc_t
 {
 	trivertx_t			bboxmin;
 	trivertx_t			bboxmax;
 	int					frame;
-} maliasgroupframedesc_t;
+};
 
-typedef struct
+struct maliasgroup_t
 {
 	int						numframes;
 	int						intervals;
 	maliasgroupframedesc_t	frames[1];
-} maliasgroup_t;
+};
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct mtriangle_s {
@@ -296,7 +296,7 @@ typedef struct mtriangle_s {
 
 
 #define	MAX_SKINS	32
-typedef struct {
+struct aliashdr_t {
 	int			ident;
 	int			version;
 	vec3_t		scale;
@@ -320,7 +320,7 @@ typedef struct {
 	int					gl_texturenum[MAX_SKINS][4];
 	int					texels[MAX_SKINS];	// only for player skins
 	maliasframedesc_t	frames[1];	// variable sized
-} aliashdr_t;
+};
 
 #define	MAXALIASVERTS	1024
 #define	MAXALIASFRAMES	256

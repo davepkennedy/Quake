@@ -142,7 +142,7 @@ void	VID_UnlockBuffer (void);
 // command line parms passed to the program, and the amount of memory
 // available for the program to use
 
-typedef struct
+struct quakeparms_t
 {
 	char	*basedir;
 	char	*cachedir;		// for development over ISDN lines
@@ -150,7 +150,7 @@ typedef struct
 	const char	**argv;
 	void	*membase;
 	size_t	memsize;
-} quakeparms_t;
+};
 
 
 //=============================================================================

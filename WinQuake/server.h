@@ -27,14 +27,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"	// usercmd_t
 #include "progs.h"	// edict_t
 
-typedef struct
+struct server_static_t
 {
 	int			maxclients;
 	int			maxclientslimit;
 	struct client_s	*clients;		// [maxclients]
 	int			serverflags;		// episode completion information
 	qboolean	changelevel_issued;	// cleared when at SV_SpawnServer
-} server_static_t;
+};
 
 //=============================================================================
 

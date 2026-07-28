@@ -46,11 +46,11 @@ int		keyshift[256];		// key to map to if shift held down in console
 static int		key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 
-typedef struct
+struct keyname_t
 {
 	const char	*name;
 	int			keynum;
-} keyname_t;
+};
 
 keyname_t keynames[] =
 {

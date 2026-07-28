@@ -184,7 +184,7 @@ struct net_state_t
 
 extern net_state_t net;
 
-typedef struct
+struct net_landriver_t
 {
 	const char	*name;
 	qboolean	initialized;
@@ -207,13 +207,13 @@ typedef struct
 	int			(*AddrCompare) (struct qsockaddr *addr1, struct qsockaddr *addr2);
 	int			(*GetSocketPort) (struct qsockaddr *addr);
 	int			(*SetSocketPort) (struct qsockaddr *addr, int port);
-} net_landriver_t;
+};
 
 #define	MAX_NET_DRIVERS		8
 extern int 				net_numlandrivers;
 extern net_landriver_t	net_landrivers[MAX_NET_DRIVERS];
 
-typedef struct
+struct net_driver_t
 {
 	const char	*name;
 	qboolean	initialized;
@@ -230,7 +230,7 @@ typedef struct
 	void		(*Close) (qsocket_t *sock);
 	void		(*Shutdown) (void);
 	int			controlSock;
-} net_driver_t;
+};
 
 extern int			net_numdrivers;
 extern net_driver_t	net_drivers[MAX_NET_DRIVERS];
@@ -250,7 +250,7 @@ double SetNetTime(void);
 
 #define HOSTCACHESIZE	8
 
-typedef struct
+struct hostcache_t
 {
 	char	name[16];
 	char	map[16];
@@ -260,7 +260,7 @@ typedef struct
 	int		driver;
 	int		ldriver;
 	struct qsockaddr addr;
-} hostcache_t;
+};
 
 extern int hostCacheCount;
 extern hostcache_t hostcache[HOSTCACHESIZE];

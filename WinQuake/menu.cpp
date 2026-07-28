@@ -1894,11 +1894,11 @@ void LanConfigMenu::Key (int key)
 //=============================================================================
 /* GAME OPTIONS MENU */
 
-typedef struct
+struct level_t
 {
 	const char	*name;
 	const char	*description;
-} level_t;
+};
 
 level_t		levels[] =
 {
@@ -1999,12 +1999,12 @@ level_t		roguelevels[] =
 	{"ctf1",    "Division of Change"}
 };
 
-typedef struct
+struct episode_t
 {
 	const char	*description;
 	int		firstLevel;
 	int		levels;
-} episode_t;
+};
 
 episode_t	episodes[] =
 {

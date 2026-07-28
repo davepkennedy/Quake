@@ -1335,10 +1335,10 @@ Fill background pixels so mipmapping doesn't have haloes - Ed
 =================
 */
 
-typedef struct
+struct floodfill_t
 {
 	short		x, y;
-} floodfill_t;
+};
 
 extern unsigned d_8to24table[];
 

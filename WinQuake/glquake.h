@@ -77,12 +77,12 @@ void GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboolean a
 int GL_LoadTexture (const char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha);
 int GL_FindTexture (const char *identifier);
 
-typedef struct
+struct glvert_t
 {
 	float	x, y, z;
 	float	s, t;
 	float	r, g, b;
-} glvert_t;
+};
 
 extern glvert_t glv;
 
@@ -130,7 +130,7 @@ typedef struct surfcache_s
 } surfcache_t;
 
 
-typedef struct
+struct drawsurf_t
 {
 	pixel_t		*surfdat;	// destination for generated surface
 	int			rowbytes;	// destination logical width in bytes
@@ -141,7 +141,7 @@ typedef struct
 	int			surfmip;	// mipmapped ratio of surface texels / world pixels
 	int			surfwidth;	// in mipmapped texels
 	int			surfheight;	// in mipmapped texels
-} drawsurf_t;
+};
 
 
 typedef enum {

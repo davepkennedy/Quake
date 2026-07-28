@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "mathlib.h"	// vec3_t
 
-typedef struct
+struct entity_state_t
 {
 	vec3_t	origin;
 	vec3_t	angles;
@@ -35,4 +35,4 @@ typedef struct
 	int		colormap;
 	int		skin;
 	int		effects;
-} entity_state_t;
+};

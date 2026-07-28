@@ -25,11 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-typedef struct
+struct prstack_t
 {
 	int				s;
 	dfunction_t		*f;
-} prstack_t;
+};
 
 #define	MAX_STACK_DEPTH		32
 prstack_t	pr_stack[MAX_STACK_DEPTH];

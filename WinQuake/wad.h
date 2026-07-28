@@ -39,22 +39,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	TYP_SOUND		67
 #define	TYP_MIPTEX		68
 
-typedef struct
+struct qpic_t
 {
 	int			width, height;
 	byte		data[4];			// variably sized
-} qpic_t;
+};
 
 
 
-typedef struct
+struct wadinfo_t
 {
 	char		identification[4];		// should be WAD2 or 2DAW
 	int			numlumps;
 	int			infotableofs;
-} wadinfo_t;
+};
 
-typedef struct
+struct lumpinfo_t
 {
 	int			filepos;
 	int			disksize;
@@ -63,7 +63,7 @@ typedef struct
 	char		compression;
 	char		pad1, pad2;
 	char		name[16];				// must be null terminated
-} lumpinfo_t;
+};
 
 extern	int			wad_numlumps;
 extern	lumpinfo_t	*wad_lumps;
