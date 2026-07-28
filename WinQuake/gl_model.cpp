@@ -100,7 +100,7 @@ mleaf_t *Mod_PointInLeaf (vec3_t p, model_t *model)
 			node = node->children[1];
 	}
 	
-	return NULL;	// never reached
+	return nullptr;	// never reached
 }
 
 
@@ -187,7 +187,7 @@ model_t *Mod_FindName (const char *name)
 	model_t	*mod;
 	
 	if (!name[0])
-		Sys_Error ("Mod_ForName: NULL name");
+		Sys_Error ("Mod_ForName: nullptr name");
 		
 //
 // search the currently loaded models
@@ -268,7 +268,7 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 	{
 		if (crash)
 			Sys_Error ("Mod_NumForName: %s not found", mod->name);
-		return NULL;
+		return nullptr;
 	}
 	
 //
@@ -347,7 +347,7 @@ void Mod_LoadTextures (lump_t *l)
 
 	if (!l->filelen)
 	{
-		loadmodel->textures = NULL;
+		loadmodel->textures = nullptr;
 		return;
 	}
 	m = (dmiptexlump_t *)(mod_base + l->fileofs);
@@ -496,7 +496,7 @@ void Mod_LoadLighting (lump_t *l)
 {
 	if (!l->filelen)
 	{
-		loadmodel->lightdata = NULL;
+		loadmodel->lightdata = nullptr;
 		return;
 	}
 	loadmodel->lightdata = (byte *)Hunk_AllocName ( l->filelen, loadname);
@@ -513,7 +513,7 @@ void Mod_LoadVisibility (lump_t *l)
 {
 	if (!l->filelen)
 	{
-		loadmodel->visdata = NULL;
+		loadmodel->visdata = nullptr;
 		return;
 	}
 	loadmodel->visdata = (byte *)Hunk_AllocName ( l->filelen, loadname);
@@ -530,7 +530,7 @@ void Mod_LoadEntities (lump_t *l)
 {
 	if (!l->filelen)
 	{
-		loadmodel->entities = NULL;
+		loadmodel->entities = nullptr;
 		return;
 	}
 	loadmodel->entities = (char *)Hunk_AllocName ( l->filelen, loadname);
@@ -793,7 +793,7 @@ void Mod_LoadFaces (lump_t *l)
 			out->styles[i] = in->styles[i];
 		i = LittleLong(in->lightofs);
 		if (i == -1)
-			out->samples = NULL;
+			out->samples = nullptr;
 		else
 			out->samples = loadmodel->lightdata + i;
 		
@@ -882,7 +882,7 @@ void Mod_LoadNodes (lump_t *l)
 		}
 	}
 	
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent (loadmodel->nodes, nullptr);	// sets nodes and leafs
 }
 
 /*
@@ -922,10 +922,10 @@ void Mod_LoadLeafs (lump_t *l)
 		
 		p = LittleLong(in->visofs);
 		if (p == -1)
-			out->compressed_vis = NULL;
+			out->compressed_vis = nullptr;
 		else
 			out->compressed_vis = loadmodel->visdata + p;
-		out->efrags = NULL;
+		out->efrags = nullptr;
 		
 		for (j=0 ; j<4 ; j++)
 			out->ambient_sound_level[j] = in->ambient_level[j];

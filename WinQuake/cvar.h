@@ -103,7 +103,7 @@ std::optional<cvar_t*> Cvar_FindVar (const char *var_name);
 
 cvar_t *Cvar_NextServerVar (const char *afterName);
 // iterator-based enumeration of .server-flagged cvars, in map order;
-// pass NULL/"" to start from the beginning, NULL return means exhausted.
+// pass nullptr/"" to start from the beginning, nullptr return means exhausted.
 // Used by net_dgrm.cpp's CCREQ_RULE_INFO handler instead of reaching into
 // cvar_vars directly.
 

@@ -364,7 +364,7 @@ void Cmd_Alias_f (void)
 static	int			cmd_argc;
 static	std::string	cmd_argv[MAX_ARGS];
 static	const char	*cmd_null_string = "";
-static	const char	*cmd_args = NULL;
+static	const char	*cmd_args = nullptr;
 
 cmd_source_t	cmd_source;
 
@@ -439,7 +439,7 @@ Parses the given string into command line tokens.
 void Cmd_TokenizeString (const char *text)
 {
 	cmd_argc = 0;
-	cmd_args = NULL;
+	cmd_args = nullptr;
 	
 	while (1)
 	{
@@ -623,7 +623,7 @@ int Cmd_CheckParm (const char *parm)
 	int i;
 	
 	if (!parm)
-		Sys_Error ("Cmd_CheckParm: NULL");
+		Sys_Error ("Cmd_CheckParm: nullptr");
 
 	for (i = 1; i < Cmd_Argc (); i++)
 		if (! Q_strcasecmp (parm, Cmd_Argv (i)))

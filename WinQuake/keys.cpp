@@ -150,7 +150,7 @@ keyname_t keynames[] =
 
 	{"SEMICOLON", ';'},	// because a raw semicolon seperates commands
 
-	{NULL,0}
+	{nullptr,0}
 };
 
 /*

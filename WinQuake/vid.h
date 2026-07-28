@@ -53,7 +53,7 @@ struct viddef_t
 	int				maxwarpwidth;
 	int				maxwarpheight;
 	pixel_t			*direct;		// direct drawing to framebuffer, if not
-									//  NULL
+									//  nullptr
 };
 
 extern	viddef_t	vid;				// global video state

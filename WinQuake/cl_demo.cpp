@@ -49,7 +49,7 @@ void CL_StopPlayback (void)
 
 	fclose (cls.demofile);
 	cls.demoplayback = false;
-	cls.demofile = NULL;
+	cls.demofile = nullptr;
 	cls.state = ca_disconnected;
 
 	if (cls.timedemo)
@@ -181,7 +181,7 @@ void CL_Stop_f (void)
 
 // finish up
 	fclose (cls.demofile);
-	cls.demofile = NULL;
+	cls.demofile = nullptr;
 	cls.demorecording = false;
 	Con_Printf ("Completed demo\n");
 }

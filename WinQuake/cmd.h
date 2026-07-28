@@ -100,7 +100,7 @@ int			Cmd_Argc (void);
 const char	*Cmd_Argv (int arg);
 std::string	Cmd_Args (void);
 // The functions that execute commands get their parameters with these
-// functions. Cmd_Argv () will return an empty string, not a NULL
+// functions. Cmd_Argv () will return an empty string, not a nullptr
 // if arg > argc, so string operations are allways safe.
 
 int Cmd_CheckParm (const char *parm);

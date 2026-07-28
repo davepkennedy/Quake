@@ -137,7 +137,7 @@ void Z_Free (void *ptr)
 	memblock_t	*block, *other;
 	
 	if (!ptr)
-		Sys_Error ("Z_Free: NULL pointer");
+		Sys_Error ("Z_Free: nullptr pointer");
 
 	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
 	if (block->id != ZONEID)
@@ -210,7 +210,7 @@ void *Z_TagMalloc (int size, int tag)
 	do
 	{
 		if (rover == start)	// scaned all the way around the list
-			return NULL;
+			return nullptr;
 		if (rover->tag)
 			base = rover = rover->next;
 		else
@@ -563,7 +563,7 @@ void *Hunk_HighAllocName (int size, const char *name)
 	if (mem.hunk_size - mem.hunk_low_used - mem.hunk_high_used < size)
 	{
 		Con_Printf ("Hunk_HighAlloc: failed on %i bytes\n",size);
-		return NULL;
+		return nullptr;
 	}
 
 	mem.hunk_high_used += size;
@@ -680,7 +680,7 @@ void Cache_FreeHigh (int new_high_hunk)
 {
 	cache_system_t	*c, *prev;
 	
-	prev = NULL;
+	prev = nullptr;
 	while (1)
 	{
 		c = mem.cache_head.prev;
@@ -701,7 +701,7 @@ void Cache_FreeHigh (int new_high_hunk)
 void Cache_UnlinkLRU (cache_system_t *cs)
 {
 	if (!cs->inLRU)
-		Sys_Error ("Cache_UnlinkLRU: NULL link");
+		Sys_Error ("Cache_UnlinkLRU: nullptr link");
 
 	mem.cacheLRU.remove (cs);
 	cs->inLRU = false;
@@ -793,7 +793,7 @@ cache_system_t *Cache_TryAlloc (int size, qboolean nobottom)
 		return newcs;
 	}
 
-	return NULL;		// couldn't allocate
+	return nullptr;		// couldn't allocate
 }
 
 /*
@@ -879,9 +879,9 @@ void Cache_Free (cache_user_t *c)
 
 	cs->prev->next = cs->next;
 	cs->next->prev = cs->prev;
-	cs->next = cs->prev = NULL;
+	cs->next = cs->prev = nullptr;
 
-	c->data = NULL;
+	c->data = nullptr;
 
 	Cache_UnlinkLRU (cs);
 }
@@ -898,7 +898,7 @@ void *Cache_Check (cache_user_t *c)
 	cache_system_t	*cs;
 
 	if (!c->data)
-		return NULL;
+		return nullptr;
 
 	cs = ((cache_system_t *)c->data) - 1;
 

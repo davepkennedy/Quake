@@ -73,10 +73,6 @@ void InsertLinkAfter (link_t *l, link_t *after);
 
 //============================================================================
 
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-
 #define Q_MAXCHAR ((char)0x7f)
 #define Q_MAXSHORT ((short)0x7fff)
 #define Q_MAXINT	((int)0x7fffffff)

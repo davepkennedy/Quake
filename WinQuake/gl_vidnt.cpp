@@ -227,7 +227,7 @@ static void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjus
 		CenterX >>= 1;	// dual screens
 	CenterX = (CenterX < 0) ? 0: CenterX;
 	CenterY = (CenterY < 0) ? 0: CenterY;
-	SetWindowPos (hWndCenter, NULL, CenterX, CenterY, 0, 0,
+	SetWindowPos (hWndCenter, nullptr, CenterX, CenterY, 0, 0,
 			SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_DRAWFRAME);
 }
 
@@ -266,10 +266,10 @@ qboolean VID_SetWindowedMode (int modenum)
 		 rect.left, rect.top,
 		 width,
 		 height,
-		 NULL,
-		 NULL,
+		 nullptr,
+		 nullptr,
 		 global_hInstance,
-		 NULL);
+		 nullptr);
 
 	if (!dibwindow)
 		Sys_Error ("Couldn't create DIB window");
@@ -283,7 +283,7 @@ qboolean VID_SetWindowedMode (int modenum)
 
 	modestate = MS_WINDOWED;
 
-// because we have set the background brush for the window to NULL
+// because we have set the background brush for the window to nullptr
 // (to avoid flickering when re-sizing the window on the desktop),
 // we clear the window to black when created, otherwise it will be
 // empty while Quake starts up.
@@ -357,10 +357,10 @@ qboolean VID_SetFullDIBMode (int modenum)
 		 rect.left, rect.top,
 		 width,
 		 height,
-		 NULL,
-		 NULL,
+		 nullptr,
+		 nullptr,
 		 global_hInstance,
-		 NULL);
+		 nullptr);
 
 	if (!dibwindow)
 		Sys_Error ("Couldn't create DIB window");
@@ -368,7 +368,7 @@ qboolean VID_SetFullDIBMode (int modenum)
 	ShowWindow (dibwindow, SW_SHOWDEFAULT);
 	UpdateWindow (dibwindow);
 
-	// Because we have set the background brush for the window to NULL
+	// Because we have set the background brush for the window to nullptr
 	// (to avoid flickering when re-sizing the window on the desktop), we
 	// clear the window to black when created, otherwise it will be
 	// empty while Quake starts up.
@@ -472,7 +472,7 @@ int VID_SetMode (int modenum, unsigned char *palette)
 	vid_modenum = modenum;
 	Cvar_SetValue ("vid_mode", (float)vid_modenum);
 
-	while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+	while (PeekMessage (&msg, nullptr, 0, 0, PM_REMOVE))
 	{
       	TranslateMessage (&msg);
       	DispatchMessage (&msg);
@@ -545,10 +545,10 @@ void CheckArrayExtensions (void)
 		if (strncmp((const char*)tmp, "GL_EXT_vertex_array", strlen("GL_EXT_vertex_array")) == 0)
 		{
 			if (
-((glArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == NULL) ||
-((glColorPointerEXT = wglGetProcAddress("glColorPointerEXT")) == NULL) ||
-((glTexCoordPointerEXT = wglGetProcAddress("glTexCoordPointerEXT")) == NULL) ||
-((glVertexPointerEXT = wglGetProcAddress("glVertexPointerEXT")) == NULL) )
+((glArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == nullptr) ||
+((glColorPointerEXT = wglGetProcAddress("glColorPointerEXT")) == nullptr) ||
+((glTexCoordPointerEXT = wglGetProcAddress("glTexCoordPointerEXT")) == nullptr) ||
+((glVertexPointerEXT = wglGetProcAddress("glVertexPointerEXT")) == nullptr) )
 			{
 				Sys_Error ("GetProcAddress for vertex extension failed");
 				return;
@@ -644,7 +644,7 @@ void CheckMultiTextureExtensions(void)
 #define GL_NUM_EXTENSIONS 0x821D
 typedef const GLubyte* (APIENTRY *PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
 
-// glGetString(GL_EXTENSIONS) returns NULL under a Core Profile context (that
+// glGetString(GL_EXTENSIONS) returns nullptr under a Core Profile context (that
 // enumeration was removed in GL 3.0 core) -- fall back to the modern
 // per-index glGetStringi query and rebuild the same space-separated format
 // (each entry followed by a space) that the strstr(gl_extensions, "...")
@@ -654,7 +654,7 @@ static std::string GL_BuildExtensionsString (void)
 	char buf[16384];
 
 	// glGetString(GL_EXTENSIONS) itself raises GL_INVALID_ENUM under a core
-	// context (not just returning NULL), so check the version first rather
+	// context (not just returning nullptr), so check the version first rather
 	// than trying it and inspecting the result.
 	GLint major = 0;
 	glGetIntegerv (GL_MAJOR_VERSION, &major);
@@ -892,7 +892,7 @@ void	VID_Shutdown (void)
 		hRC = wglGetCurrentContext();
     	hDC = wglGetCurrentDC();
 
-    	wglMakeCurrent(NULL, NULL);
+    	wglMakeCurrent(nullptr, nullptr);
 
     	if (hRC)
     	    wglDeleteContext(hRC);
@@ -901,7 +901,7 @@ void	VID_Shutdown (void)
 			ReleaseDC(dibwindow, hDC);
 
 		if (modestate == MS_FULLDIB)
-			ChangeDisplaySettings (NULL, 0);
+			ChangeDisplaySettings (nullptr, 0);
 
 		if (maindc && dibwindow)
 			ReleaseDC (dibwindow, maindc);
@@ -940,13 +940,13 @@ BOOL bSetupPixelFormat(HDC hDC)
 
     if ( (pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0 )
     {
-        MessageBox(NULL, "ChoosePixelFormat failed", "Error", MB_OK);
+        MessageBox(nullptr, "ChoosePixelFormat failed", "Error", MB_OK);
         return FALSE;
     }
 
     if (SetPixelFormat(hDC, pixelformat, &pfd) == FALSE)
     {
-        MessageBox(NULL, "SetPixelFormat failed", "Error", MB_OK);
+        MessageBox(nullptr, "SetPixelFormat failed", "Error", MB_OK);
         return FALSE;
     }
 
@@ -1099,7 +1099,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
 			IN_DeactivateMouse ();
 			IN_ShowMouse ();
 			if (vid_canalttab) { 
-				ChangeDisplaySettings (NULL, 0);
+				ChangeDisplaySettings (nullptr, 0);
 				vid_wassuspended = true;
 			}
 		}
@@ -1421,8 +1421,8 @@ void VID_InitDIB (HINSTANCE hInstance)
     wc.cbWndExtra    = 0;
     wc.hInstance     = hInstance;
     wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
-	wc.hbrBackground = NULL;
+    wc.hCursor       = LoadCursor (nullptr,IDC_ARROW);
+	wc.hbrBackground = nullptr;
     wc.lpszMenuName  = 0;
     wc.lpszClassName = "WinQuake";
 
@@ -1478,7 +1478,7 @@ void VID_InitFullDIB (HINSTANCE hInstance)
 
 	do
 	{
-		stat = EnumDisplaySettings (NULL, modenum, &devmode);
+		stat = EnumDisplaySettings (nullptr, modenum, &devmode);
 
 		if ((devmode.dmBitsPerPel >= 15) &&
 			(devmode.dmPelsWidth <= MAXWIDTH) &&
@@ -1711,14 +1711,14 @@ void	VID_Init (unsigned char *palette)
 
 	if (COM_CheckParm("-window"))
 	{
-		hdc = GetDC (NULL);
+		hdc = GetDC (nullptr);
 
 		if (GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE)
 		{
 			Sys_Error ("Can't run in non-RGB mode");
 		}
 
-		ReleaseDC (NULL, hdc);
+		ReleaseDC (nullptr, hdc);
 
 		windowed = true;
 
@@ -1953,7 +1953,7 @@ void	VID_Init (unsigned char *palette)
 	if (baseRC)
 	{
 		// Real GL 4.5 core context created -- switch to it and drop the dummy.
-		wglMakeCurrent (NULL, NULL);
+		wglMakeCurrent (nullptr, nullptr);
 		wglDeleteContext (dummyRC);
 		if (!wglMakeCurrent (maindc, baseRC))
 			Sys_Error ("wglMakeCurrent failed (core context)");

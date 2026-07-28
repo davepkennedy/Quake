@@ -58,13 +58,13 @@ struct gefv_cache {
 	char	field[MAX_FIELD_LEN];
 };
 
-static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{NULL, ""}, {NULL, ""}};
+static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{nullptr, ""}, {nullptr, ""}};
 
 /*
 =================
 ED_ClearEdict
 
-Sets everything to NULL
+Sets everything to nullptr
 =================
 */
 void ED_ClearEdict (edict_t *e)
@@ -116,7 +116,7 @@ edict_t *ED_Alloc (void)
 ED_Free
 
 Marks the edict as free
-FIXME: walk all entities and NULL out references to this entity
+FIXME: walk all entities and nullptr out references to this entity
 =================
 */
 void ED_Free (edict_t *ed)
@@ -240,7 +240,7 @@ std::optional<dfunction_t*> ED_FindFunction (const char *name)
 
 std::optional<eval_t*> GetEdictFieldValue(edict_t *ed, const char *field)
 {
-	ddef_t			*def = NULL;
+	ddef_t			*def = nullptr;
 	int				i;
 	static int		rep = 0;
 
@@ -901,7 +901,7 @@ void ED_LoadFromFile (const char *data)
 	int			inhibit;
 	std::optional<dfunction_t*>	func;
 
-	ent = NULL;
+	ent = nullptr;
 	inhibit = 0;
 	pr_global_struct->time = sv.time;
 	

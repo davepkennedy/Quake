@@ -1359,7 +1359,7 @@ void R_Mirror (void)
 	s = CL_WorldModel()->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s);
-	CL_WorldModel()->textures[mirrortexturenum]->texturechain = NULL;
+	CL_WorldModel()->textures[mirrortexturenum]->texturechain = nullptr;
 	R_World_SetAlpha (1.0f);
 	glDisable (GL_BLEND);
 }
@@ -1380,7 +1380,7 @@ void R_RenderView (void)
 		return;
 
 	if (!r_worldentity.model || !CL_WorldModel())
-		Sys_Error ("R_RenderView: NULL worldmodel");
+		Sys_Error ("R_RenderView: nullptr worldmodel");
 
 	if (r_speeds.value)
 	{

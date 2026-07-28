@@ -230,7 +230,7 @@ void PR_Profile_f (void)
 	do
 	{
 		max = 0;
-		best = NULL;
+		best = nullptr;
 		for (i=0 ; i<progs->numfunctions ; i++)
 		{
 			f = &pr_functions[i];
@@ -391,7 +391,7 @@ void PR_ExecuteProgram (func_t fnum)
 	{
 		if (pr_global_struct->self)
 			ED_Print (PROG_TO_EDICT(pr_global_struct->self));
-		Host_Error ("PR_ExecuteProgram: NULL function");
+		Host_Error ("PR_ExecuteProgram: nullptr function");
 	}
 	
 	f = &pr_functions[fnum];
@@ -627,7 +627,7 @@ while (1)
 	case OP_CALL8:
 		pr_argc = st->op - OP_CALL0;
 		if (!a->function)
-			PR_RunError ("NULL function");
+			PR_RunError ("nullptr function");
 
 		newf = &pr_functions[a->function];
 

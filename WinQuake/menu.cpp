@@ -1275,7 +1275,7 @@ void OptionsMenu::Key (int k)
 		break;
 	}
 
-	if (cursor == 12 && vid_menudrawfn == NULL)
+	if (cursor == 12 && vid_menudrawfn == nullptr)
 	{
 		if (k == K_UPARROW)
 			cursor = 11;
@@ -2584,7 +2584,7 @@ MenuScreen *M_ScreenForState (m_state_t state)
 	case m_gameoptions:   return &gameOptionsMenu;
 	case m_search:        return &searchMenu;
 	case m_slist:         return &serverListMenu;
-	default:              return NULL;	// m_none
+	default:              return nullptr;	// m_none
 	}
 }
 

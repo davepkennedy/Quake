@@ -37,8 +37,8 @@ static int		slistLastShown;
 
 static void Slist_Send(void);
 static void Slist_Poll(void);
-PollProcedure	slistSendProcedure = {NULL, 0.0, Slist_Send};
-PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
+PollProcedure	slistSendProcedure = {nullptr, 0.0, Slist_Send};
+PollProcedure	slistPollProcedure = {nullptr, 0.0, Slist_Poll};
 
 
 cvar_t	net_messagetimeout = {"net_messagetimeout","300"};
@@ -77,11 +77,11 @@ qsocket_t *NET_NewQSocket (void)
 {
 	qsocket_t	*sock;
 
-	if (net.freeSockets == NULL)
-		return NULL;
+	if (net.freeSockets == nullptr)
+		return nullptr;
 
 	if (net.activeconnections >= svs.maxclients)
-		return NULL;
+		return nullptr;
 
 	// get one from free list
 	sock = net.freeSockets;
@@ -96,7 +96,7 @@ qsocket_t *NET_NewQSocket (void)
 	Q_strcpy (sock->address,"UNSET ADDRESS");
 	sock->driver = net_driverlevel;
 	sock->socket = 0;
-	sock->driverdata = NULL;
+	sock->driverdata = nullptr;
 	sock->canSend = true;
 	sock->sendNext = false;
 	sock->lastMessageTime = net.time;
@@ -340,7 +340,7 @@ qsocket_t *NET_Connect (const char *host)
 	SetNetTime();
 
 	if (host && *host == 0)
-		host = NULL;
+		host = nullptr;
 
 	if (host)
 	{
@@ -369,10 +369,10 @@ qsocket_t *NET_Connect (const char *host)
 	while(slistInProgress)
 		NET_Poll();
 
-	if (host == NULL)
+	if (host == nullptr)
 	{
 		if (hostCacheCount != 1)
-			return NULL;
+			return nullptr;
 		host = hostcache[0].cname;
 		Con_Printf("Connecting to...\n%s @ %s\n\n", hostcache[0].name, host);
 	}
@@ -403,7 +403,7 @@ JustDoIt:
 		PrintSlistTrailer();
 	}
 	
-	return NULL;
+	return nullptr;
 }
 
 
@@ -455,7 +455,7 @@ qsocket_t *NET_CheckNewConnections (void)
 		Sys_FileWrite (vcrFile, &vcrConnect, sizeof(vcrConnect));
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -883,7 +883,7 @@ void		NET_Shutdown (void)
 }
 
 
-static PollProcedure *pollProcedureList = NULL;
+static PollProcedure *pollProcedureList = nullptr;
 
 void NET_Poll(void)
 {
@@ -906,14 +906,14 @@ void SchedulePollProcedure(PollProcedure *proc, double timeOffset)
 	PollProcedure *pp, *prev;
 
 	proc->nextTime = Sys_FloatTime() + timeOffset;
-	for (pp = pollProcedureList, prev = NULL; pp; pp = pp->next)
+	for (pp = pollProcedureList, prev = nullptr; pp; pp = pp->next)
 	{
 		if (pp->nextTime >= proc->nextTime)
 			break;
 		prev = pp;
 	}
 
-	if (prev == NULL)
+	if (prev == nullptr)
 	{
 		proc->next = pollProcedureList;
 		pollProcedureList = proc;

@@ -140,7 +140,7 @@ void VCR_SearchForHosts (qboolean xmit)
 
 qsocket_t *VCR_Connect (const char *host)
 {
-	return NULL;
+	return nullptr;
 }
 
 
@@ -154,7 +154,7 @@ qsocket_t *VCR_CheckNewConnections (void)
 	if (!next.session)
 	{
 		VCR_ReadNext ();
-		return NULL;
+		return nullptr;
 	}
 
 	sock = NET_NewQSocket ();

@@ -1344,7 +1344,7 @@ void PF_aim (void)
 // try all possible entities
 	VectorCopy (dir, bestdir);
 	bestdist = sv_aim.value;
-	bestent = NULL;
+	bestent = nullptr;
 	
 	check = EDICT_NUM(1);
 	for (i=1 ; i<SV_NumEdicts() ; i++, check = NEXT_EDICT(check) )
@@ -1519,7 +1519,7 @@ sizebuf_t *WriteDest (void)
 		break;
 	}
 	
-	return NULL;
+	return nullptr;
 }
 
 void PF_WriteByte (void)

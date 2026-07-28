@@ -227,7 +227,7 @@ Returns the clipflags if the velocity was modified (hit something solid)
 1 = floor
 2 = wall / step
 4 = dead stop
-If steptrace is not NULL, the trace of any vertical wall hit will be stored
+If steptrace is not nullptr, the trace of any vertical wall hit will be stored
 ============
 */
 #define	MAX_CLIP_PLANES	5
@@ -1110,7 +1110,7 @@ void SV_Physics_Client (edict_t	*ent, int num)
 	case MOVETYPE_FLY:
 		if (!SV_RunThink (ent))
 			return;
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, host_frametime, nullptr);
 		break;
 		
 	case MOVETYPE_NOCLIP:
@@ -1429,7 +1429,7 @@ void SV_Physics_Step (edict_t *ent)
 			}
 
 		VectorAdd (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, host_frametime, nullptr);
 		VectorSubtract (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
 
 		// determine if it's on solid ground at all
@@ -1482,7 +1482,7 @@ void SV_Physics_Step (edict_t *ent)
 
 		SV_AddGravity (ent);
 		SV_CheckVelocity (ent);
-		SV_FlyMove (ent, host_frametime, NULL);
+		SV_FlyMove (ent, host_frametime, nullptr);
 		SV_LinkEdict (ent, true);
 
 		if ( (int)ent->v.flags & FL_ONGROUND )	// just hit ground

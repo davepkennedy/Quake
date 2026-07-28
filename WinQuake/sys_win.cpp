@@ -216,7 +216,7 @@ void Sys_FileClose (int handle)
 
 	t = VID_ForceUnlockedAndReturnState ();
 	fclose (sys_handles[handle]);
-	sys_handles[handle] = NULL;
+	sys_handles[handle] = nullptr;
 	VID_ForceLockState (t);
 }
 
@@ -387,11 +387,11 @@ void Sys_Init (void)
 		va_end (argptr);
 
 		sprintf (text2, "ERROR: %s\n", text);
-		WriteFile (houtput, text5, (DWORD)strlen (text5), &dummy, NULL);
-		WriteFile (houtput, text4, (DWORD)strlen (text4), &dummy, NULL);
-		WriteFile (houtput, text2, (DWORD)strlen (text2), &dummy, NULL);
-		WriteFile (houtput, text3, (DWORD)strlen (text3), &dummy, NULL);
-		WriteFile (houtput, text4, (DWORD)strlen (text4), &dummy, NULL);
+		WriteFile (houtput, text5, (DWORD)strlen (text5), &dummy, nullptr);
+		WriteFile (houtput, text4, (DWORD)strlen (text4), &dummy, nullptr);
+		WriteFile (houtput, text2, (DWORD)strlen (text2), &dummy, nullptr);
+		WriteFile (houtput, text3, (DWORD)strlen (text3), &dummy, nullptr);
+		WriteFile (houtput, text4, (DWORD)strlen (text4), &dummy, nullptr);
 
 
 		starttime = Sys_FloatTime ();
@@ -410,12 +410,12 @@ void Sys_Init (void)
 		{
 			in_sys_error0 = 1;
 			VID_SetDefaultMode ();
-			MessageBox(NULL, text, "Quake Error",
+			MessageBox(nullptr, text, "Quake Error",
 					   MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
 		}
 		else
 		{
-			MessageBox(NULL, text, "Double Quake Error",
+			MessageBox(nullptr, text, "Double Quake Error",
 					   MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
 		}
 	}
@@ -441,7 +441,7 @@ void Sys_PrintfImpl (const std::string &text)
 	DWORD		dummy;
 
 	if (isDedicated)
-		WriteFile (houtput, text.c_str (), (DWORD)text.size (), &dummy, NULL);
+		WriteFile (houtput, text.c_str (), (DWORD)text.size (), &dummy, nullptr);
 }
 
 void Sys_Quit (void)
@@ -594,7 +594,7 @@ std::optional<std::string> Sys_ConsoleInput (void)
 				switch (ch)
 				{
 					case '\r':
-						WriteFile(houtput, "\r\n", 2, &dummy, NULL);	
+						WriteFile(houtput, "\r\n", 2, &dummy, nullptr);	
 
 						if (len)
 						{
@@ -613,7 +613,7 @@ std::optional<std::string> Sys_ConsoleInput (void)
 						break;
 
 					case '\b':
-						WriteFile(houtput, "\b \b", 3, &dummy, NULL);	
+						WriteFile(houtput, "\b \b", 3, &dummy, nullptr);	
 						if (len)
 						{
 							len--;
@@ -623,7 +623,7 @@ std::optional<std::string> Sys_ConsoleInput (void)
 					default:
 						if (ch >= ' ')
 						{
-							WriteFile(houtput, &ch, 1, &dummy, NULL);	
+							WriteFile(houtput, &ch, 1, &dummy, nullptr);	
 							text[len] = ch;
 							len = (len + 1) & 0xff;
 						}
@@ -648,12 +648,12 @@ void Sys_SendKeyEvents (void)
 {
     MSG        msg;
 
-	while (PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE))
+	while (PeekMessage (&msg, nullptr, 0, 0, PM_NOREMOVE))
 	{
 	// we always update if there are any event, even if we're paused
 		scr_skipupdate = 0;
 
-		if (!GetMessage (&msg, NULL, 0, 0))
+		if (!GetMessage (&msg, nullptr, 0, 0))
 			Sys_Quit ();
 
       	TranslateMessage (&msg);
@@ -702,7 +702,7 @@ void Sys_CloseSplashDialog (void)
 	if (hwnd_dialog)
 	{
 		DestroyWindow (hwnd_dialog);
-		hwnd_dialog = NULL;
+		hwnd_dialog = nullptr;
 	}
 }
 
@@ -723,7 +723,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	Sys_EnableDpiAwareness ();
 
 	// needed by snd_win.cpp's WASAPI device enumeration/activation
-	CoInitializeEx (NULL, COINIT_APARTMENTTHREADED);
+	CoInitializeEx (nullptr, COINIT_APARTMENTTHREADED);
 
 	global_hInstance = hInstance;
 	global_nCmdShow = nCmdShow;
@@ -738,7 +738,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		cwd[Q_strlen(cwd)-1] = 0;
 
 	parms.basedir = cwd;
-	parms.cachedir = NULL;
+	parms.cachedir = nullptr;
 
 	parms.argc = 1;
 	argv[0] = empty_string;
@@ -776,7 +776,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	if (!isDedicated)
 	{
-		hwnd_dialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, NULL);
+		hwnd_dialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), nullptr, nullptr);
 
 		if (hwnd_dialog)
 		{
@@ -826,7 +826,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	Sys_PageIn (parms.membase, parms.memsize);
 
-	tevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	tevent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
 	if (!tevent)
 		Sys_Error ("Couldn't create event");
@@ -845,19 +845,19 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		if ((t = COM_CheckParm ("-HFILE")) > 0)
 		{
 			if (t < com_argc)
-				hFile = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], NULL, 0);
+				hFile = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], nullptr, 0);
 		}
 			
 		if ((t = COM_CheckParm ("-HPARENT")) > 0)
 		{
 			if (t < com_argc)
-				heventParent = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], NULL, 0);
+				heventParent = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], nullptr, 0);
 		}
 			
 		if ((t = COM_CheckParm ("-HCHILD")) > 0)
 		{
 			if (t < com_argc)
-				heventChild = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], NULL, 0);
+				heventChild = (HANDLE)(UINT_PTR)strtoull (com_argv[t+1], nullptr, 0);
 		}
 
 		InitConProc (hFile, heventParent, heventChild);

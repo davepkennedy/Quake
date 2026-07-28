@@ -86,7 +86,7 @@ void SV_BroadcastPrintf (const char *fmt, ...)
 // Only reachable via Cmd_Exec_f (exec a .cfg file), which no test calls.
 byte *COM_LoadHunkFile (const char *path)
 {
-	return NULL;
+	return nullptr;
 }
 
 // Only reachable via Cmd_ForwardToServer, which no test calls.
@@ -285,14 +285,14 @@ const char *COM_Parse (const char *data)
 	com_token[0] = 0;
 
 	if (!data)
-		return NULL;
+		return nullptr;
 
 // skip whitespace
 skipwhite:
 	while ( (c = *data) <= ' ')
 	{
 		if (c == 0)
-			return NULL;                    // end of file;
+			return nullptr;                    // end of file;
 		data++;
 	}
 

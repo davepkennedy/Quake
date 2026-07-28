@@ -96,7 +96,7 @@ void IN_StartupXInput (void)
 	if (!pXInputGetState)
 	{
 		FreeLibrary (xinput_dll);
-		xinput_dll = NULL;
+		xinput_dll = nullptr;
 		return;
 	}
 
@@ -109,9 +109,9 @@ void IN_ShutdownXInput (void)
 	if (xinput_dll)
 	{
 		FreeLibrary (xinput_dll);
-		xinput_dll = NULL;
+		xinput_dll = nullptr;
 	}
-	pXInputGetState = NULL;
+	pXInputGetState = nullptr;
 	xinput_avail = xinput_connected = false;
 }
 
@@ -409,7 +409,7 @@ void IN_DeactivateMouse (void)
 		if (restore_spi)
 			SystemParametersInfo (SPI_SETMOUSE, 0, originalmouseparms, 0);
 
-		ClipCursor (NULL);
+		ClipCursor (nullptr);
 		ReleaseCapture ();
 
 		mouseactive = false;

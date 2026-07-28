@@ -64,9 +64,9 @@ struct server_t
 #endif
 	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
 	struct model_t 	*worldmodel;
-	char		*model_precache[MAX_MODELS];	// NULL terminated
+	char		*model_precache[MAX_MODELS];	// nullptr terminated
 	struct model_t	*models[MAX_MODELS];
-	char		*sound_precache[MAX_SOUNDS];	// NULL terminated
+	char		*sound_precache[MAX_SOUNDS];	// nullptr terminated
 	char		*lightstyles[MAX_LIGHTSTYLES];
 	int			num_edicts;
 	int			max_edicts;
@@ -224,7 +224,7 @@ extern	server_t		sv;					// local server
 // sv./svs.'s representation directly.
 int SV_NumEdicts (void);					// sv.num_edicts
 int SV_NumClients (void);					// svs.maxclients
-client_t *SV_ClientForEntNum (int entnum);	// 1-based; NULL if entnum isn't a client
+client_t *SV_ClientForEntNum (int entnum);	// 1-based; nullptr if entnum isn't a client
 
 // Narrow network-buffer accessors -- same idea, for QuakeC builtins that
 // write directly to one of the server's outgoing message buffers instead

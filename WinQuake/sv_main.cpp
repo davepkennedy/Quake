@@ -42,7 +42,7 @@ int SV_NumClients (void)
 client_t *SV_ClientForEntNum (int entnum)
 {
 	if (entnum < 1 || entnum > svs.maxclients)
-		return NULL;
+		return nullptr;
 	return &svs.clients[entnum-1];
 }
 

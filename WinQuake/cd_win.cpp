@@ -45,7 +45,7 @@ static void CDAudio_Eject(void)
 {
 	DWORD	dwReturn;
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (DWORD_PTR)NULL))
+    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (DWORD_PTR)nullptr))
 		Con_DPrintf("MCI_SET_DOOR_OPEN failed (%i)\n", dwReturn);
 }
 
@@ -54,7 +54,7 @@ static void CDAudio_CloseDoor(void)
 {
 	DWORD	dwReturn;
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (DWORD_PTR)NULL))
+    if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (DWORD_PTR)nullptr))
 		Con_DPrintf("MCI_SET_DOOR_CLOSED failed (%i)\n", dwReturn);
 }
 
@@ -185,7 +185,7 @@ void CDAudio_Stop(void)
 	if (!playing)
 		return;
 
-    if (dwReturn = mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD_PTR)NULL))
+    if (dwReturn = mciSendCommand(wDeviceID, MCI_STOP, 0, (DWORD_PTR)nullptr))
 		Con_DPrintf("MCI_STOP failed (%i)", dwReturn);
 
 	wasPlaying = false;
@@ -443,7 +443,7 @@ int CDAudio_Init(void)
     if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&mciSetParms))
     {
 		Con_Printf("MCI_SET_TIME_FORMAT failed (%i)\n", dwReturn);
-        mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD_PTR)NULL);
+        mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD_PTR)nullptr);
 		return -1;
     }
 
@@ -471,6 +471,6 @@ void CDAudio_Shutdown(void)
 	if (!initialized)
 		return;
 	CDAudio_Stop();
-	if (mciSendCommand(wDeviceID, MCI_CLOSE, MCI_WAIT, (DWORD_PTR)NULL))
+	if (mciSendCommand(wDeviceID, MCI_CLOSE, MCI_WAIT, (DWORD_PTR)nullptr))
 		Con_DPrintf("CDAudio_Shutdown: MCI_CLOSE failed\n");
 }

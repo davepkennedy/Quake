@@ -339,7 +339,7 @@ void R_ClearParticles (void)
 	int		i;
 	
 	free_particles = &particles[0];
-	active_particles = NULL;
+	active_particles = nullptr;
 
 	// particles.data() + (i+1) rather than &particles[i+1]: the last
 	// iteration computes a one-past-the-end address (immediately
@@ -348,7 +348,7 @@ void R_ClearParticles (void)
 	// builds and would assert on the out-of-range index.
 	for (i=0 ;i<r_numparticles ; i++)
 		particles[i].next = particles.data() + (i+1);
-	particles[r_numparticles-1].next = NULL;
+	particles[r_numparticles-1].next = nullptr;
 }
 
 

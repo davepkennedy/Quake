@@ -55,7 +55,7 @@ struct entity_t
 	vec3_t					origin;
 	vec3_t					msg_angles[2];	// last two updates (0 is newest)
 	vec3_t					angles;	
-	struct model_t			*model;			// NULL = no model
+	struct model_t			*model;			// nullptr = no model
 	struct efrag_t			*efrag;			// linked list of efrags
 	int						frame;
 	float					syncbase;		// for client-side animations
@@ -71,7 +71,7 @@ struct entity_t
 // FIXME: could turn these into a union
 	int						trivial_accept;
 	struct mnode_t			*topnode;		// for bmodels, first world node
-											//  that splits bmodel, or NULL if
+											//  that splits bmodel, or nullptr if
 											//  not split
 };
 

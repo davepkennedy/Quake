@@ -119,7 +119,7 @@ lumpinfo_t	*W_GetLumpinfo (const char *name)
 	}
 	
 	Sys_Error ("W_GetLumpinfo: %s not found", name);
-	return NULL;
+	return nullptr;
 }
 
 void *W_GetLumpName (const char *name)

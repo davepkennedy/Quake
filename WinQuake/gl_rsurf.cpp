@@ -54,8 +54,8 @@ int			allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
 byte		lightmaps[4*MAX_LIGHTMAPS*BLOCK_WIDTH*BLOCK_HEIGHT];
 
 // For gl_texsort 0
-msurface_t  *skychain = NULL;
-msurface_t  *waterchain = NULL;
+msurface_t  *skychain = nullptr;
+msurface_t  *waterchain = nullptr;
 
 // -------------------------------------------------------------------------
 // World surface renderer state (VAO / VBO / GLSL shader)
@@ -326,8 +326,8 @@ extern	int		solidskytexture;
 extern	int		alphaskytexture;
 extern	float	speedscale;		// for top sky and bottom sky
 
-lpMTexFUNC qglMTexCoord2fSGIS = NULL;
-lpSelTexFUNC qglSelectTextureSGIS = NULL;
+lpMTexFUNC qglMTexCoord2fSGIS = nullptr;
+lpSelTexFUNC qglSelectTextureSGIS = nullptr;
 
 qboolean mtexenabled = false;
 
@@ -673,7 +673,7 @@ void R_DrawWaterSurfaces (void)
 		for ( ; s ; s=s->texturechain)
 			R_RenderBrushPoly (s);
 
-		t->texturechain = NULL;
+		t->texturechain = nullptr;
 	}
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -709,7 +709,7 @@ void R_DrawWaterSurfaces (void)
 			EmitWaterPolys (s);
 		}
 		
-		waterchain = NULL;
+		waterchain = nullptr;
 	} else {
 
 		model_t *worldmodel = CL_WorldModel();
@@ -731,7 +731,7 @@ void R_DrawWaterSurfaces (void)
 			for ( ; s ; s=s->texturechain)
 				EmitWaterPolys (s);
 			
-			t->texturechain = NULL;
+			t->texturechain = nullptr;
 		}
 
 	}
@@ -764,7 +764,7 @@ void DrawTextureChains (void)
 		if (skychain)
 		{
 			R_DrawSkyChain (skychain);
-			skychain = NULL;
+			skychain = nullptr;
 		}
 		return;
 	}
@@ -836,7 +836,7 @@ void DrawTextureChains (void)
 			}
 		}
 
-		t->texturechain = NULL;
+		t->texturechain = nullptr;
 	}
 
 	R_World_EndDraw ();

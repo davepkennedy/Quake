@@ -96,7 +96,7 @@ Cvar_NextServerVar
 Iterator-based replacement for net_dgrm.cpp's old raw cvar_vars/->next walk
 (the CCREQ_RULE_INFO LAN "server rules" query, which enumerates .server
 cvars one at a time by asking "give me the one after this name"). Passing
-NULL or "" starts from the beginning; returns NULL once exhausted.
+nullptr or "" starts from the beginning; returns nullptr once exhausted.
 ============
 */
 cvar_t *Cvar_NextServerVar (const char *afterName)
@@ -107,7 +107,7 @@ cvar_t *Cvar_NextServerVar (const char *afterName)
 	{
 		it = cvar_vars.find (afterName);
 		if (it == cvar_vars.end ())
-			return NULL;	// unknown name -- matches the old Cvar_FindVar-fails-returns-NULL behavior
+			return nullptr;	// unknown name -- matches the old Cvar_FindVar-fails-returns-nullptr behavior
 		++it;
 	}
 
@@ -115,7 +115,7 @@ cvar_t *Cvar_NextServerVar (const char *afterName)
 		if (it->second->server)
 			return it->second;
 
-	return NULL;
+	return nullptr;
 }
 
 

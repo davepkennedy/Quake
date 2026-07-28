@@ -118,7 +118,7 @@ texture_t *R_TextureAnimation (texture_t *base);
 struct surfcache_t
 {
 	struct surfcache_t	*next;
-	struct surfcache_t 	**owner;		// NULL is an empty chunk of memory
+	struct surfcache_t 	**owner;		// nullptr is an empty chunk of memory
 	int					lightadj[MAXLIGHTMAPS]; // checked for strobe flush
 	int					dlight;
 	int					size;		// including header

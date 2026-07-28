@@ -249,7 +249,7 @@ sfx_t *S_FindName (const char *name)
 	sfx_t	*sfx;
 
 	if (!name)
-		Sys_Error ("S_FindName: NULL\n");
+		Sys_Error ("S_FindName: nullptr\n");
 
 	if (Q_strlen(name) >= MAX_QPATH)
 		Sys_Error ("Sound name too long: %s", name);
@@ -301,7 +301,7 @@ sfx_t *S_PrecacheSound (const char *name)
 	sfx_t	*sfx;
 
 	if (!sound.started || nosound.value)
-		return NULL;
+		return nullptr;
 
 	sfx = S_FindName (name);
 	
@@ -351,10 +351,10 @@ channel_t *SND_PickChannel(int entnum, int entchannel)
    }
 
 	if (first_to_die == -1)
-		return NULL;
+		return nullptr;
 
 	if (channels[first_to_die].sfx)
-		channels[first_to_die].sfx = NULL;
+		channels[first_to_die].sfx = nullptr;
 
     return &channels[first_to_die];    
 }       
@@ -457,7 +457,7 @@ void S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float f
 	sc = S_LoadSound (sfx);
 	if (!sc)
 	{
-		target_chan->sfx = NULL;
+		target_chan->sfx = nullptr;
 		return;		// couldn't load the sound's data
 	}
 
@@ -495,7 +495,7 @@ void S_StopSound(int entnum, int entchannel)
 			&& channels[i].entchannel == entchannel)
 		{
 			channels[i].end = 0;
-			channels[i].sfx = NULL;
+			channels[i].sfx = nullptr;
 			return;
 		}
 	}
@@ -512,7 +512,7 @@ void S_StopAllSounds(qboolean clear)
 
 	for (i=0 ; i<MAX_CHANNELS ; i++)
 		if (channels[i].sfx)
-			channels[i].sfx = NULL;
+			channels[i].sfx = nullptr;
 
 	Q_memset(channels, 0, MAX_CHANNELS * sizeof(channel_t));
 
@@ -608,7 +608,7 @@ void S_UpdateAmbientSounds (void)
 	if (!l || !ambient_level.value)
 	{
 		for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++)
-			channels[ambient_channel].sfx = NULL;
+			channels[ambient_channel].sfx = nullptr;
 		return;
 	}
 
@@ -665,7 +665,7 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 // update general area ambient sound sources
 	S_UpdateAmbientSounds ();
 
-	combine = NULL;
+	combine = nullptr;
 
 // update spatialization for static and dynamic sounds	
 	ch = channels+NUM_AMBIENTS;
@@ -698,7 +698,7 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 					
 			if (j == sound.total_channels)
 			{
-				combine = NULL;
+				combine = nullptr;
 			}
 			else
 			{

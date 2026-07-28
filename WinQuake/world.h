@@ -83,4 +83,4 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 // nomonsters is used for line of sight or edge testing, where mosnters
 // shouldn't be considered solid objects
 
-// passedict is explicitly excluded from clipping checks (normally NULL)
+// passedict is explicitly excluded from clipping checks (normally nullptr)

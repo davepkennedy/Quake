@@ -317,7 +317,7 @@ float CL_FaceAnimTime (void);						// cl.faceanimtime
 // active manager (cl_main.cpp only builds the initial list once), so these
 // are verbs for the two operations it actually performs, not a raw
 // getter/setter pair.
-struct efrag_t *CL_AllocEfrag (void);				// pop the free-list head, or NULL if empty
+struct efrag_t *CL_AllocEfrag (void);				// pop the free-list head, or nullptr if empty
 void CL_FreeEfrag (struct efrag_t *ef);				// push ef onto the free-list head
 
 // cl.cshifts[CSHIFT_CONTENTS] is otherwise owned entirely by view.cpp

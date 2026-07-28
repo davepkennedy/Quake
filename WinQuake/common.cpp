@@ -752,7 +752,7 @@ void SZ_Alloc (sizebuf_t *buf, int startsize)
 void SZ_Free (sizebuf_t *buf)
 {
 //      Z_Free (buf->data);
-//      buf->data = NULL;
+//      buf->data = nullptr;
 //      buf->maxsize = 0;
 	buf->cursize = 0;
 }
@@ -928,14 +928,14 @@ const char *COM_Parse (const char *data)
 	com_token[0] = 0;
 	
 	if (!data)
-		return NULL;
+		return nullptr;
 		
 // skip whitespace
 skipwhite:
 	while ( (c = *data) <= ' ')
 	{
 		if (c == 0)
-			return NULL;                    // end of file;
+			return nullptr;                    // end of file;
 		data++;
 	}
 	
@@ -1474,7 +1474,7 @@ int COM_FindFile (const char *filename, int *handle, FILE **file)
 	if (handle)
 		*handle = -1;
 	else
-		*file = NULL;
+		*file = nullptr;
 	com_filesize = -1;
 	return -1;
 }
@@ -1491,7 +1491,7 @@ it may actually be inside a pak file
 */
 int COM_OpenFile (const char *filename, int *handle)
 {
-	return COM_FindFile (filename, handle, NULL);
+	return COM_FindFile (filename, handle, nullptr);
 }
 
 /*
@@ -1504,7 +1504,7 @@ into the file.
 */
 int COM_FOpenFile (const char *filename, FILE **file)
 {
-	return COM_FindFile (filename, NULL, file);
+	return COM_FindFile (filename, nullptr, file);
 }
 
 /*
@@ -1544,12 +1544,12 @@ byte *COM_LoadFile (const char *path, int usehunk)
 	char    base[32];
 	int             len;
 
-	buf = NULL;     // quiet compiler warning
+	buf = nullptr;     // quiet compiler warning
 
 // look for it in the filesystem or pack files
 	len = COM_OpenFile (path, &h);
 	if (h == -1)
-		return NULL;
+		return nullptr;
 	
 // extract the filename base name for hunk tag
 	COM_FileBase (path, base);
@@ -1637,7 +1637,7 @@ pack_t *COM_LoadPackFile (const char *packfile)
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
 	{
 //              Con_Printf ("Couldn't open %s\n", packfile);
-		return NULL;
+		return nullptr;
 	}
 	Sys_FileRead (packhandle, (void *)&header, sizeof(header));
 	if (header.id[0] != 'P' || header.id[1] != 'A'
@@ -1762,7 +1762,7 @@ void COM_InitFilesystem (void)
 
 //
 // -cachedir <path>
-// Overrides the system supplied cache directory (NULL or /qcache)
+// Overrides the system supplied cache directory (nullptr or /qcache)
 // -cachedir - will disable caching.
 //
 	i = COM_CheckParm ("-cachedir");
@@ -1807,7 +1807,7 @@ void COM_InitFilesystem (void)
 	if (i)
 	{
 		com_modified = true;
-		com_searchpaths = NULL;
+		com_searchpaths = nullptr;
 		while (++i < com_argc)
 		{
 			if (!com_argv[i] || com_argv[i][0] == '+' || com_argv[i][0] == '-')

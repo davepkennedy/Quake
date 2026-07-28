@@ -283,7 +283,7 @@ void Host_Map_f (void)
 	svs.serverflags = 0;			// haven't completed an episode yet
 	Q_strlcpy (name, Cmd_Argv(1), sizeof(name));
 #ifdef QUAKE2
-	SV_SpawnServer (name, NULL);
+	SV_SpawnServer (name, nullptr);
 #else
 	SV_SpawnServer (name);
 #endif
@@ -331,7 +331,7 @@ void Host_Changelevel_f (void)
 
 	strcpy (level, Cmd_Argv(1));
 	if (Cmd_Argc() == 2)
-		startspot = NULL;
+		startspot = nullptr;
 	else
 	{
 		strcpy (_startspot, Cmd_Argv(2));
@@ -628,7 +628,7 @@ void Host_Loadgame_f (void)
 	CL_Disconnect_f ();
 	
 #ifdef QUAKE2
-	SV_SpawnServer (mapname, NULL);
+	SV_SpawnServer (mapname, nullptr);
 #else
 	SV_SpawnServer (mapname);
 #endif
@@ -885,7 +885,7 @@ void Host_Changelevel2_f (void)
 
 	Q_strlcpy (level, Cmd_Argv(1), sizeof(level));
 	if (Cmd_Argc() == 2)
-		startspot = NULL;
+		startspot = nullptr;
 	else
 	{
 		Q_strlcpy (_startspot, Cmd_Argv(2), sizeof(_startspot));
@@ -1432,7 +1432,7 @@ Kicks a user off of the server
 void Host_Kick_f (void)
 {
 	const char	*who;
-	const char	*message = NULL;
+	const char	*message = nullptr;
 	std::string	kickArgs;
 	client_t	*save;
 	int			i;

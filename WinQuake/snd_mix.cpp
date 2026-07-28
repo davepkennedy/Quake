@@ -226,7 +226,7 @@ void S_PaintChannels(int endtime)
 					}
 					else				
 					{	// channel just stopped
-						ch->sfx = NULL;
+						ch->sfx = nullptr;
 						break;
 					}
 				}

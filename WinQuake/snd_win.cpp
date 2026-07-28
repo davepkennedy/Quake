@@ -68,8 +68,8 @@ sample rate is negotiated: try the classic 11025Hz first, then the
 device's suggested rate, then its shared-mode mix format's rate.
 
 Note: IsFormatSupported's ppClosestMatch parameter is documented as
-optional (NULL-able) in shared mode, but at least one real driver in the
-wild returns E_POINTER if it's actually NULL -- so every call here always
+optional (nullptr-able) in shared mode, but at least one real driver in the
+wild returns E_POINTER if it's actually nullptr -- so every call here always
 passes a real out-pointer and frees whatever comes back, even when the
 suggestion itself isn't used.
 ==================
@@ -88,7 +88,7 @@ static qboolean SNDDMA_NegotiateFormat (WAVEFORMATEX *wfx)
 	wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample / 8;
 	wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
 
-	closest = NULL;
+	closest = nullptr;
 	hr = pAudioClient->IsFormatSupported (AUDCLNT_SHAREMODE_SHARED, wfx, &closest);
 	if (hr == S_OK)
 	{
@@ -104,7 +104,7 @@ static qboolean SNDDMA_NegotiateFormat (WAVEFORMATEX *wfx)
 
 	if (!suggestedRate)
 	{
-		WAVEFORMATEX *mixfmt = NULL;
+		WAVEFORMATEX *mixfmt = nullptr;
 		if (SUCCEEDED (pAudioClient->GetMixFormat (&mixfmt)) && mixfmt)
 		{
 			suggestedRate = mixfmt->nSamplesPerSec;
@@ -118,7 +118,7 @@ static qboolean SNDDMA_NegotiateFormat (WAVEFORMATEX *wfx)
 	wfx->nSamplesPerSec = suggestedRate;
 	wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
 
-	closest = NULL;
+	closest = nullptr;
 	hr = pAudioClient->IsFormatSupported (AUDCLNT_SHAREMODE_SHARED, wfx, &closest);
 	if (closest)
 		CoTaskMemFree (closest);
@@ -139,10 +139,10 @@ void SNDDMA_Shutdown (void)
 	if (pAudioClient && wasapi_client_initialized)
 		pAudioClient->Stop ();
 
-	if (pRenderClient) { pRenderClient->Release (); pRenderClient = NULL; }
-	if (pAudioClient)  { pAudioClient->Release ();  pAudioClient = NULL; }
-	if (pDevice)       { pDevice->Release ();       pDevice = NULL; }
-	if (pEnumerator)   { pEnumerator->Release ();   pEnumerator = NULL; }
+	if (pRenderClient) { pRenderClient->Release (); pRenderClient = nullptr; }
+	if (pAudioClient)  { pAudioClient->Release ();  pAudioClient = nullptr; }
+	if (pDevice)       { pDevice->Release ();       pDevice = nullptr; }
+	if (pEnumerator)   { pEnumerator->Release ();   pEnumerator = nullptr; }
 
 	wasapi_client_initialized = false;
 	wasapi_active = false;
@@ -162,7 +162,7 @@ static qboolean SNDDMA_InitWASAPI (void)
 	int				bytesPerFrame;
 	int				shadowFrames;
 
-	hr = CoCreateInstance (__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
+	hr = CoCreateInstance (__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
 							__uuidof(IMMDeviceEnumerator), (void **)&pEnumerator);
 	if (FAILED (hr))
 	{
@@ -177,7 +177,7 @@ static qboolean SNDDMA_InitWASAPI (void)
 		return false;
 	}
 
-	hr = pDevice->Activate (__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void **)&pAudioClient);
+	hr = pDevice->Activate (__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void **)&pAudioClient);
 	if (FAILED (hr))
 	{
 		Con_SafePrintf ("WASAPI: IAudioClient activation failed\n");
@@ -190,7 +190,7 @@ static qboolean SNDDMA_InitWASAPI (void)
 		return false;
 	}
 
-	hr = pAudioClient->Initialize (AUDCLNT_SHAREMODE_SHARED, 0, WASAPI_BUFFER_DURATION, 0, &wfx, NULL);
+	hr = pAudioClient->Initialize (AUDCLNT_SHAREMODE_SHARED, 0, WASAPI_BUFFER_DURATION, 0, &wfx, nullptr);
 	if (FAILED (hr))
 	{
 		Con_SafePrintf ("WASAPI: IAudioClient::Initialize failed (hr=0x%x)\n", (unsigned)hr);

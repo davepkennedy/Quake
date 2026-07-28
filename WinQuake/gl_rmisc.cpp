@@ -388,9 +388,9 @@ void R_NewMap (void)
 // clear out efrags in case the level hasn't been reloaded
 // FIXME: is this one short?
 	for (i=0 ; i<worldmodel->numleafs ; i++)
-		worldmodel->leafs[i].efrags = NULL;
+		worldmodel->leafs[i].efrags = nullptr;
 
-	r_viewleaf = NULL;
+	r_viewleaf = nullptr;
 	R_ClearParticles ();
 
 	GL_BuildLightmaps ();
@@ -406,7 +406,7 @@ void R_NewMap (void)
 			skytexturenum = i;
 		if (!Q_strncmp(worldmodel->textures[i]->name,"window02_1",10) )
 			mirrortexturenum = i;
- 		worldmodel->textures[i]->texturechain = NULL;
+ 		worldmodel->textures[i]->texturechain = nullptr;
 	}
 #ifdef QUAKE2
 	R_LoadSkys ();

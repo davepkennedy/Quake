@@ -369,7 +369,7 @@ void SV_DropClient (qboolean crash)
 
 // break the net connection
 	NET_Close (host_client->netconnection);
-	host_client->netconnection = NULL;
+	host_client->netconnection = nullptr;
 
 // free the client (the body stays around)
 	host_client->active = false;

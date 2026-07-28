@@ -194,7 +194,7 @@ void CL_ClearState (void)
 	cl.free_efrags = cl_efrags;
 	for (i=0 ; i<MAX_EFRAGS-1 ; i++)
 		cl.free_efrags[i].entnext = &cl.free_efrags[i+1];
-	cl.free_efrags[i].entnext = NULL;
+	cl.free_efrags[i].entnext = nullptr;
 }
 
 /*
@@ -599,7 +599,7 @@ void CL_RelinkEntities (void)
 // if the object wasn't included in the last packet, remove it
 		if (ent->msgtime != cl.mtime[0])
 		{
-			ent->model = NULL;
+			ent->model = nullptr;
 			continue;
 		}
 
