@@ -266,7 +266,7 @@ Done:
 	if (!def)
 		return std::nullopt;
 
-	return (eval_t *)((char *)&ed->v + def->ofs*4);
+	return (eval_t *)(reinterpret_cast<char*>(&ed->v) + def->ofs*4);
 }
 
 
@@ -447,7 +447,7 @@ void ED_Print (edict_t *ed)
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 			
-		v = reinterpret_cast<int*>((char *)&ed->v + d->ofs*4);
+		v = reinterpret_cast<int*>(reinterpret_cast<char*>(&ed->v) + d->ofs*4);
 
 	// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
@@ -497,7 +497,7 @@ void ED_Write (FILE *f, edict_t *ed)
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 			
-		v = reinterpret_cast<int*>((char *)&ed->v + d->ofs*4);
+		v = reinterpret_cast<int*>(reinterpret_cast<char*>(&ed->v) + d->ofs*4);
 
 	// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
@@ -688,7 +688,7 @@ char *ED_NewString (const char *string)
 	int		i,l;
 
 	l = (int)strlen(string) + 1;
-	newstr = (char *)Hunk_Alloc (l);
+	newstr = static_cast<char*>(Hunk_Alloc (l));
 	new_p = newstr;
 
 	for (i=0 ; i< l ; i++)
@@ -1003,7 +1003,7 @@ void PR_LoadProgs (void)
 		Sys_Error ("progs.dat system vars have been modified, progdefs.h is out of date");
 
 	pr_functions = (dfunction_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_functions);
-	pr_strings = (char *)progs + progs->ofs_strings;
+	pr_strings = reinterpret_cast<char*>(progs) + progs->ofs_strings;
 	pr_globaldefs = (ddef_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_globaldefs);
 	pr_fielddefs = (ddef_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_fielddefs);
 	pr_statements = (dstatement_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_statements);
@@ -1014,7 +1014,7 @@ void PR_LoadProgs (void)
 	// Allocate temp string buffer in the hunk so pr_string_temp - pr_strings fits in int on x64.
 	// On x64 a static/BSS buffer would be in a different memory region from the hunk, making the
 	// pointer difference gigabytes wide and causing truncation when stored as string_t (int).
-	pr_string_temp = (char *)Hunk_Alloc(128);
+	pr_string_temp = static_cast<char*>(Hunk_Alloc(128));
 
 	pr_edict_size = progs->entityfields * 4 + sizeof (edict_t) - sizeof(entvars_t);
 	

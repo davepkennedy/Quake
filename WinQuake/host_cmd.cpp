@@ -645,7 +645,7 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = (char *)Hunk_Alloc ((int)(strlen(str)+1));
+		sv.lightstyles[i] = static_cast<char*>(Hunk_Alloc ((int)(strlen(str)+1)));
 		strcpy (sv.lightstyles[i], str);
 	}
 
@@ -813,7 +813,7 @@ int LoadGamestate(char *level, char *startspot)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = (char *)Hunk_Alloc ((int)(strlen(str)+1));
+		sv.lightstyles[i] = static_cast<char*>(Hunk_Alloc ((int)(strlen(str)+1)));
 		strcpy (sv.lightstyles[i], str);
 	}
 

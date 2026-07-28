@@ -179,7 +179,7 @@ int WIPX_OpenSocket (int port)
 	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
 		goto ErrorReturn;
 
-	if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&_true, sizeof(_true)) < 0)
+	if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char*>(&_true), sizeof(_true)) < 0)
 		goto ErrorReturn;
 
 	address.sa_family = AF_IPX;
@@ -245,7 +245,7 @@ int WIPX_Read (int handle, byte *buf, int len, struct qsockaddr *addr)
 	int socket = ipxsocket[handle];
 	int ret;
 
-	ret = recvfrom (socket, (char *)packetBuffer, len+4, 0, (struct sockaddr *)addr, &addrlen);
+	ret = recvfrom (socket, reinterpret_cast<char*>(packetBuffer), len+4, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == -1)
 	{
 		int wsa_err = WSAGetLastError();

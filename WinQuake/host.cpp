@@ -791,12 +791,12 @@ void Host_InitVCR (quakeparms_t *parms)
 			Sys_Error("Invalid signature in vcr file\n");
 
 		Sys_FileRead (vcrFile, &com_argc, sizeof(int));
-		com_argv = (const char **)malloc(com_argc * sizeof(char *));
+		com_argv = static_cast<const char**>(malloc(com_argc * sizeof(char *)));
 		com_argv[0] = parms->argv[0];
 		for (i = 0; i < com_argc; i++)
 		{
 			Sys_FileRead (vcrFile, &len, sizeof(int));
-			p = (char *)malloc(len);
+			p = static_cast<char*>(malloc(len));
 			Sys_FileRead (vcrFile, p, len);
 			com_argv[i+1] = p;
 		}

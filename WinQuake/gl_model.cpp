@@ -533,7 +533,7 @@ void Mod_LoadEntities (lump_t *l)
 		loadmodel->entities = nullptr;
 		return;
 	}
-	loadmodel->entities = (char *)Hunk_AllocName ( l->filelen, loadname);
+	loadmodel->entities = static_cast<char*>(Hunk_AllocName ( l->filelen, loadname));
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 }
 

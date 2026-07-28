@@ -346,7 +346,7 @@ int WINS_Read (int socket, byte *buf, int len, struct qsockaddr *addr)
 	int addrlen = sizeof (struct qsockaddr);
 	int ret;
 
-	ret = recvfrom (socket, (char *)buf, len, 0, (struct sockaddr *)addr, &addrlen);
+	ret = recvfrom (socket, reinterpret_cast<char*>(buf), len, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == -1)
 	{
 		int wsa_err = WSAGetLastError();
@@ -365,7 +365,7 @@ int WINS_MakeSocketBroadcastCapable (int socket)
 	int	i = 1;
 
 	// make this socket broadcast capable
-	if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) < 0)
+	if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char*>(&i), sizeof(i)) < 0)
 		return -1;
 	net_broadcastsocket = socket;
 
@@ -458,10 +458,10 @@ int WINS_GetNameFromAddr (struct qsockaddr *addr, char *name)
 {
 	struct hostent *hostentry;
 
-	hostentry = gethostbyaddr ((char *)&((struct sockaddr_in *)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
+	hostentry = gethostbyaddr (reinterpret_cast<char*>(&((struct sockaddr_in *)addr)->sin_addr), sizeof(struct in_addr), AF_INET);
 	if (hostentry)
 	{
-		Q_strncpy (name, (char *)hostentry->h_name, NET_NAMELEN - 1);
+		Q_strncpy (name, hostentry->h_name, NET_NAMELEN - 1);
 		return 0;
 	}
 

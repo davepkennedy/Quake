@@ -536,13 +536,13 @@ void CheckTextureExtensions (void)
 
 void CheckArrayExtensions (void)
 {
-	char		*tmp;
+	const char	*tmp;
 
 	/* check for texture extension */
-	tmp = (char *)glGetString(GL_EXTENSIONS);
+	tmp = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
 	while (*tmp)
 	{
-		if (strncmp((const char*)tmp, "GL_EXT_vertex_array", strlen("GL_EXT_vertex_array")) == 0)
+		if (strncmp(tmp, "GL_EXT_vertex_array", strlen("GL_EXT_vertex_array")) == 0)
 		{
 			if (
 ((glArrayElementEXT = wglGetProcAddress("glArrayElementEXT")) == nullptr) ||
@@ -1626,7 +1626,7 @@ void VID_Init8bitPalette()
 
 	Con_SafePrintf("8-bit GL extensions enabled.\n");
     glEnable( GL_SHARED_TEXTURE_PALETTE_EXT );
-	oldPalette = (char *) d_8to24table; //d_8to24table3dfx;
+	oldPalette = reinterpret_cast<char*>( d_8to24table); //d_8to24table3dfx;
 	newPalette = thePalette;
 	for (i=0;i<256;i++) {
 		*newPalette++ = *oldPalette++;

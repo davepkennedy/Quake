@@ -157,7 +157,7 @@ void Cbuf_Execute (void)
 	while (cmd_text.cursize)
 	{
 // find a \n or ; line break
-		text = (char *)cmd_text.data;
+		text = reinterpret_cast<char*>(cmd_text.data);
 
 		quotes = 0;
 		for (i=0 ; i< cmd_text.cursize ; i++)
@@ -278,7 +278,7 @@ void Cmd_Exec_f (void)
 	}
 
 	mark = Hunk_LowMark ();
-	f = (char *)COM_LoadHunkFile (Cmd_Argv(1));
+	f = reinterpret_cast<char*>(COM_LoadHunkFile (Cmd_Argv(1)));
 	if (!f)
 	{
 		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));

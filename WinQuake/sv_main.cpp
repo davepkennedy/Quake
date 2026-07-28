@@ -1309,7 +1309,7 @@ void SV_SpawnServer (char *server)
 	memset (&ent->v, 0, progs->entityfields * 4);
 	ent->free = false;
 	// mod_known[] is a BSS global array; copy name to hunk so string_t offset from pr_strings fits in int on x64
-	tmp = (char *)Hunk_Alloc((int)strlen(sv.worldmodel->name) + 1);
+	tmp = static_cast<char*>(Hunk_Alloc((int)strlen(sv.worldmodel->name) + 1));
 	Q_strcpy(tmp, sv.worldmodel->name);
 	ent->v.model = (int)(tmp - pr_strings);
 	ent->v.modelindex = 1;		// world model
@@ -1322,11 +1322,11 @@ void SV_SpawnServer (char *server)
 		pr_global_struct->deathmatch = deathmatch.value;
 
 	// sv is a BSS global; copy sv.name to hunk so the string_t offset from pr_strings fits in int on x64
-	tmp = (char *)Hunk_Alloc((int)strlen(sv.name) + 1);
+	tmp = static_cast<char*>(Hunk_Alloc((int)strlen(sv.name) + 1));
 	Q_strcpy(tmp, sv.name);
 	pr_global_struct->mapname = (int)(tmp - pr_strings);
 #ifdef QUAKE2
-	tmp = (char *)Hunk_Alloc(strlen(sv.startspot) + 1);
+	tmp = static_cast<char*>(Hunk_Alloc(strlen(sv.startspot) + 1));
 	Q_strcpy(tmp, sv.startspot);
 	pr_global_struct->startspot = (int)(tmp - pr_strings);
 #endif
