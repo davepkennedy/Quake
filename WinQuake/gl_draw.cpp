@@ -45,7 +45,7 @@ struct glpic_t
 };
 
 byte		conback_buffer[sizeof(qpic_t) + sizeof(glpic_t)];
-qpic_t		*conback = (qpic_t *)&conback_buffer;
+qpic_t		*conback = reinterpret_cast<qpic_t*>(&conback_buffer);
 
 int		gl_lightmap_format = GL_RGBA;
 int		gl_solid_format = GL_RGB;
@@ -222,8 +222,8 @@ qpic_t *Draw_PicFromWad (const char *name)
 	qpic_t	*p;
 	glpic_t	*gl;
 
-	p = (qpic_t *)W_GetLumpName (name);
-	gl = (glpic_t *)p->data;
+	p = static_cast<qpic_t*>(W_GetLumpName (name));
+	gl = reinterpret_cast<glpic_t*>(p->data);
 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64)
@@ -284,7 +284,7 @@ qpic_t	*Draw_CachePic (const char *path)
 //
 // load the pic from disk
 //
-	dat = (qpic_t *)COM_LoadTempFile (path);	
+	dat = reinterpret_cast<qpic_t*>(COM_LoadTempFile (path));
 	if (!dat)
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
 	SwapPic (dat);
@@ -298,7 +298,7 @@ qpic_t	*Draw_CachePic (const char *path)
 	pic->pic.width = dat->width;
 	pic->pic.height = dat->height;
 
-	gl = (glpic_t *)pic->pic.data;
+	gl = reinterpret_cast<glpic_t*>(pic->pic.data);
 	gl->texnum = GL_LoadPicTexture (dat);
 	gl->sl = 0;
 	gl->sh = 1;
@@ -529,7 +529,7 @@ void Draw_Init (void)
 
 	start = Hunk_LowMark();
 
-	cb = (qpic_t *)COM_LoadTempFile ("gfx/conback.lmp");	
+	cb = reinterpret_cast<qpic_t*>(COM_LoadTempFile ("gfx/conback.lmp"));
 	if (!cb)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
@@ -552,7 +552,7 @@ void Draw_Init (void)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	gl = (glpic_t *)conback->data;
+	gl = reinterpret_cast<glpic_t*>(conback->data);
 	gl->texnum = GL_LoadTexture ("conback", conback->width, conback->height, ncdata, false, false);
 	gl->sl = 0;
 	gl->sh = 1;
@@ -651,7 +651,7 @@ void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 {
 	if (scrap_dirty)
 		Scrap_Upload ();
-	glpic_t *gl = (glpic_t *)pic->data;
+	glpic_t *gl = reinterpret_cast<glpic_t*>(pic->data);
 
 	glEnable(GL_BLEND);
 	GL_Bind(gl->texnum);
@@ -676,7 +676,7 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 {
 	if (scrap_dirty)
 		Scrap_Upload ();
-	glpic_t *gl = (glpic_t *)pic->data;
+	glpic_t *gl = reinterpret_cast<glpic_t*>(pic->data);
 
 	GL_Bind(gl->texnum);
 	qglUniform1i(u_has_tex_loc, 1);
@@ -776,7 +776,7 @@ refresh window.
 */
 void Draw_TileClear (int x, int y, int w, int h)
 {
-	glpic_t *gl = (glpic_t *)draw_backtile->data;
+	glpic_t *gl = reinterpret_cast<glpic_t*>(draw_backtile->data);
 	GL_Bind(gl->texnum);
 	qglUniform1i(u_has_tex_loc, 1);
 	const float white[4] = {1.f, 1.f, 1.f, 1.f};
