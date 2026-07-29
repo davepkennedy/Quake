@@ -266,7 +266,7 @@ Done:
 	if (!def)
 		return std::nullopt;
 
-	return (eval_t *)(reinterpret_cast<char*>(&ed->v) + def->ofs*4);
+	return reinterpret_cast<eval_t*>(reinterpret_cast<char*>(&ed->v) + def->ofs*4);
 }
 
 
@@ -385,7 +385,7 @@ std::string PR_GlobalString (int ofs)
 	eval_t	*val;
 	std::string	line;
 
-	val = (eval_t *)&pr_globals[ofs];
+	val = reinterpret_cast<eval_t*>(&pr_globals[ofs]);
 	auto def = ED_GlobalAtOfs(ofs);
 	if (!def)
 		line = std::format ("{}(???)", ofs);
@@ -463,7 +463,7 @@ void ED_Print (edict_t *ed)
 		while (l++ < 15)
 			Con_Printf (" ");
 
-		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v).c_str ());
+		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, reinterpret_cast<eval_t*>(v)).c_str ());
 	}
 }
 
@@ -508,7 +508,7 @@ void ED_Write (FILE *f, edict_t *ed)
 			continue;
 	
 		fprintf (f,"\"%s\" ",name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)d->type, (eval_t *)v).c_str ());
+		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)d->type, reinterpret_cast<eval_t*>(v)).c_str ());
 	}
 
 	fprintf (f, "}\n");
@@ -628,7 +628,7 @@ void ED_WriteGlobals (FILE *f)
 
 		name = pr_strings + def->s_name;		
 		fprintf (f,"\"%s\" ", name);
-		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)type, (eval_t *)&pr_globals[def->ofs]).c_str ());
+		fprintf (f,"\"%s\"\n", PR_UglyValueString((etype_t)type, reinterpret_cast<eval_t*>(&pr_globals[def->ofs])).c_str ());
 	}
 	fprintf (f,"}\n");
 }
@@ -729,11 +729,11 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 	switch (key->type & ~DEF_SAVEGLOBAL)
 	{
 	case ev_string:
-		*(string_t *)d = (string_t)(ED_NewString(s) - pr_strings);
+		*static_cast<string_t*>(d) = (string_t)(ED_NewString(s) - pr_strings);
 		break;
 		
 	case ev_float:
-		*(float *)d = atof (s);
+		*static_cast<float*>(d) = atof (s);
 		break;
 		
 	case ev_vector:
@@ -745,7 +745,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 			while (*v && *v != ' ')
 				v++;
 			*v = 0;
-			((float *)d)[i] = atof (w);
+			(static_cast<float*>(d))[i] = atof (w);
 			w = v = v+1;
 		}
 		break;
@@ -774,7 +774,7 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 				Con_Printf ("Can't find function %s\n", s);
 				return false;
 			}
-			*(func_t *)d = *func - pr_functions;
+			*static_cast<func_t*>(d) = *func - pr_functions;
 		}
 		break;
 		
@@ -985,7 +985,7 @@ void PR_LoadProgs (void)
 
 	CRC_Init (&pr_crc);
 
-	progs = (dprograms_t *)COM_LoadHunkFile ("progs.dat");
+	progs = reinterpret_cast<dprograms_t*>(COM_LoadHunkFile ("progs.dat"));
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);
@@ -1002,14 +1002,14 @@ void PR_LoadProgs (void)
 	if (progs->crc != PROGHEADER_CRC)
 		Sys_Error ("progs.dat system vars have been modified, progdefs.h is out of date");
 
-	pr_functions = (dfunction_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_functions);
+	pr_functions = reinterpret_cast<dfunction_t*>(reinterpret_cast<byte*>(progs) + progs->ofs_functions);
 	pr_strings = reinterpret_cast<char*>(progs) + progs->ofs_strings;
-	pr_globaldefs = (ddef_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_globaldefs);
-	pr_fielddefs = (ddef_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_fielddefs);
-	pr_statements = (dstatement_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_statements);
+	pr_globaldefs = reinterpret_cast<ddef_t*>(reinterpret_cast<byte*>(progs) + progs->ofs_globaldefs);
+	pr_fielddefs = reinterpret_cast<ddef_t*>(reinterpret_cast<byte*>(progs) + progs->ofs_fielddefs);
+	pr_statements = reinterpret_cast<dstatement_t*>(reinterpret_cast<byte*>(progs) + progs->ofs_statements);
 
-	pr_global_struct = (globalvars_t *)(reinterpret_cast<byte*>(progs) + progs->ofs_globals);
-	pr_globals = (float *)pr_global_struct;
+	pr_global_struct = reinterpret_cast<globalvars_t*>(reinterpret_cast<byte*>(progs) + progs->ofs_globals);
+	pr_globals = reinterpret_cast<float*>(pr_global_struct);
 
 	// Allocate temp string buffer in the hunk so pr_string_temp - pr_strings fits in int on x64.
 	// On x64 a static/BSS buffer would be in a different memory region from the hunk, making the
@@ -1088,7 +1088,7 @@ edict_t *EDICT_NUM(int n)
 {
 	if (n < 0 || n >= sv.max_edicts)
 		Sys_Error ("EDICT_NUM: bad number %i", n);
-	return (edict_t *)(reinterpret_cast<byte*>(sv.edicts)+ (n)*pr_edict_size);
+	return reinterpret_cast<edict_t*>(reinterpret_cast<byte*>(sv.edicts)+ (n)*pr_edict_size);
 }
 
 int NUM_FOR_EDICT(edict_t *e)
@@ -1107,7 +1107,7 @@ edict_t *PROG_TO_EDICT (int prog)
 {
 	if (prog < 0 || prog >= sv.max_edicts * pr_edict_size)
 		Sys_Error ("PROG_TO_EDICT: bad prog offset %i", prog);
-	return (edict_t *)(reinterpret_cast<byte*>(sv.edicts) + prog);
+	return reinterpret_cast<edict_t*>(reinterpret_cast<byte*>(sv.edicts) + prog);
 }
 
 int EDICT_TO_PROG (edict_t *e)
@@ -1130,7 +1130,7 @@ int G_EDICTNUM (int ofs)
 
 edict_t *NEXT_EDICT (edict_t *e)
 {
-	edict_t *n = (edict_t *)(reinterpret_cast<byte*>(e) + pr_edict_size);
+	edict_t *n = reinterpret_cast<edict_t*>(reinterpret_cast<byte*>(e) + pr_edict_size);
 	int b = reinterpret_cast<byte*>(n) - reinterpret_cast<byte*>(sv.edicts);
 	if (b < 0 || b > sv.max_edicts * pr_edict_size)
 		Sys_Error ("NEXT_EDICT: walked off the edict array");
