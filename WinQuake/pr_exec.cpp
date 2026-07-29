@@ -367,7 +367,7 @@ static eval_t *PR_FieldAddress (int ofs)
 {
 	if (ofs < 0 || ofs >= sv.max_edicts * pr_edict_size)
 		Sys_Error ("PR_FieldAddress: bad offset %i", ofs);
-	return (eval_t *)(reinterpret_cast<byte*>(sv.edicts) + ofs);
+	return reinterpret_cast<eval_t*>(reinterpret_cast<byte*>(sv.edicts) + ofs);
 }
 
 /*
@@ -409,9 +409,9 @@ while (1)
 	s++;	// next statement
 
 	st = &pr_statements[s];
-	a = (eval_t *)&pr_globals[st->a];
-	b = (eval_t *)&pr_globals[st->b];
-	c = (eval_t *)&pr_globals[st->c];
+	a = reinterpret_cast<eval_t*>(&pr_globals[st->a]);
+	b = reinterpret_cast<eval_t*>(&pr_globals[st->b]);
+	c = reinterpret_cast<eval_t*>(&pr_globals[st->c]);
 	
 	if (!--runaway)
 		PR_RunError ("runaway loop error");
@@ -577,7 +577,7 @@ while (1)
 		
 	case OP_ADDRESS:
 		ed = PROG_TO_EDICT(a->edict);
-		if (ed == (edict_t *)sv.edicts && sv.state == server_state_t::ss_active)
+		if (ed == sv.edicts && sv.state == server_state_t::ss_active)
 			PR_RunError ("assignment to world entity");
 		c->_int = (int)(reinterpret_cast<byte*>(reinterpret_cast<int*>(&ed->v) + b->_int) - reinterpret_cast<byte*>(sv.edicts));
 		break;
@@ -588,13 +588,13 @@ while (1)
 	case OP_LOAD_S:
 	case OP_LOAD_FNC:
 		ed = PROG_TO_EDICT(a->edict);
-		a = (eval_t *)(reinterpret_cast<int*>(&ed->v) + b->_int);
+		a = reinterpret_cast<eval_t*>(reinterpret_cast<int*>(&ed->v) + b->_int);
 		c->_int = a->_int;
 		break;
 
 	case OP_LOAD_V:
 		ed = PROG_TO_EDICT(a->edict);
-		a = (eval_t *)(reinterpret_cast<int*>(&ed->v) + b->_int);
+		a = reinterpret_cast<eval_t*>(reinterpret_cast<int*>(&ed->v) + b->_int);
 		c->vector[0] = a->vector[0];
 		c->vector[1] = a->vector[1];
 		c->vector[2] = a->vector[2];
