@@ -114,7 +114,7 @@ void Z_ClearZone (memzone_t *zone, int size)
 // set the entire zone to one free block
 
 	zone->blocklist.next = zone->blocklist.prev = block =
-		(memblock_t *)( reinterpret_cast<byte*>(zone) + sizeof(memzone_t) );
+		reinterpret_cast<memblock_t*>( reinterpret_cast<byte*>(zone) + sizeof(memzone_t) );
 	zone->blocklist.tag = 1;	// in use block
 	zone->blocklist.id = 0;
 	zone->blocklist.size = 0;
@@ -139,7 +139,7 @@ void Z_Free (void *ptr)
 	if (!ptr)
 		Sys_Error ("Z_Free: nullptr pointer");
 
-	block = (memblock_t *) ( reinterpret_cast<byte*>(ptr) - sizeof(memblock_t));
+	block = reinterpret_cast<memblock_t*>( ( static_cast<byte*>(ptr) - sizeof(memblock_t)));
 	if (block->id != ZONEID)
 		Sys_Error ("Z_Free: freed a pointer without ZONEID");
 	if (block->tag == 0)
@@ -223,7 +223,7 @@ void *Z_TagMalloc (int size, int tag)
 	extra = base->size - size;
 	if (extra >  MINFRAGMENT)
 	{	// there will be a free fragment after the allocated block
-		newblock = (memblock_t *) (reinterpret_cast<byte*>(base) + size );
+		newblock = reinterpret_cast<memblock_t*>( (reinterpret_cast<byte*>(base) + size ));
 		newblock->size = extra;
 		newblock->tag = 0;			// free block
 		newblock->prev = base;
@@ -321,13 +321,13 @@ void Hunk_Check (void)
 {
 	hunk_t	*h;
 	
-	for (h = (hunk_t *)mem.hunk_base ; reinterpret_cast<byte*>(h) != mem.hunk_base + mem.hunk_low_used ; )
+	for (h = reinterpret_cast<hunk_t*>(mem.hunk_base) ; reinterpret_cast<byte*>(h) != mem.hunk_base + mem.hunk_low_used ; )
 	{
 		if (h->sentinal != HUNK_SENTINAL)
 			Sys_Error ("Hunk_Check: trahsed sentinal");
 		if (h->size < 16 || (size_t)(h->size + reinterpret_cast<byte*>(h) - mem.hunk_base) > mem.hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
-		h = (hunk_t *)(reinterpret_cast<byte*>(h)+h->size);
+		h = reinterpret_cast<hunk_t*>(reinterpret_cast<byte*>(h)+h->size);
 	}
 }
 
@@ -351,10 +351,10 @@ void Hunk_Print (qboolean all)
 	sum = 0;
 	totalblocks = 0;
 	
-	h = (hunk_t *)mem.hunk_base;
-	endlow = (hunk_t *)(mem.hunk_base + mem.hunk_low_used);
-	starthigh = (hunk_t *)(mem.hunk_base + mem.hunk_size - mem.hunk_high_used);
-	endhigh = (hunk_t *)(mem.hunk_base + mem.hunk_size);
+	h = reinterpret_cast<hunk_t*>(mem.hunk_base);
+	endlow = reinterpret_cast<hunk_t*>(mem.hunk_base + mem.hunk_low_used);
+	starthigh = reinterpret_cast<hunk_t*>(mem.hunk_base + mem.hunk_size - mem.hunk_high_used);
+	endhigh = reinterpret_cast<hunk_t*>(mem.hunk_base + mem.hunk_size);
 
 	Con_Printf ("          :%8i total hunk size\n", mem.hunk_size);
 	Con_Printf ("-------------------------\n");
@@ -386,7 +386,7 @@ void Hunk_Print (qboolean all)
 		if (h->size < 16 || (size_t)(h->size + reinterpret_cast<byte*>(h) - mem.hunk_base) > mem.hunk_size)
 			Sys_Error ("Hunk_Check: bad size");
 			
-		next = (hunk_t *)(reinterpret_cast<byte*>(h)+h->size);
+		next = reinterpret_cast<hunk_t*>(reinterpret_cast<byte*>(h)+h->size);
 		count++;
 		totalblocks++;
 		sum += h->size;
@@ -439,7 +439,7 @@ void *Hunk_AllocName (int size, const char *name)
 	if (mem.hunk_size - mem.hunk_low_used - mem.hunk_high_used < size)
 		Sys_Error ("Hunk_Alloc: failed on %i bytes",size);
 	
-	h = (hunk_t *)(mem.hunk_base + mem.hunk_low_used);
+	h = reinterpret_cast<hunk_t*>(mem.hunk_base + mem.hunk_low_used);
 	mem.hunk_low_used += size;
 
 	Cache_FreeLow ((int)mem.hunk_low_used);
@@ -569,7 +569,7 @@ void *Hunk_HighAllocName (int size, const char *name)
 	mem.hunk_high_used += size;
 	Cache_FreeHigh ((int)mem.hunk_high_used);
 
-	h = (hunk_t *)(mem.hunk_base + mem.hunk_size - mem.hunk_high_used);
+	h = reinterpret_cast<hunk_t*>(mem.hunk_base + mem.hunk_size - mem.hunk_high_used);
 
 	memset (h, 0, size);
 	h->size = size;
@@ -735,7 +735,7 @@ cache_system_t *Cache_TryAlloc (int size, qboolean nobottom)
 		if (mem.hunk_size - mem.hunk_high_used - mem.hunk_low_used < size)
 			Sys_Error ("Cache_TryAlloc: %i is greater then free hunk", size);
 
-		newcs = (cache_system_t *) (mem.hunk_base + mem.hunk_low_used);
+		newcs = reinterpret_cast<cache_system_t*>( (mem.hunk_base + mem.hunk_low_used));
 		memset (newcs, 0, sizeof(*newcs));
 		newcs->size = size;
 
@@ -748,7 +748,7 @@ cache_system_t *Cache_TryAlloc (int size, qboolean nobottom)
 
 // search from the bottom up for space
 
-	newcs = (cache_system_t *) (mem.hunk_base + mem.hunk_low_used);
+	newcs = reinterpret_cast<cache_system_t*>( (mem.hunk_base + mem.hunk_low_used));
 	cs = mem.cache_head.next;
 
 	do
@@ -772,7 +772,7 @@ cache_system_t *Cache_TryAlloc (int size, qboolean nobottom)
 		}
 
 	// continue looking
-		newcs = (cache_system_t *)(reinterpret_cast<byte*>(cs) + cs->size);
+		newcs = reinterpret_cast<cache_system_t*>(reinterpret_cast<byte*>(cs) + cs->size);
 		cs = cs->next;
 
 	} while (cs != &mem.cache_head);
@@ -875,7 +875,7 @@ void Cache_Free (cache_user_t *c)
 	if (!c->data)
 		Sys_Error ("Cache_Free: not allocated");
 
-	cs = ((cache_system_t *)c->data) - 1;
+	cs = (static_cast<cache_system_t*>(c->data)) - 1;
 
 	cs->prev->next = cs->next;
 	cs->next->prev = cs->prev;
@@ -900,7 +900,7 @@ void *Cache_Check (cache_user_t *c)
 	if (!c->data)
 		return nullptr;
 
-	cs = ((cache_system_t *)c->data) - 1;
+	cs = (static_cast<cache_system_t*>(c->data)) - 1;
 
 // move to head of LRU
 	Cache_UnlinkLRU (cs);
@@ -976,7 +976,7 @@ void Memory_Init (void *buf, size_t size)
 		else
 			Sys_Error ("Memory_Init: you must specify a size in KB after -zone");
 	}
-	mem.mainzone = (memzone_t *)Hunk_AllocName (zonesize, "zone" );
+	mem.mainzone = static_cast<memzone_t*>(Hunk_AllocName (zonesize, "zone" ));
 	Z_ClearZone (mem.mainzone, zonesize);
 }
 
