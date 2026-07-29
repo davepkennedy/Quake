@@ -153,7 +153,7 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
 	int				i, numframes, frame;
 	float			*pintervals, fullinterval, targettime, time;
 
-	psprite = (msprite_t *)currententity->model->cache.data;
+	psprite = static_cast<msprite_t*>(currententity->model->cache.data);
 	frame = currententity->frame;
 
 	if ((frame >= psprite->numframes) || (frame < 0))
@@ -168,7 +168,7 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity)
 	}
 	else
 	{
-		pspritegroup = (mspritegroup_t *)psprite->frames[frame].frameptr;
+		pspritegroup = reinterpret_cast<mspritegroup_t*>(psprite->frames[frame].frameptr);
 		pintervals = pspritegroup->intervals;
 		numframes = pspritegroup->numframes;
 		fullinterval = pintervals[numframes-1];
@@ -327,7 +327,7 @@ void R_DrawSpriteModel (entity_t *e)
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
 	frame = R_GetSpriteFrame (e);
-	psprite = (msprite_t *)currententity->model->cache.data;
+	psprite = static_cast<msprite_t*>(currententity->model->cache.data);
 
 	if (psprite->type == SPR_ORIENTED)
 	{	// bullet marks on walls
@@ -578,7 +578,7 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 
 lastposenum = posenum;
 
-	verts = (trivertx_t *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
+	verts = reinterpret_cast<trivertx_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
 	order = reinterpret_cast<int*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
 
@@ -602,8 +602,8 @@ lastposenum = posenum;
 			if (n < ALIAS_MAX_CMD_VERTS)
 			{
 				// texture coordinates come from the draw list
-				cmdverts[n][3] = ((float *)order)[0];
-				cmdverts[n][4] = ((float *)order)[1];
+				cmdverts[n][3] = reinterpret_cast<float*>(order)[0];
+				cmdverts[n][4] = reinterpret_cast<float*>(order)[1];
 
 				// normals and vertexes come from the frame list
 				cmdverts[n][0] = verts->v[0];
@@ -640,7 +640,7 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 
 	lheight = currententity->origin[2] - lightspot[2];
 
-	verts = (trivertx_t *)(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
+	verts = reinterpret_cast<trivertx_t*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
 	order = reinterpret_cast<int*>(reinterpret_cast<byte*>(paliashdr) + paliashdr->commands);
 
@@ -819,7 +819,7 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// locate the proper data
 	//
-	paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
+	paliashdr = static_cast<aliashdr_t*>(Mod_Extradata (currententity->model));
 
 	c_alias_polys += paliashdr->numtris;
 
