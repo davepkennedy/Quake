@@ -111,13 +111,13 @@ edict_t *NEXT_EDICT(edict_t *e);
 edict_t *G_EDICT(int ofs);
 int G_EDICTNUM(int ofs);
 #define	G_VECTOR(o) (&pr_globals[o])
-#define	G_STRING(o) (pr_strings + *(string_t *)&pr_globals[o])
-#define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
+#define	G_STRING(o) (pr_strings + *reinterpret_cast<string_t*>(&pr_globals[o]))
+#define	G_FUNCTION(o) (*reinterpret_cast<func_t*>(&pr_globals[o]))
 
-#define	E_FLOAT(e,o) (((float*)&e->v)[o])
-#define	E_INT(e,o) (*reinterpret_cast<int*>(&((float*)&e->v)[o]))
-#define	E_VECTOR(e,o) (&((float*)&e->v)[o])
-#define	E_STRING(e,o) (pr_strings + *(string_t *)&((float*)&e->v)[o])
+#define	E_FLOAT(e,o) ((reinterpret_cast<float*>(&e->v))[o])
+#define	E_INT(e,o) (*reinterpret_cast<int*>(&(reinterpret_cast<float*>(&e->v))[o]))
+#define	E_VECTOR(e,o) (&(reinterpret_cast<float*>(&e->v))[o])
+#define	E_STRING(e,o) (pr_strings + *reinterpret_cast<string_t*>(&(reinterpret_cast<float*>(&e->v))[o]))
 
 extern	int		type_size[8];
 
