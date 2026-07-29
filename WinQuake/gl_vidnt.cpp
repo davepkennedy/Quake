@@ -628,8 +628,8 @@ void CheckMultiTextureExtensions(void)
 {
 	if (gl_extensions.find("GL_SGIS_multitexture ") != std::string::npos && !COM_CheckParm("-nomtex")) {
 		Con_Printf("Multitexture extensions found.\n");
-		qglMTexCoord2fSGIS = (lpMTexFUNC) wglGetProcAddress("glMTexCoord2fSGIS");
-		qglSelectTextureSGIS = (lpSelTexFUNC) wglGetProcAddress("glSelectTextureSGIS");
+		qglMTexCoord2fSGIS = reinterpret_cast<lpMTexFUNC>(wglGetProcAddress("glMTexCoord2fSGIS"));
+		qglSelectTextureSGIS = reinterpret_cast<lpSelTexFUNC>(wglGetProcAddress("glSelectTextureSGIS"));
 		gl_mtexable = true;
 	}
 }
@@ -660,13 +660,13 @@ static std::string GL_BuildExtensionsString (void)
 	glGetIntegerv (GL_MAJOR_VERSION, &major);
 	if (major < 3)
 	{
-		const char *legacy = (const char *)glGetString (GL_EXTENSIONS);
+		const char *legacy = reinterpret_cast<const char*>(glGetString (GL_EXTENSIONS));
 		if (legacy)
 			return legacy;
 	}
 
 	PFNGLGETSTRINGIPROC qglGetStringi =
-		(PFNGLGETSTRINGIPROC) wglGetProcAddress ("glGetStringi");
+		reinterpret_cast<PFNGLGETSTRINGIPROC>(wglGetProcAddress ("glGetStringi"));
 	if (!qglGetStringi)
 		return "";
 
@@ -677,7 +677,7 @@ static std::string GL_BuildExtensionsString (void)
 	buf[0] = '\0';
 	for (GLint i = 0; i < count; i++)
 	{
-		const char *ext = (const char *)qglGetStringi (GL_EXTENSIONS, (GLuint)i);
+		const char *ext = reinterpret_cast<const char*>(qglGetStringi (GL_EXTENSIONS, (GLuint)i));
 		if (!ext)
 			continue;
 		size_t len = strlen (ext);
@@ -699,18 +699,18 @@ GL_Init
 void GL_Init (void)
 {
 	{
-		const char *vendor = (const char *)glGetString (GL_VENDOR);
+		const char *vendor = reinterpret_cast<const char*>(glGetString (GL_VENDOR));
 		gl_vendor = vendor ? vendor : "";
 	}
 	Con_Printf ("GL_VENDOR: %s\n", gl_vendor.c_str());
 	{
-		const char *renderer = (const char *)glGetString (GL_RENDERER);
+		const char *renderer = reinterpret_cast<const char*>(glGetString (GL_RENDERER));
 		gl_renderer = renderer ? renderer : "";
 	}
 	Con_Printf ("GL_RENDERER: %s\n", gl_renderer.c_str());
 
 	{
-		const char *version = (const char *)glGetString (GL_VERSION);
+		const char *version = reinterpret_cast<const char*>(glGetString (GL_VERSION));
 		gl_version = version ? version : "";
 	}
 	Con_Printf ("GL_VERSION: %s\n", gl_version.c_str());
@@ -848,7 +848,7 @@ void	VID_SetPalette (unsigned char *palette)
 		r = ((i & 0x1F) << 3)+4;
 		g = ((i & 0x03E0) >> 2)+4;
 		b = ((i & 0x7C00) >> 7)+4;
-		pal = (unsigned char *)d_8to24table;
+		pal = reinterpret_cast<unsigned char*>(d_8to24table);
 		for (v=0,k=0,l=10000*10000; v<256; v++,pal+=4) {
 			r1 = r-pal[0];
 			g1 = g-pal[1];
@@ -1187,7 +1187,7 @@ LRESULT WINAPI MainWndProc (
 
 			GetRawInputData ((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
 
-			RAWINPUT *raw = (RAWINPUT *)lpb;
+			RAWINPUT *raw = reinterpret_cast<RAWINPUT*>(lpb);
 			if (raw->header.dwType == RIM_TYPEMOUSE && !(raw->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
 				IN_RawMouseMoved (raw->data.mouse.lLastX, raw->data.mouse.lLastY);
 
@@ -1619,7 +1619,7 @@ void VID_Init8bitPalette()
 	char thePalette[256*3];
 	char *oldPalette, *newPalette;
 
-	glColorTableEXT = (lp3DFXFUNC)wglGetProcAddress("glColorTableEXT");
+	glColorTableEXT = reinterpret_cast<lp3DFXFUNC>(wglGetProcAddress("glColorTableEXT"));
     if (!glColorTableEXT || gl_extensions.find("GL_EXT_shared_texture_palette") != std::string::npos ||
 		COM_CheckParm("-no8bit"))
 		return;
@@ -1936,7 +1936,7 @@ void	VID_Init (unsigned char *palette)
 		Sys_Error ("wglMakeCurrent failed");
 
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
-		(PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress ("wglCreateContextAttribsARB");
+		reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress ("wglCreateContextAttribsARB"));
 
 	baseRC = nullptr;
 	if (wglCreateContextAttribsARB)
