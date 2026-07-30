@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -21,16 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include <string>
-#include <cstdio>	// FILE
+#include <cstdio> // FILE
 #include <map>
 #include <optional>
 
-#include "common.h"	// qboolean
+#include "common.h" // qboolean
 
 /*
 
-cvar_t variables are used to hold scalar or string variables that can be changed or displayed at the console or prog code as well as accessed directly
-in C code.
+cvar_t variables are used to hold scalar or string variables that can be changed or displayed at the console or prog
+code as well as accessed directly in C code.
 
 it is sufficient to initialize a cvar_t with just the first two fields, or
 you can add a ,true flag for variables that you want saved to the configuration
@@ -39,8 +39,9 @@ file when the game is quit:
 cvar_t	r_draworder = {"r_draworder","1"};
 cvar_t	scr_screensize = {"screensize","1",true};
 
-Cvars must be registered before use, or they will have a 0 value instead of the float interpretation of the string.  Generally, all cvar_t declarations should be registered in the apropriate init function before any console commands are executed:
-Cvar_RegisterVariable (&host_framerate);
+Cvars must be registered before use, or they will have a 0 value instead of the float interpretation of the string.
+Generally, all cvar_t declarations should be registered in the apropriate init function before any console commands are
+executed: Cvar_RegisterVariable (&host_framerate);
 
 
 C code usually just references a cvar in place:
@@ -63,48 +64,48 @@ interface from being ambiguous.
 
 struct cvar_t
 {
-	const char	*name;
-	std::string	string;
-	qboolean archive;		// set to true to cause it to be saved to vars.rc
-	qboolean server;		// notifies players when changed
-	float	value;
+    const char *name;
+    std::string string;
+    qboolean archive; // set to true to cause it to be saved to vars.rc
+    qboolean server;  // notifies players when changed
+    float value;
 };
 
-void 	Cvar_RegisterVariable (cvar_t *variable);
+void Cvar_RegisterVariable(cvar_t *variable);
 // registers a cvar that allready has the name, string, and optionally the
 // archive elements set.
 
-void 	Cvar_Set (const char *var_name, const char *value);
+void Cvar_Set(const char *var_name, const char *value);
 // equivelant to "<name> <variable>" typed at the console
 
-void	Cvar_SetValue (const char *var_name, float value);
+void Cvar_SetValue(const char *var_name, float value);
 // expands value to a string and calls Cvar_Set
 
-float	Cvar_VariableValue (const char *var_name);
+float Cvar_VariableValue(const char *var_name);
 // returns 0 if not defined or non numeric
 
-std::string	Cvar_VariableString (const char *var_name);
+std::string Cvar_VariableString(const char *var_name);
 // returns an empty string if not defined
 
-std::optional<std::string> 	Cvar_CompleteVariable (const char *partial);
+std::optional<std::string> Cvar_CompleteVariable(const char *partial);
 // attempts to match a partial variable name for command line completion
 // returns std::nullopt if nothing fits
 
-qboolean Cvar_Command (void);
+qboolean Cvar_Command(void);
 // called by Cmd_ExecuteString when Cmd_Argv(0) doesn't match a known
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)
 
-void 	Cvar_WriteVariables (FILE *f);
+void Cvar_WriteVariables(FILE *f);
 // Writes lines containing "set variable value" for all variables
 // with the archive flag set to true.
 
-std::optional<cvar_t*> Cvar_FindVar (const char *var_name);
+std::optional<cvar_t *> Cvar_FindVar(const char *var_name);
 
-cvar_t *Cvar_NextServerVar (const char *afterName);
+cvar_t *Cvar_NextServerVar(const char *afterName);
 // iterator-based enumeration of .server-flagged cvars, in map order;
 // pass nullptr/"" to start from the beginning, nullptr return means exhausted.
 // Used by net_dgrm.cpp's CCREQ_RULE_INFO handler instead of reaching into
 // cvar_vars directly.
 
-extern std::map<std::string, cvar_t*>	cvar_vars;
+extern std::map<std::string, cvar_t *> cvar_vars;

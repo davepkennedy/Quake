@@ -31,13 +31,19 @@ GLuint GL_CompileShader(GLenum type, const char *src)
 
 GLProgram GL_BuildProgram(const char *vert_src, const char *frag_src)
 {
-    GLuint vert = GL_CompileShader(GL_VERTEX_SHADER,   vert_src);
+    GLuint vert = GL_CompileShader(GL_VERTEX_SHADER, vert_src);
     GLuint frag = GL_CompileShader(GL_FRAGMENT_SHADER, frag_src);
 
     if (!vert || !frag)
     {
-        if (vert) qglDeleteShader(vert);
-        if (frag) qglDeleteShader(frag);
+        if (vert)
+        {
+            qglDeleteShader(vert);
+        }
+        if (frag)
+        {
+            qglDeleteShader(frag);
+        }
         return GLProgram();
     }
 

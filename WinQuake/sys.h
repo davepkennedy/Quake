@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sys.h -- non-portable functions
 #pragma once
 
-#include <cstddef>	// size_t
+#include <cstddef> // size_t
 #include <string>
 #include <format>
 #include <utility>
@@ -33,56 +33,54 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // returns the file size
 // return -1 if file is not present
 // the file should be in BINARY mode for stupid OSs that care
-int Sys_FileOpenRead (const char *path, int *hndl);
+int Sys_FileOpenRead(const char *path, int *hndl);
 
-int Sys_FileOpenWrite (const char *path);
-void Sys_FileClose (int handle);
-void Sys_FileSeek (int handle, int position);
-int Sys_FileRead (int handle, void *dest, int count);
-int Sys_FileWrite (int handle, const void *data, int count);
-int	Sys_FileTime (const char *path);
-void Sys_mkdir (const char *path);
+int Sys_FileOpenWrite(const char *path);
+void Sys_FileClose(int handle);
+void Sys_FileSeek(int handle, int position);
+int Sys_FileRead(int handle, void *dest, int count);
+int Sys_FileWrite(int handle, const void *data, int count);
+int Sys_FileTime(const char *path);
+void Sys_mkdir(const char *path);
 
 //
 // memory protection
 //
-void Sys_MakeCodeWriteable (size_t startaddr, size_t length);
+void Sys_MakeCodeWriteable(size_t startaddr, size_t length);
 
 //
 // system IO
 //
 void Sys_DebugLog(const char *file, const char *fmt, ...);
 
-[[noreturn]] void Sys_Error (const char *error, ...);
+[[noreturn]] void Sys_Error(const char *error, ...);
 // an error will cause the entire program to exit
 
 // Sends already-formatted text to the console (dedicated-server output).
 // Defined in sys_win.cpp, which keeps its output HANDLE private -- kept as
 // a plain function rather than exposing that handle here just so the
 // Sys_Printf template below could reach it directly.
-void Sys_PrintfImpl (const std::string &text);
+void Sys_PrintfImpl(const std::string &text);
 
 // send text to the console
-template <typename... Args>
-void Sys_Printf (std::format_string<Args...> fmt, Args&&... args)
+template <typename... Args> void Sys_Printf(std::format_string<Args...> fmt, Args &&...args)
 {
-	Sys_PrintfImpl (std::format (fmt, std::forward<Args> (args)...));
+    Sys_PrintfImpl(std::format(fmt, std::forward<Args>(args)...));
 }
 
-void Sys_Quit (void);
+void Sys_Quit(void);
 
-double Sys_FloatTime (void);
+double Sys_FloatTime(void);
 
-std::optional<std::string> Sys_ConsoleInput (void);
+std::optional<std::string> Sys_ConsoleInput(void);
 
-void Sys_Sleep (void);
+void Sys_Sleep(void);
 // called to yield for a little bit so as
 // not to hog cpu when paused or debugging
 
-void Sys_SendKeyEvents (void);
+void Sys_SendKeyEvents(void);
 // Perform Key_Event () callbacks until the input que is empty
 
-void Sys_LowFPPrecision (void);
-void Sys_HighFPPrecision (void);
-void Sys_SetFPCW (void);
-
+void Sys_LowFPPrecision(void);
+void Sys_HighFPPrecision(void);
+void Sys_SetFPCW(void);

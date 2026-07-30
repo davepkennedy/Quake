@@ -1,2 +1,3 @@
-BasedOnStyle: LLVM
+BasedOnStyle: Microsoft
 InsertBraces: true
+SortIncludes: false

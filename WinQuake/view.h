@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -20,22 +20,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // view.h
 #pragma once
 
-#include "common.h"	// byte
-#include "mathlib.h"	// vec3_t
-#include "cvar.h"	// cvar_t
+#include "common.h"  // byte
+#include "mathlib.h" // vec3_t
+#include "cvar.h"    // cvar_t
 
-extern	cvar_t		v_gamma;
+extern cvar_t v_gamma;
 
-extern	byte		gammatable[256];	// palette is sent through this
-extern	byte		ramps[3][256];
+extern byte gammatable[256]; // palette is sent through this
+extern byte ramps[3][256];
 extern float v_blend[4];
 
 extern cvar_t lcd_x;
 
-
-void V_Init (void);
-void V_RenderView (void);
-float V_CalcRoll (vec3_t angles, vec3_t velocity);
-void V_UpdatePalette (void);
-void V_CalcBlend (void);
-
+void V_Init(void);
+void V_RenderView(void);
+float V_CalcRoll(vec3_t angles, vec3_t velocity);
+void V_UpdatePalette(void);
+void V_CalcBlend(void);

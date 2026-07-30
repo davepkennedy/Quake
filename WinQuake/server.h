@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -20,287 +20,288 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // server.h
 #pragma once
 
-#include "qlimits.h"	// MAX_MODELS, MAX_SOUNDS, MAX_LIGHTSTYLES, MAX_DATAGRAM,
-						// MAX_MSGLEN
-#include "common.h"	// byte, qboolean, sizebuf_t
-#include "mathlib.h"	// vec3_t
-#include "client.h"	// usercmd_t
-#include "progs.h"	// edict_t
+#include "qlimits.h" // MAX_MODELS, MAX_SOUNDS, MAX_LIGHTSTYLES, MAX_DATAGRAM,
+                     // MAX_MSGLEN
+#include "common.h"  // byte, qboolean, sizebuf_t
+#include "mathlib.h" // vec3_t
+#include "client.h"  // usercmd_t
+#include "progs.h"   // edict_t
 
 struct server_static_t
 {
-	int			maxclients;
-	int			maxclientslimit;
-	struct client_t	*clients;		// [maxclients]
-	int			serverflags;		// episode completion information
-	qboolean	changelevel_issued;	// cleared when at SV_SpawnServer
+    int maxclients;
+    int maxclientslimit;
+    struct client_t *clients;    // [maxclients]
+    int serverflags;             // episode completion information
+    qboolean changelevel_issued; // cleared when at SV_SpawnServer
 };
 
 //=============================================================================
 
-enum class server_state_t {ss_loading, ss_active};
+enum class server_state_t
+{
+    ss_loading,
+    ss_active
+};
 
 struct server_t
 {
-	// Resets every field to zero, matching the previous memset(&sv, 0,
-	// sizeof(sv)) call sites -- kept as an explicit method (rather than
-	// leaving memset scattered at each call site) so it stays correct if
-	// this struct ever gains a non-trivial member (e.g. std::string).
-	void Clear();
+    // Resets every field to zero, matching the previous memset(&sv, 0,
+    // sizeof(sv)) call sites -- kept as an explicit method (rather than
+    // leaving memset scattered at each call site) so it stays correct if
+    // this struct ever gains a non-trivial member (e.g. std::string).
+    void Clear();
 
-	qboolean	active;				// false if only a net client
+    qboolean active; // false if only a net client
 
-	qboolean	paused;
-	qboolean	loadgame;			// handle connections specially
+    qboolean paused;
+    qboolean loadgame; // handle connections specially
 
-	double		time;
-	
-	int			lastcheck;			// used by PF_checkclient
-	double		lastchecktime;
-	
-	char		name[64];			// map name
+    double time;
+
+    int lastcheck; // used by PF_checkclient
+    double lastchecktime;
+
+    char name[64]; // map name
 #ifdef QUAKE2
-	char		startspot[64];
+    char startspot[64];
 #endif
-	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
-	struct model_t 	*worldmodel;
-	char		*model_precache[MAX_MODELS];	// nullptr terminated
-	struct model_t	*models[MAX_MODELS];
-	char		*sound_precache[MAX_SOUNDS];	// nullptr terminated
-	char		*lightstyles[MAX_LIGHTSTYLES];
-	int			num_edicts;
-	int			max_edicts;
-	edict_t		*edicts;			// can NOT be array indexed, because
-									// edict_t is variable sized, but can
-									// be used to reference the world ent
-	server_state_t	state;			// some actions are only valid during load
+    char modelname[64]; // maps/<name>.bsp, for model_precache[0]
+    struct model_t *worldmodel;
+    char *model_precache[MAX_MODELS]; // nullptr terminated
+    struct model_t *models[MAX_MODELS];
+    char *sound_precache[MAX_SOUNDS]; // nullptr terminated
+    char *lightstyles[MAX_LIGHTSTYLES];
+    int num_edicts;
+    int max_edicts;
+    edict_t *edicts;      // can NOT be array indexed, because
+                          // edict_t is variable sized, but can
+                          // be used to reference the world ent
+    server_state_t state; // some actions are only valid during load
 
-	sizebuf_t	datagram;
-	byte		datagram_buf[MAX_DATAGRAM];
+    sizebuf_t datagram;
+    byte datagram_buf[MAX_DATAGRAM];
 
-	sizebuf_t	reliable_datagram;	// copied to all clients at end of frame
-	byte		reliable_datagram_buf[MAX_DATAGRAM];
+    sizebuf_t reliable_datagram; // copied to all clients at end of frame
+    byte reliable_datagram_buf[MAX_DATAGRAM];
 
-	sizebuf_t	signon;
-	byte		signon_buf[8192];
+    sizebuf_t signon;
+    byte signon_buf[8192];
 };
 
-
-#define	NUM_PING_TIMES		16
-#define	NUM_SPAWN_PARMS		16
+#define NUM_PING_TIMES 16
+#define NUM_SPAWN_PARMS 16
 
 struct client_t
 {
-	qboolean		active;				// false = client is free
-	qboolean		spawned;			// false = don't send datagrams
-	qboolean		dropasap;			// has been told to go to another level
-	qboolean		privileged;			// can execute any host command
-	qboolean		sendsignon;			// only valid before spawned
+    qboolean active;     // false = client is free
+    qboolean spawned;    // false = don't send datagrams
+    qboolean dropasap;   // has been told to go to another level
+    qboolean privileged; // can execute any host command
+    qboolean sendsignon; // only valid before spawned
 
-	double			last_message;		// reliable messages must be sent
-										// periodically
+    double last_message; // reliable messages must be sent
+                         // periodically
 
-	struct qsocket_t *netconnection;	// communications handle
+    struct qsocket_t *netconnection; // communications handle
 
-	usercmd_t		cmd;				// movement
-	vec3_t			wishdir;			// intended motion calced from cmd
+    usercmd_t cmd;  // movement
+    vec3_t wishdir; // intended motion calced from cmd
 
-	sizebuf_t		message;			// can be added to at any time,
-										// copied and clear once per frame
-	byte			msgbuf[MAX_MSGLEN];
-	edict_t			*edict;				// EDICT_NUM(clientnum+1)
-	char			name[32];			// for printing to other people
-	int				colors;
-		
-	float			ping_times[NUM_PING_TIMES];
-	int				num_pings;			// ping_times[num_pings%NUM_PING_TIMES]
+    sizebuf_t message; // can be added to at any time,
+                       // copied and clear once per frame
+    byte msgbuf[MAX_MSGLEN];
+    edict_t *edict; // EDICT_NUM(clientnum+1)
+    char name[32];  // for printing to other people
+    int colors;
 
-// spawn parms are carried from level to level
-	float			spawn_parms[NUM_SPAWN_PARMS];
+    float ping_times[NUM_PING_TIMES];
+    int num_pings; // ping_times[num_pings%NUM_PING_TIMES]
 
-// client known data for deltas	
-	int				old_frags;
+    // spawn parms are carried from level to level
+    float spawn_parms[NUM_SPAWN_PARMS];
+
+    // client known data for deltas
+    int old_frags;
 };
-
 
 //=============================================================================
 
 // edict->movetype values
-#define	MOVETYPE_NONE			0		// never moves
-#define	MOVETYPE_ANGLENOCLIP	1
-#define	MOVETYPE_ANGLECLIP		2
-#define	MOVETYPE_WALK			3		// gravity
-#define	MOVETYPE_STEP			4		// gravity, special edge handling
-#define	MOVETYPE_FLY			5
-#define	MOVETYPE_TOSS			6		// gravity
-#define	MOVETYPE_PUSH			7		// no clip to world, push and crush
-#define	MOVETYPE_NOCLIP			8
-#define	MOVETYPE_FLYMISSILE		9		// extra size to monsters
-#define	MOVETYPE_BOUNCE			10
+#define MOVETYPE_NONE 0 // never moves
+#define MOVETYPE_ANGLENOCLIP 1
+#define MOVETYPE_ANGLECLIP 2
+#define MOVETYPE_WALK 3 // gravity
+#define MOVETYPE_STEP 4 // gravity, special edge handling
+#define MOVETYPE_FLY 5
+#define MOVETYPE_TOSS 6 // gravity
+#define MOVETYPE_PUSH 7 // no clip to world, push and crush
+#define MOVETYPE_NOCLIP 8
+#define MOVETYPE_FLYMISSILE 9 // extra size to monsters
+#define MOVETYPE_BOUNCE 10
 #ifdef QUAKE2
-#define MOVETYPE_BOUNCEMISSILE	11		// bounce w/o gravity
-#define MOVETYPE_FOLLOW			12		// track movement of aiment
+#define MOVETYPE_BOUNCEMISSILE 11 // bounce w/o gravity
+#define MOVETYPE_FOLLOW 12        // track movement of aiment
 #endif
 
 // edict->solid values
-#define	SOLID_NOT				0		// no interaction with other objects
-#define	SOLID_TRIGGER			1		// touch on edge, but not blocking
-#define	SOLID_BBOX				2		// touch on edge, block
-#define	SOLID_SLIDEBOX			3		// touch on edge, but not an onground
-#define	SOLID_BSP				4		// bsp clip, touch on edge, block
+#define SOLID_NOT 0      // no interaction with other objects
+#define SOLID_TRIGGER 1  // touch on edge, but not blocking
+#define SOLID_BBOX 2     // touch on edge, block
+#define SOLID_SLIDEBOX 3 // touch on edge, but not an onground
+#define SOLID_BSP 4      // bsp clip, touch on edge, block
 
 // edict->deadflag values
-#define	DEAD_NO					0
-#define	DEAD_DYING				1
-#define	DEAD_DEAD				2
+#define DEAD_NO 0
+#define DEAD_DYING 1
+#define DEAD_DEAD 2
 
-#define	DAMAGE_NO				0
-#define	DAMAGE_YES				1
-#define	DAMAGE_AIM				2
+#define DAMAGE_NO 0
+#define DAMAGE_YES 1
+#define DAMAGE_AIM 2
 
 // edict->flags
-#define	FL_FLY					1
-#define	FL_SWIM					2
-//#define	FL_GLIMPSE				4
-#define	FL_CONVEYOR				4
-#define	FL_CLIENT				8
-#define	FL_INWATER				16
-#define	FL_MONSTER				32
-#define	FL_GODMODE				64
-#define	FL_NOTARGET				128
-#define	FL_ITEM					256
-#define	FL_ONGROUND				512
-#define	FL_PARTIALGROUND		1024	// not all corners are valid
-#define	FL_WATERJUMP			2048	// player jumping out of water
-#define	FL_JUMPRELEASED			4096	// for jump debouncing
+#define FL_FLY 1
+#define FL_SWIM 2
+// #define	FL_GLIMPSE				4
+#define FL_CONVEYOR 4
+#define FL_CLIENT 8
+#define FL_INWATER 16
+#define FL_MONSTER 32
+#define FL_GODMODE 64
+#define FL_NOTARGET 128
+#define FL_ITEM 256
+#define FL_ONGROUND 512
+#define FL_PARTIALGROUND 1024 // not all corners are valid
+#define FL_WATERJUMP 2048     // player jumping out of water
+#define FL_JUMPRELEASED 4096  // for jump debouncing
 #ifdef QUAKE2
-#define FL_FLASHLIGHT			8192
-#define FL_ARCHIVE_OVERRIDE		1048576
+#define FL_FLASHLIGHT 8192
+#define FL_ARCHIVE_OVERRIDE 1048576
 #endif
 
 // entity effects
 
-#define	EF_BRIGHTFIELD			1
-#define	EF_MUZZLEFLASH 			2
-#define	EF_BRIGHTLIGHT 			4
-#define	EF_DIMLIGHT 			8
+#define EF_BRIGHTFIELD 1
+#define EF_MUZZLEFLASH 2
+#define EF_BRIGHTLIGHT 4
+#define EF_DIMLIGHT 8
 #ifdef QUAKE2
-#define EF_DARKLIGHT			16
-#define EF_DARKFIELD			32
-#define EF_LIGHT				64
-#define EF_NODRAW				128
+#define EF_DARKLIGHT 16
+#define EF_DARKFIELD 32
+#define EF_LIGHT 64
+#define EF_NODRAW 128
 #endif
 
-#define	SPAWNFLAG_NOT_EASY			256
-#define	SPAWNFLAG_NOT_MEDIUM		512
-#define	SPAWNFLAG_NOT_HARD			1024
-#define	SPAWNFLAG_NOT_DEATHMATCH	2048
+#define SPAWNFLAG_NOT_EASY 256
+#define SPAWNFLAG_NOT_MEDIUM 512
+#define SPAWNFLAG_NOT_HARD 1024
+#define SPAWNFLAG_NOT_DEATHMATCH 2048
 
 #ifdef QUAKE2
 // server flags
-#define	SFL_EPISODE_1		1
-#define	SFL_EPISODE_2		2
-#define	SFL_EPISODE_3		4
-#define	SFL_EPISODE_4		8
-#define	SFL_NEW_UNIT		16
-#define	SFL_NEW_EPISODE		32
-#define	SFL_CROSS_TRIGGERS	65280
+#define SFL_EPISODE_1 1
+#define SFL_EPISODE_2 2
+#define SFL_EPISODE_3 4
+#define SFL_EPISODE_4 8
+#define SFL_NEW_UNIT 16
+#define SFL_NEW_EPISODE 32
+#define SFL_CROSS_TRIGGERS 65280
 #endif
 
 //============================================================================
 
-extern	cvar_t	teamplay;
-extern	cvar_t	skill;
-extern	cvar_t	deathmatch;
-extern	cvar_t	coop;
-extern	cvar_t	fraglimit;
-extern	cvar_t	timelimit;
+extern cvar_t teamplay;
+extern cvar_t skill;
+extern cvar_t deathmatch;
+extern cvar_t coop;
+extern cvar_t fraglimit;
+extern cvar_t timelimit;
 
-extern	server_static_t	svs;				// persistant server info
-extern	server_t		sv;					// local server
+extern server_static_t svs; // persistant server info
+extern server_t sv;         // local server
 
 // Narrow entity/client-pool accessors -- for QuakeC builtins (pr_cmds.cpp)
 // that need to iterate or look up by entity number without reaching into
 // sv./svs.'s representation directly.
-int SV_NumEdicts (void);					// sv.num_edicts
-int SV_NumClients (void);					// svs.maxclients
-client_t *SV_ClientForEntNum (int entnum);	// 1-based; nullptr if entnum isn't a client
+int SV_NumEdicts(void);                   // sv.num_edicts
+int SV_NumClients(void);                  // svs.maxclients
+client_t *SV_ClientForEntNum(int entnum); // 1-based; nullptr if entnum isn't a client
 
 // Narrow network-buffer accessors -- same idea, for QuakeC builtins that
 // write directly to one of the server's outgoing message buffers instead
 // of going through WriteDest()'s destination dispatch.
-sizebuf_t *SV_SignonBuffer (void);				// &sv.signon
-sizebuf_t *SV_DatagramBuffer (void);			// &sv.datagram
-sizebuf_t *SV_ReliableDatagramBuffer (void);	// &sv.reliable_datagram
+sizebuf_t *SV_SignonBuffer(void);           // &sv.signon
+sizebuf_t *SV_DatagramBuffer(void);         // &sv.datagram
+sizebuf_t *SV_ReliableDatagramBuffer(void); // &sv.reliable_datagram
 
 // Narrow sim-clock/bookkeeping accessors -- same idea again. SV_Time() is
 // a trivial read; the LastCheckClient pair covers PF_checkclient's own
 // round-robin PVS-check cursor, still stored in server_t but only ever
 // touched from pr_cmds.cpp.
-double SV_Time (void);							// sv.time
-int SV_LastCheckClient (void);					// sv.lastcheck
-double SV_LastCheckClientTime (void);			// sv.lastchecktime
-void SV_SetLastCheckClient (int entnum, double time);	// sv.lastcheck/lastchecktime
+double SV_Time(void);                                // sv.time
+int SV_LastCheckClient(void);                        // sv.lastcheck
+double SV_LastCheckClientTime(void);                 // sv.lastchecktime
+void SV_SetLastCheckClient(int entnum, double time); // sv.lastcheck/lastchecktime
 
 // Narrow lifecycle/precache accessors -- this bucket is more mixed than
 // the others: most are simple reads, but SV_TryIssueChangelevel is a
 // genuine check-and-set state transition, not a plain getter/setter.
-server_state_t SV_State (void);				// sv.state
-struct model_t *SV_WorldModel (void);			// sv.worldmodel
-int SV_SoundPrecacheIndex (const char *name);	// find only; -1 if not precached
-int SV_PrecacheSound (char *name);				// find-or-register; -1 if table full
-int SV_ModelPrecacheIndex (const char *name);	// find only; -1 if not precached
-int SV_PrecacheModel (char *name);				// find-or-register (also loads the model); -1 if table full
-struct model_t *SV_ModelForIndex (int index);	// sv.models[index]
-qboolean SV_TryIssueChangelevel (void);		// true if this call issued it, false if already issued this spawn
-qboolean SV_Active (void);						// sv.active
-int SV_MaxClientsLimit (void);					// svs.maxclientslimit
+server_state_t SV_State(void);               // sv.state
+struct model_t *SV_WorldModel(void);         // sv.worldmodel
+int SV_SoundPrecacheIndex(const char *name); // find only; -1 if not precached
+int SV_PrecacheSound(char *name);            // find-or-register; -1 if table full
+int SV_ModelPrecacheIndex(const char *name); // find only; -1 if not precached
+int SV_PrecacheModel(char *name);            // find-or-register (also loads the model); -1 if table full
+struct model_t *SV_ModelForIndex(int index); // sv.models[index]
+qboolean SV_TryIssueChangelevel(void);       // true if this call issued it, false if already issued this spawn
+qboolean SV_Active(void);                    // sv.active
+int SV_MaxClientsLimit(void);                // svs.maxclientslimit
 
-extern	client_t	*host_client;
+extern client_t *host_client;
 
-extern	double		host_time;
+extern double host_time;
 
-extern	edict_t		*sv_player;
+extern edict_t *sv_player;
 
 //===========================================================
 
-void SV_Init (void);
+void SV_Init(void);
 
-void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count);
-void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume,
-    float attenuation);
+void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count);
+void SV_StartSound(edict_t *entity, int channel, const char *sample, int volume, float attenuation);
 
-void SV_DropClient (qboolean crash);
+void SV_DropClient(qboolean crash);
 
-void SV_SendClientMessages (void);
-void SV_ClearDatagram (void);
+void SV_SendClientMessages(void);
+void SV_ClearDatagram(void);
 
-int SV_ModelIndex (const char *name);
+int SV_ModelIndex(const char *name);
 
-void SV_SetIdealPitch (void);
+void SV_SetIdealPitch(void);
 
-void SV_AddUpdates (void);
+void SV_AddUpdates(void);
 
-void SV_ClientThink (void);
-void SV_AddClientToServer (struct qsocket_t	*ret);
+void SV_ClientThink(void);
+void SV_AddClientToServer(struct qsocket_t *ret);
 
-void SV_ClientPrintf (const char *fmt, ...);
-void SV_BroadcastPrintf (const char *fmt, ...);
+void SV_ClientPrintf(const char *fmt, ...);
+void SV_BroadcastPrintf(const char *fmt, ...);
 
-void SV_Physics (void);
+void SV_Physics(void);
 
-qboolean SV_CheckBottom (edict_t *ent);
-qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink);
+qboolean SV_CheckBottom(edict_t *ent);
+qboolean SV_movestep(edict_t *ent, vec3_t move, qboolean relink);
 
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg);
+void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg);
 
-void SV_MoveToGoal (void);
+void SV_MoveToGoal(void);
 
-void SV_CheckForNewClients (void);
-void SV_RunClients (void);
-void SV_SaveSpawnparms ();
+void SV_CheckForNewClients(void);
+void SV_RunClients(void);
+void SV_SaveSpawnparms();
 #ifdef QUAKE2
-void SV_SpawnServer (char *server, char *startspot);
+void SV_SpawnServer(char *server, char *startspot);
 #else
-void SV_SpawnServer (char *server);
+void SV_SpawnServer(char *server);
 #endif

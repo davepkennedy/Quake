@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -20,36 +20,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // net.h -- quake's interface to the networking layer
 #pragma once
 
-#include "qlimits.h"	// MAX_DATAGRAM
-#include "common.h"	// byte, qboolean, sizebuf_t
-#include "cvar.h"	// cvar_t
+#include "qlimits.h" // MAX_DATAGRAM
+#include "common.h"  // byte, qboolean, sizebuf_t
+#include "cvar.h"    // cvar_t
 #include "hunk_resource.h"
 #include <vector>
 
 struct qsockaddr
 {
-	short sa_family;
-	unsigned char sa_data[14];
+    short sa_family;
+    unsigned char sa_data[14];
 };
 
+#define NET_NAMELEN 64
 
-#define	NET_NAMELEN			64
-
-#define NET_MAXMESSAGE		8192
-#define NET_HEADERSIZE		(2 * sizeof(unsigned int))
-#define NET_DATAGRAMSIZE	(MAX_DATAGRAM + NET_HEADERSIZE)
+#define NET_MAXMESSAGE 8192
+#define NET_HEADERSIZE (2 * sizeof(unsigned int))
+#define NET_DATAGRAMSIZE (MAX_DATAGRAM + NET_HEADERSIZE)
 
 // NetHeader flags
-#define NETFLAG_LENGTH_MASK	0x0000ffff
-#define NETFLAG_DATA		0x00010000
-#define NETFLAG_ACK			0x00020000
-#define NETFLAG_NAK			0x00040000
-#define NETFLAG_EOM			0x00080000
-#define NETFLAG_UNRELIABLE	0x00100000
-#define NETFLAG_CTL			0x80000000
+#define NETFLAG_LENGTH_MASK 0x0000ffff
+#define NETFLAG_DATA 0x00010000
+#define NETFLAG_ACK 0x00020000
+#define NETFLAG_NAK 0x00040000
+#define NETFLAG_EOM 0x00080000
+#define NETFLAG_UNRELIABLE 0x00100000
+#define NETFLAG_CTL 0x80000000
 
-
-#define NET_PROTOCOL_VERSION	3
+#define NET_PROTOCOL_VERSION 3
 
 // This is the network info/connection protocol.  It is used to find Quake
 // servers, get info about them, and connect to them.  Once connected, the
@@ -112,47 +110,46 @@ struct qsockaddr
 //		a full address and port in a string.  It is used for returning the
 //		address of a server that is not running locally.
 
-#define CCREQ_CONNECT		0x01
-#define CCREQ_SERVER_INFO	0x02
-#define CCREQ_PLAYER_INFO	0x03
-#define CCREQ_RULE_INFO		0x04
+#define CCREQ_CONNECT 0x01
+#define CCREQ_SERVER_INFO 0x02
+#define CCREQ_PLAYER_INFO 0x03
+#define CCREQ_RULE_INFO 0x04
 
-#define CCREP_ACCEPT		0x81
-#define CCREP_REJECT		0x82
-#define CCREP_SERVER_INFO	0x83
-#define CCREP_PLAYER_INFO	0x84
-#define CCREP_RULE_INFO		0x85
+#define CCREP_ACCEPT 0x81
+#define CCREP_REJECT 0x82
+#define CCREP_SERVER_INFO 0x83
+#define CCREP_PLAYER_INFO 0x84
+#define CCREP_RULE_INFO 0x85
 
 struct qsocket_t
 {
-	struct qsocket_t	*next;
-	double			connecttime;
-	double			lastMessageTime;
-	double			lastSendTime;
+    struct qsocket_t *next;
+    double connecttime;
+    double lastMessageTime;
+    double lastSendTime;
 
-	qboolean		disconnected;
-	qboolean		canSend;
-	qboolean		sendNext;
-	
-	int				driver;
-	int				landriver;
-	int				socket;
-	void			*driverdata;
+    qboolean disconnected;
+    qboolean canSend;
+    qboolean sendNext;
 
-	unsigned int	ackSequence;
-	unsigned int	sendSequence;
-	unsigned int	unreliableSendSequence;
-	int				sendMessageLength;
-	byte			sendMessage [NET_MAXMESSAGE];
+    int driver;
+    int landriver;
+    int socket;
+    void *driverdata;
 
-	unsigned int	receiveSequence;
-	unsigned int	unreliableReceiveSequence;
-	int				receiveMessageLength;
-	byte			receiveMessage [NET_MAXMESSAGE];
+    unsigned int ackSequence;
+    unsigned int sendSequence;
+    unsigned int unreliableSendSequence;
+    int sendMessageLength;
+    byte sendMessage[NET_MAXMESSAGE];
 
-	struct qsockaddr	addr;
-	char				address[NET_NAMELEN];
+    unsigned int receiveSequence;
+    unsigned int unreliableReceiveSequence;
+    int receiveMessageLength;
+    byte receiveMessage[NET_MAXMESSAGE];
 
+    struct qsockaddr addr;
+    char address[NET_NAMELEN];
 };
 
 // Core network connection state -- consolidated per an explicit scoping
@@ -164,119 +161,118 @@ struct qsocket_t
 // net_drivers), the LAN server-browser hostcache, and VCR record/playback.
 struct net_state_t
 {
-	qsocket_t	*activeSockets = nullptr;
-	qsocket_t	*freeSockets = nullptr;
-	int			numsockets = 0;
-	std::pmr::vector<qsocket_t>	socketPool;	// backing storage for freeSockets' initial pool
+    qsocket_t *activeSockets = nullptr;
+    qsocket_t *freeSockets = nullptr;
+    int numsockets = 0;
+    std::pmr::vector<qsocket_t> socketPool; // backing storage for freeSockets' initial pool
 
-	qboolean	ipxAvailable = false;
-	qboolean	tcpipAvailable = false;
+    qboolean ipxAvailable = false;
+    qboolean tcpipAvailable = false;
 
-	sizebuf_t	message;
-	int			activeconnections = 0;
-	double		time = 0;
+    sizebuf_t message;
+    int activeconnections = 0;
+    double time = 0;
 
-	int			messagesSent = 0;
-	int			messagesReceived = 0;
-	int			unreliableMessagesSent = 0;
-	int			unreliableMessagesReceived = 0;
+    int messagesSent = 0;
+    int messagesReceived = 0;
+    int unreliableMessagesSent = 0;
+    int unreliableMessagesReceived = 0;
 };
 
 extern net_state_t net;
 
 struct net_landriver_t
 {
-	const char	*name;
-	qboolean	initialized;
-	int			controlSock;
-	int			(*Init) (void);
-	void		(*Shutdown) (void);
-	void		(*Listen) (qboolean state);
-	int 		(*OpenSocket) (int port);
-	int 		(*CloseSocket) (int socket);
-	int 		(*Connect) (int socket, struct qsockaddr *addr);
-	int 		(*CheckNewConnections) (void);
-	int 		(*Read) (int socket, byte *buf, int len, struct qsockaddr *addr);
-	int 		(*Write) (int socket, byte *buf, int len, struct qsockaddr *addr);
-	int 		(*Broadcast) (int socket, byte *buf, int len);
-	std::string	(*AddrToString) (struct qsockaddr *addr);
-	int 		(*StringToAddr) (const char *string, struct qsockaddr *addr);
-	int 		(*GetSocketAddr) (int socket, struct qsockaddr *addr);
-	int 		(*GetNameFromAddr) (struct qsockaddr *addr, char *name);
-	int 		(*GetAddrFromName) (const char *name, struct qsockaddr *addr);
-	int			(*AddrCompare) (struct qsockaddr *addr1, struct qsockaddr *addr2);
-	int			(*GetSocketPort) (struct qsockaddr *addr);
-	int			(*SetSocketPort) (struct qsockaddr *addr, int port);
+    const char *name;
+    qboolean initialized;
+    int controlSock;
+    int (*Init)(void);
+    void (*Shutdown)(void);
+    void (*Listen)(qboolean state);
+    int (*OpenSocket)(int port);
+    int (*CloseSocket)(int socket);
+    int (*Connect)(int socket, struct qsockaddr *addr);
+    int (*CheckNewConnections)(void);
+    int (*Read)(int socket, byte *buf, int len, struct qsockaddr *addr);
+    int (*Write)(int socket, byte *buf, int len, struct qsockaddr *addr);
+    int (*Broadcast)(int socket, byte *buf, int len);
+    std::string (*AddrToString)(struct qsockaddr *addr);
+    int (*StringToAddr)(const char *string, struct qsockaddr *addr);
+    int (*GetSocketAddr)(int socket, struct qsockaddr *addr);
+    int (*GetNameFromAddr)(struct qsockaddr *addr, char *name);
+    int (*GetAddrFromName)(const char *name, struct qsockaddr *addr);
+    int (*AddrCompare)(struct qsockaddr *addr1, struct qsockaddr *addr2);
+    int (*GetSocketPort)(struct qsockaddr *addr);
+    int (*SetSocketPort)(struct qsockaddr *addr, int port);
 };
 
-#define	MAX_NET_DRIVERS		8
-extern int 				net_numlandrivers;
-extern net_landriver_t	net_landrivers[MAX_NET_DRIVERS];
+#define MAX_NET_DRIVERS 8
+extern int net_numlandrivers;
+extern net_landriver_t net_landrivers[MAX_NET_DRIVERS];
 
 struct net_driver_t
 {
-	const char	*name;
-	qboolean	initialized;
-	int			(*Init) (void);
-	void		(*Listen) (qboolean state);
-	void		(*SearchForHosts) (qboolean xmit);
-	qsocket_t	*(*Connect) (const char *host);
-	qsocket_t 	*(*CheckNewConnections) (void);
-	int			(*QGetMessage) (qsocket_t *sock);
-	int			(*QSendMessage) (qsocket_t *sock, sizebuf_t *data);
-	int			(*SendUnreliableMessage) (qsocket_t *sock, sizebuf_t *data);
-	qboolean	(*CanSendMessage) (qsocket_t *sock);
-	qboolean	(*CanSendUnreliableMessage) (qsocket_t *sock);
-	void		(*Close) (qsocket_t *sock);
-	void		(*Shutdown) (void);
-	int			controlSock;
+    const char *name;
+    qboolean initialized;
+    int (*Init)(void);
+    void (*Listen)(qboolean state);
+    void (*SearchForHosts)(qboolean xmit);
+    qsocket_t *(*Connect)(const char *host);
+    qsocket_t *(*CheckNewConnections)(void);
+    int (*QGetMessage)(qsocket_t *sock);
+    int (*QSendMessage)(qsocket_t *sock, sizebuf_t *data);
+    int (*SendUnreliableMessage)(qsocket_t *sock, sizebuf_t *data);
+    qboolean (*CanSendMessage)(qsocket_t *sock);
+    qboolean (*CanSendUnreliableMessage)(qsocket_t *sock);
+    void (*Close)(qsocket_t *sock);
+    void (*Shutdown)(void);
+    int controlSock;
 };
 
-extern int			net_numdrivers;
-extern net_driver_t	net_drivers[MAX_NET_DRIVERS];
+extern int net_numdrivers;
+extern net_driver_t net_drivers[MAX_NET_DRIVERS];
 
-extern int			DEFAULTnet_hostport;
-extern int			net_hostport;
+extern int DEFAULTnet_hostport;
+extern int net_hostport;
 
 extern int net_driverlevel;
-extern cvar_t		hostname;
-extern char			playername[];
-extern int			playercolor;
+extern cvar_t hostname;
+extern char playername[];
+extern int playercolor;
 
-qsocket_t *NET_NewQSocket (void);
+qsocket_t *NET_NewQSocket(void);
 void NET_FreeQSocket(qsocket_t *);
 double SetNetTime(void);
 
-
-#define HOSTCACHESIZE	8
+#define HOSTCACHESIZE 8
 
 struct hostcache_t
 {
-	char	name[16];
-	char	map[16];
-	char	cname[32];
-	int		users;
-	int		maxusers;
-	int		driver;
-	int		ldriver;
-	struct qsockaddr addr;
+    char name[16];
+    char map[16];
+    char cname[32];
+    int users;
+    int maxusers;
+    int driver;
+    int ldriver;
+    struct qsockaddr addr;
 };
 
 extern int hostCacheCount;
 extern hostcache_t hostcache[HOSTCACHESIZE];
 
-#if !defined(_WIN32 ) && !defined (__linux__) && !defined (__sun__)
+#if !defined(_WIN32) && !defined(__linux__) && !defined(__sun__)
 #ifndef htonl
-extern unsigned long htonl (unsigned long hostlong);
+extern unsigned long htonl(unsigned long hostlong);
 #endif
 #ifndef htons
-extern unsigned short htons (unsigned short hostshort);
+extern unsigned short htons(unsigned short hostshort);
 #endif
 #ifndef ntohl
-extern unsigned long ntohl (unsigned long netlong);
+extern unsigned long ntohl(unsigned long netlong);
 #endif
 #ifndef ntohs
-extern unsigned short ntohs (unsigned short netshort);
+extern unsigned short ntohs(unsigned short netshort);
 #endif
 #endif
 
@@ -290,38 +286,37 @@ qboolean IsID(struct qsockaddr *addr);
 //
 //============================================================================
 
-void		NET_Init (void);
-void		NET_Shutdown (void);
+void NET_Init(void);
+void NET_Shutdown(void);
 
-struct qsocket_t	*NET_CheckNewConnections (void);
+struct qsocket_t *NET_CheckNewConnections(void);
 // returns a new connection number if there is one pending, else -1
 
-struct qsocket_t	*NET_Connect (const char *host);
+struct qsocket_t *NET_Connect(const char *host);
 // called by client to connect to a host.  Returns -1 if not able to
 
-qboolean NET_CanSendMessage (qsocket_t *sock);
+qboolean NET_CanSendMessage(qsocket_t *sock);
 // Returns true or false if the given qsocket can currently accept a
 // message to be transmitted.
 
-int			NET_GetMessage (struct qsocket_t *sock);
+int NET_GetMessage(struct qsocket_t *sock);
 // returns data in net_message sizebuf
 // returns 0 if no data is waiting
 // returns 1 if a message was received
 // returns 2 if an unreliable message was received
 // returns -1 if the connection died
 
-int			NET_SendMessage (struct qsocket_t *sock, sizebuf_t *data);
-int			NET_SendUnreliableMessage (struct qsocket_t *sock, sizebuf_t *data);
+int NET_SendMessage(struct qsocket_t *sock, sizebuf_t *data);
+int NET_SendUnreliableMessage(struct qsocket_t *sock, sizebuf_t *data);
 // returns 0 if the message connot be delivered reliably, but the connection
 //		is still considered valid
 // returns 1 if the message was sent properly
 // returns -1 if the connection died
 
-int			NET_SendToAll(sizebuf_t *data, int blocktime);
+int NET_SendToAll(sizebuf_t *data, int blocktime);
 // This is a reliable *blocking* send to all attached clients.
 
-
-void		NET_Close (struct qsocket_t *sock);
+void NET_Close(struct qsocket_t *sock);
 // if a dead connection is returned by a get or send function, this function
 // should be called when it is convenient
 
@@ -332,22 +327,21 @@ void		NET_Close (struct qsocket_t *sock);
 
 void NET_Poll(void);
 
-
 struct PollProcedure
 {
-	struct PollProcedure	*next;
-	double					nextTime;
-	void					(*procedure)();
-	void					*arg;
+    struct PollProcedure *next;
+    double nextTime;
+    void (*procedure)();
+    void *arg;
 };
 
 void SchedulePollProcedure(PollProcedure *pp, double timeOffset);
 
-std::string NET_IPXAddressString (void);
-std::string NET_TCPIPAddressString (void);
+std::string NET_IPXAddressString(void);
+std::string NET_TCPIPAddressString(void);
 
-extern	qboolean	slistInProgress;
-extern	qboolean	slistSilent;
-extern	qboolean	slistLocal;
+extern qboolean slistInProgress;
+extern qboolean slistSilent;
+extern qboolean slistLocal;
 
-void NET_Slist_f (void);
+void NET_Slist_f(void);

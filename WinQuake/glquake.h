@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // disable data conversion warnings
 #pragma once
 
-#pragma warning(disable : 4244)     // MIPS
-#pragma warning(disable : 4136)     // X86
-#pragma warning(disable : 4051)     // ALPHA
+#pragma warning(disable : 4244) // MIPS
+#pragma warning(disable : 4136) // X86
+#pragma warning(disable : 4051) // ALPHA
 
 #ifdef _WIN32
 #include <windows.h>
@@ -33,233 +33,232 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <glm/glm.hpp>
 
-#include "common.h"	// byte, qboolean
-#include "mathlib.h"	// vec3_t, fixed8_t
-#include "vid.h"	// pixel_t
-#include "cvar.h"	// cvar_t
-#include "wad.h"	// qpic_t
-#include "render.h"	// entity_t
-#include "gl_model.h"	// texture_t, msurface_t, mplane_t
-#include "client.h"	// dlight_t
+#include "common.h"   // byte, qboolean
+#include "mathlib.h"  // vec3_t, fixed8_t
+#include "vid.h"      // pixel_t
+#include "cvar.h"     // cvar_t
+#include "wad.h"      // qpic_t
+#include "render.h"   // entity_t
+#include "gl_model.h" // texture_t, msurface_t, mplane_t
+#include "client.h"   // dlight_t
 
-void GL_BeginRendering (int *x, int *y, int *width, int *height);
-void GL_EndRendering (void);
-
+void GL_BeginRendering(int *x, int *y, int *width, int *height);
+void GL_EndRendering(void);
 
 #ifdef _WIN32
 // Function prototypes for the Texture Object Extension routines
-typedef GLboolean (APIENTRY *ARETEXRESFUNCPTR)(GLsizei, const GLuint *,
-                    const GLboolean *);
-typedef void (APIENTRY *BINDTEXFUNCPTR)(GLenum, GLuint);
-typedef void (APIENTRY *DELTEXFUNCPTR)(GLsizei, const GLuint *);
-typedef void (APIENTRY *GENTEXFUNCPTR)(GLsizei, GLuint *);
-typedef GLboolean (APIENTRY *ISTEXFUNCPTR)(GLuint);
-typedef void (APIENTRY *PRIORTEXFUNCPTR)(GLsizei, const GLuint *,
-                    const GLclampf *);
-typedef void (APIENTRY *TEXSUBIMAGEPTR)(int, int, int, int, int, int, int, int, void *);
+typedef GLboolean(APIENTRY *ARETEXRESFUNCPTR)(GLsizei, const GLuint *, const GLboolean *);
+typedef void(APIENTRY *BINDTEXFUNCPTR)(GLenum, GLuint);
+typedef void(APIENTRY *DELTEXFUNCPTR)(GLsizei, const GLuint *);
+typedef void(APIENTRY *GENTEXFUNCPTR)(GLsizei, GLuint *);
+typedef GLboolean(APIENTRY *ISTEXFUNCPTR)(GLuint);
+typedef void(APIENTRY *PRIORTEXFUNCPTR)(GLsizei, const GLuint *, const GLclampf *);
+typedef void(APIENTRY *TEXSUBIMAGEPTR)(int, int, int, int, int, int, int, int, void *);
 
-extern	BINDTEXFUNCPTR bindTexFunc;
-extern	DELTEXFUNCPTR delTexFunc;
-extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
+extern BINDTEXFUNCPTR bindTexFunc;
+extern DELTEXFUNCPTR delTexFunc;
+extern TEXSUBIMAGEPTR TexSubImage2DFunc;
 #endif
 
 #include "gl_ext.h"
 #include "gl_shader.h"
 
-extern	int texture_extension_number;
-void GL_ReserveTextureNames (int count);
-extern	int		texture_mode;
+extern int texture_extension_number;
+void GL_ReserveTextureNames(int count);
+extern int texture_mode;
 
-extern	float	gldepthmin, gldepthmax;
+extern float gldepthmin, gldepthmax;
 
-void GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qboolean alpha);
-void GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboolean alpha);
-int GL_LoadTexture (const char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha);
-int GL_FindTexture (const char *identifier);
+void GL_Upload32(unsigned *data, int width, int height, qboolean mipmap, qboolean alpha);
+void GL_Upload8(byte *data, int width, int height, qboolean mipmap, qboolean alpha);
+int GL_LoadTexture(const char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha);
+int GL_FindTexture(const char *identifier);
 
 struct glvert_t
 {
-	float	x, y, z;
-	float	s, t;
-	float	r, g, b;
+    float x, y, z;
+    float s, t;
+    float r, g, b;
 };
 
 extern glvert_t glv;
 
-extern	int glx, gly, glwidth, glheight;
+extern int glx, gly, glwidth, glheight;
 
 #ifdef _WIN32
-extern	PROC glArrayElementEXT;
-extern	PROC glColorPointerEXT;
-extern	PROC glTexturePointerEXT;
-extern	PROC glVertexPointerEXT;
+extern PROC glArrayElementEXT;
+extern PROC glColorPointerEXT;
+extern PROC glTexturePointerEXT;
+extern PROC glVertexPointerEXT;
 #endif
 
 // r_local.h -- private refresh defs
 
-#define ALIAS_BASE_SIZE_RATIO		(1.0 / 11.0)
-					// normalizing factor so player model works out to about
-					//  1 pixel per triangle
-#define	MAX_LBM_HEIGHT		480
+#define ALIAS_BASE_SIZE_RATIO (1.0 / 11.0)
+// normalizing factor so player model works out to about
+//  1 pixel per triangle
+#define MAX_LBM_HEIGHT 480
 
-#define TILE_SIZE		128		// size of textures generated by R_GenTiledSurf
+#define TILE_SIZE 128 // size of textures generated by R_GenTiledSurf
 
-#define SKYSHIFT		7
-#define	SKYSIZE			(1 << SKYSHIFT)
-#define SKYMASK			(SKYSIZE - 1)
+#define SKYSHIFT 7
+#define SKYSIZE (1 << SKYSHIFT)
+#define SKYMASK (SKYSIZE - 1)
 
-#define BACKFACE_EPSILON	0.01
+#define BACKFACE_EPSILON 0.01
 
-
-void R_TimeRefresh_f (void);
-void R_ReadPointFile_f (void);
-texture_t *R_TextureAnimation (texture_t *base);
+void R_TimeRefresh_f(void);
+void R_ReadPointFile_f(void);
+texture_t *R_TextureAnimation(texture_t *base);
 
 struct surfcache_t
 {
-	struct surfcache_t	*next;
-	struct surfcache_t 	**owner;		// nullptr is an empty chunk of memory
-	int					lightadj[MAXLIGHTMAPS]; // checked for strobe flush
-	int					dlight;
-	int					size;		// including header
-	unsigned			width;
-	unsigned			height;		// DEBUG only needed for debug
-	float				mipscale;
-	struct texture_t	*texture;	// checked for animating textures
-	byte				data[4];	// width*height elements
+    struct surfcache_t *next;
+    struct surfcache_t **owner; // nullptr is an empty chunk of memory
+    int lightadj[MAXLIGHTMAPS]; // checked for strobe flush
+    int dlight;
+    int size; // including header
+    unsigned width;
+    unsigned height; // DEBUG only needed for debug
+    float mipscale;
+    struct texture_t *texture; // checked for animating textures
+    byte data[4];              // width*height elements
 };
-
 
 struct drawsurf_t
 {
-	pixel_t		*surfdat;	// destination for generated surface
-	int			rowbytes;	// destination logical width in bytes
-	msurface_t	*surf;		// description for surface to generate
-	fixed8_t	lightadj[MAXLIGHTMAPS];
-							// adjust for lightmap levels for dynamic lighting
-	texture_t	*texture;	// corrected for animating textures
-	int			surfmip;	// mipmapped ratio of surface texels / world pixels
-	int			surfwidth;	// in mipmapped texels
-	int			surfheight;	// in mipmapped texels
+    pixel_t *surfdat; // destination for generated surface
+    int rowbytes;     // destination logical width in bytes
+    msurface_t *surf; // description for surface to generate
+    fixed8_t lightadj[MAXLIGHTMAPS];
+    // adjust for lightmap levels for dynamic lighting
+    texture_t *texture; // corrected for animating textures
+    int surfmip;        // mipmapped ratio of surface texels / world pixels
+    int surfwidth;      // in mipmapped texels
+    int surfheight;     // in mipmapped texels
 };
 
-
-typedef enum {
-	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2
+typedef enum
+{
+    pt_static,
+    pt_grav,
+    pt_slowgrav,
+    pt_fire,
+    pt_explode,
+    pt_explode2,
+    pt_blob,
+    pt_blob2
 } ptype_t;
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 struct particle_t
 {
-// driver-usable fields
-	vec3_t		org;
-	float		color;
-// drivers never touch the following fields
-	struct particle_t	*next;
-	vec3_t		vel;
-	float		ramp;
-	float		die;
-	ptype_t		type;
+    // driver-usable fields
+    vec3_t org;
+    float color;
+    // drivers never touch the following fields
+    struct particle_t *next;
+    vec3_t vel;
+    float ramp;
+    float die;
+    ptype_t type;
 };
-
 
 //====================================================
 
-
-extern	entity_t	r_worldentity;
-extern	qboolean	r_cache_thrash;		// compatability
-extern	vec3_t		modelorg, r_entorigin;
-extern	entity_t	*currententity;
-extern	int			r_visframecount;	// ??? what difs?
-extern	int			r_framecount;
-extern	mplane_t	frustum[4];
-extern	int		c_brush_polys, c_alias_polys;
-
+extern entity_t r_worldentity;
+extern qboolean r_cache_thrash; // compatability
+extern vec3_t modelorg, r_entorigin;
+extern entity_t *currententity;
+extern int r_visframecount; // ??? what difs?
+extern int r_framecount;
+extern mplane_t frustum[4];
+extern int c_brush_polys, c_alias_polys;
 
 //
 // view origin
 //
-extern	vec3_t	vup;
-extern	vec3_t	vpn;
-extern	vec3_t	vright;
-extern	vec3_t	r_origin;
+extern vec3_t vup;
+extern vec3_t vpn;
+extern vec3_t vright;
+extern vec3_t r_origin;
 
 //
 // screen size info
 //
-extern	refdef_t	r_refdef;
-extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
-extern	texture_t	*r_notexture_mip;
-extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
+extern refdef_t r_refdef;
+extern mleaf_t *r_viewleaf, *r_oldviewleaf;
+extern texture_t *r_notexture_mip;
+extern int d_lightstylevalue[256]; // 8.8 fraction of base light value
 
-extern	qboolean	envmap;
-extern	int	currenttexture;
-extern	int	cnttextures[2];
-extern	int	particletexture;
-extern	int	playertextures;
+extern qboolean envmap;
+extern int currenttexture;
+extern int cnttextures[2];
+extern int particletexture;
+extern int playertextures;
 
-extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
+extern int skytexturenum; // index in cl.loadmodel, not gl texture object
 
-extern	cvar_t	r_norefresh;
-extern	cvar_t	r_drawentities;
-extern	cvar_t	r_drawworld;
-extern	cvar_t	r_drawviewmodel;
-extern	cvar_t	r_speeds;
-extern	cvar_t	r_waterwarp;
-extern	cvar_t	r_fullbright;
-extern	cvar_t	r_lightmap;
-extern	cvar_t	r_shadows;
-extern	cvar_t	r_mirroralpha;
-extern	cvar_t	r_wateralpha;
-extern	cvar_t	r_dynamic;
-extern	cvar_t	r_novis;
+extern cvar_t r_norefresh;
+extern cvar_t r_drawentities;
+extern cvar_t r_drawworld;
+extern cvar_t r_drawviewmodel;
+extern cvar_t r_speeds;
+extern cvar_t r_waterwarp;
+extern cvar_t r_fullbright;
+extern cvar_t r_lightmap;
+extern cvar_t r_shadows;
+extern cvar_t r_mirroralpha;
+extern cvar_t r_wateralpha;
+extern cvar_t r_dynamic;
+extern cvar_t r_novis;
 
-extern	cvar_t	gl_clear;
-extern	cvar_t	gl_cull;
-extern	cvar_t	gl_poly;
-extern	cvar_t	gl_texsort;
-extern	cvar_t	gl_smoothmodels;
-extern	cvar_t	gl_affinemodels;
-extern	cvar_t	gl_polyblend;
-extern	cvar_t	gl_keeptjunctions;
-extern	cvar_t	gl_reporttjunctions;
-extern	cvar_t	gl_flashblend;
-extern	cvar_t	gl_nocolors;
-extern	cvar_t	gl_doubleeyes;
+extern cvar_t gl_clear;
+extern cvar_t gl_cull;
+extern cvar_t gl_poly;
+extern cvar_t gl_texsort;
+extern cvar_t gl_smoothmodels;
+extern cvar_t gl_affinemodels;
+extern cvar_t gl_polyblend;
+extern cvar_t gl_keeptjunctions;
+extern cvar_t gl_reporttjunctions;
+extern cvar_t gl_flashblend;
+extern cvar_t gl_nocolors;
+extern cvar_t gl_doubleeyes;
 
-extern	int		gl_lightmap_format;
-extern	int		gl_solid_format;
-extern	int		gl_alpha_format;
+extern int gl_lightmap_format;
+extern int gl_solid_format;
+extern int gl_alpha_format;
 
-extern	cvar_t	gl_max_size;
-extern	cvar_t	gl_playermip;
+extern cvar_t gl_max_size;
+extern cvar_t gl_playermip;
 
-extern	int			mirrortexturenum;	// quake texturenum, not gltexturenum
-extern	qboolean	mirror;
-extern	mplane_t	*mirror_plane;
+extern int mirrortexturenum; // quake texturenum, not gltexturenum
+extern qboolean mirror;
+extern mplane_t *mirror_plane;
 
-extern	glm::mat4	r_world_matrix;
-extern	glm::mat4	r_proj_matrix;
-extern	glm::mat4	r_entity_matrix;
+extern glm::mat4 r_world_matrix;
+extern glm::mat4 r_proj_matrix;
+extern glm::mat4 r_entity_matrix;
 
-extern	std::string gl_vendor;
-extern	std::string gl_renderer;
-extern	std::string gl_version;
-extern	std::string gl_extensions;
+extern std::string gl_vendor;
+extern std::string gl_renderer;
+extern std::string gl_version;
+extern std::string gl_extensions;
 
-void R_TranslatePlayerSkin (int playernum);
-void GL_Bind (int texnum);
+void R_TranslatePlayerSkin(int playernum);
+void GL_Bind(int texnum);
 
 // Multitexture
-#define    TEXTURE0_SGIS				0x835E
-#define    TEXTURE1_SGIS				0x835F
+#define TEXTURE0_SGIS 0x835E
+#define TEXTURE1_SGIS 0x835F
 
 #ifndef _WIN32
 #define APIENTRY /* */
 #endif
 
-typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
-typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
+typedef void(APIENTRY *lpMTexFUNC)(GLenum, GLfloat, GLfloat);
+typedef void(APIENTRY *lpSelTexFUNC)(GLenum);
 extern lpMTexFUNC qglMTexCoord2fSGIS;
 extern lpSelTexFUNC qglSelectTextureSGIS;
 
@@ -269,42 +268,42 @@ void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);
 
 // gl_draw.cpp
-void GL_Set2D (void);
-void GL_Upload8_EXT (byte *data, int width, int height, qboolean mipmap, qboolean alpha);
-int  GL_LoadPicTexture (qpic_t *pic);
+void GL_Set2D(void);
+void GL_Upload8_EXT(byte *data, int width, int height, qboolean mipmap, qboolean alpha);
+int GL_LoadPicTexture(qpic_t *pic);
 
 // gl_mesh.cpp
-void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr);
 
 // gl_warp.cpp
-void GL_SubdivideSurface (msurface_t *fa);
-void EmitWaterPolys (msurface_t *fa);
-void EmitSkyPolys (msurface_t *fa);
-void EmitBothSkyLayers (msurface_t *fa);
-void R_DrawSkyChain (msurface_t *s);
+void GL_SubdivideSurface(msurface_t *fa);
+void EmitWaterPolys(msurface_t *fa);
+void EmitSkyPolys(msurface_t *fa);
+void EmitBothSkyLayers(msurface_t *fa);
+void R_DrawSkyChain(msurface_t *s);
 
 // gl_rsurf.cpp
-void GL_BuildLightmaps (void);
-void R_DrawWorld (void);
-void R_DrawBrushModel (entity_t *e);
-void R_DrawWaterSurfaces (void);
-void R_RenderBrushPoly (msurface_t *fa);
-void R_World_SetAlpha (float a);
+void GL_BuildLightmaps(void);
+void R_DrawWorld(void);
+void R_DrawBrushModel(entity_t *e);
+void R_DrawWaterSurfaces(void);
+void R_RenderBrushPoly(msurface_t *fa);
+void R_World_SetAlpha(float a);
 
 // gl_rlight.cpp
-void R_AnimateLight (void);
-void R_RenderDlights (void);
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
-int  R_LightPoint (vec3_t p);
+void R_AnimateLight(void);
+void R_RenderDlights(void);
+void R_MarkLights(dlight_t *light, int bit, mnode_t *node);
+int R_LightPoint(vec3_t p);
 
 // gl_rmain.cpp
-qboolean R_CullBox (vec3_t mins, vec3_t maxs);
-void R_RotateForEntity (entity_t *e);
+qboolean R_CullBox(vec3_t mins, vec3_t maxs);
+void R_RotateForEntity(entity_t *e);
 
 // gl_refrag.cpp
-void R_StoreEfrags (efrag_t **ppefrag);
+void R_StoreEfrags(efrag_t **ppefrag);
 
 // r_part.cpp
-void R_InitParticles (void);
-void R_ClearParticles (void);
-void R_DrawParticles (void);
+void R_InitParticles(void);
+void R_ClearParticles(void);
+void R_DrawParticles(void);

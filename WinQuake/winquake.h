@@ -31,13 +31,13 @@ extern qboolean ActiveApp, Minimized;
 // startup splash dialog: created in sys_win.cpp, torn down by Video once
 // the real GL window is up. Exposed as a one-shot action rather than the
 // raw HWND.
-void Sys_CloseSplashDialog (void);
+void Sys_CloseSplashDialog(void);
 
 // window geometry, owned and computed by Video (gl_vidnt.cpp) but also
 // needed by in_win.cpp's cursor-warp mouse-look fallback. RECT-typed, so
 // these live here (the Win32-specific header) rather than in vid.h.
-void VID_GetWindowCenter (int *x, int *y);
-const RECT *VID_GetWindowRect (void);
+void VID_GetWindowCenter(int *x, int *y);
+const RECT *VID_GetWindowRect(void);
 
 // Video's cvar, declared here rather than vid.h -- vid.h is included (via
 // quakedef.h) before cvar.h, so cvar_t isn't a known type there yet

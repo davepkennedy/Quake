@@ -24,15 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // being defined inline in quakedef.h the way it used to be.
 #pragma once
 
-#include "mathlib.h"	// vec3_t
+#include "mathlib.h" // vec3_t
 
 struct entity_state_t
 {
-	vec3_t	origin;
-	vec3_t	angles;
-	int		modelindex;
-	int		frame;
-	int		colormap;
-	int		skin;
-	int		effects;
+    vec3_t origin;
+    vec3_t angles;
+    int modelindex;
+    int frame;
+    int colormap;
+    int skin;
+    int effects;
 };

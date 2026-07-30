@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-#include <cstddef>	// size_t
+#include <cstddef> // size_t
 
 /*
  memory allocation
@@ -87,49 +87,46 @@ Zone block
 
 */
 
-void Memory_Init (void *buf, size_t size);
+void Memory_Init(void *buf, size_t size);
 
-void Z_Free (void *ptr);
-void *Z_Malloc (int size);			// returns 0 filled memory
-void *Z_TagMalloc (int size, int tag);
+void Z_Free(void *ptr);
+void *Z_Malloc(int size); // returns 0 filled memory
+void *Z_TagMalloc(int size, int tag);
 
-void Z_DumpHeap (void);
-void Z_CheckHeap (void);
-int Z_FreeMemory (void);
+void Z_DumpHeap(void);
+void Z_CheckHeap(void);
+int Z_FreeMemory(void);
 
-void *Hunk_Alloc (int size);		// returns 0 filled memory
-void *Hunk_AllocName (int size, const char *name);
+void *Hunk_Alloc(int size); // returns 0 filled memory
+void *Hunk_AllocName(int size, const char *name);
 
-void *Hunk_HighAllocName (int size, const char *name);
+void *Hunk_HighAllocName(int size, const char *name);
 
-size_t	Hunk_LowMark (void);
-void Hunk_FreeToLowMark (size_t mark);
+size_t Hunk_LowMark(void);
+void Hunk_FreeToLowMark(size_t mark);
 
-size_t	Hunk_HighMark (void);
-void Hunk_FreeToHighMark (size_t mark);
+size_t Hunk_HighMark(void);
+void Hunk_FreeToHighMark(size_t mark);
 
-void *Hunk_TempAlloc (int size);
+void *Hunk_TempAlloc(int size);
 
-void Hunk_Check (void);
+void Hunk_Check(void);
 
 struct cache_user_t
 {
-	void	*data;
+    void *data;
 };
 
-void Cache_Flush (void);
+void Cache_Flush(void);
 
-void *Cache_Check (cache_user_t *c);
+void *Cache_Check(cache_user_t *c);
 // returns the cached data, and moves to the head of the LRU list
 // if present, otherwise returns nullptr
 
-void Cache_Free (cache_user_t *c);
+void Cache_Free(cache_user_t *c);
 
-void *Cache_Alloc (cache_user_t *c, int size, const char *name);
+void *Cache_Alloc(cache_user_t *c, int size, const char *name);
 // Returns nullptr if all purgable data was tossed and there still
 // wasn't enough room.
 
-void Cache_Report (void);
-
-
-
+void Cache_Report(void);

@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -19,33 +19,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-enum m_state_t {
-  m_none,
-  m_main,
-  m_singleplayer,
-  m_load,
-  m_save,
-  m_multiplayer,
-  m_setup,
-  m_net,
-  m_options,
-  m_video,
-  m_keys,
-  m_help,
-  m_quit,
-  m_lanconfig,
-  m_gameoptions,
-  m_search,
-  m_slist
+enum m_state_t
+{
+    m_none,
+    m_main,
+    m_singleplayer,
+    m_load,
+    m_save,
+    m_multiplayer,
+    m_setup,
+    m_net,
+    m_options,
+    m_video,
+    m_keys,
+    m_help,
+    m_quit,
+    m_lanconfig,
+    m_gameoptions,
+    m_search,
+    m_slist
 };
-
 
 //
 // menus
 //
-void M_Init (void);
-void M_Keydown (int key);
-void M_Draw (void);
-void M_ToggleMenu_f (void);
-
-
+void M_Init(void);
+void M_Keydown(int key);
+void M_Draw(void);
+void M_ToggleMenu_f(void);

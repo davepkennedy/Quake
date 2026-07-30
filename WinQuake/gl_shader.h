@@ -12,168 +12,206 @@
 
 class GLVertexArray
 {
-public:
-	GLVertexArray () = default;
-	~GLVertexArray () { Release (); }
+  public:
+    GLVertexArray() = default;
+    ~GLVertexArray()
+    {
+        Release();
+    }
 
-	GLVertexArray (const GLVertexArray &) = delete;
-	GLVertexArray &operator= (const GLVertexArray &) = delete;
+    GLVertexArray(const GLVertexArray &) = delete;
+    GLVertexArray &operator=(const GLVertexArray &) = delete;
 
-	GLVertexArray (GLVertexArray &&other) noexcept : handle (other.handle) { other.handle = 0; }
-	GLVertexArray &operator= (GLVertexArray &&other) noexcept
-	{
-		if (this != &other)
-		{
-			Release ();
-			handle = other.handle;
-			other.handle = 0;
-		}
-		return *this;
-	}
+    GLVertexArray(GLVertexArray &&other) noexcept : handle(other.handle)
+    {
+        other.handle = 0;
+    }
+    GLVertexArray &operator=(GLVertexArray &&other) noexcept
+    {
+        if (this != &other)
+        {
+            Release();
+            handle = other.handle;
+            other.handle = 0;
+        }
+        return *this;
+    }
 
-	static GLVertexArray Create ()
-	{
-		GLVertexArray v;
-		qglGenVertexArrays (1, &v.handle);
-		return v;
-	}
+    static GLVertexArray Create()
+    {
+        GLVertexArray v;
+        qglGenVertexArrays(1, &v.handle);
+        return v;
+    }
 
-	void Release ()
-	{
-		if (handle)
-		{
-			qglDeleteVertexArrays (1, &handle);
-			handle = 0;
-		}
-	}
+    void Release()
+    {
+        if (handle)
+        {
+            qglDeleteVertexArrays(1, &handle);
+            handle = 0;
+        }
+    }
 
-	operator GLuint () const { return handle; }
+    operator GLuint() const
+    {
+        return handle;
+    }
 
-private:
-	GLuint handle = 0;
+  private:
+    GLuint handle = 0;
 };
 
 class GLBuffer
 {
-public:
-	GLBuffer () = default;
-	~GLBuffer () { Release (); }
+  public:
+    GLBuffer() = default;
+    ~GLBuffer()
+    {
+        Release();
+    }
 
-	GLBuffer (const GLBuffer &) = delete;
-	GLBuffer &operator= (const GLBuffer &) = delete;
+    GLBuffer(const GLBuffer &) = delete;
+    GLBuffer &operator=(const GLBuffer &) = delete;
 
-	GLBuffer (GLBuffer &&other) noexcept : handle (other.handle) { other.handle = 0; }
-	GLBuffer &operator= (GLBuffer &&other) noexcept
-	{
-		if (this != &other)
-		{
-			Release ();
-			handle = other.handle;
-			other.handle = 0;
-		}
-		return *this;
-	}
+    GLBuffer(GLBuffer &&other) noexcept : handle(other.handle)
+    {
+        other.handle = 0;
+    }
+    GLBuffer &operator=(GLBuffer &&other) noexcept
+    {
+        if (this != &other)
+        {
+            Release();
+            handle = other.handle;
+            other.handle = 0;
+        }
+        return *this;
+    }
 
-	static GLBuffer Create ()
-	{
-		GLBuffer b;
-		qglGenBuffers (1, &b.handle);
-		return b;
-	}
+    static GLBuffer Create()
+    {
+        GLBuffer b;
+        qglGenBuffers(1, &b.handle);
+        return b;
+    }
 
-	void Release ()
-	{
-		if (handle)
-		{
-			qglDeleteBuffers (1, &handle);
-			handle = 0;
-		}
-	}
+    void Release()
+    {
+        if (handle)
+        {
+            qglDeleteBuffers(1, &handle);
+            handle = 0;
+        }
+    }
 
-	operator GLuint () const { return handle; }
+    operator GLuint() const
+    {
+        return handle;
+    }
 
-private:
-	GLuint handle = 0;
+  private:
+    GLuint handle = 0;
 };
 
 class GLSampler
 {
-public:
-	GLSampler () = default;
-	~GLSampler () { Release (); }
+  public:
+    GLSampler() = default;
+    ~GLSampler()
+    {
+        Release();
+    }
 
-	GLSampler (const GLSampler &) = delete;
-	GLSampler &operator= (const GLSampler &) = delete;
+    GLSampler(const GLSampler &) = delete;
+    GLSampler &operator=(const GLSampler &) = delete;
 
-	GLSampler (GLSampler &&other) noexcept : handle (other.handle) { other.handle = 0; }
-	GLSampler &operator= (GLSampler &&other) noexcept
-	{
-		if (this != &other)
-		{
-			Release ();
-			handle = other.handle;
-			other.handle = 0;
-		}
-		return *this;
-	}
+    GLSampler(GLSampler &&other) noexcept : handle(other.handle)
+    {
+        other.handle = 0;
+    }
+    GLSampler &operator=(GLSampler &&other) noexcept
+    {
+        if (this != &other)
+        {
+            Release();
+            handle = other.handle;
+            other.handle = 0;
+        }
+        return *this;
+    }
 
-	static GLSampler Create ()
-	{
-		GLSampler s;
-		qglGenSamplers (1, &s.handle);
-		return s;
-	}
+    static GLSampler Create()
+    {
+        GLSampler s;
+        qglGenSamplers(1, &s.handle);
+        return s;
+    }
 
-	void Release ()
-	{
-		if (handle)
-		{
-			qglDeleteSamplers (1, &handle);
-			handle = 0;
-		}
-	}
+    void Release()
+    {
+        if (handle)
+        {
+            qglDeleteSamplers(1, &handle);
+            handle = 0;
+        }
+    }
 
-	operator GLuint () const { return handle; }
+    operator GLuint() const
+    {
+        return handle;
+    }
 
-private:
-	GLuint handle = 0;
+  private:
+    GLuint handle = 0;
 };
 
 class GLProgram
 {
-public:
-	GLProgram () = default;
-	explicit GLProgram (GLuint alreadyBuilt) : handle (alreadyBuilt) {}
-	~GLProgram () { Release (); }
+  public:
+    GLProgram() = default;
+    explicit GLProgram(GLuint alreadyBuilt) : handle(alreadyBuilt)
+    {
+    }
+    ~GLProgram()
+    {
+        Release();
+    }
 
-	GLProgram (const GLProgram &) = delete;
-	GLProgram &operator= (const GLProgram &) = delete;
+    GLProgram(const GLProgram &) = delete;
+    GLProgram &operator=(const GLProgram &) = delete;
 
-	GLProgram (GLProgram &&other) noexcept : handle (other.handle) { other.handle = 0; }
-	GLProgram &operator= (GLProgram &&other) noexcept
-	{
-		if (this != &other)
-		{
-			Release ();
-			handle = other.handle;
-			other.handle = 0;
-		}
-		return *this;
-	}
+    GLProgram(GLProgram &&other) noexcept : handle(other.handle)
+    {
+        other.handle = 0;
+    }
+    GLProgram &operator=(GLProgram &&other) noexcept
+    {
+        if (this != &other)
+        {
+            Release();
+            handle = other.handle;
+            other.handle = 0;
+        }
+        return *this;
+    }
 
-	void Release ()
-	{
-		if (handle)
-		{
-			qglDeleteProgram (handle);
-			handle = 0;
-		}
-	}
+    void Release()
+    {
+        if (handle)
+        {
+            qglDeleteProgram(handle);
+            handle = 0;
+        }
+    }
 
-	operator GLuint () const { return handle; }
+    operator GLuint() const
+    {
+        return handle;
+    }
 
-private:
-	GLuint handle = 0;
+  private:
+    GLuint handle = 0;
 };
 
 // Compile a single shader stage; returns 0 and prints error on failure.

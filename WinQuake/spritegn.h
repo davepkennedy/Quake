@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -58,53 +58,65 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif
 
-#define SPRITE_VERSION	1
+#define SPRITE_VERSION 1
 
 // must match definition in modelgen.h
 #ifndef SYNCTYPE_T
 #define SYNCTYPE_T
-typedef enum {ST_SYNC=0, ST_RAND } synctype_t;
+typedef enum
+{
+    ST_SYNC = 0,
+    ST_RAND
+} synctype_t;
 #endif
 
 // TODO: shorten these?
-struct dsprite_t {
-	int			ident;
-	int			version;
-	int			type;
-	float		boundingradius;
-	int			width;
-	int			height;
-	int			numframes;
-	float		beamlength;
-	synctype_t	synctype;
+struct dsprite_t
+{
+    int ident;
+    int version;
+    int type;
+    float boundingradius;
+    int width;
+    int height;
+    int numframes;
+    float beamlength;
+    synctype_t synctype;
 };
 
-#define SPR_VP_PARALLEL_UPRIGHT		0
-#define SPR_FACING_UPRIGHT			1
-#define SPR_VP_PARALLEL				2
-#define SPR_ORIENTED				3
-#define SPR_VP_PARALLEL_ORIENTED	4
+#define SPR_VP_PARALLEL_UPRIGHT 0
+#define SPR_FACING_UPRIGHT 1
+#define SPR_VP_PARALLEL 2
+#define SPR_ORIENTED 3
+#define SPR_VP_PARALLEL_ORIENTED 4
 
-struct dspriteframe_t {
-	int			origin[2];
-	int			width;
-	int			height;
+struct dspriteframe_t
+{
+    int origin[2];
+    int width;
+    int height;
 };
 
-struct dspritegroup_t {
-	int			numframes;
+struct dspritegroup_t
+{
+    int numframes;
 };
 
-struct dspriteinterval_t {
-	float	interval;
+struct dspriteinterval_t
+{
+    float interval;
 };
 
-typedef enum { SPR_SINGLE=0, SPR_GROUP } spriteframetype_t;
+typedef enum
+{
+    SPR_SINGLE = 0,
+    SPR_GROUP
+} spriteframetype_t;
 
-struct dspriteframetype_t {
-	spriteframetype_t	type;
+struct dspriteframetype_t
+{
+    spriteframetype_t type;
 };
 
-#define IDSPRITEHEADER	(('P'<<24)+('S'<<16)+('D'<<8)+'I')
-														// little-endian "IDSP"
-
+#define IDSPRITEHEADER (('P' << 24) + ('S' << 16) + ('D' << 8) + 'I')
+// little-endian "IDSP"

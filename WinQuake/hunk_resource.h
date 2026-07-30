@@ -39,10 +39,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // legacy Hunk_AllocName caller.
 class HunkMemoryResource : public std::pmr::memory_resource
 {
-protected:
-	void *do_allocate (size_t bytes, size_t alignment) override;
-	void do_deallocate (void *p, size_t bytes, size_t alignment) override;
-	bool do_is_equal (const std::pmr::memory_resource &other) const noexcept override;
+  protected:
+    void *do_allocate(size_t bytes, size_t alignment) override;
+    void do_deallocate(void *p, size_t bytes, size_t alignment) override;
+    bool do_is_equal(const std::pmr::memory_resource &other) const noexcept override;
 };
 
-HunkMemoryResource *Hunk_GetResource (void);
+HunkMemoryResource *Hunk_GetResource(void);

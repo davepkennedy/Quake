@@ -25,20 +25,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // instead of a linear scan; holds non-owning pointers to the cvar_t
 // globals declared throughout the codebase (same ownership model as the
 // linked list this replaced -- nothing here allocates or frees a cvar_t).
-std::map<std::string, cvar_t*>	cvar_vars;
-const char	*cvar_null_string = "";
+std::map<std::string, cvar_t *> cvar_vars;
+const char *cvar_null_string = "";
 
 /*
 ============
 Cvar_FindVar
 ============
 */
-std::optional<cvar_t*> Cvar_FindVar (const char *var_name)
+std::optional<cvar_t *> Cvar_FindVar(const char *var_name)
 {
-	auto it = cvar_vars.find (var_name);
-	if (it == cvar_vars.end ())
-		return std::nullopt;
-	return it->second;
+    auto it = cvar_vars.find(var_name);
+    if (it == cvar_vars.end())
+    {
+        return std::nullopt;
+    }
+    return it->second;
 }
 
 /*
@@ -46,48 +48,53 @@ std::optional<cvar_t*> Cvar_FindVar (const char *var_name)
 Cvar_VariableValue
 ============
 */
-float	Cvar_VariableValue (const char *var_name)
+float Cvar_VariableValue(const char *var_name)
 {
-	auto var = Cvar_FindVar (var_name);
-	if (!var)
-		return 0;
-	return Q_atof ((*var)->string.c_str());
+    auto var = Cvar_FindVar(var_name);
+    if (!var)
+    {
+        return 0;
+    }
+    return Q_atof((*var)->string.c_str());
 }
-
 
 /*
 ============
 Cvar_VariableString
 ============
 */
-std::string Cvar_VariableString (const char *var_name)
+std::string Cvar_VariableString(const char *var_name)
 {
-	auto var = Cvar_FindVar (var_name);
-	if (!var)
-		return cvar_null_string;
-	return (*var)->string;
+    auto var = Cvar_FindVar(var_name);
+    if (!var)
+    {
+        return cvar_null_string;
+    }
+    return (*var)->string;
 }
-
 
 /*
 ============
 Cvar_CompleteVariable
 ============
 */
-std::optional<std::string> Cvar_CompleteVariable (const char *partial)
+std::optional<std::string> Cvar_CompleteVariable(const char *partial)
 {
-	size_t len = Q_strlen (partial);
+    size_t len = Q_strlen(partial);
 
-	if (!len)
-		return std::nullopt;
+    if (!len)
+    {
+        return std::nullopt;
+    }
 
-	auto it = cvar_vars.lower_bound (partial);
-	if (it != cvar_vars.end () && it->first.compare (0, len, partial) == 0)
-		return it->second->name;
+    auto it = cvar_vars.lower_bound(partial);
+    if (it != cvar_vars.end() && it->first.compare(0, len, partial) == 0)
+    {
+        return it->second->name;
+    }
 
-	return std::nullopt;
+    return std::nullopt;
 }
-
 
 /*
 ============
@@ -99,52 +106,59 @@ cvars one at a time by asking "give me the one after this name"). Passing
 nullptr or "" starts from the beginning; returns nullptr once exhausted.
 ============
 */
-cvar_t *Cvar_NextServerVar (const char *afterName)
+cvar_t *Cvar_NextServerVar(const char *afterName)
 {
-	auto it = cvar_vars.begin ();
+    auto it = cvar_vars.begin();
 
-	if (afterName && afterName[0])
-	{
-		it = cvar_vars.find (afterName);
-		if (it == cvar_vars.end ())
-			return nullptr;	// unknown name -- matches the old Cvar_FindVar-fails-returns-nullptr behavior
-		++it;
-	}
+    if (afterName && afterName[0])
+    {
+        it = cvar_vars.find(afterName);
+        if (it == cvar_vars.end())
+        {
+            return nullptr; // unknown name -- matches the old Cvar_FindVar-fails-returns-nullptr behavior
+        }
+        ++it;
+    }
 
-	for ( ; it != cvar_vars.end (); ++it)
-		if (it->second->server)
-			return it->second;
+    for (; it != cvar_vars.end(); ++it)
+    {
+        if (it->second->server)
+        {
+            return it->second;
+        }
+    }
 
-	return nullptr;
+    return nullptr;
 }
-
 
 /*
 ============
 Cvar_Set
 ============
 */
-void Cvar_Set (const char *var_name, const char *value)
+void Cvar_Set(const char *var_name, const char *value)
 {
-	qboolean changed;
+    qboolean changed;
 
-	auto found = Cvar_FindVar (var_name);
-	if (!found)
-	{	// there is an error in C code if this happens
-		Con_Printf ("Cvar_Set: variable %s not found\n", var_name);
-		return;
-	}
-	cvar_t *var = *found;
+    auto found = Cvar_FindVar(var_name);
+    if (!found)
+    { // there is an error in C code if this happens
+        Con_Printf("Cvar_Set: variable %s not found\n", var_name);
+        return;
+    }
+    cvar_t *var = *found;
 
-	changed = var->string != value;
+    changed = var->string != value;
 
-	var->string = value;
-	var->value = Q_atof (var->string.c_str());
-	if (var->server && changed)
-	{
-		if (sv.active)
-			SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string.c_str());
-	}
+    var->string = value;
+    var->value = Q_atof(var->string.c_str());
+    if (var->server && changed)
+    {
+        if (sv.active)
+        {
+            SV_BroadcastPrintf("\"%s\" changed to \"%s\"\n", var->name, var->string.c_str());
+        }
+    }
 }
 
 /*
@@ -152,15 +166,14 @@ void Cvar_Set (const char *var_name, const char *value)
 Cvar_SetValue
 ============
 */
-void Cvar_SetValue (const char *var_name, float value)
+void Cvar_SetValue(const char *var_name, float value)
 {
-	// {:f} matches printf's %f exactly (fixed 6 decimal places); a bare {}
-	// would use std::format's shortest-round-trip float representation
-	// instead ("200" instead of "200.000000"), silently changing what
-	// gets written into this cvar's serialized string value.
-	Cvar_Set (var_name, va("{:f}", value));
+    // {:f} matches printf's %f exactly (fixed 6 decimal places); a bare {}
+    // would use std::format's shortest-round-trip float representation
+    // instead ("200" instead of "200.000000"), silently changing what
+    // gets written into this cvar's serialized string value.
+    Cvar_Set(var_name, va("{:f}", value));
 }
-
 
 /*
 ============
@@ -169,25 +182,25 @@ Cvar_RegisterVariable
 Adds a freestanding variable to the variable list.
 ============
 */
-void Cvar_RegisterVariable (cvar_t *variable)
+void Cvar_RegisterVariable(cvar_t *variable)
 {
-// first check to see if it has allready been defined
-	if (Cvar_FindVar (variable->name))
-	{
-		Con_Printf ("Can't register variable %s, allready defined\n", variable->name);
-		return;
-	}
+    // first check to see if it has allready been defined
+    if (Cvar_FindVar(variable->name))
+    {
+        Con_Printf("Can't register variable %s, allready defined\n", variable->name);
+        return;
+    }
 
-// check for overlap with a command
-	if (Cmd_Exists (variable->name))
-	{
-		Con_Printf ("Cvar_RegisterVariable: %s is a command\n", variable->name);
-		return;
-	}
+    // check for overlap with a command
+    if (Cmd_Exists(variable->name))
+    {
+        Con_Printf("Cvar_RegisterVariable: %s is a command\n", variable->name);
+        return;
+    }
 
-	variable->value = Q_atof (variable->string.c_str());
+    variable->value = Q_atof(variable->string.c_str());
 
-	cvar_vars[variable->name] = variable;
+    cvar_vars[variable->name] = variable;
 }
 
 /*
@@ -197,25 +210,26 @@ Cvar_Command
 Handles variable inspection and changing from the console
 ============
 */
-qboolean	Cvar_Command (void)
+qboolean Cvar_Command(void)
 {
-// check variables
-	auto found = Cvar_FindVar (Cmd_Argv(0));
-	if (!found)
-		return false;
-	cvar_t *v = *found;
+    // check variables
+    auto found = Cvar_FindVar(Cmd_Argv(0));
+    if (!found)
+    {
+        return false;
+    }
+    cvar_t *v = *found;
 
-// perform a variable print or set
-	if (Cmd_Argc() == 1)
-	{
-		Con_Printf ("\"%s\" is \"%s\"\n", v->name, v->string.c_str());
-		return true;
-	}
+    // perform a variable print or set
+    if (Cmd_Argc() == 1)
+    {
+        Con_Printf("\"%s\" is \"%s\"\n", v->name, v->string.c_str());
+        return true;
+    }
 
-	Cvar_Set (v->name, Cmd_Argv(1));
-	return true;
+    Cvar_Set(v->name, Cmd_Argv(1));
+    return true;
 }
-
 
 /*
 ============
@@ -225,9 +239,13 @@ Writes lines containing "set variable value" for all variables
 with the archive flag set to true.
 ============
 */
-void Cvar_WriteVariables (FILE *f)
+void Cvar_WriteVariables(FILE *f)
 {
-	for (const auto &[name, var] : cvar_vars)
-		if (var->archive)
-			fprintf (f, "%s \"%s\"\n", var->name, var->string.c_str());
+    for (const auto &[name, var] : cvar_vars)
+    {
+        if (var->archive)
+        {
+            fprintf(f, "%s \"%s\"\n", var->name, var->string.c_str());
+        }
+    }
 }

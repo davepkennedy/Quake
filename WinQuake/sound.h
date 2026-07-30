@@ -24,11 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // files needs it, confirmed via a full-codebase grep before the split.
 #pragma once
 
-#include "qlimits.h"	// MAX_QPATH
-#include "common.h"	// qboolean
-#include "zone.h"	// cache_user_t
-#include "mathlib.h"	// vec3_t
-#include "cvar.h"	// cvar_t
+#include "qlimits.h" // MAX_QPATH
+#include "common.h"  // qboolean
+#include "zone.h"    // cache_user_t
+#include "mathlib.h" // vec3_t
+#include "cvar.h"    // cvar_t
 
 #ifndef __SOUND__
 #define __SOUND__
@@ -38,32 +38,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct sfx_t
 {
-	char 	name[MAX_QPATH];
-	cache_user_t	cache;
+    char name[MAX_QPATH];
+    cache_user_t cache;
 };
 
-void S_Init (void);
-void S_Shutdown (void);
-void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol,  float attenuation);
-void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation);
-void S_StopSound (int entnum, int entchannel);
+void S_Init(void);
+void S_Shutdown(void);
+void S_StartSound(int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float fvol, float attenuation);
+void S_StaticSound(sfx_t *sfx, vec3_t origin, float vol, float attenuation);
+void S_StopSound(int entnum, int entchannel);
 void S_StopAllSounds(qboolean clear);
-void S_ClearBuffer (void);
-void S_Update (vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
-void S_ExtraUpdate (void);
+void S_ClearBuffer(void);
+void S_Update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
+void S_ExtraUpdate(void);
 
-sfx_t *S_PrecacheSound (const char *sample);
-void S_TouchSound (const char *sample);
-void S_BeginPrecaching (void);
-void S_EndPrecaching (void);
+sfx_t *S_PrecacheSound(const char *sample);
+void S_TouchSound(const char *sample);
+void S_BeginPrecaching(void);
+void S_EndPrecaching(void);
 
-void S_LocalSound (const char *s);
+void S_LocalSound(const char *s);
 
-void S_BlockSound (void);
-void S_UnblockSound (void);
+void S_BlockSound(void);
+void S_UnblockSound(void);
 
-extern	cvar_t loadas8bit;
-extern	cvar_t bgmvolume;
-extern	cvar_t volume;
+extern cvar_t loadas8bit;
+extern cvar_t bgmvolume;
+extern cvar_t volume;
 
 #endif
