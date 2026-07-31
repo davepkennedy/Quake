@@ -54,7 +54,7 @@ void Con_ToggleConsole_f(void)
 {
     if (key_dest == keydest_t::key_console)
     {
-        if (cls.state == ca_connected)
+        if (cls.state == cactive_t::ca_connected)
         {
             key_dest = keydest_t::key_game;
             key_lines[edit_line][1] = 0; // clear any typing
@@ -386,7 +386,7 @@ void Con_Printf(const char *fmt, ...)
         return;
     }
 
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return; // no graphics mode
     }

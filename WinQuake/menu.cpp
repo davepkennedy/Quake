@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
-// enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, m_keys,
-// m_help, m_quit, m_lanconfig, m_gameoptions, m_search, m_slist} m_state;
+// enum {m_state_t::m_none, m_state_t::m_main, m_state_t::m_singleplayer, m_state_t::m_load, m_state_t::m_save, m_state_t::m_multiplayer, m_state_t::m_setup, m_state_t::m_net, m_state_t::m_options, m_state_t::m_video, m_state_t::m_keys,
+// m_state_t::m_help, m_state_t::m_quit, m_state_t::m_lanconfig, m_state_t::m_gameoptions, m_state_t::m_search, m_state_t::m_slist} m_state;
 m_state_t m_state;
 
 void M_Menu_Main_f(void);
@@ -237,13 +237,13 @@ void M_ToggleMenu_f(void)
 
     if (key_dest == keydest_t::key_menu)
     {
-        if (m_state != m_main)
+        if (m_state != m_state_t::m_main)
         {
             M_Menu_Main_f();
             return;
         }
         key_dest = keydest_t::key_game;
-        m_state = m_none;
+        m_state = m_state_t::m_none;
         return;
     }
     if (key_dest == keydest_t::key_console)
@@ -278,7 +278,7 @@ void M_Menu_Main_f(void)
         cls.demonum = -1;
     }
     key_dest = keydest_t::key_menu;
-    m_state = m_main;
+    m_state = m_state_t::m_main;
     m_entersound = true;
 }
 
@@ -303,9 +303,9 @@ void MainMenu::Key(int key)
     {
     case K_ESCAPE:
         key_dest = keydest_t::key_game;
-        m_state = m_none;
+        m_state = m_state_t::m_none;
         cls.demonum = m_save_demonum;
-        if (cls.demonum != -1 && !cls.demoplayback && cls.state != ca_connected)
+        if (cls.demonum != -1 && !cls.demoplayback && cls.state != cactive_t::ca_connected)
         {
             CL_NextDemo();
         }
@@ -372,7 +372,7 @@ SinglePlayerMenu singlePlayerMenu;
 void M_Menu_SinglePlayer_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_singleplayer;
+    m_state = m_state_t::m_singleplayer;
     m_entersound = true;
 }
 
@@ -515,7 +515,7 @@ SaveMenu saveMenu;
 void M_Menu_Load_f(void)
 {
     m_entersound = true;
-    m_state = m_load;
+    m_state = m_state_t::m_load;
     key_dest = keydest_t::key_menu;
     M_ScanSaves();
 }
@@ -535,7 +535,7 @@ void M_Menu_Save_f(void)
         return;
     }
     m_entersound = true;
-    m_state = m_save;
+    m_state = m_state_t::m_save;
     key_dest = keydest_t::key_menu;
     M_ScanSaves();
 }
@@ -588,7 +588,7 @@ void LoadGameMenu::Key(int k)
         {
             return;
         }
-        m_state = m_none;
+        m_state = m_state_t::m_none;
         key_dest = keydest_t::key_game;
 
         // Host_Loadgame_f can't bring up the loading plaque because too much
@@ -630,7 +630,7 @@ void SaveMenu::Key(int k)
         break;
 
     case K_ENTER:
-        m_state = m_none;
+        m_state = m_state_t::m_none;
         key_dest = keydest_t::key_game;
         Cbuf_AddText(va("save s{}\n", load_cursor));
         return;
@@ -674,7 +674,7 @@ MultiPlayerMenu multiPlayerMenu;
 void M_Menu_MultiPlayer_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_multiplayer;
+    m_state = m_state_t::m_multiplayer;
     m_entersound = true;
 }
 
@@ -773,7 +773,7 @@ SetupMenu setupMenu;
 void M_Menu_Setup_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_setup;
+    m_state = m_state_t::m_setup;
     m_entersound = true;
     Q_strlcpy(setupMenu.nameBuf, cl_name.string.c_str(), sizeof(setupMenu.nameBuf));
     Q_strlcpy(setupMenu.hostnameBuf, hostname.string.c_str(), sizeof(setupMenu.hostnameBuf));
@@ -994,7 +994,7 @@ const char *net_helpMessage[] = {
 void M_Menu_Net_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_net;
+    m_state = m_state_t::m_net;
     m_entersound = true;
     netMenu.items = 2;
 
@@ -1135,11 +1135,11 @@ OptionsMenu optionsMenu;
 void M_Menu_Options_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_options;
+    m_state = m_state_t::m_options;
     m_entersound = true;
 
 #ifdef _WIN32
-    if ((optionsMenu.cursor == 13) && (modestate != MS_WINDOWED))
+    if ((optionsMenu.cursor == 13) && (modestate != modestate_t::MS_WINDOWED))
     {
         optionsMenu.cursor = 0;
     }
@@ -1340,7 +1340,7 @@ void OptionsMenu::Draw(void)
     }
 
 #ifdef _WIN32
-    if (modestate == MS_WINDOWED)
+    if (modestate == modestate_t::MS_WINDOWED)
     {
         M_Print(16, 136, "             Use Mouse");
         M_DrawCheckbox(220, 136, _windowed_mouse.value);
@@ -1367,7 +1367,7 @@ void OptionsMenu::Key(int k)
             M_Menu_Keys_f();
             break;
         case 1:
-            m_state = m_none;
+            m_state = m_state_t::m_none;
             Con_ToggleConsole_f();
             break;
         case 2:
@@ -1422,7 +1422,7 @@ void OptionsMenu::Key(int k)
     }
 
 #ifdef _WIN32
-    if ((cursor == 13) && (modestate != MS_WINDOWED))
+    if ((cursor == 13) && (modestate != modestate_t::MS_WINDOWED))
     {
         if (k == K_UPARROW)
         {
@@ -1464,7 +1464,7 @@ KeysMenu keysMenu;
 void M_Menu_Keys_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_keys;
+    m_state = m_state_t::m_keys;
     m_entersound = true;
 }
 
@@ -1606,7 +1606,7 @@ VideoMenu videoMenu;
 void M_Menu_Video_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_video;
+    m_state = m_state_t::m_video;
     m_entersound = true;
 }
 
@@ -1637,7 +1637,7 @@ HelpMenu helpMenu;
 void M_Menu_Help_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_help;
+    m_state = m_state_t::m_help;
     m_entersound = true;
     helpMenu.page = 0;
 }
@@ -1682,7 +1682,7 @@ int msgNumber;
 class QuitMenu : public MenuScreen
 {
   public:
-    int prevState = 0;
+    m_state_t prevState = m_state_t::m_none;
     qboolean wasInMenus = false;
     void Draw() override;
     void Key(int key) override;
@@ -1711,14 +1711,14 @@ const char *quitMessage[] = {
 
 void M_Menu_Quit_f(void)
 {
-    if (m_state == m_quit)
+    if (m_state == m_state_t::m_quit)
     {
         return;
     }
     quitMenu.wasInMenus = (key_dest == keydest_t::key_menu);
     key_dest = keydest_t::key_menu;
     quitMenu.prevState = m_state;
-    m_state = m_quit;
+    m_state = m_state_t::m_quit;
     m_entersound = true;
     msgNumber = rand() & 7;
 }
@@ -1732,13 +1732,13 @@ void QuitMenu::Key(int key)
     case 'N':
         if (wasInMenus)
         {
-            m_state = (decltype(m_state))prevState;
+            m_state = prevState;
             m_entersound = true;
         }
         else
         {
             key_dest = keydest_t::key_game;
-            m_state = m_none;
+            m_state = m_state_t::m_none;
         }
         break;
 
@@ -1757,10 +1757,10 @@ void QuitMenu::Draw(void)
 {
     if (wasInMenus)
     {
-        m_state = (decltype(m_state))prevState;
+        m_state = prevState;
         m_recursiveDraw = true;
         M_Draw();
-        m_state = m_quit;
+        m_state = m_state_t::m_quit;
     }
 
 #ifdef _WIN32
@@ -1816,7 +1816,7 @@ LanConfigMenu lanConfigMenu;
 void M_Menu_LanConfig_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_lanconfig;
+    m_state = m_state_t::m_lanconfig;
     m_entersound = true;
     if (lanConfigMenu.cursor == -1)
     {
@@ -1969,10 +1969,10 @@ void LanConfigMenu::Key(int key)
 
         if (cursor == 2)
         {
-            m_return_state = m_state;
+            m_return_state = static_cast<int>(m_state);
             m_return_onerror = true;
             key_dest = keydest_t::key_game;
-            m_state = m_none;
+            m_state = m_state_t::m_none;
             Cbuf_AddText(va("connect \"{}\"\n", joinname));
             break;
         }
@@ -2184,7 +2184,7 @@ GameOptionsMenu gameOptionsMenu;
 void M_Menu_GameOptions_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_gameoptions;
+    m_state = m_state_t::m_gameoptions;
     m_entersound = true;
     if (gameOptionsMenu.maxplayers == 0)
     {
@@ -2606,7 +2606,7 @@ SearchMenu searchMenu;
 void M_Menu_Search_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_search;
+    m_state = m_state_t::m_search;
     m_entersound = false;
     slistSilent = true;
     slistLocal = false;
@@ -2672,7 +2672,7 @@ ServerListMenu serverListMenu;
 void M_Menu_ServerList_f(void)
 {
     key_dest = keydest_t::key_menu;
-    m_state = m_slist;
+    m_state = m_state_t::m_slist;
     m_entersound = true;
     serverListMenu.cursor = 0;
     m_return_onerror = false;
@@ -2765,11 +2765,11 @@ void ServerListMenu::Key(int k)
 
     case K_ENTER:
         S_LocalSound("misc/menu2.wav");
-        m_return_state = m_state;
+        m_return_state = static_cast<int>(m_state);
         m_return_onerror = true;
         sorted = false;
         key_dest = keydest_t::key_game;
-        m_state = m_none;
+        m_state = m_state_t::m_none;
         Cbuf_AddText(va("connect \"{}\"\n", hostcache[cursor].cname));
         break;
 
@@ -2811,46 +2811,46 @@ MenuScreen *M_ScreenForState(m_state_t state)
 {
     switch (state)
     {
-    case m_main:
+    case m_state_t::m_main:
         return &mainMenu;
-    case m_singleplayer:
+    case m_state_t::m_singleplayer:
         return &singlePlayerMenu;
-    case m_load:
+    case m_state_t::m_load:
         return &loadGameMenu;
-    case m_save:
+    case m_state_t::m_save:
         return &saveMenu;
-    case m_multiplayer:
+    case m_state_t::m_multiplayer:
         return &multiPlayerMenu;
-    case m_setup:
+    case m_state_t::m_setup:
         return &setupMenu;
-    case m_net:
+    case m_state_t::m_net:
         return &netMenu;
-    case m_options:
+    case m_state_t::m_options:
         return &optionsMenu;
-    case m_keys:
+    case m_state_t::m_keys:
         return &keysMenu;
-    case m_video:
+    case m_state_t::m_video:
         return &videoMenu;
-    case m_help:
+    case m_state_t::m_help:
         return &helpMenu;
-    case m_quit:
+    case m_state_t::m_quit:
         return &quitMenu;
-    case m_lanconfig:
+    case m_state_t::m_lanconfig:
         return &lanConfigMenu;
-    case m_gameoptions:
+    case m_state_t::m_gameoptions:
         return &gameOptionsMenu;
-    case m_search:
+    case m_state_t::m_search:
         return &searchMenu;
-    case m_slist:
+    case m_state_t::m_slist:
         return &serverListMenu;
     default:
-        return nullptr; // m_none
+        return nullptr; // m_state_t::m_none
     }
 }
 
 void M_Draw(void)
 {
-    if (m_state == m_none || key_dest != keydest_t::key_menu)
+    if (m_state == m_state_t::m_none || key_dest != keydest_t::key_menu)
     {
         return;
     }

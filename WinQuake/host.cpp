@@ -106,7 +106,7 @@ void Host_EndGame(const char *message, ...)
         Host_ShutdownServer(false);
     }
 
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         Sys_Error("Host_EndGame: %s\n", string.c_str()); // dedicated servers exit
     }
@@ -153,7 +153,7 @@ void Host_Error(const char *error, ...)
         Host_ShutdownServer(false);
     }
 
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         Sys_Error("Host_Error: %s\n", string.c_str()); // dedicated servers exit
     }
@@ -180,7 +180,7 @@ void Host_FindMaxClients(void)
     i = COM_CheckParm("-dedicated");
     if (i)
     {
-        cls.state = ca_dedicated;
+        cls.state = cactive_t::ca_dedicated;
         if (i != (com_argc - 1))
         {
             svs.maxclients = Q_atoi(com_argv[i + 1]);
@@ -192,13 +192,13 @@ void Host_FindMaxClients(void)
     }
     else
     {
-        cls.state = ca_disconnected;
+        cls.state = cactive_t::ca_disconnected;
     }
 
     i = COM_CheckParm("-listen");
     if (i)
     {
-        if (cls.state == ca_dedicated)
+        if (cls.state == cactive_t::ca_dedicated)
         {
             Sys_Error("Only one of -dedicated or -listen can be specified");
         }
@@ -453,7 +453,7 @@ void Host_ShutdownServer(qboolean crash)
     sv.active = false;
 
     // stop all client sounds immediately
-    if (cls.state == ca_connected)
+    if (cls.state == cactive_t::ca_connected)
     {
         CL_Disconnect();
     }
@@ -754,7 +754,7 @@ void _Host_Frame(float time)
         host_time += host_frametime;
 
         // fetch results from server
-        if (cls.state == ca_connected)
+        if (cls.state == cactive_t::ca_connected)
         {
             CL_ReadFromServer();
         }
@@ -965,7 +965,7 @@ void Host_Init(quakeparms_t *parms)
 
     R_InitTextures(); // needed even for dedicated servers
 
-    if (cls.state != ca_dedicated)
+    if (cls.state != cactive_t::ca_dedicated)
     {
         host_basepal = COM_LoadHunkFile("gfx/palette.lmp");
         if (!host_basepal)
@@ -1045,7 +1045,7 @@ void Host_Shutdown(void)
     S_Shutdown();
     IN_Shutdown();
 
-    if (cls.state != ca_dedicated)
+    if (cls.state != cactive_t::ca_dedicated)
     {
         // Release owned GL objects (shader programs, VAOs, VBOs) explicitly
         // while a context is still current -- VID_Shutdown() below destroys

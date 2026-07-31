@@ -727,7 +727,7 @@ void SCR_BeginLoadingPlaque(void)
 {
     S_StopAllSounds(true);
 
-    if (cls.state != ca_connected)
+    if (cls.state != cactive_t::ca_connected)
     {
         return;
     }
@@ -822,7 +822,7 @@ keypress.
 */
 int SCR_ModalMessage(const char *text)
 {
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return true;
     }

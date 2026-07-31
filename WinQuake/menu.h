@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-enum m_state_t
+enum class m_state_t
 {
     m_none,
     m_main,

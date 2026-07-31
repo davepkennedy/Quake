@@ -17,13 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+#pragma once
 
 // this file is shared by quake and qcc
 
 typedef int func_t;
 typedef int string_t;
 
-typedef enum
+enum class etype_t
 {
     ev_void,
     ev_string,
@@ -33,7 +34,7 @@ typedef enum
     ev_field,
     ev_function,
     ev_pointer
-} etype_t;
+};
 
 #define OFS_NULL 0
 #define OFS_RETURN 1

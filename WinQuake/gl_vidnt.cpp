@@ -130,7 +130,7 @@ unsigned char d_15to8table[65536];
 
 float gldepthmin, gldepthmax;
 
-modestate_t modestate = MS_UNINIT;
+modestate_t modestate = modestate_t::MS_UNINIT;
 
 void VID_MenuDraw(void);
 void VID_MenuKey(int key);
@@ -236,7 +236,8 @@ static void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjus
 qboolean VID_SetWindowedMode(int modenum)
 {
     HDC hdc;
-    int lastmodestate, width, height;
+    modestate_t lastmodestate;
+    int width, height;
     RECT rect;
 
     lastmodestate = modestate;
@@ -273,7 +274,7 @@ qboolean VID_SetWindowedMode(int modenum)
     ShowWindow(dibwindow, SW_SHOWDEFAULT);
     UpdateWindow(dibwindow);
 
-    modestate = MS_WINDOWED;
+    modestate = modestate_t::MS_WINDOWED;
 
     // because we have set the background brush for the window to nullptr
     // (to avoid flickering when re-sizing the window on the desktop),
@@ -307,7 +308,8 @@ qboolean VID_SetWindowedMode(int modenum)
 qboolean VID_SetFullDIBMode(int modenum)
 {
     HDC hdc;
-    int lastmodestate, width, height;
+    modestate_t lastmodestate;
+    int width, height;
     RECT rect;
 
     if (!leavecurrentmode)
@@ -325,7 +327,7 @@ qboolean VID_SetFullDIBMode(int modenum)
     }
 
     lastmodestate = modestate;
-    modestate = MS_FULLDIB;
+    modestate = modestate_t::MS_FULLDIB;
 
     WindowRect.top = WindowRect.left = 0;
 
@@ -416,7 +418,7 @@ int VID_SetMode(int modenum, unsigned char *palette)
     }
 
     // Set either the fullscreen or windowed mode
-    if (modelist[modenum].type == MS_WINDOWED)
+    if (modelist[modenum].type == modestate_t::MS_WINDOWED)
     {
         if (_windowed_mouse.value && key_dest == keydest_t::key_game)
         {
@@ -431,7 +433,7 @@ int VID_SetMode(int modenum, unsigned char *palette)
             stat = VID_SetWindowedMode(modenum);
         }
     }
-    else if (modelist[modenum].type == MS_FULLDIB)
+    else if (modelist[modenum].type == modestate_t::MS_FULLDIB)
     {
         stat = VID_SetFullDIBMode(modenum);
         IN_ActivateMouse();
@@ -805,7 +807,7 @@ void GL_EndRendering(void)
     }
 
     // handle the mouse state when windowed if that's changed
-    if (modestate == MS_WINDOWED)
+    if (modestate == modestate_t::MS_WINDOWED)
     {
         if (!_windowed_mouse.value)
         {
@@ -935,7 +937,7 @@ void VID_Shutdown(void)
             ReleaseDC(dibwindow, hDC);
         }
 
-        if (modestate == MS_FULLDIB)
+        if (modestate == modestate_t::MS_FULLDIB)
         {
             ChangeDisplaySettings(nullptr, 0);
         }
@@ -1137,7 +1139,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
 
     if (fActive)
     {
-        if (modestate == MS_FULLDIB)
+        if (modestate == modestate_t::MS_FULLDIB)
         {
             IN_ActivateMouse();
             IN_HideMouse();
@@ -1148,7 +1150,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
                 ShowWindow(mainwindow, SW_SHOWNORMAL);
             }
         }
-        else if ((modestate == MS_WINDOWED) && _windowed_mouse.value && key_dest == keydest_t::key_game)
+        else if ((modestate == modestate_t::MS_WINDOWED) && _windowed_mouse.value && key_dest == keydest_t::key_game)
         {
             IN_ActivateMouse();
             IN_HideMouse();
@@ -1157,7 +1159,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
 
     if (!fActive)
     {
-        if (modestate == MS_FULLDIB)
+        if (modestate == modestate_t::MS_FULLDIB)
         {
             IN_DeactivateMouse();
             IN_ShowMouse();
@@ -1167,7 +1169,7 @@ void AppActivate(BOOL fActive, BOOL minimize)
                 vid_wassuspended = true;
             }
         }
-        else if ((modestate == MS_WINDOWED) && _windowed_mouse.value)
+        else if ((modestate == modestate_t::MS_WINDOWED) && _windowed_mouse.value)
         {
             IN_DeactivateMouse();
             IN_ShowMouse();
@@ -1190,7 +1192,7 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg)
     {
     case WM_KILLFOCUS:
-        if (modestate == MS_FULLDIB)
+        if (modestate == modestate_t::MS_FULLDIB)
         {
             ShowWindow(mainwindow, SW_SHOWMINNOACTIVE);
         }
@@ -1390,7 +1392,7 @@ std::optional<std::string> VID_GetExtModeDescription(int mode)
     }
 
     pv = VID_GetModePtr(mode);
-    if (modelist[mode].type == MS_FULLDIB)
+    if (modelist[mode].type == modestate_t::MS_FULLDIB)
     {
         if (!leavecurrentmode)
         {
@@ -1404,7 +1406,7 @@ std::optional<std::string> VID_GetExtModeDescription(int mode)
     }
     else
     {
-        if (modestate == MS_WINDOWED)
+        if (modestate == modestate_t::MS_WINDOWED)
         {
             return std::format("{} windowed", pv->modedesc);
         }
@@ -1510,7 +1512,7 @@ void VID_InitDIB(HINSTANCE hInstance)
         Sys_Error("Couldn't register window class");
     }
 
-    modelist[0].type = MS_WINDOWED;
+    modelist[0].type = modestate_t::MS_WINDOWED;
 
     if (COM_CheckParm("-width"))
     {
@@ -1578,7 +1580,7 @@ void VID_InitFullDIB(HINSTANCE hInstance)
 
             if (ChangeDisplaySettings(&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
             {
-                modelist[nummodes].type = MS_FULLDIB;
+                modelist[nummodes].type = modestate_t::MS_FULLDIB;
                 modelist[nummodes].width = devmode.dmPelsWidth;
                 modelist[nummodes].height = devmode.dmPelsHeight;
                 modelist[nummodes].modenum = 0;
@@ -1639,7 +1641,7 @@ void VID_InitFullDIB(HINSTANCE hInstance)
 
             if (ChangeDisplaySettings(&devmode, CDS_TEST | CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
             {
-                modelist[nummodes].type = MS_FULLDIB;
+                modelist[nummodes].type = modestate_t::MS_FULLDIB;
                 modelist[nummodes].width = devmode.dmPelsWidth;
                 modelist[nummodes].height = devmode.dmPelsHeight;
                 modelist[nummodes].modenum = 0;
@@ -1883,7 +1885,7 @@ void VID_Init(unsigned char *palette)
                 // if they want to force it, add the specified mode to the list
                 if (COM_CheckParm("-force") && (nummodes < MAX_MODE_LIST))
                 {
-                    modelist[nummodes].type = MS_FULLDIB;
+                    modelist[nummodes].type = modestate_t::MS_FULLDIB;
                     modelist[nummodes].width = width;
                     modelist[nummodes].height = height;
                     modelist[nummodes].modenum = 0;

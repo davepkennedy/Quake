@@ -175,7 +175,7 @@ void Key_Console(int key)
         history_line = edit_line;
         key_lines[edit_line][0] = ']';
         key_linepos = 1;
-        if (cls.state == ca_disconnected)
+        if (cls.state == cactive_t::ca_disconnected)
         {
             SCR_UpdateScreen(); // force an update, because the command
                                 // may take some time

@@ -223,7 +223,7 @@ void CL_Disconnect(void)
     {
         CL_StopPlayback();
     }
-    else if (cls.state == ca_connected)
+    else if (cls.state == cactive_t::ca_connected)
     {
         if (cls.demorecording)
         {
@@ -237,7 +237,7 @@ void CL_Disconnect(void)
         SZ_Clear(&cls.message);
         NET_Close(cls.netcon);
 
-        cls.state = ca_disconnected;
+        cls.state = cactive_t::ca_disconnected;
         if (sv.active)
         {
             Host_ShutdownServer(false);
@@ -266,7 +266,7 @@ Host should be either "local" or a net address to be passed on
 */
 void CL_EstablishConnection(const char *host)
 {
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return;
     }
@@ -286,7 +286,7 @@ void CL_EstablishConnection(const char *host)
     Con_DPrintf("CL_EstablishConnection: connected to %s\n", host);
 
     cls.demonum = -1; // not in the demo loop now
-    cls.state = ca_connected;
+    cls.state = cactive_t::ca_connected;
     cls.signon = 0; // need all the signon messages before playing
 }
 
@@ -813,7 +813,7 @@ int CL_ReadFromServer(void)
 
         cl.last_received_message = realtime;
         CL_ParseServerMessage();
-    } while (ret && cls.state == ca_connected);
+    } while (ret && cls.state == cactive_t::ca_connected);
 
     if (cl_shownet.value)
     {
@@ -838,7 +838,7 @@ void CL_SendCmd(void)
 {
     usercmd_t cmd;
 
-    if (cls.state != ca_connected)
+    if (cls.state != cactive_t::ca_connected)
     {
         return;
     }

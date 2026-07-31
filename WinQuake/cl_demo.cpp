@@ -52,7 +52,7 @@ void CL_StopPlayback(void)
     fclose(cls.demofile);
     cls.demoplayback = false;
     cls.demofile = nullptr;
-    cls.state = ca_disconnected;
+    cls.state = cactive_t::ca_disconnected;
 
     if (cls.timedemo)
     {
@@ -236,7 +236,7 @@ void CL_Record_f(void)
         return;
     }
 
-    if (c == 2 && cls.state == ca_connected)
+    if (c == 2 && cls.state == cactive_t::ca_connected)
     {
         Con_Printf(
             "Can not record - already connected to server\nClient demo recording must be started before connecting\n");
@@ -328,7 +328,7 @@ void CL_PlayDemo_f(void)
     }
 
     cls.demoplayback = true;
-    cls.state = ca_connected;
+    cls.state = cactive_t::ca_connected;
     cls.forcetrack = 0;
 
     while ((c = getc(cls.demofile)) != '\n')

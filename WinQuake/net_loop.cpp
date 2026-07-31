@@ -28,7 +28,7 @@ qsocket_t *loop_server = nullptr;
 
 int Loop_Init(void)
 {
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return -1;
     }

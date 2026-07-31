@@ -1585,7 +1585,7 @@ void *Mod_LoadAllSkins(int numskins, daliasskintype_t *pskintype)
 
     for (i = 0; i < numskins; i++)
     {
-        if (pskintype->type == ALIAS_SKIN_SINGLE)
+        if (pskintype->type == aliasskintype_t::ALIAS_SKIN_SINGLE)
         {
             Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
 
@@ -1714,7 +1714,7 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer)
     }
 
     pheader->size = LittleFloat(pinmodel->size) * ALIAS_BASE_SIZE_RATIO;
-    mod->synctype = (synctype_t)LittleLong(pinmodel->synctype);
+    mod->synctype = static_cast<synctype_t>(LittleLong(static_cast<int>(pinmodel->synctype)));
     mod->numframes = pheader->numframes;
 
     for (i = 0; i < 3; i++)
@@ -1767,9 +1767,9 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer)
     {
         aliasframetype_t frametype;
 
-        frametype = (aliasframetype_t)LittleLong(pframetype->type);
+        frametype = static_cast<aliasframetype_t>(LittleLong(static_cast<int>(pframetype->type)));
 
-        if (frametype == ALIAS_SINGLE)
+        if (frametype == aliasframetype_t::ALIAS_SINGLE)
         {
             pframetype = static_cast<daliasframetype_t *>(Mod_LoadAliasFrame(pframetype + 1, &pheader->frames[i]));
         }
@@ -1941,7 +1941,7 @@ void Mod_LoadSpriteModel(model_t *mod, void *buffer)
     psprite->maxwidth = LittleLong(pin->width);
     psprite->maxheight = LittleLong(pin->height);
     psprite->beamlength = LittleFloat(pin->beamlength);
-    mod->synctype = (synctype_t)LittleLong(pin->synctype);
+    mod->synctype = static_cast<synctype_t>(LittleLong(static_cast<int>(pin->synctype)));
     psprite->numframes = numframes;
 
     mod->mins[0] = mod->mins[1] = -psprite->maxwidth / 2;
@@ -1965,10 +1965,10 @@ void Mod_LoadSpriteModel(model_t *mod, void *buffer)
     {
         spriteframetype_t frametype;
 
-        frametype = (spriteframetype_t)LittleLong(pframetype->type);
+        frametype = static_cast<spriteframetype_t>(LittleLong(static_cast<int>(pframetype->type)));
         psprite->frames[i].type = frametype;
 
-        if (frametype == SPR_SINGLE)
+        if (frametype == spriteframetype_t::SPR_SINGLE)
         {
             pframetype =
                 static_cast<dspriteframetype_t *>(Mod_LoadSpriteFrame(pframetype + 1, &psprite->frames[i].frameptr, i));

@@ -37,7 +37,7 @@ extern void M_Menu_Quit_f(void);
 
 void Host_Quit_f(void)
 {
-    if (key_dest != keydest_t::key_console && cls.state != ca_dedicated)
+    if (key_dest != keydest_t::key_console && cls.state != cactive_t::ca_dedicated)
     {
         M_Menu_Quit_f();
         return;
@@ -324,7 +324,7 @@ void Host_Map_f(void)
         return;
     }
 
-    if (cls.state != ca_dedicated)
+    if (cls.state != cactive_t::ca_dedicated)
     {
         std::string spawnparms;
         for (i = 2; i < Cmd_Argc(); i++)
@@ -769,7 +769,7 @@ void Host_Loadgame_f(void)
         svs.clients->spawn_parms[i] = spawn_parms[i];
     }
 
-    if (cls.state != ca_dedicated)
+    if (cls.state != cactive_t::ca_dedicated)
     {
         CL_EstablishConnection("local");
         Host_Reconnect_f();
@@ -1023,7 +1023,7 @@ void Host_Name_f(void)
             return;
         }
         Cvar_Set("_cl_name", newName);
-        if (cls.state == ca_connected)
+        if (cls.state == cactive_t::ca_connected)
         {
             Cmd_ForwardToServer();
         }
@@ -1131,7 +1131,7 @@ void Host_Say(qboolean teamonly)
 
     if (cmd_source == cmd_source_t::src_command)
     {
-        if (cls.state == ca_dedicated)
+        if (cls.state == cactive_t::ca_dedicated)
         {
             fromServer = true;
             teamonly = false;
@@ -1306,7 +1306,7 @@ void Host_Color_f(void)
     if (cmd_source == cmd_source_t::src_command)
     {
         Cvar_SetValue("_cl_color", playercolor);
-        if (cls.state == ca_connected)
+        if (cls.state == cactive_t::ca_connected)
         {
             Cmd_ForwardToServer();
         }
@@ -1619,7 +1619,7 @@ void Host_Kick_f(void)
     {
         if (cmd_source == cmd_source_t::src_command)
         {
-            if (cls.state == ca_dedicated)
+            if (cls.state == cactive_t::ca_dedicated)
             {
                 who = "Console";
             }
@@ -2022,7 +2022,7 @@ void Host_Startdemos_f(void)
 {
     int i, c;
 
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         if (!sv.active)
         {
@@ -2064,7 +2064,7 @@ Return to looping demos
 */
 void Host_Demos_f(void)
 {
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return;
     }
@@ -2085,7 +2085,7 @@ Return to looping demos
 */
 void Host_Stopdemo_f(void)
 {
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return;
     }

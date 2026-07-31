@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // spritegn.h: header file for sprite generation program
 //
+#pragma once
 
 // **********************************************************
 // * This file must be identical in the spritegen directory *
@@ -63,11 +64,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // must match definition in modelgen.h
 #ifndef SYNCTYPE_T
 #define SYNCTYPE_T
-typedef enum
+enum class synctype_t
 {
     ST_SYNC = 0,
     ST_RAND
-} synctype_t;
+};
 #endif
 
 // TODO: shorten these?
@@ -107,11 +108,11 @@ struct dspriteinterval_t
     float interval;
 };
 
-typedef enum
+enum class spriteframetype_t
 {
     SPR_SINGLE = 0,
     SPR_GROUP
-} spriteframetype_t;
+};
 
 struct dspriteframetype_t
 {

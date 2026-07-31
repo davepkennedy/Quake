@@ -62,13 +62,13 @@ extern unsigned d_8to24table[256];
 extern void (*vid_menudrawfn)(void);
 extern void (*vid_menukeyfn)(int key);
 
-typedef enum
+enum class modestate_t
 {
     MS_WINDOWED,
     MS_FULLSCREEN,
     MS_FULLDIB,
     MS_UNINIT
-} modestate_t;
+};
 
 extern modestate_t modestate;
 // _windowed_mouse cvar declared in winquake.h -- vid.h is included (via

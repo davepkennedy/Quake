@@ -164,7 +164,7 @@ mspriteframe_t *R_GetSpriteFrame(entity_t *currententity)
         frame = 0;
     }
 
-    if (psprite->frames[frame].type == SPR_SINGLE)
+    if (psprite->frames[frame].type == spriteframetype_t::SPR_SINGLE)
     {
         pspriteframe = psprite->frames[frame].frameptr;
     }

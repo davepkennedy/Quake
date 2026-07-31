@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // net_wipx.h
+#pragma once
 
 int WIPX_Init(void);
 void WIPX_Shutdown(void);

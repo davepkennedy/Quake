@@ -880,12 +880,12 @@ void NET_Init(void)
     }
     net_hostport = DEFAULTnet_hostport;
 
-    if (COM_CheckParm("-listen") || cls.state == ca_dedicated)
+    if (COM_CheckParm("-listen") || cls.state == cactive_t::ca_dedicated)
     {
         listening = true;
     }
     net.numsockets = svs.maxclientslimit;
-    if (cls.state != ca_dedicated)
+    if (cls.state != cactive_t::ca_dedicated)
     {
         net.numsockets++;
     }

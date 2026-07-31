@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // dosisms.h: I'd call it dos.h, but the name's taken
 //
-
-#ifndef _DOSISMS_H_
-#define _DOSISMS_H_
+#pragma once
 
 int dos_lockmem(void *addr, int size);
 int dos_unlockmem(void *addr, int size);
@@ -98,5 +96,3 @@ void dos_usleep(int usecs);
 int dos_getheapsize(void);
 
 extern regs_t regs;
-
-#endif // _DOSISMS_H_

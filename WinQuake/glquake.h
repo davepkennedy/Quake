@@ -138,7 +138,7 @@ struct drawsurf_t
     int surfheight;     // in mipmapped texels
 };
 
-typedef enum
+enum class ptype_t
 {
     pt_static,
     pt_grav,
@@ -148,7 +148,7 @@ typedef enum
     pt_explode2,
     pt_blob,
     pt_blob2
-} ptype_t;
+};
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 struct particle_t

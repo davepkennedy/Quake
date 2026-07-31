@@ -23,9 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sound.h is the actual public interface. Confirmed via a full-codebase
 // grep before this split that nothing outside those 4 files touched any
 // of this, so this header is closing a gap, not fixing a live violation.
-
-#ifndef __SND_INTERNAL__
-#define __SND_INTERNAL__
+#pragma once
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
 struct portable_samplepair_t
@@ -166,5 +164,3 @@ void SNDDMA_Submit(void);
 
 void S_AmbientOff(void);
 void S_AmbientOn(void);
-
-#endif

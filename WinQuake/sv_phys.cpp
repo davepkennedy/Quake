@@ -1780,7 +1780,7 @@ trace_t SV_Trace_Toss(edict_t *ent, edict_t *ignore)
         //
         //			p->die = 256;
         //			p->color = 15;
-        //			p->type = pt_static;
+        //			p->type = ptype_t::pt_static;
         //			VectorCopy (vec3_origin, p->vel);
         //			VectorCopy (tent->v.origin, p->org);
         //		}

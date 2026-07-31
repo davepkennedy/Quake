@@ -293,39 +293,39 @@ std::string PR_ValueString(etype_t type, eval_t *val)
     std::string line;
     dfunction_t *f;
 
-    type = (etype_t)(type & ~DEF_SAVEGLOBAL);
+    type = static_cast<etype_t>(static_cast<int>(type) & ~DEF_SAVEGLOBAL);
 
     switch (type)
     {
-    case ev_string:
+    case etype_t::ev_string:
         line = pr_strings + val->string;
         break;
-    case ev_entity:
+    case etype_t::ev_entity:
         line = std::format("entity {}", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
         break;
-    case ev_function:
+    case etype_t::ev_function:
         f = pr_functions + val->function;
         line = std::format("{}()", pr_strings + f->s_name);
         break;
-    case ev_field: {
+    case etype_t::ev_field: {
         auto fdef = ED_FieldAtOfs(val->_int);
         line = fdef ? std::format(".{}", pr_strings + (*fdef)->s_name) : ".<bad field>";
     }
     break;
-    case ev_void:
+    case etype_t::ev_void:
         line = "void";
         break;
-    case ev_float:
+    case etype_t::ev_float:
         line = std::format("{:5.1f}", val->_float);
         break;
-    case ev_vector:
+    case etype_t::ev_vector:
         line = std::format("'{:5.1f} {:5.1f} {:5.1f}'", val->vector[0], val->vector[1], val->vector[2]);
         break;
-    case ev_pointer:
+    case etype_t::ev_pointer:
         line = "pointer";
         break;
     default:
-        line = std::format("bad type {}", (int)type);
+        line = std::format("bad type {}", static_cast<int>(type));
         break;
     }
 
@@ -345,36 +345,36 @@ std::string PR_UglyValueString(etype_t type, eval_t *val)
     std::string line;
     dfunction_t *f;
 
-    type = (etype_t)(type & ~DEF_SAVEGLOBAL);
+    type = static_cast<etype_t>(static_cast<int>(type) & ~DEF_SAVEGLOBAL);
 
     switch (type)
     {
-    case ev_string:
+    case etype_t::ev_string:
         line = pr_strings + val->string;
         break;
-    case ev_entity:
+    case etype_t::ev_entity:
         line = std::format("{}", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
         break;
-    case ev_function:
+    case etype_t::ev_function:
         f = pr_functions + val->function;
         line = pr_strings + f->s_name;
         break;
-    case ev_field: {
+    case etype_t::ev_field: {
         auto fdef = ED_FieldAtOfs(val->_int);
         line = fdef ? std::string(pr_strings + (*fdef)->s_name) : "<bad field>";
     }
     break;
-    case ev_void:
+    case etype_t::ev_void:
         line = "void";
         break;
-    case ev_float:
+    case etype_t::ev_float:
         line = std::format("{:f}", val->_float);
         break;
-    case ev_vector:
+    case etype_t::ev_vector:
         line = std::format("{:f} {:f} {:f}", val->vector[0], val->vector[1], val->vector[2]);
         break;
     default:
-        line = std::format("bad type {}", (int)type);
+        line = std::format("bad type {}", static_cast<int>(type));
         break;
     }
 
@@ -402,7 +402,8 @@ std::string PR_GlobalString(int ofs)
     }
     else
     {
-        line = std::format("{}({}){}", ofs, pr_strings + (*def)->s_name, PR_ValueString((etype_t)(*def)->type, val));
+        line = std::format("{}({}){}", ofs, pr_strings + (*def)->s_name,
+                            PR_ValueString(static_cast<etype_t>((*def)->type), val));
     }
 
     while (line.size() < 20)
@@ -493,7 +494,7 @@ void ED_Print(edict_t *ed)
             Con_Printf(" ");
         }
 
-        Con_Printf("%s\n", PR_ValueString((etype_t)d->type, reinterpret_cast<eval_t *>(v)).c_str());
+        Con_Printf("%s\n", PR_ValueString(static_cast<etype_t>(d->type), reinterpret_cast<eval_t *>(v)).c_str());
     }
 }
 
@@ -546,7 +547,7 @@ void ED_Write(FILE *f, edict_t *ed)
         }
 
         fprintf(f, "\"%s\" ", name);
-        fprintf(f, "\"%s\"\n", PR_UglyValueString((etype_t)d->type, reinterpret_cast<eval_t *>(v)).c_str());
+        fprintf(f, "\"%s\"\n", PR_UglyValueString(static_cast<etype_t>(d->type), reinterpret_cast<eval_t *>(v)).c_str());
     }
 
     fprintf(f, "}\n");
@@ -670,7 +671,8 @@ void ED_WriteGlobals(FILE *f)
         }
         type &= ~DEF_SAVEGLOBAL;
 
-        if (type != ev_string && type != ev_float && type != ev_entity)
+        if (static_cast<etype_t>(type) != etype_t::ev_string && static_cast<etype_t>(type) != etype_t::ev_float &&
+            static_cast<etype_t>(type) != etype_t::ev_entity)
         {
             continue;
         }
@@ -678,7 +680,7 @@ void ED_WriteGlobals(FILE *f)
         name = pr_strings + def->s_name;
         fprintf(f, "\"%s\" ", name);
         fprintf(f, "\"%s\"\n",
-                PR_UglyValueString((etype_t)type, reinterpret_cast<eval_t *>(&pr_globals[def->ofs])).c_str());
+                PR_UglyValueString(static_cast<etype_t>(type), reinterpret_cast<eval_t *>(&pr_globals[def->ofs])).c_str());
     }
     fprintf(f, "}\n");
 }
@@ -790,17 +792,17 @@ qboolean ED_ParseEpair(void *base, ddef_t *key, const char *s)
 
     d = static_cast<void *>(static_cast<int *>(base) + key->ofs);
 
-    switch (key->type & ~DEF_SAVEGLOBAL)
+    switch (static_cast<etype_t>(key->type & ~DEF_SAVEGLOBAL))
     {
-    case ev_string:
+    case etype_t::ev_string:
         *static_cast<string_t *>(d) = (string_t)(ED_NewString(s) - pr_strings);
         break;
 
-    case ev_float:
+    case etype_t::ev_float:
         *static_cast<float *>(d) = atof(s);
         break;
 
-    case ev_vector:
+    case etype_t::ev_vector:
         Q_strlcpy(string, s, sizeof(string));
         v = string;
         w = string;
@@ -816,11 +818,11 @@ qboolean ED_ParseEpair(void *base, ddef_t *key, const char *s)
         }
         break;
 
-    case ev_entity:
+    case etype_t::ev_entity:
         *static_cast<int *>(d) = EDICT_TO_PROG(EDICT_NUM(atoi(s)));
         break;
 
-    case ev_field: {
+    case etype_t::ev_field: {
         std::optional<ddef_t *> def = ED_FindField(s);
         if (!def)
         {
@@ -831,7 +833,7 @@ qboolean ED_ParseEpair(void *base, ddef_t *key, const char *s)
     }
     break;
 
-    case ev_function: {
+    case etype_t::ev_function: {
         std::optional<dfunction_t *> func = ED_FindFunction(s);
         if (!func)
         {

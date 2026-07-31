@@ -470,7 +470,7 @@ int CDAudio_Init(void)
     MCI_SET_PARMS mciSetParms;
     int n;
 
-    if (cls.state == ca_dedicated)
+    if (cls.state == cactive_t::ca_dedicated)
     {
         return -1;
     }

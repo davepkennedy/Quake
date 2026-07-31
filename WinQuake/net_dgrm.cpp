@@ -1550,7 +1550,7 @@ ErrorReturn2:
     if (m_return_onerror)
     {
         key_dest = keydest_t::key_menu;
-        m_state = (m_state_t)m_return_state;
+        m_state = static_cast<m_state_t>(m_return_state);
         m_return_onerror = false;
     }
     return nullptr;
