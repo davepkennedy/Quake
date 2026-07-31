@@ -3,7 +3,7 @@
 // All functions are loaded at startup by GL_LoadExtensions() (gl_ext.cpp).
 // Uses qgl prefix to distinguish loaded pointers from any future SDK prototypes.
 
-#include <stddef.h> // ptrdiff_t
+#include <cstddef> // ptrdiff_t
 
 // Types missing from the Windows SDK GL 1.1 header
 typedef char GLchar;
