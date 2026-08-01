@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_mesh.c: triangle model functions
 
 #include "quakedef.h"
+#include <fstream>
 
 /*
 =================================================================
@@ -371,14 +372,13 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
         // save out the cached version
         //
         fullpath = std::format("{}/{}", com_gamedir, cache);
-        f = fopen(fullpath.c_str(), "wb");
-        if (f)
+        std::ofstream outFile(fullpath, std::ios::binary);
+        if (outFile)
         {
-            fwrite(&numcommands, 4, 1, f);
-            fwrite(&numorder, 4, 1, f);
-            fwrite(&commands, numcommands * sizeof(commands[0]), 1, f);
-            fwrite(&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
-            fclose(f);
+            outFile.write(reinterpret_cast<const char *>(&numcommands), sizeof(numcommands));
+            outFile.write(reinterpret_cast<const char *>(&numorder), sizeof(numorder));
+            outFile.write(reinterpret_cast<const char *>(&commands), numcommands * sizeof(commands[0]));
+            outFile.write(reinterpret_cast<const char *>(&vertexorder), numorder * sizeof(vertexorder[0]));
         }
     }
 

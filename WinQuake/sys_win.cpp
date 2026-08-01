@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "resource.h"
 #include "conproc.h"
 #include <direct.h>
+#include <fstream>
 
 #define MINIMUM_WIN_MEMORY 0x0880000
 #define MAXIMUM_WIN_MEMORY 0x1000000
@@ -128,7 +129,7 @@ FILE IO
 */
 
 #define MAX_HANDLES 10
-FILE *sys_handles[MAX_HANDLES];
+std::fstream sys_handles[MAX_HANDLES];
 
 int findhandle(void)
 {
@@ -136,7 +137,7 @@ int findhandle(void)
 
     for (i = 1; i < MAX_HANDLES; i++)
     {
-        if (!sys_handles[i])
+        if (!sys_handles[i].is_open())
         {
             return i;
         }
@@ -150,7 +151,7 @@ int findhandle(void)
 filelength
 ================
 */
-int filelength(FILE *f)
+int filelength(std::fstream &f)
 {
     int pos;
     int end;
@@ -158,10 +159,10 @@ int filelength(FILE *f)
 
     t = VID_ForceUnlockedAndReturnState();
 
-    pos = ftell(f);
-    fseek(f, 0, SEEK_END);
-    end = ftell(f);
-    fseek(f, pos, SEEK_SET);
+    pos = static_cast<int>(f.tellg());
+    f.seekg(0, std::ios::end);
+    end = static_cast<int>(f.tellg());
+    f.seekg(pos, std::ios::beg);
 
     VID_ForceLockState(t);
 
@@ -170,7 +171,6 @@ int filelength(FILE *f)
 
 int Sys_FileOpenRead(const char *path, int *hndl)
 {
-    FILE *f;
     int i, retval;
     int t;
 
@@ -178,18 +178,17 @@ int Sys_FileOpenRead(const char *path, int *hndl)
 
     i = findhandle();
 
-    f = fopen(path, "rb");
+    sys_handles[i].open(path, std::ios::in | std::ios::binary);
 
-    if (!f)
+    if (!sys_handles[i].is_open())
     {
         *hndl = -1;
         retval = -1;
     }
     else
     {
-        sys_handles[i] = f;
         *hndl = i;
-        retval = filelength(f);
+        retval = filelength(sys_handles[i]);
     }
 
     VID_ForceLockState(t);
@@ -199,7 +198,6 @@ int Sys_FileOpenRead(const char *path, int *hndl)
 
 int Sys_FileOpenWrite(const char *path)
 {
-    FILE *f;
     int i;
     int t;
 
@@ -207,12 +205,11 @@ int Sys_FileOpenWrite(const char *path)
 
     i = findhandle();
 
-    f = fopen(path, "wb");
-    if (!f)
+    sys_handles[i].open(path, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!sys_handles[i].is_open())
     {
         Sys_Error("Error opening %s: %s", path, strerror(errno));
     }
-    sys_handles[i] = f;
 
     VID_ForceLockState(t);
 
@@ -224,8 +221,8 @@ void Sys_FileClose(int handle)
     int t;
 
     t = VID_ForceUnlockedAndReturnState();
-    fclose(sys_handles[handle]);
-    sys_handles[handle] = nullptr;
+    sys_handles[handle].close();
+    sys_handles[handle].clear();
     VID_ForceLockState(t);
 }
 
@@ -234,7 +231,9 @@ void Sys_FileSeek(int handle, int position)
     int t;
 
     t = VID_ForceUnlockedAndReturnState();
-    fseek(sys_handles[handle], position, SEEK_SET);
+    sys_handles[handle].clear(); // in case a previous read hit EOF
+    sys_handles[handle].seekg(position, std::ios::beg);
+    sys_handles[handle].seekp(position, std::ios::beg);
     VID_ForceLockState(t);
 }
 
@@ -243,7 +242,9 @@ int Sys_FileRead(int handle, void *dest, int count)
     int t, x;
 
     t = VID_ForceUnlockedAndReturnState();
-    x = (int)fread(dest, 1, count, sys_handles[handle]);
+    sys_handles[handle].read(static_cast<char *>(dest), count);
+    x = (int)sys_handles[handle].gcount();
+    sys_handles[handle].clear(); // don't leave eofbit/failbit set on a short read
     VID_ForceLockState(t);
     return x;
 }
@@ -253,28 +254,21 @@ int Sys_FileWrite(int handle, const void *data, int count)
     int t, x;
 
     t = VID_ForceUnlockedAndReturnState();
-    x = (int)fwrite(data, 1, count, sys_handles[handle]);
+    sys_handles[handle].write(static_cast<const char *>(data), count);
+    x = sys_handles[handle].fail() ? 0 : count;
     VID_ForceLockState(t);
     return x;
 }
 
 int Sys_FileTime(const char *path)
 {
-    FILE *f;
     int t, retval;
 
     t = VID_ForceUnlockedAndReturnState();
 
-    f = fopen(path, "rb");
-
-    if (f)
     {
-        fclose(f);
-        retval = 1;
-    }
-    else
-    {
-        retval = -1;
+        std::ifstream f(path, std::ios::binary);
+        retval = f.is_open() ? 1 : -1;
     }
 
     VID_ForceLockState(t);
