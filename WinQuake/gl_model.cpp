@@ -225,7 +225,7 @@ model_t *Mod_FindName(const char *name)
         {
             Sys_Error("mod_numknown == MAX_MOD_KNOWN");
         }
-        strcpy(mod->name, name);
+        Q_strlcpy(mod->name, name, sizeof(mod->name));
         mod->needload = true;
         mod_numknown++;
     }
@@ -306,7 +306,7 @@ model_t *Mod_LoadModel(model_t *mod, qboolean crash)
     //
     // allocate a new model
     //
-    COM_FileBase(mod->name, loadname);
+    COM_FileBase(mod->name, loadname, sizeof(loadname));
 
     loadmodel = mod;
 
@@ -1358,7 +1358,7 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer)
             name = std::format("*{}", i + 1);
             loadmodel = Mod_FindName(name.c_str());
             *loadmodel = *mod;
-            strcpy(loadmodel->name, name.c_str());
+            Q_strlcpy(loadmodel->name, name.c_str(), sizeof(loadmodel->name));
             mod = loadmodel;
         }
     }
@@ -1398,7 +1398,7 @@ void *Mod_LoadAliasFrame(void *pin, maliasframedesc_t *frame)
 
     pdaliasframe = static_cast<daliasframe_t *>(pin);
 
-    strcpy(frame->name, pdaliasframe->name);
+    Q_strlcpy(frame->name, pdaliasframe->name, sizeof(frame->name));
     frame->firstpose = posenum;
     frame->numposes = 1;
 

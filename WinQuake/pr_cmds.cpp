@@ -32,13 +32,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 std::string PF_VarString(int first)
 {
-    int i;
-    char out[256];
+    std::string out;
 
-    out[0] = 0;
-    for (i = first; i < pr_argc; i++)
+    for (int i = first; i < pr_argc; i++)
     {
-        strcat(out, G_STRING((OFS_PARM0 + i * 3)));
+        out += G_STRING((OFS_PARM0 + i * 3));
     }
     return out;
 }
@@ -1013,7 +1011,8 @@ void PF_vtos(void)
 #ifdef QUAKE2
 void PF_etos(void)
 {
-    sprintf(pr_string_temp, "entity %i", G_EDICTNUM(OFS_PARM0));
+    auto result = std::format_to_n(pr_string_temp, 127, "entity {}", G_EDICTNUM(OFS_PARM0));
+    *result.out = '\0';
     G_INT(OFS_RETURN) = (int)(pr_string_temp - pr_strings);
 }
 #endif

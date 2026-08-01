@@ -125,15 +125,16 @@ float MSG_ReadAngle(void);
 void Q_memset(void *dest, int fill, int count);
 void Q_memcpy(void *dest, const void *src, int count);
 int Q_memcmp(const void *m1, const void *m2, int count);
-void Q_strcpy(char *dest, const char *src);
 void Q_strncpy(char *dest, const char *src, int count);
 void Q_strlcpy(char *dest, const char *src, size_t destsize);
 // Like strcpy, but truncates to fit destsize and always null-terminates
 // within it (BSD strlcpy semantics) -- the safe replacement for strcpy
 // into a fixed-size buffer with unbounded/untrusted source data.
+void Q_strlcat(char *dest, const char *src, size_t destsize);
+// Like strcat, but truncates to fit destsize and always null-terminates
+// within it (BSD strlcat semantics) -- the safe replacement for strcat.
 int Q_strlen(const char *str);
 std::optional<std::string> Q_strrchr(const char *s, char c);
-void Q_strcat(char *dest, const char *src);
 int Q_strcmp(const char *s1, const char *s2);
 int Q_strncmp(const char *s1, const char *s2, int count);
 int Q_strcasecmp(const char *s1, const char *s2);
@@ -156,9 +157,9 @@ void COM_Init(const char *path);
 void COM_InitArgv(int argc, const char **argv);
 
 const char *COM_SkipPath(const char *pathname);
-void COM_StripExtension(const char *in, char *out);
-void COM_FileBase(const char *in, char *out);
-void COM_DefaultExtension(char *path, const char *extension);
+void COM_StripExtension(const char *in, char *out, size_t outsize);
+void COM_FileBase(const char *in, char *out, size_t outsize);
+void COM_DefaultExtension(char *path, const char *extension, size_t pathsize);
 
 // Formats into a temp buffer, returning a pointer valid until the next
 // va() call. std::format_string gives compile-time checking of the

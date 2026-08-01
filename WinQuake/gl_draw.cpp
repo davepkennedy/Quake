@@ -292,7 +292,7 @@ qpic_t *Draw_CachePic(const char *path)
         Sys_Error("menu_numcachepics == MAX_CACHED_PICS");
     }
     menu_numcachepics++;
-    strcpy(pic->name, path);
+    Q_strlcpy(pic->name, path, sizeof(pic->name));
 
     //
     // load the pic from disk
@@ -567,7 +567,7 @@ void Draw_Init(void)
 
     // hack the version number directly into the pic
 #if defined(__linux__)
-    sprintf(ver, "(Linux %2.2f, gl %4.2f) %4.2f", (float)LINUX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
+    ver = std::format("(Linux {:2.2f}, gl {:4.2f}) {:4.2f}", (float)LINUX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
 #else
     ver = std::format("(gl {:4.2f}) {:4.2f}", (float)GLQUAKE_VERSION, (float)VERSION);
 #endif
@@ -1391,7 +1391,7 @@ int GL_LoadTexture(const char *identifier, int width, int height, byte *data, qb
         numgltextures++;
     }
 
-    strcpy(glt->identifier, identifier);
+    Q_strlcpy(glt->identifier, identifier, sizeof(glt->identifier));
     GL_ReserveTextureNames(1);
     glt->texnum = texture_extension_number;
     glt->width = width;

@@ -273,7 +273,7 @@ sfx_t *S_FindName(const char *name)
     }
 
     sfx = &sound.known_sfx[i];
-    strcpy(sfx->name, name);
+    Q_strlcpy(sfx->name, name, sizeof(sfx->name));
 
     sound.num_sfx++;
 

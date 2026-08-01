@@ -190,15 +190,6 @@ int Q_memcmp(const void *m1, const void *m2, int count)
     return 0;
 }
 
-void Q_strcpy(char *dest, const char *src)
-{
-    while (*src)
-    {
-        *dest++ = *src++;
-    }
-    *dest++ = 0;
-}
-
 void Q_strlcpy(char *dest, const char *src, size_t destsize)
 {
     if (destsize == 0)
@@ -212,6 +203,16 @@ void Q_strlcpy(char *dest, const char *src, size_t destsize)
         dest[i] = src[i];
     }
     dest[i] = 0;
+}
+
+void Q_strlcat(char *dest, const char *src, size_t destsize)
+{
+    size_t destlen = Q_strlen(dest);
+    if (destlen >= destsize)
+    {
+        return;
+    }
+    Q_strlcpy(dest + destlen, src, destsize - destlen);
 }
 
 void Q_strncpy(char *dest, const char *src, int count)
@@ -251,12 +252,6 @@ std::optional<std::string> Q_strrchr(const char *s, char c)
         }
     }
     return std::nullopt;
-}
-
-void Q_strcat(char *dest, const char *src)
-{
-    dest += Q_strlen(dest);
-    Q_strcpy(dest, src);
 }
 
 int Q_strcmp(const char *s1, const char *s2)
@@ -913,13 +908,20 @@ const char *COM_SkipPath(const char *pathname)
 COM_StripExtension
 ============
 */
-void COM_StripExtension(const char *in, char *out)
+void COM_StripExtension(const char *in, char *out, size_t outsize)
 {
-    while (*in && *in != '.')
+    if (outsize == 0)
     {
-        *out++ = *in++;
+        return;
     }
-    *out = 0;
+
+    size_t i = 0;
+    while (in[i] && in[i] != '.' && i < outsize - 1)
+    {
+        out[i] = in[i];
+        i++;
+    }
+    out[i] = 0;
 }
 
 /*
@@ -954,7 +956,7 @@ std::string COM_FileExtension(const char *in)
 COM_FileBase
 ============
 */
-void COM_FileBase(const char *in, char *out)
+void COM_FileBase(const char *in, char *out, size_t outsize)
 {
     const char *s, *s2;
 
@@ -968,15 +970,25 @@ void COM_FileBase(const char *in, char *out)
     for (s2 = s; *s2 && *s2 != '/'; s2--)
         ;
 
+    if (outsize == 0)
+    {
+        return;
+    }
+
     if (s - s2 < 2)
     {
-        strcpy(out, "?model?");
+        Q_strlcpy(out, "?model?", outsize);
     }
     else
     {
         s--;
-        strncpy(out, s2 + 1, s - s2);
-        out[s - s2] = 0;
+        size_t len = s - s2;
+        if (len > outsize - 1)
+        {
+            len = outsize - 1;
+        }
+        memcpy(out, s2 + 1, len);
+        out[len] = 0;
     }
 }
 
@@ -985,7 +997,7 @@ void COM_FileBase(const char *in, char *out)
 COM_DefaultExtension
 ==================
 */
-void COM_DefaultExtension(char *path, const char *extension)
+void COM_DefaultExtension(char *path, const char *extension, size_t pathsize)
 {
     char *src;
     //
@@ -1003,7 +1015,7 @@ void COM_DefaultExtension(char *path, const char *extension)
         src--;
     }
 
-    strcat(path, extension);
+    Q_strlcat(path, extension, pathsize);
 }
 
 /*
@@ -1703,7 +1715,7 @@ byte *COM_LoadFile(const char *path, int usehunk)
     }
 
     // extract the filename base name for hunk tag
-    COM_FileBase(path, base);
+    COM_FileBase(path, base, sizeof(base));
 
     if (usehunk == 1)
     {
@@ -1845,13 +1857,13 @@ pack_t *COM_LoadPackFile(const char *packfile)
     // parse the directory
     for (i = 0; i < numpackfiles; i++)
     {
-        strcpy(newfiles[i].name, info[i].name);
+        Q_strlcpy(newfiles[i].name, info[i].name, sizeof(newfiles[i].name));
         newfiles[i].filepos = LittleLong(info[i].filepos);
         newfiles[i].filelen = LittleLong(info[i].filelen);
     }
 
     pack = (pack_t *)Hunk_Alloc(sizeof(pack_t));
-    strcpy(pack->filename, packfile);
+    Q_strlcpy(pack->filename, packfile, sizeof(pack->filename));
     pack->handle = packhandle;
     pack->numfiles = numpackfiles;
     pack->files = newfiles;
@@ -1875,13 +1887,13 @@ void COM_AddGameDirectory(const char *dir)
     pack_t *pak;
     std::string pakfile;
 
-    strcpy(com_gamedir, dir);
+    Q_strlcpy(com_gamedir, dir, sizeof(com_gamedir));
 
     //
     // add the directory to the search path
     //
     search = (searchpath_t *)Hunk_Alloc(sizeof(searchpath_t));
-    strcpy(search->filename, dir);
+    Q_strlcpy(search->filename, dir, sizeof(search->filename));
     search->next = com_searchpaths;
     com_searchpaths = search;
 
@@ -1925,11 +1937,11 @@ void COM_InitFilesystem(void)
     i = COM_CheckParm("-basedir");
     if (i && i < com_argc - 1)
     {
-        strcpy(basedir, com_argv[i + 1]);
+        Q_strlcpy(basedir, com_argv[i + 1], sizeof(basedir));
     }
     else
     {
-        strcpy(basedir, host_parms.basedir);
+        Q_strlcpy(basedir, host_parms.basedir, sizeof(basedir));
     }
 
     j = (int)strlen(basedir);
@@ -1956,12 +1968,12 @@ void COM_InitFilesystem(void)
         }
         else
         {
-            strcpy(com_cachedir, com_argv[i + 1]);
+            Q_strlcpy(com_cachedir, com_argv[i + 1], sizeof(com_cachedir));
         }
     }
     else if (host_parms.cachedir)
     {
-        strcpy(com_cachedir, host_parms.cachedir);
+        Q_strlcpy(com_cachedir, host_parms.cachedir, sizeof(com_cachedir));
     }
     else
     {
@@ -2020,7 +2032,7 @@ void COM_InitFilesystem(void)
             }
             else
             {
-                strcpy(search->filename, com_argv[i]);
+                Q_strlcpy(search->filename, com_argv[i], sizeof(search->filename));
             }
             search->next = com_searchpaths;
             com_searchpaths = search;

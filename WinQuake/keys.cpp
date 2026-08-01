@@ -192,7 +192,7 @@ void Key_Console(int key)
         }
         if (cmd)
         {
-            Q_strcpy(key_lines[edit_line] + 1, cmd->c_str());
+            Q_strlcpy(key_lines[edit_line] + 1, cmd->c_str(), sizeof(key_lines[edit_line]) - 1);
             key_linepos = (int)cmd->length() + 1;
             key_lines[edit_line][key_linepos] = ' ';
             key_linepos++;
@@ -220,7 +220,7 @@ void Key_Console(int key)
         {
             history_line = (edit_line + 1) & 31;
         }
-        Q_strcpy(key_lines[edit_line], key_lines[history_line]);
+        Q_strlcpy(key_lines[edit_line], key_lines[history_line], sizeof(key_lines[edit_line]));
         key_linepos = Q_strlen(key_lines[edit_line]);
         return;
     }
@@ -242,7 +242,7 @@ void Key_Console(int key)
         }
         else
         {
-            Q_strcpy(key_lines[edit_line], key_lines[history_line]);
+            Q_strlcpy(key_lines[edit_line], key_lines[history_line], sizeof(key_lines[edit_line]));
             key_linepos = Q_strlen(key_lines[edit_line]);
         }
         return;

@@ -467,7 +467,7 @@ void M_ScanSaves(void)
 
     for (i = 0; i < MAX_SAVEGAMES; i++)
     {
-        strcpy(m_filenames[i], "--- UNUSED SLOT ---");
+        Q_strlcpy(m_filenames[i], "--- UNUSED SLOT ---", sizeof(m_filenames[i]));
         loadable[i] = false;
         path = std::format("{}/s{}.sav", com_gamedir, i);
         f = fopen(path.c_str(), "r");
@@ -1834,7 +1834,9 @@ void M_Menu_LanConfig_f(void)
         lanConfigMenu.cursor = 1;
     }
     lanConfigMenu.port = DEFAULTnet_hostport;
-    sprintf(lanConfigMenu.portname, "%u", lanConfigMenu.port);
+    auto portnameResult =
+        std::format_to_n(lanConfigMenu.portname, sizeof(lanConfigMenu.portname) - 1, "{}", lanConfigMenu.port);
+    *portnameResult.out = '\0';
 
     m_return_onerror = false;
     m_return_reason[0] = 0;
@@ -2049,7 +2051,8 @@ void LanConfigMenu::Key(int key)
     {
         port = l;
     }
-    sprintf(portname, "%u", port);
+    auto portnameResult = std::format_to_n(portname, sizeof(portname) - 1, "{}", port);
+    *portnameResult.out = '\0';
 }
 
 //=============================================================================

@@ -208,7 +208,8 @@ void Con_Init(void)
     {
         if (strlen(com_gamedir) < (MAXGAMEDIRLEN - strlen(t2)))
         {
-            sprintf(temp, "%s%s", com_gamedir, t2);
+            auto result = std::format_to_n(temp, sizeof(temp) - 1, "{}{}", com_gamedir, t2);
+            *result.out = '\0';
             _unlink(temp);
         }
     }

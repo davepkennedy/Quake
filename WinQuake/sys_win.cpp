@@ -387,16 +387,17 @@ void Sys_Init(void)
     }
 
     va_start(argptr, error);
-    vsprintf(text, error, argptr);
+    vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
 
     if (isDedicated)
     {
         va_start(argptr, error);
-        vsprintf(text, error, argptr);
+        vsnprintf(text, sizeof(text), error, argptr);
         va_end(argptr);
 
-        sprintf(text2, "ERROR: %s\n", text);
+        auto text2Result = std::format_to_n(text2, sizeof(text2) - 1, "ERROR: {}\n", text);
+        *text2Result.out = '\0';
         WriteFile(houtput, text5, (DWORD)strlen(text5), &dummy, nullptr);
         WriteFile(houtput, text4, (DWORD)strlen(text4), &dummy, nullptr);
         WriteFile(houtput, text2, (DWORD)strlen(text2), &dummy, nullptr);

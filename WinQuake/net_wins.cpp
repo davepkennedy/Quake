@@ -317,7 +317,7 @@ static int PartialIPAddress(const char *in, struct qsockaddr *hostaddr)
 
     buff[0] = '.';
     b = buff;
-    strcpy(buff + 1, in);
+    Q_strlcpy(buff + 1, in, sizeof(buff) - 1);
     if (buff[1] == '.')
     {
         b++;
@@ -472,13 +472,11 @@ int WINS_Write(int socket, byte *buf, int len, struct qsockaddr *addr)
 
 std::string WINS_AddrToString(struct qsockaddr *addr)
 {
-    char buffer[22];
     int haddr;
 
     haddr = ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr);
-    sprintf(buffer, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff,
-            ntohs(((struct sockaddr_in *)addr)->sin_port));
-    return buffer;
+    return std::format("{}.{}.{}.{}:{}", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff,
+                        haddr & 0xff, ntohs(((struct sockaddr_in *)addr)->sin_port));
 }
 
 //=============================================================================
@@ -525,11 +523,11 @@ int WINS_GetNameFromAddr(struct qsockaddr *addr, char *name)
                               AF_INET);
     if (hostentry)
     {
-        Q_strncpy(name, hostentry->h_name, NET_NAMELEN - 1);
+        Q_strlcpy(name, hostentry->h_name, NET_NAMELEN);
         return 0;
     }
 
-    Q_strcpy(name, WINS_AddrToString(addr).c_str());
+    Q_strlcpy(name, WINS_AddrToString(addr).c_str(), NET_NAMELEN);
     return 0;
 }
 

@@ -226,7 +226,8 @@ void SV_Init(void)
 
     for (i = 0; i < MAX_MODELS; i++)
     {
-        sprintf(localmodels[i], "*%i", i);
+        auto result = std::format_to_n(localmodels[i], sizeof(localmodels[i]) - 1, "*{}", i);
+        *result.out = '\0';
     }
 }
 
@@ -386,7 +387,9 @@ void SV_SendServerinfo(client_t *client)
     char message[2048];
 
     MSG_WriteByte(&client->message, svc_print);
-    sprintf(message, "%c\nVERSION %4.2f SERVER (%i CRC)", 2, VERSION, pr_crc);
+    auto result = std::format_to_n(message, sizeof(message) - 1, "{}\nVERSION {:4.2f} SERVER ({} CRC)",
+                                    static_cast<char>(2), VERSION, pr_crc);
+    *result.out = '\0';
     MSG_WriteString(&client->message, message);
 
     MSG_WriteByte(&client->message, svc_serverinfo);
@@ -469,7 +472,7 @@ void SV_ConnectClient(int clientnum)
     memset(client, 0, sizeof(*client));
     client->netconnection = netconnection;
 
-    strcpy(client->name, "unconnected");
+    Q_strlcpy(client->name, "unconnected", sizeof(client->name));
     client->active = true;
     client->spawned = false;
     client->edict = ent;
@@ -1442,7 +1445,7 @@ void SV_SpawnServer(char *server)
 #ifdef QUAKE2
     if (startspot)
     {
-        strcpy(sv.startspot, startspot);
+        Q_strlcpy(sv.startspot, startspot, sizeof(sv.startspot));
     }
 #endif
 
@@ -1513,7 +1516,7 @@ void SV_SpawnServer(char *server)
     ent->free = false;
     // mod_known[] is a BSS global array; copy name to hunk so string_t offset from pr_strings fits in int on x64
     tmp = static_cast<char *>(Hunk_Alloc((int)strlen(sv.worldmodel->name) + 1));
-    Q_strcpy(tmp, sv.worldmodel->name);
+    Q_strlcpy(tmp, sv.worldmodel->name, strlen(sv.worldmodel->name) + 1);
     ent->v.model = (int)(tmp - pr_strings);
     ent->v.modelindex = 1; // world model
     ent->v.solid = SOLID_BSP;
@@ -1530,11 +1533,11 @@ void SV_SpawnServer(char *server)
 
     // sv is a BSS global; copy sv.name to hunk so the string_t offset from pr_strings fits in int on x64
     tmp = static_cast<char *>(Hunk_Alloc((int)strlen(sv.name) + 1));
-    Q_strcpy(tmp, sv.name);
+    Q_strlcpy(tmp, sv.name, strlen(sv.name) + 1);
     pr_global_struct->mapname = (int)(tmp - pr_strings);
 #ifdef QUAKE2
     tmp = static_cast<char *>(Hunk_Alloc(strlen(sv.startspot) + 1));
-    Q_strcpy(tmp, sv.startspot);
+    Q_strlcpy(tmp, sv.startspot, strlen(sv.startspot) + 1);
     pr_global_struct->startspot = (int)(tmp - pr_strings);
 #endif
 

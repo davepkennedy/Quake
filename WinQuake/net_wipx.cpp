@@ -346,15 +346,14 @@ int WIPX_Write(int handle, byte *buf, int len, struct qsockaddr *addr)
 
 std::string WIPX_AddrToString(struct qsockaddr *addr)
 {
-    char buf[28];
-
-    sprintf(buf, "%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%u", ((struct sockaddr_ipx *)addr)->sa_netnum[0] & 0xff,
-            ((struct sockaddr_ipx *)addr)->sa_netnum[1] & 0xff, ((struct sockaddr_ipx *)addr)->sa_netnum[2] & 0xff,
-            ((struct sockaddr_ipx *)addr)->sa_netnum[3] & 0xff, ((struct sockaddr_ipx *)addr)->sa_nodenum[0] & 0xff,
-            ((struct sockaddr_ipx *)addr)->sa_nodenum[1] & 0xff, ((struct sockaddr_ipx *)addr)->sa_nodenum[2] & 0xff,
-            ((struct sockaddr_ipx *)addr)->sa_nodenum[3] & 0xff, ((struct sockaddr_ipx *)addr)->sa_nodenum[4] & 0xff,
-            ((struct sockaddr_ipx *)addr)->sa_nodenum[5] & 0xff, ntohs(((struct sockaddr_ipx *)addr)->sa_socket));
-    return buf;
+    return std::format(
+        "{:02x}{:02x}{:02x}{:02x}:{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}:{}",
+        ((struct sockaddr_ipx *)addr)->sa_netnum[0] & 0xff, ((struct sockaddr_ipx *)addr)->sa_netnum[1] & 0xff,
+        ((struct sockaddr_ipx *)addr)->sa_netnum[2] & 0xff, ((struct sockaddr_ipx *)addr)->sa_netnum[3] & 0xff,
+        ((struct sockaddr_ipx *)addr)->sa_nodenum[0] & 0xff, ((struct sockaddr_ipx *)addr)->sa_nodenum[1] & 0xff,
+        ((struct sockaddr_ipx *)addr)->sa_nodenum[2] & 0xff, ((struct sockaddr_ipx *)addr)->sa_nodenum[3] & 0xff,
+        ((struct sockaddr_ipx *)addr)->sa_nodenum[4] & 0xff, ((struct sockaddr_ipx *)addr)->sa_nodenum[5] & 0xff,
+        ntohs(((struct sockaddr_ipx *)addr)->sa_socket));
 }
 
 //=============================================================================
@@ -410,7 +409,7 @@ int WIPX_GetSocketAddr(int handle, struct qsockaddr *addr)
 
 int WIPX_GetNameFromAddr(struct qsockaddr *addr, char *name)
 {
-    Q_strcpy(name, WIPX_AddrToString(addr).c_str());
+    Q_strlcpy(name, WIPX_AddrToString(addr).c_str(), NET_NAMELEN);
     return 0;
 }
 

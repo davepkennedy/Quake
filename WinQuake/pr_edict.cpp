@@ -268,7 +268,7 @@ std::optional<eval_t *> GetEdictFieldValue(edict_t *ed, const char *field)
     if (strlen(field) < MAX_FIELD_LEN)
     {
         gefvCache[rep].pcache = def;
-        strcpy(gefvCache[rep].field, field);
+        Q_strlcpy(gefvCache[rep].field, field, sizeof(gefvCache[rep].field));
         rep ^= 1;
     }
 
@@ -893,7 +893,7 @@ const char *ED_ParseEdict(const char *data, edict_t *ent)
         // and allow them to be turned into vectors. (FIXME...)
         if (!strcmp(com_token, "angle"))
         {
-            strcpy(com_token, "angles");
+            Q_strlcpy(com_token, "angles", sizeof(com_token));
             anglehack = true;
         }
         else
@@ -904,7 +904,7 @@ const char *ED_ParseEdict(const char *data, edict_t *ent)
         // FIXME: change light to _light to get rid of this hack
         if (!strcmp(com_token, "light"))
         {
-            strcpy(com_token, "light_lev"); // hack for single light def
+            Q_strlcpy(com_token, "light_lev", sizeof(com_token)); // hack for single light def
         }
 
         Q_strlcpy(keyname, com_token, sizeof(keyname));
@@ -948,7 +948,7 @@ const char *ED_ParseEdict(const char *data, edict_t *ent)
         if (anglehack)
         {
             std::string temp = std::format("0 {} 0", com_token);
-            strcpy(com_token, temp.c_str());
+            Q_strlcpy(com_token, temp.c_str(), sizeof(com_token));
         }
 
         if (!ED_ParseEpair(static_cast<void *>(&ent->v), *key, com_token))

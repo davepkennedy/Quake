@@ -363,14 +363,14 @@ void Host_Changelevel_f(void)
         return;
     }
 
-    strcpy(level, Cmd_Argv(1));
+    Q_strlcpy(level, Cmd_Argv(1), sizeof(level));
     if (Cmd_Argc() == 2)
     {
         startspot = nullptr;
     }
     else
     {
-        strcpy(_startspot, Cmd_Argv(2));
+        Q_strlcpy(_startspot, Cmd_Argv(2), sizeof(_startspot));
         startspot = _startspot;
     }
 
@@ -421,7 +421,7 @@ void Host_Restart_f(void)
     Q_strlcpy(mapname, sv.name, sizeof(mapname)); // must copy out, because it gets cleared
                                                   // in sv_spawnserver
 #ifdef QUAKE2
-    strcpy(startspot, sv.startspot);
+    Q_strlcpy(startspot, sv.startspot, sizeof(startspot));
     SV_SpawnServer(mapname, startspot);
 #else
     SV_SpawnServer(mapname);
@@ -491,7 +491,9 @@ void Host_SavegameComment(char *text)
         text[i] = ' ';
     }
     memcpy(text, cl.levelname, strlen(cl.levelname));
-    sprintf(kills, "kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+    auto killsResult = std::format_to_n(kills, sizeof(kills) - 1, "kills:{:3}/{:3}", cl.stats[STAT_MONSTERS],
+                                         cl.stats[STAT_TOTALMONSTERS]);
+    *killsResult.out = '\0';
     memcpy(text + 22, kills, strlen(kills));
     // convert space to _ to make stdio happy
     for (i = 0; i < SAVEGAME_COMMENT_LENGTH; i++)
@@ -561,7 +563,7 @@ void Host_Savegame_f(void)
     }
 
     snprintf(name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
-    COM_DefaultExtension(name, ".sav");
+    COM_DefaultExtension(name, ".sav", sizeof(name));
 
     Con_Printf("Saving game to %s...\n", name);
     f = fopen(name, "w");
@@ -639,7 +641,7 @@ void Host_Loadgame_f(void)
     cls.demonum = -1; // stop demo loop in case this fails
 
     snprintf(name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
-    COM_DefaultExtension(name, ".sav");
+    COM_DefaultExtension(name, ".sav", sizeof(name));
 
     // we can't call SCR_BeginLoadingPlaque, because too much stack space has
     // been used.  The menu calls it before stuffing loadgame command
@@ -700,7 +702,7 @@ void Host_Loadgame_f(void)
     {
         fscanf(f, "%s\n", str);
         sv.lightstyles[i] = static_cast<char *>(Hunk_Alloc((int)(strlen(str) + 1)));
-        strcpy(sv.lightstyles[i], str);
+        Q_strlcpy(sv.lightstyles[i], str, strlen(str) + 1);
     }
 
     // load the edicts out of the savegame file
@@ -785,7 +787,8 @@ void SaveGamestate()
     char comment[SAVEGAME_COMMENT_LENGTH + 1];
     edict_t *ent;
 
-    sprintf(name, "%s/%s.gip", com_gamedir, sv.name);
+    auto nameResult = std::format_to_n(name, sizeof(name) - 1, "{}/{}.gip", com_gamedir, sv.name);
+    *nameResult.out = '\0';
 
     Con_Printf("Saving game to %s...\n", name);
     f = fopen(name, "w");
@@ -846,7 +849,8 @@ int LoadGamestate(char *level, char *startspot)
     int version;
     //	float	spawn_parms[NUM_SPAWN_PARMS];
 
-    sprintf(name, "%s/%s.gip", com_gamedir, level);
+    auto nameResult = std::format_to_n(name, sizeof(name) - 1, "{}/{}.gip", com_gamedir, level);
+    *nameResult.out = '\0';
 
     Con_Printf("Loading game from %s...\n", name);
     f = fopen(name, "r");
@@ -885,7 +889,7 @@ int LoadGamestate(char *level, char *startspot)
     {
         fscanf(f, "%s\n", str);
         sv.lightstyles[i] = static_cast<char *>(Hunk_Alloc((int)(strlen(str) + 1)));
-        strcpy(sv.lightstyles[i], str);
+        Q_strlcpy(sv.lightstyles[i], str, strlen(str) + 1);
     }
 
     // load the edicts out of the savegame file
@@ -1037,7 +1041,7 @@ void Host_Name_f(void)
             Con_Printf("%s renamed to %s\n", host_client->name, newName);
         }
     }
-    Q_strcpy(host_client->name, newName);
+    Q_strlcpy(host_client->name, newName, sizeof(host_client->name));
     host_client->edict->v.netname = host_client->name - pr_strings;
 
     // send notification to all clients
@@ -1176,8 +1180,8 @@ void Host_Say(qboolean teamonly)
         p[j] = 0;
     }
 
-    strcat(text, p);
-    strcat(text, "\n");
+    Q_strlcat(text, p, sizeof(text));
+    Q_strlcat(text, "\n", sizeof(text));
 
     for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
     {
