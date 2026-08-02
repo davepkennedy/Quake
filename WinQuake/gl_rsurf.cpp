@@ -685,56 +685,6 @@ void R_MirrorChain(msurface_t *s)
     mirror_plane = s->plane;
 }
 
-#if 0
-/*
-================
-R_DrawWaterSurfaces
-================
-*/
-void R_DrawWaterSurfaces (void)
-{
-	int			i;
-	msurface_t	*s;
-	texture_t	*t;
-
-	if (r_wateralpha.value == 1.0)
-		return;
-
-	//
-	// go back to the world matrix
-	//
-    glLoadMatrixf (r_world_matrix);
-
-	glEnable (GL_BLEND);
-	glColor4f (1,1,1,r_wateralpha.value);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
-	{
-		t = cl.worldmodel->textures[i];
-		if (!t)
-			continue;
-		s = t->texturechain;
-		if (!s)
-			continue;
-		if ( !(s->flags & SURF_DRAWTURB) )
-			continue;
-
-		// set modulate mode explicitly
-		GL_Bind (t->gl_texturenum);
-
-		for ( ; s ; s=s->texturechain)
-			R_RenderBrushPoly (s);
-
-		t->texturechain = nullptr;
-	}
-
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	glColor4f (1,1,1,1);
-	glDisable (GL_BLEND);
-}
-#else
 /*
 ================
 R_DrawWaterSurfaces
@@ -811,7 +761,6 @@ void R_DrawWaterSurfaces(void)
     }
 }
 
-#endif
 
 /*
 ================
@@ -1229,9 +1178,6 @@ void R_DrawWorld(void)
     currententity = &ent;
     currenttexture = -1;
 
-#ifdef QUAKE2
-    R_ClearSkyBox();
-#endif
 
     R_RecursiveWorldNode(CL_WorldModel()->nodes);
 
@@ -1239,9 +1185,6 @@ void R_DrawWorld(void)
 
     R_BlendLightmaps();
 
-#ifdef QUAKE2
-    R_DrawSkyBox();
-#endif
 }
 
 /*
@@ -1592,12 +1535,10 @@ void GL_BuildLightmaps(void)
             {
                 continue;
             }
-#ifndef QUAKE2
             if (m->surfaces[i].flags & SURF_DRAWSKY)
             {
                 continue;
             }
-#endif
             BuildSurfaceDisplayList(m->surfaces + i);
         }
     }

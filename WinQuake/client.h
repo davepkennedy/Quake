@@ -39,9 +39,6 @@ struct usercmd_t
     float forwardmove;
     float sidemove;
     float upmove;
-#ifdef QUAKE2
-    byte lightlevel;
-#endif
 };
 
 struct lightstyle_t
@@ -88,9 +85,6 @@ struct dlight_t
     float decay;    // drop this each second
     float minlight; // don't add when contributing less
     int key;
-#ifdef QUAKE2
-    qboolean dark; // subtracts light instead of adding
-#endif
 };
 
 #define MAX_BEAMS 24
@@ -240,12 +234,6 @@ struct client_state_t
     // frag scoreboard
     scoreboard_t *scores; // [cl.maxclients]
 
-#ifdef QUAKE2
-    // light level at player's position including dlights
-    // this is sent back to the server each frame
-    // architectually ugly but it works
-    int light_level;
-#endif
 };
 
 //

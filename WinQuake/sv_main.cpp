@@ -662,13 +662,6 @@ void SV_WriteEntitiesToClient(edict_t *clent, sizebuf_t *msg)
     ent = NEXT_EDICT(sv.edicts);
     for (e = 1; e < sv.num_edicts; e++, ent = NEXT_EDICT(ent))
     {
-#ifdef QUAKE2
-        // don't send if flagged for NODRAW and there are no lighting effects
-        if (ent->v.effects == EF_NODRAW)
-        {
-            continue;
-        }
-#endif
 
         // ignore if not touching a PV leaf
         if (ent != clent) // clent is ALLWAYS sent
@@ -861,9 +854,7 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
     int i;
     edict_t *other;
     int items;
-#ifndef QUAKE2
     std::optional<eval_t *> val;
-#endif
 
     //
     // send a damage message
@@ -913,9 +904,6 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
 
 // stuff the sigil bits into the high bits of items for sbar, or else
 // mix in items2
-#ifdef QUAKE2
-    items = (int)ent->v.items | ((int)ent->v.items2 << 23);
-#else
     val = GetEdictFieldValue(ent, "items2");
 
     if (val)
@@ -926,7 +914,6 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
     {
         items = (int)ent->v.items | ((int)pr_global_struct->serverflags << 28);
     }
-#endif
 
     bits |= SU_ITEMS;
 
@@ -1340,11 +1327,7 @@ void SV_SendReconnect(void)
     NET_SendToAll(&msg, 5);
 
     if (cls.state != cactive_t::ca_dedicated)
-#ifdef QUAKE2
-        Cbuf_InsertText("reconnect\n");
-#else
         Cmd_ExecuteString("reconnect\n", cmd_source_t::src_command);
-#endif
 }
 
 /*
@@ -1387,11 +1370,7 @@ This is called at the start of each level
 */
 extern float scr_centertime_off;
 
-#ifdef QUAKE2
-void SV_SpawnServer(char *server, char *startspot)
-#else
 void SV_SpawnServer(char *server)
-#endif
 {
     edict_t *ent;
     int i;
@@ -1442,12 +1421,6 @@ void SV_SpawnServer(char *server)
     sv.Clear();
 
     Q_strlcpy(sv.name, server, sizeof(sv.name));
-#ifdef QUAKE2
-    if (startspot)
-    {
-        Q_strlcpy(sv.startspot, startspot, sizeof(sv.startspot));
-    }
-#endif
 
     // load progs to get entity field count
     PR_LoadProgs();
@@ -1535,11 +1508,6 @@ void SV_SpawnServer(char *server)
     tmp = static_cast<char *>(Hunk_Alloc((int)strlen(sv.name) + 1));
     Q_strlcpy(tmp, sv.name, strlen(sv.name) + 1);
     pr_global_struct->mapname = (int)(tmp - pr_strings);
-#ifdef QUAKE2
-    tmp = static_cast<char *>(Hunk_Alloc(strlen(sv.startspot) + 1));
-    Q_strlcpy(tmp, sv.startspot, strlen(sv.startspot) + 1);
-    pr_global_struct->startspot = (int)(tmp - pr_strings);
-#endif
 
     // serverflags are for cross level information (sigils)
     pr_global_struct->serverflags = svs.serverflags;

@@ -130,9 +130,6 @@ byte *Mod_DecompressVis(byte *in, model_t *model)
     row = (model->numleafs + 7) >> 3;
     out = decompressed;
 
-#if 0
-	memcpy (out, in, row);
-#else
     if (!in)
     { // no vis info, so make all visible
         while (row)
@@ -159,7 +156,6 @@ byte *Mod_DecompressVis(byte *in, model_t *model)
             c--;
         }
     } while (out - decompressed < row);
-#endif
 
     return decompressed;
 }
@@ -752,12 +748,6 @@ void Mod_LoadTexinfo(lump_t *l)
         {
             out->mipadjust = 1;
         }
-#if 0
-		if (len1 + len2 < 0.001)
-			out->mipadjust = 1;		// don't crash
-		else
-			out->mipadjust = 1 / floor( (len1+len2)/2 + 0.1 );
-#endif
 
         miptex = LittleLong(in->miptex);
         out->flags = LittleLong(in->flags);
@@ -907,9 +897,7 @@ void Mod_LoadFaces(lump_t *l)
         if (!Q_strncmp(out->texinfo->texture->name, "sky", 3)) // sky
         {
             out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-#ifndef QUAKE2
             GL_SubdivideSurface(out); // cut up polygon for warps
-#endif
             continue;
         }
 

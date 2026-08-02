@@ -457,7 +457,6 @@ void EmitBothSkyLayers(msurface_t *fa)
     Warp_EndDraw();
 }
 
-#ifndef QUAKE2
 /*
 =================
 R_DrawSkyChain
@@ -495,7 +494,6 @@ void R_DrawSkyChain(msurface_t *s)
     Warp_EndDraw();
 }
 
-#endif
 
 //===============================================================
 
