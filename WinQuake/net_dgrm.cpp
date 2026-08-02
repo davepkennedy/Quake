@@ -654,6 +654,7 @@ static void Test_f(void)
 
     host = Cmd_Argv(1);
 
+    bool foundCached = false;
     if (host && hostCacheCount)
     {
         for (n = 0; n < hostCacheCount; n++)
@@ -670,31 +671,30 @@ static void Test_f(void)
                 break;
             }
         }
-        if (n < hostCacheCount)
-        {
-            goto JustDoIt;
-        }
+        foundCached = (n < hostCacheCount);
     }
 
-    for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers; net_landriverlevel++)
+    if (!foundCached)
     {
-        if (!net_landrivers[net_landriverlevel].initialized)
+        for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers; net_landriverlevel++)
         {
-            continue;
-        }
+            if (!net_landrivers[net_landriverlevel].initialized)
+            {
+                continue;
+            }
 
-        // see if we can resolve the host name
-        if (dfunc.GetAddrFromName(host, &sendaddr) != -1)
+            // see if we can resolve the host name
+            if (dfunc.GetAddrFromName(host, &sendaddr) != -1)
+            {
+                break;
+            }
+        }
+        if (net_landriverlevel == net_numlandrivers)
         {
-            break;
+            return;
         }
     }
-    if (net_landriverlevel == net_numlandrivers)
-    {
-        return;
-    }
 
-JustDoIt:
     testSocket = dfunc.OpenSocket(0);
     if (testSocket == -1)
     {
@@ -739,62 +739,52 @@ static void Test2_Poll(void)
     name[0] = 0;
 
     len = dfunc.Read(test2Socket, net.message.data, net.message.maxsize, &clientaddr);
-    if (len < sizeof(int))
+    if (len >= sizeof(int))
     {
-        goto Reschedule;
+        net.message.cursize = len;
+
+        MSG_BeginReading();
+        control = BigLong(*(reinterpret_cast<int *>(net.message.data)));
+        MSG_ReadLong();
+        if (control == -1 || (control & (~NETFLAG_LENGTH_MASK)) != NETFLAG_CTL || (control & NETFLAG_LENGTH_MASK) != len)
+        {
+            Con_Printf("Unexpected repsonse to Rule Info request\n");
+            dfunc.CloseSocket(test2Socket);
+            test2InProgress = false;
+            return;
+        }
+
+        if (MSG_ReadByte() != CCREP_RULE_INFO)
+        {
+            Con_Printf("Unexpected repsonse to Rule Info request\n");
+            dfunc.CloseSocket(test2Socket);
+            test2InProgress = false;
+            return;
+        }
+
+        Q_strlcpy(name, MSG_ReadString().c_str(), sizeof(name));
+        if (name[0] == 0)
+        {
+            dfunc.CloseSocket(test2Socket);
+            test2InProgress = false;
+            return;
+        }
+        Q_strlcpy(value, MSG_ReadString().c_str(), sizeof(value));
+
+        Con_Printf("%-16.16s  %-16.16s\n", name, value);
+
+        SZ_Clear(&net.message);
+        // save space for the header, filled in later
+        MSG_WriteLong(&net.message, 0);
+        MSG_WriteByte(&net.message, CCREQ_RULE_INFO);
+        MSG_WriteString(&net.message, name);
+        *(reinterpret_cast<int *>(net.message.data)) =
+            BigLong(NETFLAG_CTL | (net.message.cursize & NETFLAG_LENGTH_MASK));
+        dfunc.Write(test2Socket, net.message.data, net.message.cursize, &clientaddr);
+        SZ_Clear(&net.message);
     }
 
-    net.message.cursize = len;
-
-    MSG_BeginReading();
-    control = BigLong(*(reinterpret_cast<int *>(net.message.data)));
-    MSG_ReadLong();
-    if (control == -1)
-    {
-        goto Error;
-    }
-    if ((control & (~NETFLAG_LENGTH_MASK)) != NETFLAG_CTL)
-    {
-        goto Error;
-    }
-    if ((control & NETFLAG_LENGTH_MASK) != len)
-    {
-        goto Error;
-    }
-
-    if (MSG_ReadByte() != CCREP_RULE_INFO)
-    {
-        goto Error;
-    }
-
-    Q_strlcpy(name, MSG_ReadString().c_str(), sizeof(name));
-    if (name[0] == 0)
-    {
-        goto Done;
-    }
-    Q_strlcpy(value, MSG_ReadString().c_str(), sizeof(value));
-
-    Con_Printf("%-16.16s  %-16.16s\n", name, value);
-
-    SZ_Clear(&net.message);
-    // save space for the header, filled in later
-    MSG_WriteLong(&net.message, 0);
-    MSG_WriteByte(&net.message, CCREQ_RULE_INFO);
-    MSG_WriteString(&net.message, name);
-    *(reinterpret_cast<int *>(net.message.data)) = BigLong(NETFLAG_CTL | (net.message.cursize & NETFLAG_LENGTH_MASK));
-    dfunc.Write(test2Socket, net.message.data, net.message.cursize, &clientaddr);
-    SZ_Clear(&net.message);
-
-Reschedule:
     SchedulePollProcedure(&test2PollProcedure, 0.05);
-    return;
-
-Error:
-    Con_Printf("Unexpected repsonse to Rule Info request\n");
-Done:
-    dfunc.CloseSocket(test2Socket);
-    test2InProgress = false;
-    return;
 }
 
 static void Test2_f(void)
@@ -810,6 +800,7 @@ static void Test2_f(void)
 
     host = Cmd_Argv(1);
 
+    bool foundCached = false;
     if (host && hostCacheCount)
     {
         for (n = 0; n < hostCacheCount; n++)
@@ -825,31 +816,30 @@ static void Test2_f(void)
                 break;
             }
         }
-        if (n < hostCacheCount)
-        {
-            goto JustDoIt;
-        }
+        foundCached = (n < hostCacheCount);
     }
 
-    for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers; net_landriverlevel++)
+    if (!foundCached)
     {
-        if (!net_landrivers[net_landriverlevel].initialized)
+        for (net_landriverlevel = 0; net_landriverlevel < net_numlandrivers; net_landriverlevel++)
         {
-            continue;
-        }
+            if (!net_landrivers[net_landriverlevel].initialized)
+            {
+                continue;
+            }
 
-        // see if we can resolve the host name
-        if (dfunc.GetAddrFromName(host, &sendaddr) != -1)
+            // see if we can resolve the host name
+            if (dfunc.GetAddrFromName(host, &sendaddr) != -1)
+            {
+                break;
+            }
+        }
+        if (net_landriverlevel == net_numlandrivers)
         {
-            break;
+            return;
         }
     }
-    if (net_landriverlevel == net_numlandrivers)
-    {
-        return;
-    }
 
-JustDoIt:
     test2Socket = dfunc.OpenSocket(0);
     if (test2Socket == -1)
     {
@@ -1402,18 +1392,34 @@ static qsocket_t *_Datagram_Connect(const char *host)
         return nullptr;
     }
 
+    auto errorReturn2 = [&]() -> qsocket_t * {
+        dfunc.CloseSocket(newsock);
+        if (m_return_onerror)
+        {
+            key_dest = keydest_t::key_menu;
+            m_state = static_cast<m_state_t>(m_return_state);
+            m_return_onerror = false;
+        }
+        return nullptr;
+    };
+
     sock = NET_NewQSocket();
     if (sock == nullptr)
     {
-        goto ErrorReturn2;
+        return errorReturn2();
     }
     sock->socket = newsock;
     sock->landriver = net_landriverlevel;
 
+    auto errorReturn = [&]() -> qsocket_t * {
+        NET_FreeQSocket(sock);
+        return errorReturn2();
+    };
+
     // connect to the host
     if (dfunc.Connect(newsock, &sendaddr) == -1)
     {
-        goto ErrorReturn;
+        return errorReturn();
     }
 
     // send the connection request
@@ -1494,7 +1500,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
         reason = "No Response";
         Con_Printf("%s\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
-        goto ErrorReturn;
+        return errorReturn();
     }
 
     if (ret == -1)
@@ -1502,7 +1508,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
         reason = "Network Error";
         Con_Printf("%s\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
-        goto ErrorReturn;
+        return errorReturn();
     }
 
     ret = MSG_ReadByte();
@@ -1511,7 +1517,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
         rejectReason = MSG_ReadString();
         Con_Printf("%s", rejectReason.c_str());
         Q_strlcpy(m_return_reason, rejectReason.c_str(), sizeof(m_return_reason));
-        goto ErrorReturn;
+        return errorReturn();
     }
 
     if (ret == CCREP_ACCEPT)
@@ -1524,7 +1530,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
         reason = "Bad Response";
         Con_Printf("%s\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
-        goto ErrorReturn;
+        return errorReturn();
     }
 
     dfunc.GetNameFromAddr(&sendaddr, sock->address);
@@ -1538,23 +1544,11 @@ static qsocket_t *_Datagram_Connect(const char *host)
         reason = "Connect to Game failed";
         Con_Printf("%s\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
-        goto ErrorReturn;
+        return errorReturn();
     }
 
     m_return_onerror = false;
     return sock;
-
-ErrorReturn:
-    NET_FreeQSocket(sock);
-ErrorReturn2:
-    dfunc.CloseSocket(newsock);
-    if (m_return_onerror)
-    {
-        key_dest = keydest_t::key_menu;
-        m_state = static_cast<m_state_t>(m_return_state);
-        m_return_onerror = false;
-    }
-    return nullptr;
 }
 
 qsocket_t *Datagram_Connect(const char *host)

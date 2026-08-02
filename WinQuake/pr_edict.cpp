@@ -259,20 +259,22 @@ std::optional<eval_t *> GetEdictFieldValue(edict_t *ed, const char *field)
         if (!strcmp(field, gefvCache[i].field))
         {
             def = gefvCache[i].pcache;
-            goto Done;
+            break;
         }
     }
 
-    def = ED_FindField(field).value_or(nullptr);
-
-    if (strlen(field) < MAX_FIELD_LEN)
+    if (i == GEFV_CACHESIZE)
     {
-        gefvCache[rep].pcache = def;
-        Q_strlcpy(gefvCache[rep].field, field, sizeof(gefvCache[rep].field));
-        rep ^= 1;
+        def = ED_FindField(field).value_or(nullptr);
+
+        if (strlen(field) < MAX_FIELD_LEN)
+        {
+            gefvCache[rep].pcache = def;
+            Q_strlcpy(gefvCache[rep].field, field, sizeof(gefvCache[rep].field));
+            rep ^= 1;
+        }
     }
 
-Done:
     if (!def)
     {
         return std::nullopt;

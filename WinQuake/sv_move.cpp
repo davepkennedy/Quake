@@ -40,6 +40,7 @@ qboolean SV_CheckBottom(edict_t *ent)
     trace_t trace;
     int x, y;
     float mid, bottom;
+    bool allSolid = true;
 
     VectorAdd(ent->v.origin, ent->v.mins, mins);
     VectorAdd(ent->v.origin, ent->v.maxs, maxs);
@@ -48,7 +49,7 @@ qboolean SV_CheckBottom(edict_t *ent)
     // with the tougher checks
     // the corners must be within 16 of the midpoint
     start[2] = mins[2] - 1;
-    for (x = 0; x <= 1; x++)
+    for (x = 0; x <= 1 && allSolid; x++)
     {
         for (y = 0; y <= 1; y++)
         {
@@ -56,15 +57,18 @@ qboolean SV_CheckBottom(edict_t *ent)
             start[1] = y ? maxs[1] : mins[1];
             if (SV_PointContents(start) != CONTENTS_SOLID)
             {
-                goto realcheck;
+                allSolid = false;
+                break;
             }
         }
     }
 
-    c_yes++;
-    return true; // we got out easy
+    if (allSolid)
+    {
+        c_yes++;
+        return true; // we got out easy
+    }
 
-realcheck:
     c_no++;
     //
     // check it for real...

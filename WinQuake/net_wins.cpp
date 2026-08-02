@@ -268,7 +268,8 @@ int WINS_OpenSocket(int port)
 
     if (ioctlsocket(newsocket, FIONBIO, &_true) == -1)
     {
-        goto ErrorReturn;
+        closesocket(newsocket);
+        return -1;
     }
 
     address.sin_family = AF_INET;
@@ -280,9 +281,6 @@ int WINS_OpenSocket(int port)
     }
 
     Sys_Error("Unable to bind to %s", WINS_AddrToString((struct qsockaddr *)&address).c_str());
-ErrorReturn:
-    closesocket(newsocket);
-    return -1;
 }
 
 //=============================================================================

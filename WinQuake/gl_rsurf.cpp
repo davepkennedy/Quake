@@ -221,38 +221,38 @@ void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
         {
             blocklights[i] = 255 * 256;
         }
-        goto store;
     }
-
-    // clear to no light
-    for (i = 0; i < size; i++)
+    else
     {
-        blocklights[i] = 0;
-    }
-
-    // add all the lightmaps
-    if (lightmap)
-    {
-        for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
+        // clear to no light
+        for (i = 0; i < size; i++)
         {
-            scale = d_lightstylevalue[surf->styles[maps]];
-            surf->cached_light[maps] = scale; // 8.8 fraction
-            for (i = 0; i < size; i++)
+            blocklights[i] = 0;
+        }
+
+        // add all the lightmaps
+        if (lightmap)
+        {
+            for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
             {
-                blocklights[i] += lightmap[i] * scale;
+                scale = d_lightstylevalue[surf->styles[maps]];
+                surf->cached_light[maps] = scale; // 8.8 fraction
+                for (i = 0; i < size; i++)
+                {
+                    blocklights[i] += lightmap[i] * scale;
+                }
+                lightmap += size; // skip to next lightmap
             }
-            lightmap += size; // skip to next lightmap
+        }
+
+        // add all the dynamic lights
+        if (surf->dlightframe == r_framecount)
+        {
+            R_AddDynamicLights(surf);
         }
     }
 
-    // add all the dynamic lights
-    if (surf->dlightframe == r_framecount)
-    {
-        R_AddDynamicLights(surf);
-    }
-
-// bound, invert, and shift
-store:
+    // bound, invert, and shift
     switch (gl_lightmap_format)
     {
     case GL_RGBA:
@@ -487,17 +487,18 @@ static void R_UpdateSurfaceLightmap(msurface_t *fa)
     glRect_t *theRect;
     byte *base;
 
+    bool styleChanged = false;
     for (maps = 0; maps < MAXLIGHTMAPS && fa->styles[maps] != 255; maps++)
     {
         if (d_lightstylevalue[fa->styles[maps]] != fa->cached_light[maps])
         {
-            goto dynamic;
+            styleChanged = true;
+            break;
         }
     }
 
-    if (fa->dlightframe == r_framecount || fa->cached_dlight)
+    if (styleChanged || fa->dlightframe == r_framecount || fa->cached_dlight)
     {
-    dynamic:
         if (r_dynamic.value)
         {
             lightmap_modified[fa->lightmaptexturenum] = true;

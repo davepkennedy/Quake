@@ -1123,50 +1123,56 @@ void GL_Upload32(unsigned *data, int width, int height, qboolean mipmap, qboolea
 
     texels += scaled_width * scaled_height;
 
+    bool alreadyUploaded = false;
     if (scaled_width == width && scaled_height == height)
     {
         if (!mipmap)
         {
             glTexImage2D(GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            goto done;
+            alreadyUploaded = true;
         }
-        memcpy(scaled, data, width * height * 4);
+        else
+        {
+            memcpy(scaled, data, width * height * 4);
+        }
     }
     else
     {
         GL_ResampleTexture(data, width, height, scaled, scaled_width, scaled_height);
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-    if (mipmap)
+    if (!alreadyUploaded)
     {
-        if (qglGenerateMipmap)
+        glTexImage2D(GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+        if (mipmap)
         {
-            qglGenerateMipmap(GL_TEXTURE_2D);
-        }
-        else
-        {
-            int miplevel = 0;
-            while (scaled_width > 1 || scaled_height > 1)
+            if (qglGenerateMipmap)
             {
-                GL_MipMap(reinterpret_cast<byte *>(scaled), scaled_width, scaled_height);
-                scaled_width >>= 1;
-                scaled_height >>= 1;
-                if (scaled_width < 1)
+                qglGenerateMipmap(GL_TEXTURE_2D);
+            }
+            else
+            {
+                int miplevel = 0;
+                while (scaled_width > 1 || scaled_height > 1)
                 {
-                    scaled_width = 1;
+                    GL_MipMap(reinterpret_cast<byte *>(scaled), scaled_width, scaled_height);
+                    scaled_width >>= 1;
+                    scaled_height >>= 1;
+                    if (scaled_width < 1)
+                    {
+                        scaled_width = 1;
+                    }
+                    if (scaled_height < 1)
+                    {
+                        scaled_height = 1;
+                    }
+                    miplevel++;
+                    glTexImage2D(GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA,
+                                 GL_UNSIGNED_BYTE, scaled);
                 }
-                if (scaled_height < 1)
-                {
-                    scaled_height = 1;
-                }
-                miplevel++;
-                glTexImage2D(GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA,
-                             GL_UNSIGNED_BYTE, scaled);
             }
         }
     }
-done:;
 
     if (mipmap)
     {
@@ -1237,47 +1243,53 @@ void GL_Upload8_EXT(byte *data, int width, int height, qboolean mipmap, qboolean
 
     texels += scaled_width * scaled_height;
 
+    bool alreadyUploaded = false;
     if (scaled_width == width && scaled_height == height)
     {
         if (!mipmap)
         {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX,
                          GL_UNSIGNED_BYTE, data);
-            goto done;
+            alreadyUploaded = true;
         }
-        memcpy(scaled, data, width * height);
+        else
+        {
+            memcpy(scaled, data, width * height);
+        }
     }
     else
     {
         GL_Resample8BitTexture(data, width, height, scaled, scaled_width, scaled_height);
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX,
-                 GL_UNSIGNED_BYTE, scaled);
-    if (mipmap)
+    if (!alreadyUploaded)
     {
-        int miplevel;
-
-        miplevel = 0;
-        while (scaled_width > 1 || scaled_height > 1)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX,
+                     GL_UNSIGNED_BYTE, scaled);
+        if (mipmap)
         {
-            GL_MipMap8Bit(reinterpret_cast<byte *>(scaled), scaled_width, scaled_height);
-            scaled_width >>= 1;
-            scaled_height >>= 1;
-            if (scaled_width < 1)
+            int miplevel;
+
+            miplevel = 0;
+            while (scaled_width > 1 || scaled_height > 1)
             {
-                scaled_width = 1;
+                GL_MipMap8Bit(reinterpret_cast<byte *>(scaled), scaled_width, scaled_height);
+                scaled_width >>= 1;
+                scaled_height >>= 1;
+                if (scaled_width < 1)
+                {
+                    scaled_width = 1;
+                }
+                if (scaled_height < 1)
+                {
+                    scaled_height = 1;
+                }
+                miplevel++;
+                glTexImage2D(GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0,
+                             GL_COLOR_INDEX, GL_UNSIGNED_BYTE, scaled);
             }
-            if (scaled_height < 1)
-            {
-                scaled_height = 1;
-            }
-            miplevel++;
-            glTexImage2D(GL_TEXTURE_2D, miplevel, GL_COLOR_INDEX8_EXT, scaled_width, scaled_height, 0, GL_COLOR_INDEX,
-                         GL_UNSIGNED_BYTE, scaled);
         }
     }
-done:;
 
     if (mipmap)
     {

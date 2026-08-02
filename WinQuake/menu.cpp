@@ -870,7 +870,6 @@ void SetupMenu::Key(int k)
         {
             return;
         }
-    forward:
         S_LocalSound("misc/menu3.wav");
         if (cursor == 2)
         {
@@ -890,7 +889,16 @@ void SetupMenu::Key(int k)
 
         if (cursor == 2 || cursor == 3)
         {
-            goto forward;
+            S_LocalSound("misc/menu3.wav");
+            if (cursor == 2)
+            {
+                top = top + 1;
+            }
+            if (cursor == 3)
+            {
+                bottom = bottom + 1;
+            }
+            break;
         }
 
         // cursor == 4 (OK)
@@ -1059,56 +1067,49 @@ void NetMenu::Draw(void)
 
 void NetMenu::Key(int k)
 {
-again:
-    switch (k)
+    do
     {
-    case K_ESCAPE:
-        M_Menu_MultiPlayer_f();
-        break;
-
-    case K_DOWNARROW:
-        S_LocalSound("misc/menu1.wav");
-        if (++cursor >= items)
+        switch (k)
         {
-            cursor = 0;
-        }
-        break;
-
-    case K_UPARROW:
-        S_LocalSound("misc/menu1.wav");
-        if (--cursor < 0)
-        {
-            cursor = items - 1;
-        }
-        break;
-
-    case K_ENTER:
-        m_entersound = true;
-
-        switch (cursor)
-        {
-        case 0:
-            M_Menu_LanConfig_f();
+        case K_ESCAPE:
+            M_Menu_MultiPlayer_f();
             break;
 
-        case 1:
-            M_Menu_LanConfig_f();
+        case K_DOWNARROW:
+            S_LocalSound("misc/menu1.wav");
+            if (++cursor >= items)
+            {
+                cursor = 0;
+            }
             break;
 
-        case 4:
-            // multiprotocol
+        case K_UPARROW:
+            S_LocalSound("misc/menu1.wav");
+            if (--cursor < 0)
+            {
+                cursor = items - 1;
+            }
             break;
+
+        case K_ENTER:
+            m_entersound = true;
+
+            switch (cursor)
+            {
+            case 0:
+                M_Menu_LanConfig_f();
+                break;
+
+            case 1:
+                M_Menu_LanConfig_f();
+                break;
+
+            case 4:
+                // multiprotocol
+                break;
+            }
         }
-    }
-
-    if (cursor == 0 && !net.ipxAvailable)
-    {
-        goto again;
-    }
-    if (cursor == 1 && !net.tcpipAvailable)
-    {
-        goto again;
-    }
+    } while ((cursor == 0 && !net.ipxAvailable) || (cursor == 1 && !net.tcpipAvailable));
 }
 
 //=============================================================================

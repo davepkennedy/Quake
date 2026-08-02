@@ -57,6 +57,13 @@ int stripverts[128];
 int striptris[128];
 int stripcount;
 
+enum class TriScanResult
+{
+    Extended,
+    AlreadyUsed,
+    NoMatch
+};
+
 /*
 ================
 StripLength
@@ -84,51 +91,56 @@ int StripLength(int starttri, int startv)
     m2 = last->vertindex[(startv + 1) % 3];
 
     // look for a matching triangle
-nexttri:
-    for (j = starttri + 1, check = &triangles[starttri + 1]; j < pheader->numtris; j++, check++)
+    auto scanForNextTri = [&]() -> TriScanResult {
+        for (j = starttri + 1, check = &triangles[starttri + 1]; j < pheader->numtris; j++, check++)
+        {
+            if (check->facesfront != last->facesfront)
+            {
+                continue;
+            }
+            for (k = 0; k < 3; k++)
+            {
+                if (check->vertindex[k] != m1)
+                {
+                    continue;
+                }
+                if (check->vertindex[(k + 1) % 3] != m2)
+                {
+                    continue;
+                }
+
+                // this is the next part of the fan
+
+                // if we can't use this triangle, this tristrip is done
+                if (used[j])
+                {
+                    return TriScanResult::AlreadyUsed;
+                }
+
+                // the new edge
+                if (stripcount & 1)
+                {
+                    m2 = check->vertindex[(k + 2) % 3];
+                }
+                else
+                {
+                    m1 = check->vertindex[(k + 2) % 3];
+                }
+
+                stripverts[stripcount + 2] = check->vertindex[(k + 2) % 3];
+                striptris[stripcount] = j;
+                stripcount++;
+
+                used[j] = 2;
+                return TriScanResult::Extended;
+            }
+        }
+        return TriScanResult::NoMatch;
+    };
+
+    while (scanForNextTri() == TriScanResult::Extended)
     {
-        if (check->facesfront != last->facesfront)
-        {
-            continue;
-        }
-        for (k = 0; k < 3; k++)
-        {
-            if (check->vertindex[k] != m1)
-            {
-                continue;
-            }
-            if (check->vertindex[(k + 1) % 3] != m2)
-            {
-                continue;
-            }
-
-            // this is the next part of the fan
-
-            // if we can't use this triangle, this tristrip is done
-            if (used[j])
-            {
-                goto done;
-            }
-
-            // the new edge
-            if (stripcount & 1)
-            {
-                m2 = check->vertindex[(k + 2) % 3];
-            }
-            else
-            {
-                m1 = check->vertindex[(k + 2) % 3];
-            }
-
-            stripverts[stripcount + 2] = check->vertindex[(k + 2) % 3];
-            striptris[stripcount] = j;
-            stripcount++;
-
-            used[j] = 2;
-            goto nexttri;
-        }
     }
-done:
 
     // clear the temp used flags
     for (j = starttri + 1; j < pheader->numtris; j++)
@@ -169,44 +181,49 @@ int FanLength(int starttri, int startv)
     m2 = last->vertindex[(startv + 2) % 3];
 
     // look for a matching triangle
-nexttri:
-    for (j = starttri + 1, check = &triangles[starttri + 1]; j < pheader->numtris; j++, check++)
+    auto scanForNextTri = [&]() -> TriScanResult {
+        for (j = starttri + 1, check = &triangles[starttri + 1]; j < pheader->numtris; j++, check++)
+        {
+            if (check->facesfront != last->facesfront)
+            {
+                continue;
+            }
+            for (k = 0; k < 3; k++)
+            {
+                if (check->vertindex[k] != m1)
+                {
+                    continue;
+                }
+                if (check->vertindex[(k + 1) % 3] != m2)
+                {
+                    continue;
+                }
+
+                // this is the next part of the fan
+
+                // if we can't use this triangle, this tristrip is done
+                if (used[j])
+                {
+                    return TriScanResult::AlreadyUsed;
+                }
+
+                // the new edge
+                m2 = check->vertindex[(k + 2) % 3];
+
+                stripverts[stripcount + 2] = m2;
+                striptris[stripcount] = j;
+                stripcount++;
+
+                used[j] = 2;
+                return TriScanResult::Extended;
+            }
+        }
+        return TriScanResult::NoMatch;
+    };
+
+    while (scanForNextTri() == TriScanResult::Extended)
     {
-        if (check->facesfront != last->facesfront)
-        {
-            continue;
-        }
-        for (k = 0; k < 3; k++)
-        {
-            if (check->vertindex[k] != m1)
-            {
-                continue;
-            }
-            if (check->vertindex[(k + 1) % 3] != m2)
-            {
-                continue;
-            }
-
-            // this is the next part of the fan
-
-            // if we can't use this triangle, this tristrip is done
-            if (used[j])
-            {
-                goto done;
-            }
-
-            // the new edge
-            m2 = check->vertindex[(k + 2) % 3];
-
-            stripverts[stripcount + 2] = m2;
-            striptris[stripcount] = j;
-            stripcount++;
-
-            used[j] = 2;
-            goto nexttri;
-        }
     }
-done:
 
     // clear the temp used flags
     for (j = starttri + 1; j < pheader->numtris; j++)

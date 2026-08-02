@@ -524,7 +524,6 @@ qboolean SV_ReadClientMessage(void)
 
     do
     {
-    nextmsg:
         ret = NET_GetMessage(host_client->netconnection);
         if (ret == -1)
         {
@@ -538,7 +537,8 @@ qboolean SV_ReadClientMessage(void)
 
         MSG_BeginReading();
 
-        while (1)
+        bool endOfMessage = false;
+        while (!endOfMessage)
         {
             if (!host_client->active)
             {
@@ -556,7 +556,8 @@ qboolean SV_ReadClientMessage(void)
             switch (cmd)
             {
             case -1:
-                goto nextmsg; // end of message
+                endOfMessage = true; // end of message
+                break;
 
             default:
                 Sys_Printf("SV_ReadClientMessage: unknown command char\n");

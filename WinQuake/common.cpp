@@ -1038,25 +1038,28 @@ const char *COM_Parse(const char *data)
         return nullptr;
     }
 
-// skip whitespace
-skipwhite:
-    while ((c = *data) <= ' ')
+    // skip whitespace
+    while (true)
     {
-        if (c == 0)
+        while ((c = *data) <= ' ')
         {
-            return nullptr; // end of file;
-        }
-        data++;
-    }
-
-    // skip // comments
-    if (c == '/' && data[1] == '/')
-    {
-        while (*data && *data != '\n')
-        {
+            if (c == 0)
+            {
+                return nullptr; // end of file;
+            }
             data++;
         }
-        goto skipwhite;
+
+        // skip // comments
+        if (c == '/' && data[1] == '/')
+        {
+            while (*data && *data != '\n')
+            {
+                data++;
+            }
+            continue;
+        }
+        break;
     }
 
     // handle quoted strings specially

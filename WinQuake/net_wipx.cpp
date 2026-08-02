@@ -210,12 +210,14 @@ int WIPX_OpenSocket(int port)
 
     if (ioctlsocket(newsocket, FIONBIO, &_true) == -1)
     {
-        goto ErrorReturn;
+        closesocket(newsocket);
+        return -1;
     }
 
     if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char *>(&_true), sizeof(_true)) < 0)
     {
-        goto ErrorReturn;
+        closesocket(newsocket);
+        return -1;
     }
 
     address.sa_family = AF_IPX;
@@ -231,9 +233,6 @@ int WIPX_OpenSocket(int port)
     }
 
     Sys_Error("Winsock IPX bind failed\n");
-ErrorReturn:
-    closesocket(newsocket);
-    return -1;
 }
 
 //=============================================================================

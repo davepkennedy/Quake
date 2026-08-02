@@ -377,12 +377,46 @@ qsocket_t *NET_Connect(const char *host)
         host = nullptr;
     }
 
+    bool skipDiscovery = false;
     if (host)
     {
         if (Q_strcasecmp(host, "local") == 0)
         {
             numdrivers = 1;
-            goto JustDoIt;
+            skipDiscovery = true;
+        }
+        else if (hostCacheCount)
+        {
+            for (n = 0; n < hostCacheCount; n++)
+            {
+                if (Q_strcasecmp(host, hostcache[n].name) == 0)
+                {
+                    host = hostcache[n].cname;
+                    break;
+                }
+            }
+            skipDiscovery = (n < hostCacheCount);
+        }
+    }
+
+    if (!skipDiscovery)
+    {
+        slistSilent = host ? true : false;
+        NET_Slist_f();
+
+        while (slistInProgress)
+        {
+            NET_Poll();
+        }
+
+        if (host == nullptr)
+        {
+            if (hostCacheCount != 1)
+            {
+                return nullptr;
+            }
+            host = hostcache[0].cname;
+            Con_Printf("Connecting to...\n%s @ %s\n\n", hostcache[0].name, host);
         }
 
         if (hostCacheCount)
@@ -395,44 +429,9 @@ qsocket_t *NET_Connect(const char *host)
                     break;
                 }
             }
-            if (n < hostCacheCount)
-            {
-                goto JustDoIt;
-            }
         }
     }
 
-    slistSilent = host ? true : false;
-    NET_Slist_f();
-
-    while (slistInProgress)
-    {
-        NET_Poll();
-    }
-
-    if (host == nullptr)
-    {
-        if (hostCacheCount != 1)
-        {
-            return nullptr;
-        }
-        host = hostcache[0].cname;
-        Con_Printf("Connecting to...\n%s @ %s\n\n", hostcache[0].name, host);
-    }
-
-    if (hostCacheCount)
-    {
-        for (n = 0; n < hostCacheCount; n++)
-        {
-            if (Q_strcasecmp(host, hostcache[n].name) == 0)
-            {
-                host = hostcache[n].cname;
-                break;
-            }
-        }
-    }
-
-JustDoIt:
     for (net_driverlevel = 0; net_driverlevel < numdrivers; net_driverlevel++)
     {
         if (net_drivers[net_driverlevel].initialized == false)
