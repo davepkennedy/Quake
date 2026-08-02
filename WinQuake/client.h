@@ -62,21 +62,21 @@ struct cshift_t
     int percent; // 0-256
 };
 
-#define CSHIFT_CONTENTS 0
-#define CSHIFT_DAMAGE 1
-#define CSHIFT_BONUS 2
-#define CSHIFT_POWERUP 3
-#define NUM_CSHIFTS 4
+constexpr int CSHIFT_CONTENTS = 0;
+constexpr int CSHIFT_DAMAGE = 1;
+constexpr int CSHIFT_BONUS = 2;
+constexpr int CSHIFT_POWERUP = 3;
+constexpr int NUM_CSHIFTS = 4;
 
-#define NAME_LENGTH 64
+constexpr int NAME_LENGTH = 64;
 
 //
 // client_state_t should hold all pieces of the client state
 //
 
-#define SIGNONS 4 // signon messages to receive before connected
+constexpr int SIGNONS = 4; // signon messages to receive before connected
 
-#define MAX_DLIGHTS 32
+constexpr int MAX_DLIGHTS = 32;
 struct dlight_t
 {
     vec3_t origin;
@@ -87,7 +87,7 @@ struct dlight_t
     int key;
 };
 
-#define MAX_BEAMS 24
+constexpr int MAX_BEAMS = 24;
 struct beam_t
 {
     int entity;
@@ -96,11 +96,11 @@ struct beam_t
     vec3_t start, end;
 };
 
-#define MAX_EFRAGS 640
+constexpr int MAX_EFRAGS = 640;
 
-#define MAX_MAPSTRING 2048
-#define MAX_DEMOS 8
-#define MAX_DEMONAME 16
+constexpr int MAX_MAPSTRING = 2048;
+constexpr int MAX_DEMOS = 8;
+constexpr int MAX_DEMONAME = 16;
 
 enum class cactive_t
 {
@@ -269,8 +269,8 @@ extern cvar_t m_yaw;
 extern cvar_t m_forward;
 extern cvar_t m_side;
 
-#define MAX_TEMP_ENTITIES 64    // lightning bolts, etc
-#define MAX_STATIC_ENTITIES 128 // torches, etc
+constexpr int MAX_TEMP_ENTITIES = 64;    // lightning bolts, etc
+constexpr int MAX_STATIC_ENTITIES = 128; // torches, etc
 
 extern client_state_t cl;
 
@@ -336,7 +336,7 @@ void CL_Disconnect(void);
 void CL_Disconnect_f(void);
 void CL_NextDemo(void);
 
-#define MAX_VISEDICTS 256
+constexpr int MAX_VISEDICTS = 256;
 extern int cl_numvisedicts;
 extern entity_t *cl_visedicts[MAX_VISEDICTS];
 

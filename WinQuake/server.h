@@ -86,8 +86,8 @@ struct server_t
     byte signon_buf[8192];
 };
 
-#define NUM_PING_TIMES 16
-#define NUM_SPAWN_PARMS 16
+constexpr int NUM_PING_TIMES = 16;
+constexpr int NUM_SPAWN_PARMS = 16;
 
 struct client_t
 {
@@ -125,61 +125,61 @@ struct client_t
 //=============================================================================
 
 // edict->movetype values
-#define MOVETYPE_NONE 0 // never moves
-#define MOVETYPE_ANGLENOCLIP 1
-#define MOVETYPE_ANGLECLIP 2
-#define MOVETYPE_WALK 3 // gravity
-#define MOVETYPE_STEP 4 // gravity, special edge handling
-#define MOVETYPE_FLY 5
-#define MOVETYPE_TOSS 6 // gravity
-#define MOVETYPE_PUSH 7 // no clip to world, push and crush
-#define MOVETYPE_NOCLIP 8
-#define MOVETYPE_FLYMISSILE 9 // extra size to monsters
-#define MOVETYPE_BOUNCE 10
+constexpr int MOVETYPE_NONE = 0; // never moves
+constexpr int MOVETYPE_ANGLENOCLIP = 1;
+constexpr int MOVETYPE_ANGLECLIP = 2;
+constexpr int MOVETYPE_WALK = 3; // gravity
+constexpr int MOVETYPE_STEP = 4; // gravity, special edge handling
+constexpr int MOVETYPE_FLY = 5;
+constexpr int MOVETYPE_TOSS = 6; // gravity
+constexpr int MOVETYPE_PUSH = 7; // no clip to world, push and crush
+constexpr int MOVETYPE_NOCLIP = 8;
+constexpr int MOVETYPE_FLYMISSILE = 9; // extra size to monsters
+constexpr int MOVETYPE_BOUNCE = 10;
 
 // edict->solid values
-#define SOLID_NOT 0      // no interaction with other objects
-#define SOLID_TRIGGER 1  // touch on edge, but not blocking
-#define SOLID_BBOX 2     // touch on edge, block
-#define SOLID_SLIDEBOX 3 // touch on edge, but not an onground
-#define SOLID_BSP 4      // bsp clip, touch on edge, block
+constexpr int SOLID_NOT = 0;      // no interaction with other objects
+constexpr int SOLID_TRIGGER = 1;  // touch on edge, but not blocking
+constexpr int SOLID_BBOX = 2;     // touch on edge, block
+constexpr int SOLID_SLIDEBOX = 3; // touch on edge, but not an onground
+constexpr int SOLID_BSP = 4;      // bsp clip, touch on edge, block
 
 // edict->deadflag values
-#define DEAD_NO 0
-#define DEAD_DYING 1
-#define DEAD_DEAD 2
+constexpr int DEAD_NO = 0;
+constexpr int DEAD_DYING = 1;
+constexpr int DEAD_DEAD = 2;
 
-#define DAMAGE_NO 0
-#define DAMAGE_YES 1
-#define DAMAGE_AIM 2
+constexpr int DAMAGE_NO = 0;
+constexpr int DAMAGE_YES = 1;
+constexpr int DAMAGE_AIM = 2;
 
 // edict->flags
-#define FL_FLY 1
-#define FL_SWIM 2
+constexpr int FL_FLY = 1;
+constexpr int FL_SWIM = 2;
 // #define	FL_GLIMPSE				4
-#define FL_CONVEYOR 4
-#define FL_CLIENT 8
-#define FL_INWATER 16
-#define FL_MONSTER 32
-#define FL_GODMODE 64
-#define FL_NOTARGET 128
-#define FL_ITEM 256
-#define FL_ONGROUND 512
-#define FL_PARTIALGROUND 1024 // not all corners are valid
-#define FL_WATERJUMP 2048     // player jumping out of water
-#define FL_JUMPRELEASED 4096  // for jump debouncing
+constexpr int FL_CONVEYOR = 4;
+constexpr int FL_CLIENT = 8;
+constexpr int FL_INWATER = 16;
+constexpr int FL_MONSTER = 32;
+constexpr int FL_GODMODE = 64;
+constexpr int FL_NOTARGET = 128;
+constexpr int FL_ITEM = 256;
+constexpr int FL_ONGROUND = 512;
+constexpr int FL_PARTIALGROUND = 1024; // not all corners are valid
+constexpr int FL_WATERJUMP = 2048;     // player jumping out of water
+constexpr int FL_JUMPRELEASED = 4096;  // for jump debouncing
 
 // entity effects
 
-#define EF_BRIGHTFIELD 1
-#define EF_MUZZLEFLASH 2
-#define EF_BRIGHTLIGHT 4
-#define EF_DIMLIGHT 8
+constexpr int EF_BRIGHTFIELD = 1;
+constexpr int EF_MUZZLEFLASH = 2;
+constexpr int EF_BRIGHTLIGHT = 4;
+constexpr int EF_DIMLIGHT = 8;
 
-#define SPAWNFLAG_NOT_EASY 256
-#define SPAWNFLAG_NOT_MEDIUM 512
-#define SPAWNFLAG_NOT_HARD 1024
-#define SPAWNFLAG_NOT_DEATHMATCH 2048
+constexpr int SPAWNFLAG_NOT_EASY = 256;
+constexpr int SPAWNFLAG_NOT_MEDIUM = 512;
+constexpr int SPAWNFLAG_NOT_HARD = 1024;
+constexpr int SPAWNFLAG_NOT_DEATHMATCH = 2048;
 
 
 //============================================================================

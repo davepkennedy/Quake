@@ -38,18 +38,18 @@ LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 typedef HGLRC(WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int *attribList);
 
-#define MAX_MODE_LIST 30
-#define VID_ROW_SIZE 3
-#define WARP_WIDTH 320
-#define WARP_HEIGHT 200
-#define MAXWIDTH 10000
-#define MAXHEIGHT 10000
-#define BASEWIDTH 320
-#define BASEHEIGHT 200
+constexpr int MAX_MODE_LIST = 30;
+constexpr int VID_ROW_SIZE = 3;
+constexpr int WARP_WIDTH = 320;
+constexpr int WARP_HEIGHT = 200;
+constexpr int MAXWIDTH = 10000;
+constexpr int MAXHEIGHT = 10000;
+constexpr int BASEWIDTH = 320;
+constexpr int BASEHEIGHT = 200;
 
-#define MODE_WINDOWED 0
-#define NO_MODE (MODE_WINDOWED - 1)
-#define MODE_FULLSCREEN_DEFAULT (MODE_WINDOWED + 1)
+constexpr int MODE_WINDOWED = 0;
+constexpr int NO_MODE = (MODE_WINDOWED - 1);
+constexpr int MODE_FULLSCREEN_DEFAULT = (MODE_WINDOWED + 1);
 
 struct vmode_t
 {
@@ -561,7 +561,7 @@ int texture_mode = GL_LINEAR;
 
 int texture_extension_number = 1;
 
-#define TEXTURE_NAME_BATCH 2048
+constexpr int TEXTURE_NAME_BATCH = 2048;
 
 // one past the last GL texture name known to be reserved; 0 means "not yet initialized"
 static GLuint texture_pool_end = 0;
@@ -2117,9 +2117,9 @@ struct modedesc_t
     int iscur;
 };
 
-#define MAX_COLUMN_SIZE 9
-#define MODE_AREA_HEIGHT (MAX_COLUMN_SIZE + 2)
-#define MAX_MODEDESCS (MAX_COLUMN_SIZE * 3)
+constexpr int MAX_COLUMN_SIZE = 9;
+constexpr int MODE_AREA_HEIGHT = (MAX_COLUMN_SIZE + 2);
+constexpr int MAX_MODEDESCS = (MAX_COLUMN_SIZE * 3);
 
 static modedesc_t modedescs[MAX_MODEDESCS];
 

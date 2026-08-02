@@ -39,12 +39,8 @@ m*_t structures are in-memory
 
 */
 
-// entity effects
-
-#define EF_BRIGHTFIELD 1
-#define EF_MUZZLEFLASH 2
-#define EF_BRIGHTLIGHT 4
-#define EF_DIMLIGHT 8
+// entity effects (EF_BRIGHTFIELD/EF_MUZZLEFLASH/EF_BRIGHTLIGHT/EF_DIMLIGHT) are
+// declared once in server.h, included before this header from quakedef.h
 
 /*
 ==============================================================================
@@ -63,9 +59,9 @@ struct mvertex_t
     vec3_t position;
 };
 
-#define SIDE_FRONT 0
-#define SIDE_BACK 1
-#define SIDE_ON 2
+constexpr int SIDE_FRONT = 0;
+constexpr int SIDE_BACK = 1;
+constexpr int SIDE_ON = 2;
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
@@ -91,13 +87,13 @@ struct texture_t
     unsigned offsets[MIPLEVELS];       // four mip maps stored
 };
 
-#define SURF_PLANEBACK 2
-#define SURF_DRAWSKY 4
-#define SURF_DRAWSPRITE 8
-#define SURF_DRAWTURB 0x10
-#define SURF_DRAWTILED 0x20
-#define SURF_DRAWBACKGROUND 0x40
-#define SURF_UNDERWATER 0x80
+constexpr int SURF_PLANEBACK = 2;
+constexpr int SURF_DRAWSKY = 4;
+constexpr int SURF_DRAWSPRITE = 8;
+constexpr int SURF_DRAWTURB = 0x10;
+constexpr int SURF_DRAWTILED = 0x20;
+constexpr int SURF_DRAWBACKGROUND = 0x40;
+constexpr int SURF_UNDERWATER = 0x80;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 struct medge_t
@@ -114,7 +110,7 @@ struct mtexinfo_t
     int flags;
 };
 
-#define VERTEXSIZE 7
+constexpr int VERTEXSIZE = 7;
 
 struct glpoly_t
 {
@@ -287,7 +283,7 @@ struct mtriangle_t
     int vertindex[3];
 };
 
-#define MAX_SKINS 32
+constexpr int MAX_SKINS = 32;
 struct aliashdr_t
 {
     int ident;
@@ -315,9 +311,9 @@ struct aliashdr_t
     maliasframedesc_t frames[1]; // variable sized
 };
 
-#define MAXALIASVERTS 1024
-#define MAXALIASFRAMES 256
-#define MAXALIASTRIS 2048
+constexpr int MAXALIASVERTS = 1024;
+constexpr int MAXALIASFRAMES = 256;
+constexpr int MAXALIASTRIS = 2048;
 extern aliashdr_t *pheader;
 extern stvert_t stverts[MAXALIASVERTS];
 extern mtriangle_t triangles[MAXALIASTRIS];
@@ -336,14 +332,14 @@ enum class modtype_t
     mod_alias
 };
 
-#define EF_ROCKET 1    // leave a trail
-#define EF_GRENADE 2   // leave a trail
-#define EF_GIB 4       // leave a trail
-#define EF_ROTATE 8    // rotate (bonus items)
-#define EF_TRACER 16   // green split trail
-#define EF_ZOMGIB 32   // small blood trail
-#define EF_TRACER2 64  // orange split trail + rotate
-#define EF_TRACER3 128 // purple trail
+constexpr int EF_ROCKET = 1;    // leave a trail
+constexpr int EF_GRENADE = 2;   // leave a trail
+constexpr int EF_GIB = 4;       // leave a trail
+constexpr int EF_ROTATE = 8;    // rotate (bonus items)
+constexpr int EF_TRACER = 16;   // green split trail
+constexpr int EF_ZOMGIB = 32;   // small blood trail
+constexpr int EF_TRACER2 = 64;  // orange split trail + rotate
+constexpr int EF_TRACER3 = 128; // purple trail
 
 struct model_t
 {

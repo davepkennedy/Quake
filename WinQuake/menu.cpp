@@ -259,7 +259,7 @@ void M_ToggleMenu_f(void)
 //=============================================================================
 /* MAIN MENU */
 
-#define MAIN_ITEMS 5
+constexpr int MAIN_ITEMS = 5;
 
 class MainMenu : public MenuScreen
 {
@@ -358,7 +358,7 @@ void MainMenu::Key(int key)
 //=============================================================================
 /* SINGLE PLAYER MENU */
 
-#define SINGLEPLAYER_ITEMS 3
+constexpr int SINGLEPLAYER_ITEMS = 3;
 
 class SinglePlayerMenu : public MenuScreen
 {
@@ -453,7 +453,7 @@ void SinglePlayerMenu::Key(int key)
 
 int load_cursor; // 0 < load_cursor < MAX_SAVEGAMES
 
-#define MAX_SAVEGAMES 12
+constexpr int MAX_SAVEGAMES = 12;
 char m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
 int loadable[MAX_SAVEGAMES];
 
@@ -660,7 +660,7 @@ void SaveMenu::Key(int k)
 //=============================================================================
 /* MULTIPLAYER MENU */
 
-#define MULTIPLAYER_ITEMS 3
+constexpr int MULTIPLAYER_ITEMS = 3;
 
 class MultiPlayerMenu : public MenuScreen
 {
@@ -753,7 +753,7 @@ void MultiPlayerMenu::Key(int key)
 
 int setup_cursor_table[] = {40, 56, 80, 104, 140};
 
-#define NUM_SETUP_CMDS 5
+constexpr int NUM_SETUP_CMDS = 5;
 
 class SetupMenu : public MenuScreen
 {
@@ -1115,12 +1115,12 @@ again:
 /* OPTIONS MENU */
 
 #ifdef _WIN32
-#define OPTIONS_ITEMS 14
+constexpr int OPTIONS_ITEMS = 14;
 #else
-#define OPTIONS_ITEMS 13
+constexpr int OPTIONS_ITEMS = 13;
 #endif
 
-#define SLIDER_RANGE 10
+constexpr int SLIDER_RANGE = 10;
 
 class OptionsMenu : public MenuScreen
 {
@@ -1443,7 +1443,7 @@ const char *bindnames[][2] = {{"+attack", "attack"},       {"impulse 10", "chang
                               {"+mlook", "mouse look"},    {"+klook", "keyboard look"},
                               {"+moveup", "swim up"},      {"+movedown", "swim down"}};
 
-#define NUMCOMMANDS (sizeof(bindnames) / sizeof(bindnames[0]))
+constexpr int NUMCOMMANDS = (sizeof(bindnames) / sizeof(bindnames[0]));
 
 class KeysMenu : public MenuScreen
 {
@@ -1617,7 +1617,7 @@ void VideoMenu::Key(int key)
 //=============================================================================
 /* HELP MENU */
 
-#define NUM_HELP_PAGES 6
+constexpr int NUM_HELP_PAGES = 6;
 
 class HelpMenu : public MenuScreen
 {
@@ -1793,7 +1793,7 @@ void QuitMenu::Draw(void)
 /* LAN CONFIG MENU */
 
 int lanConfig_cursor_table[] = {72, 92, 124};
-#define NUM_LANCONFIG_CMDS 3
+constexpr int NUM_LANCONFIG_CMDS = 3;
 
 class LanConfigMenu : public MenuScreen
 {
@@ -2161,7 +2161,7 @@ episode_t rogueepisodes[] = {
     {"Introduction", 0, 1}, {"Hell's Fortress", 1, 7}, {"Corridors of Time", 8, 8}, {"Deathmatch Arena", 16, 1}};
 
 int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 88, 96, 112, 120};
-#define NUM_GAMEOPTIONS 9
+constexpr int NUM_GAMEOPTIONS = 9;
 
 class GameOptionsMenu : public MenuScreen
 {

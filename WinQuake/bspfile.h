@@ -23,62 +23,62 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // upper design bounds
 
-#define MAX_MAP_HULLS 4
+constexpr int MAX_MAP_HULLS = 4;
 
-#define MAX_MAP_MODELS 256
-#define MAX_MAP_BRUSHES 4096
-#define MAX_MAP_ENTITIES 1024
-#define MAX_MAP_ENTSTRING 65536
+constexpr int MAX_MAP_MODELS = 256;
+constexpr int MAX_MAP_BRUSHES = 4096;
+constexpr int MAX_MAP_ENTITIES = 1024;
+constexpr int MAX_MAP_ENTSTRING = 65536;
 
-#define MAX_MAP_PLANES 32767
-#define MAX_MAP_NODES 32767     // because negative shorts are contents
-#define MAX_MAP_CLIPNODES 32767 //
-#define MAX_MAP_LEAFS 8192
-#define MAX_MAP_VERTS 65535
-#define MAX_MAP_FACES 65535
-#define MAX_MAP_MARKSURFACES 65535
-#define MAX_MAP_TEXINFO 4096
-#define MAX_MAP_EDGES 256000
-#define MAX_MAP_SURFEDGES 512000
-#define MAX_MAP_TEXTURES 512
-#define MAX_MAP_MIPTEX 0x200000
-#define MAX_MAP_LIGHTING 0x100000
-#define MAX_MAP_VISIBILITY 0x100000
+constexpr int MAX_MAP_PLANES = 32767;
+constexpr int MAX_MAP_NODES = 32767;     // because negative shorts are contents
+constexpr int MAX_MAP_CLIPNODES = 32767; //
+constexpr int MAX_MAP_LEAFS = 8192;
+constexpr int MAX_MAP_VERTS = 65535;
+constexpr int MAX_MAP_FACES = 65535;
+constexpr int MAX_MAP_MARKSURFACES = 65535;
+constexpr int MAX_MAP_TEXINFO = 4096;
+constexpr int MAX_MAP_EDGES = 256000;
+constexpr int MAX_MAP_SURFEDGES = 512000;
+constexpr int MAX_MAP_TEXTURES = 512;
+constexpr int MAX_MAP_MIPTEX = 0x200000;
+constexpr int MAX_MAP_LIGHTING = 0x100000;
+constexpr int MAX_MAP_VISIBILITY = 0x100000;
 
-#define MAX_MAP_PORTALS 65536
+constexpr int MAX_MAP_PORTALS = 65536;
 
 // key / value pair sizes
 
-#define MAX_KEY 32
-#define MAX_VALUE 1024
+constexpr int MAX_KEY = 32;
+constexpr int MAX_VALUE = 1024;
 
 //=============================================================================
 
-#define BSPVERSION 29
-#define TOOLVERSION 2
+constexpr int BSPVERSION = 29;
+constexpr int TOOLVERSION = 2;
 
 struct lump_t
 {
     int fileofs, filelen;
 };
 
-#define LUMP_ENTITIES 0
-#define LUMP_PLANES 1
-#define LUMP_TEXTURES 2
-#define LUMP_VERTEXES 3
-#define LUMP_VISIBILITY 4
-#define LUMP_NODES 5
-#define LUMP_TEXINFO 6
-#define LUMP_FACES 7
-#define LUMP_LIGHTING 8
-#define LUMP_CLIPNODES 9
-#define LUMP_LEAFS 10
-#define LUMP_MARKSURFACES 11
-#define LUMP_EDGES 12
-#define LUMP_SURFEDGES 13
-#define LUMP_MODELS 14
+constexpr int LUMP_ENTITIES = 0;
+constexpr int LUMP_PLANES = 1;
+constexpr int LUMP_TEXTURES = 2;
+constexpr int LUMP_VERTEXES = 3;
+constexpr int LUMP_VISIBILITY = 4;
+constexpr int LUMP_NODES = 5;
+constexpr int LUMP_TEXINFO = 6;
+constexpr int LUMP_FACES = 7;
+constexpr int LUMP_LIGHTING = 8;
+constexpr int LUMP_CLIPNODES = 9;
+constexpr int LUMP_LEAFS = 10;
+constexpr int LUMP_MARKSURFACES = 11;
+constexpr int LUMP_EDGES = 12;
+constexpr int LUMP_SURFEDGES = 13;
+constexpr int LUMP_MODELS = 14;
 
-#define HEADER_LUMPS 15
+constexpr int HEADER_LUMPS = 15;
 
 struct dmodel_t
 {
@@ -101,7 +101,7 @@ struct dmiptexlump_t
     int dataofs[4]; // [nummiptex]
 };
 
-#define MIPLEVELS 4
+constexpr int MIPLEVELS = 4;
 struct miptex_t
 {
     char name[16];
@@ -115,14 +115,14 @@ struct dvertex_t
 };
 
 // 0-2 are axial planes
-#define PLANE_X 0
-#define PLANE_Y 1
-#define PLANE_Z 2
+constexpr int PLANE_X = 0;
+constexpr int PLANE_Y = 1;
+constexpr int PLANE_Z = 2;
 
 // 3-5 are non-axial planes snapped to the nearest
-#define PLANE_ANYX 3
-#define PLANE_ANYY 4
-#define PLANE_ANYZ 5
+constexpr int PLANE_ANYX = 3;
+constexpr int PLANE_ANYY = 4;
+constexpr int PLANE_ANYZ = 5;
 
 struct dplane_t
 {
@@ -131,21 +131,21 @@ struct dplane_t
     int type; // PLANE_X - PLANE_ANYZ ?remove? trivial to regenerate
 };
 
-#define CONTENTS_EMPTY -1
-#define CONTENTS_SOLID -2
-#define CONTENTS_WATER -3
-#define CONTENTS_SLIME -4
-#define CONTENTS_LAVA -5
-#define CONTENTS_SKY -6
-#define CONTENTS_ORIGIN -7 // removed at csg time
-#define CONTENTS_CLIP -8   // changed to contents_solid
+constexpr int CONTENTS_EMPTY = -1;
+constexpr int CONTENTS_SOLID = -2;
+constexpr int CONTENTS_WATER = -3;
+constexpr int CONTENTS_SLIME = -4;
+constexpr int CONTENTS_LAVA = -5;
+constexpr int CONTENTS_SKY = -6;
+constexpr int CONTENTS_ORIGIN = -7; // removed at csg time
+constexpr int CONTENTS_CLIP = -8;   // changed to contents_solid
 
-#define CONTENTS_CURRENT_0 -9
-#define CONTENTS_CURRENT_90 -10
-#define CONTENTS_CURRENT_180 -11
-#define CONTENTS_CURRENT_270 -12
-#define CONTENTS_CURRENT_UP -13
-#define CONTENTS_CURRENT_DOWN -14
+constexpr int CONTENTS_CURRENT_0 = -9;
+constexpr int CONTENTS_CURRENT_90 = -10;
+constexpr int CONTENTS_CURRENT_180 = -11;
+constexpr int CONTENTS_CURRENT_270 = -12;
+constexpr int CONTENTS_CURRENT_UP = -13;
+constexpr int CONTENTS_CURRENT_DOWN = -14;
 
 // !!! if this is changed, it must be changed in asm_i386.h too !!!
 struct dnode_t
@@ -170,7 +170,7 @@ struct texinfo_t
     int miptex;
     int flags;
 };
-#define TEX_SPECIAL 1 // sky or slime, no lightmap or 256 subdivision
+constexpr int TEX_SPECIAL = 1; // sky or slime, no lightmap or 256 subdivision
 
 // note that edge 0 is never used, because negative edge nums are used for
 // counterclockwise use of the edge in a face
@@ -179,7 +179,7 @@ struct dedge_t
     unsigned short v[2]; // vertex numbers
 };
 
-#define MAXLIGHTMAPS 4
+constexpr int MAXLIGHTMAPS = 4;
 struct dface_t
 {
     short planenum;
@@ -194,12 +194,12 @@ struct dface_t
     int lightofs; // start of [numstyles*surfsize] samples
 };
 
-#define AMBIENT_WATER 0
-#define AMBIENT_SKY 1
-#define AMBIENT_SLIME 2
-#define AMBIENT_LAVA 3
+constexpr int AMBIENT_WATER = 0;
+constexpr int AMBIENT_SKY = 1;
+constexpr int AMBIENT_SLIME = 2;
+constexpr int AMBIENT_LAVA = 3;
 
-#define NUM_AMBIENTS 4 // automatic ambient sounds
+constexpr int NUM_AMBIENTS = 4; // automatic ambient sounds
 
 // leaf 0 is the generic CONTENTS_SOLID leaf, used for all solid areas
 // all other leafs need visibility info
@@ -221,8 +221,8 @@ struct dleaf_t
 
 #ifndef QUAKE_GAME
 
-#define ANGLE_UP -1
-#define ANGLE_DOWN -2
+constexpr int ANGLE_UP = -1;
+constexpr int ANGLE_DOWN = -2;
 
 // the utilities get to be lazy and just use large static arrays
 

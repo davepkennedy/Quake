@@ -32,22 +32,22 @@ struct qsockaddr
     unsigned char sa_data[14];
 };
 
-#define NET_NAMELEN 64
+constexpr int NET_NAMELEN = 64;
 
-#define NET_MAXMESSAGE 8192
-#define NET_HEADERSIZE (2 * sizeof(unsigned int))
-#define NET_DATAGRAMSIZE (MAX_DATAGRAM + NET_HEADERSIZE)
+constexpr int NET_MAXMESSAGE = 8192;
+constexpr int NET_HEADERSIZE = (2 * sizeof(unsigned int));
+constexpr int NET_DATAGRAMSIZE = (MAX_DATAGRAM + NET_HEADERSIZE);
 
 // NetHeader flags
-#define NETFLAG_LENGTH_MASK 0x0000ffff
-#define NETFLAG_DATA 0x00010000
-#define NETFLAG_ACK 0x00020000
-#define NETFLAG_NAK 0x00040000
-#define NETFLAG_EOM 0x00080000
-#define NETFLAG_UNRELIABLE 0x00100000
-#define NETFLAG_CTL 0x80000000
+constexpr int NETFLAG_LENGTH_MASK = 0x0000ffff;
+constexpr int NETFLAG_DATA = 0x00010000;
+constexpr int NETFLAG_ACK = 0x00020000;
+constexpr int NETFLAG_NAK = 0x00040000;
+constexpr int NETFLAG_EOM = 0x00080000;
+constexpr int NETFLAG_UNRELIABLE = 0x00100000;
+constexpr int NETFLAG_CTL = 0x80000000;
 
-#define NET_PROTOCOL_VERSION 3
+constexpr int NET_PROTOCOL_VERSION = 3;
 
 // This is the network info/connection protocol.  It is used to find Quake
 // servers, get info about them, and connect to them.  Once connected, the
@@ -110,16 +110,16 @@ struct qsockaddr
 //		a full address and port in a string.  It is used for returning the
 //		address of a server that is not running locally.
 
-#define CCREQ_CONNECT 0x01
-#define CCREQ_SERVER_INFO 0x02
-#define CCREQ_PLAYER_INFO 0x03
-#define CCREQ_RULE_INFO 0x04
+constexpr int CCREQ_CONNECT = 0x01;
+constexpr int CCREQ_SERVER_INFO = 0x02;
+constexpr int CCREQ_PLAYER_INFO = 0x03;
+constexpr int CCREQ_RULE_INFO = 0x04;
 
-#define CCREP_ACCEPT 0x81
-#define CCREP_REJECT 0x82
-#define CCREP_SERVER_INFO 0x83
-#define CCREP_PLAYER_INFO 0x84
-#define CCREP_RULE_INFO 0x85
+constexpr int CCREP_ACCEPT = 0x81;
+constexpr int CCREP_REJECT = 0x82;
+constexpr int CCREP_SERVER_INFO = 0x83;
+constexpr int CCREP_PLAYER_INFO = 0x84;
+constexpr int CCREP_RULE_INFO = 0x85;
 
 struct qsocket_t
 {
@@ -206,7 +206,7 @@ struct net_landriver_t
     int (*SetSocketPort)(struct qsockaddr *addr, int port);
 };
 
-#define MAX_NET_DRIVERS 8
+constexpr int MAX_NET_DRIVERS = 8;
 extern int net_numlandrivers;
 extern net_landriver_t net_landrivers[MAX_NET_DRIVERS];
 
@@ -244,7 +244,7 @@ qsocket_t *NET_NewQSocket(void);
 void NET_FreeQSocket(qsocket_t *);
 double SetNetTime(void);
 
-#define HOSTCACHESIZE 8
+constexpr int HOSTCACHESIZE = 8;
 
 struct hostcache_t
 {

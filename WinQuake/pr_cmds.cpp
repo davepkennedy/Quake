@@ -757,7 +757,7 @@ it is not returned at all.
 name checkclient ()
 =================
 */
-#define MAX_CHECK 16
+constexpr int MAX_CHECK = 16;
 int c_invis, c_notvis;
 void PF_checkclient(void)
 {
@@ -1447,10 +1447,10 @@ MESSAGE WRITING
 ===============================================================================
 */
 
-#define MSG_BROADCAST 0 // unreliable to all
-#define MSG_ONE 1       // reliable to one (msg_entity)
-#define MSG_ALL 2       // reliable to all
-#define MSG_INIT 3      // write to the init string
+constexpr int MSG_BROADCAST = 0; // unreliable to all
+constexpr int MSG_ONE = 1;       // reliable to one (msg_entity)
+constexpr int MSG_ALL = 2;       // reliable to all
+constexpr int MSG_INIT = 3;      // write to the init string
 
 sizebuf_t *WriteDest(void)
 {
