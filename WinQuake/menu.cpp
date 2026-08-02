@@ -1715,7 +1715,7 @@ void M_Menu_Quit_f(void)
     quitMenu.prevState = m_state;
     m_state = m_state_t::m_quit;
     m_entersound = true;
-    msgNumber = rand() & 7;
+    msgNumber = Q_rand() & 7;
 }
 
 void QuitMenu::Key(int key)

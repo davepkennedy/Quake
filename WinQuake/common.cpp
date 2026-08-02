@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // common.c -- misc functions used in client and server
 
 #include "quakedef.h"
+#include <random>
 
 #define NUM_SAFE_ARGVS 7
 
@@ -498,6 +499,12 @@ float Q_atof(const char *str)
     }
 
     return val * sign;
+}
+
+int Q_rand()
+{
+    static std::mt19937 engine(std::random_device{}());
+    return static_cast<int>(engine() & 0x7fffffff);
 }
 
 /*

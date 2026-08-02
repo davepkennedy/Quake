@@ -656,7 +656,7 @@ void CL_RelinkEntities(void)
             AngleVectors(ent->angles, fv, rv, uv);
 
             VectorMA(dl->origin, 18, fv, dl->origin);
-            dl->radius = 200 + (rand() & 31);
+            dl->radius = 200 + (Q_rand() & 31);
             dl->minlight = 32;
             dl->die = cl.time + 0.1;
         }
@@ -665,14 +665,14 @@ void CL_RelinkEntities(void)
             dl = CL_AllocDlight(i);
             VectorCopy(ent->origin, dl->origin);
             dl->origin[2] += 16;
-            dl->radius = 400 + (rand() & 31);
+            dl->radius = 400 + (Q_rand() & 31);
             dl->die = cl.time + 0.001;
         }
         if (ent->effects & EF_DIMLIGHT)
         {
             dl = CL_AllocDlight(i);
             VectorCopy(ent->origin, dl->origin);
-            dl->radius = 200 + (rand() & 31);
+            dl->radius = 200 + (Q_rand() & 31);
             dl->die = cl.time + 0.001;
         }
 

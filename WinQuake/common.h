@@ -142,6 +142,14 @@ int Q_strncasecmp(const char *s1, const char *s2, int n);
 int Q_atoi(const char *str);
 float Q_atof(const char *str);
 
+int Q_rand();
+// A properly-seeded std::mt19937 wrapped to drop in for plain rand() at
+// callers with no gameplay-determinism requirement (client-side cosmetic
+// effects only -- see project notes on why server-side/QuakeC-visible
+// randomness must keep using rand() itself). Returns a full-range
+// non-negative int; existing `& mask` / `% N` call-site arithmetic is
+// unaffected since mt19937's output is well-distributed across all bits.
+
 //============================================================================
 
 extern char com_token[1024];

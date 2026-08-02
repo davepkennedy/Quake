@@ -273,7 +273,7 @@ void R_EntityParticles(entity_t *ent)
     {
         for (i = 0; i < NUMVERTEXNORMALS * 3; i++)
         {
-            avelocities[0][i] = (rand() & 255) * 0.01;
+            avelocities[0][i] = (Q_rand() & 255) * 0.01;
         }
     }
 
@@ -445,14 +445,14 @@ void R_ParticleExplosion(vec3_t org)
 
         p->die = cl.time + 5;
         p->color = ramp1[0];
-        p->ramp = rand() & 3;
+        p->ramp = Q_rand() & 3;
         if (i & 1)
         {
             p->type = ptype_t::pt_explode;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = org[j] + ((rand() % 32) - 16);
-                p->vel[j] = (rand() % 512) - 256;
+                p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+                p->vel[j] = (Q_rand() % 512) - 256;
             }
         }
         else
@@ -460,8 +460,8 @@ void R_ParticleExplosion(vec3_t org)
             p->type = ptype_t::pt_explode2;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = org[j] + ((rand() % 32) - 16);
-                p->vel[j] = (rand() % 512) - 256;
+                p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+                p->vel[j] = (Q_rand() % 512) - 256;
             }
         }
     }
@@ -497,8 +497,8 @@ void R_ParticleExplosion2(vec3_t org, int colorStart, int colorLength)
         p->type = ptype_t::pt_blob;
         for (j = 0; j < 3; j++)
         {
-            p->org[j] = org[j] + ((rand() % 32) - 16);
-            p->vel[j] = (rand() % 512) - 256;
+            p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+            p->vel[j] = (Q_rand() % 512) - 256;
         }
     }
 }
@@ -525,26 +525,26 @@ void R_BlobExplosion(vec3_t org)
         p->next = active_particles;
         active_particles = p;
 
-        p->die = cl.time + 1 + (rand() & 8) * 0.05;
+        p->die = cl.time + 1 + (Q_rand() & 8) * 0.05;
 
         if (i & 1)
         {
             p->type = ptype_t::pt_blob;
-            p->color = 66 + rand() % 6;
+            p->color = 66 + Q_rand() % 6;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = org[j] + ((rand() % 32) - 16);
-                p->vel[j] = (rand() % 512) - 256;
+                p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+                p->vel[j] = (Q_rand() % 512) - 256;
             }
         }
         else
         {
             p->type = ptype_t::pt_blob2;
-            p->color = 150 + rand() % 6;
+            p->color = 150 + Q_rand() % 6;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = org[j] + ((rand() % 32) - 16);
-                p->vel[j] = (rand() % 512) - 256;
+                p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+                p->vel[j] = (Q_rand() % 512) - 256;
             }
         }
     }
@@ -576,14 +576,14 @@ void R_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
         { // rocket explosion
             p->die = cl.time + 5;
             p->color = ramp1[0];
-            p->ramp = rand() & 3;
+            p->ramp = Q_rand() & 3;
             if (i & 1)
             {
                 p->type = ptype_t::pt_explode;
                 for (j = 0; j < 3; j++)
                 {
-                    p->org[j] = org[j] + ((rand() % 32) - 16);
-                    p->vel[j] = (rand() % 512) - 256;
+                    p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+                    p->vel[j] = (Q_rand() % 512) - 256;
                 }
             }
             else
@@ -591,20 +591,20 @@ void R_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
                 p->type = ptype_t::pt_explode2;
                 for (j = 0; j < 3; j++)
                 {
-                    p->org[j] = org[j] + ((rand() % 32) - 16);
-                    p->vel[j] = (rand() % 512) - 256;
+                    p->org[j] = org[j] + ((Q_rand() % 32) - 16);
+                    p->vel[j] = (Q_rand() % 512) - 256;
                 }
             }
         }
         else
         {
-            p->die = cl.time + 0.1 * (rand() % 5);
-            p->color = (color & ~7) + (rand() & 7);
+            p->die = cl.time + 0.1 * (Q_rand() % 5);
+            p->color = (color & ~7) + (Q_rand() & 7);
             p->type = ptype_t::pt_slowgrav;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = org[j] + ((rand() & 15) - 8);
-                p->vel[j] = dir[j] * 15; // + (rand()%300)-150;
+                p->org[j] = org[j] + ((Q_rand() & 15) - 8);
+                p->vel[j] = dir[j] * 15; // + (Q_rand()%300)-150;
             }
         }
     }
@@ -638,20 +638,20 @@ void R_LavaSplash(vec3_t org)
                 p->next = active_particles;
                 active_particles = p;
 
-                p->die = cl.time + 2 + (rand() & 31) * 0.02;
-                p->color = 224 + (rand() & 7);
+                p->die = cl.time + 2 + (Q_rand() & 31) * 0.02;
+                p->color = 224 + (Q_rand() & 7);
                 p->type = ptype_t::pt_slowgrav;
 
-                dir[0] = j * 8 + (rand() & 7);
-                dir[1] = i * 8 + (rand() & 7);
+                dir[0] = j * 8 + (Q_rand() & 7);
+                dir[1] = i * 8 + (Q_rand() & 7);
                 dir[2] = 256;
 
                 p->org[0] = org[0] + dir[0];
                 p->org[1] = org[1] + dir[1];
-                p->org[2] = org[2] + (rand() & 63);
+                p->org[2] = org[2] + (Q_rand() & 63);
 
                 VectorNormalize(dir);
-                vel = 50 + (rand() & 63);
+                vel = 50 + (Q_rand() & 63);
                 VectorScale(dir, vel, p->vel);
             }
         }
@@ -686,20 +686,20 @@ void R_TeleportSplash(vec3_t org)
                 p->next = active_particles;
                 active_particles = p;
 
-                p->die = cl.time + 0.2 + (rand() & 7) * 0.02;
-                p->color = 7 + (rand() & 7);
+                p->die = cl.time + 0.2 + (Q_rand() & 7) * 0.02;
+                p->color = 7 + (Q_rand() & 7);
                 p->type = ptype_t::pt_slowgrav;
 
                 dir[0] = j * 8;
                 dir[1] = i * 8;
                 dir[2] = k * 8;
 
-                p->org[0] = org[0] + i + (rand() & 3);
-                p->org[1] = org[1] + j + (rand() & 3);
-                p->org[2] = org[2] + k + (rand() & 3);
+                p->org[0] = org[0] + i + (Q_rand() & 3);
+                p->org[1] = org[1] + j + (Q_rand() & 3);
+                p->org[2] = org[2] + k + (Q_rand() & 3);
 
                 VectorNormalize(dir);
-                vel = 50 + (rand() & 63);
+                vel = 50 + (Q_rand() & 63);
                 VectorScale(dir, vel, p->vel);
             }
         }
@@ -746,31 +746,31 @@ void R_RocketTrail(vec3_t start, vec3_t end, int type)
         switch (type)
         {
         case 0: // rocket trail
-            p->ramp = (rand() & 3);
+            p->ramp = (Q_rand() & 3);
             p->color = ramp3[(int)p->ramp];
             p->type = ptype_t::pt_fire;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = start[j] + ((rand() % 6) - 3);
+                p->org[j] = start[j] + ((Q_rand() % 6) - 3);
             }
             break;
 
         case 1: // smoke smoke
-            p->ramp = (rand() & 3) + 2;
+            p->ramp = (Q_rand() & 3) + 2;
             p->color = ramp3[(int)p->ramp];
             p->type = ptype_t::pt_fire;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = start[j] + ((rand() % 6) - 3);
+                p->org[j] = start[j] + ((Q_rand() % 6) - 3);
             }
             break;
 
         case 2: // blood
             p->type = ptype_t::pt_grav;
-            p->color = 67 + (rand() & 3);
+            p->color = 67 + (Q_rand() & 3);
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = start[j] + ((rand() % 6) - 3);
+                p->org[j] = start[j] + ((Q_rand() % 6) - 3);
             }
             break;
 
@@ -804,21 +804,21 @@ void R_RocketTrail(vec3_t start, vec3_t end, int type)
 
         case 4: // slight blood
             p->type = ptype_t::pt_grav;
-            p->color = 67 + (rand() & 3);
+            p->color = 67 + (Q_rand() & 3);
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = start[j] + ((rand() % 6) - 3);
+                p->org[j] = start[j] + ((Q_rand() % 6) - 3);
             }
             len -= 3;
             break;
 
         case 6: // voor trail
-            p->color = 9 * 16 + 8 + (rand() & 3);
+            p->color = 9 * 16 + 8 + (Q_rand() & 3);
             p->type = ptype_t::pt_static;
             p->die = cl.time + 0.3;
             for (j = 0; j < 3; j++)
             {
-                p->org[j] = start[j] + ((rand() & 15) - 8);
+                p->org[j] = start[j] + ((Q_rand() & 15) - 8);
             }
             break;
         }

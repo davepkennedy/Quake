@@ -412,7 +412,7 @@ void CL_ParseUpdate(int bits)
         {
             if (model->synctype == synctype_t::ST_RAND)
             {
-                ent->syncbase = (float)(rand() & 0x7fff) / 0x7fff;
+                ent->syncbase = (float)(Q_rand() & 0x7fff) / 0x7fff;
             }
             else
             {
