@@ -1038,7 +1038,7 @@ void R_RecursiveWorldNode(mnode_t *node)
     {
         return;
     }
-    if (R_CullBox(node->minmaxs, node->minmaxs + 3))
+    if (R_CullBox(node->mins, node->maxs))
     {
         return;
     }

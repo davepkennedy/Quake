@@ -158,7 +158,11 @@ struct mnode_t
     int contents; // 0, to differentiate from leafs
     int visframe; // node needs to be traversed if current
 
-    float minmaxs[6]; // for bounding box culling
+    // for bounding box culling -- two independent vectors, not one packed
+    // array (avoid the pointer-offset-into-a-shared-buffer trick; each end
+    // of the box should be addressable as its own real vec3_t)
+    vec3_t mins;
+    vec3_t maxs;
 
     struct mnode_t *parent;
 
@@ -176,7 +180,9 @@ struct mleaf_t
     int contents; // wil be a negative contents number
     int visframe; // node needs to be traversed if current
 
-    float minmaxs[6]; // for bounding box culling
+    // for bounding box culling -- see mnode_t's mins/maxs comment
+    vec3_t mins;
+    vec3_t maxs;
 
     struct mnode_t *parent;
 

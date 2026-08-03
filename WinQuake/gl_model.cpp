@@ -957,8 +957,8 @@ void Mod_LoadNodes(lump_t *l)
     {
         for (j = 0; j < 3; j++)
         {
-            out->minmaxs[j] = LittleShort(in->mins[j]);
-            out->minmaxs[3 + j] = LittleShort(in->maxs[j]);
+            out->mins[j] = LittleShort(in->mins[j]);
+            out->maxs[j] = LittleShort(in->maxs[j]);
         }
 
         p = LittleLong(in->planenum);
@@ -1010,8 +1010,8 @@ void Mod_LoadLeafs(lump_t *l)
     {
         for (j = 0; j < 3; j++)
         {
-            out->minmaxs[j] = LittleShort(in->mins[j]);
-            out->minmaxs[3 + j] = LittleShort(in->maxs[j]);
+            out->mins[j] = LittleShort(in->mins[j]);
+            out->maxs[j] = LittleShort(in->maxs[j]);
         }
 
         p = LittleLong(in->contents);
