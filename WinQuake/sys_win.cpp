@@ -303,8 +303,6 @@ void Sys_MakeCodeWriteable(size_t startaddr, size_t length)
     }
 }
 
-#ifndef _M_IX86
-
 void Sys_SetFPCW(void)
 {
 }
@@ -320,8 +318,6 @@ void Sys_PopFPCW(void)
 void MaskExceptions(void)
 {
 }
-
-#endif
 
 /*
 ================

@@ -23,38 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define BAN_TEST
 
 #ifdef BAN_TEST
-#if defined(_WIN32)
 #include <windows.h>
-#elif defined(NeXT)
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#else
-#define AF_INET 2          /* internet */
-struct in_addr
-{
-    union {
-        struct
-        {
-            unsigned char s_b1, s_b2, s_b3, s_b4;
-        } S_un_b;
-        struct
-        {
-            unsigned short s_w1, s_w2;
-        } S_un_w;
-        unsigned long S_addr;
-    } S_un;
-};
-#define s_addr S_un.S_addr /* can be used for most tcp & ip code */
-struct sockaddr_in
-{
-    short sin_family;
-    unsigned short sin_port;
-    struct in_addr sin_addr;
-    char sin_zero[8];
-};
-char *inet_ntoa(struct in_addr in);
-unsigned long inet_addr(const char *cp);
-#endif
 #endif // BAN_TEST
 
 #include "quakedef.h"
@@ -87,22 +56,6 @@ extern int m_return_state;
 extern m_state_t m_state;
 extern qboolean m_return_onerror;
 extern char m_return_reason[32];
-
-#ifdef DEBUG
-std::string StrAddr(struct qsockaddr *addr)
-{
-    char buf[34];
-    byte *p = reinterpret_cast<byte *>(addr);
-    int n;
-
-    for (n = 0; n < 16; n++)
-    {
-        auto result = std::format_to_n(buf + n * 2, 2, "{:02x}", *p++);
-        *result.out = '\0';
-    }
-    return buf;
-}
-#endif
 
 #ifdef BAN_TEST
 unsigned long banAddr = 0x00000000;
@@ -176,23 +129,6 @@ int Datagram_SendMessage(qsocket_t *sock, sizebuf_t *data)
     unsigned int packetLen;
     unsigned int dataLen;
     unsigned int eom;
-
-#ifdef DEBUG
-    if (data->cursize == 0)
-    {
-        Sys_Error("Datagram_SendMessage: zero length message\n");
-    }
-
-    if (data->cursize > NET_MAXMESSAGE)
-    {
-        Sys_Error("Datagram_SendMessage: message too big %u\n", data->cursize);
-    }
-
-    if (sock->canSend == false)
-    {
-        Sys_Error("SendMessage: called with canSend == false\n");
-    }
-#endif
 
     Q_memcpy(sock->sendMessage, data->data, data->cursize);
     sock->sendMessageLength = data->cursize;
@@ -312,18 +248,6 @@ int Datagram_SendUnreliableMessage(qsocket_t *sock, sizebuf_t *data)
 {
     int packetLen;
 
-#ifdef DEBUG
-    if (data->cursize == 0)
-    {
-        Sys_Error("Datagram_SendUnreliableMessage: zero length message\n");
-    }
-
-    if (data->cursize > MAX_DATAGRAM)
-    {
-        Sys_Error("Datagram_SendUnreliableMessage: message too big %u\n", data->cursize);
-    }
-#endif
-
     packetLen = NET_HEADERSIZE + data->cursize;
 
     packetBuffer.length = BigLong(packetLen | NETFLAG_UNRELIABLE);
@@ -376,11 +300,6 @@ int Datagram_GetMessage(qsocket_t *sock)
 
         if (sfunc.AddrCompare(&readaddr, &sock->addr) != 0)
         {
-#ifdef DEBUG
-            Con_DPrintf("Forged packet received\n");
-            Con_DPrintf("Expected: %s\n", StrAddr(&sock->addr).c_str());
-            Con_DPrintf("Received: %s\n", StrAddr(&readaddr).c_str());
-#endif
             continue;
         }
 
@@ -1448,12 +1367,6 @@ static qsocket_t *_Datagram_Connect(const char *host)
                 // is it from the right place?
                 if (sfunc.AddrCompare(&readaddr, &sendaddr) != 0)
                 {
-#ifdef DEBUG
-                    Con_Printf("wrong reply address\n");
-                    Con_Printf("Expected: %s\n", StrAddr(&sendaddr).c_str());
-                    Con_Printf("Received: %s\n", StrAddr(&readaddr).c_str());
-                    SCR_UpdateScreen();
-#endif
                     ret = 0;
                     continue;
                 }

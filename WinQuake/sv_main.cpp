@@ -480,11 +480,7 @@ void SV_ConnectClient(int clientnum)
     client->message.maxsize = sizeof(client->msgbuf);
     client->message.allowoverflow = true; // we can catch it
 
-#ifdef IDGODS
-    client->privileged = IsID(&client->netconnection->addr);
-#else
     client->privileged = false;
-#endif
 
     if (sv.loadgame)
     {

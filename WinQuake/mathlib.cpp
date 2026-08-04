@@ -66,8 +66,6 @@ void BOPS_Error(void)
     Sys_Error("BoxOnPlaneSide:  Bad signbits");
 }
 
-#if !id386
-
 /*
 ==================
 BoxOnPlaneSide
@@ -133,17 +131,8 @@ int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, mplane_t *p)
         sides |= 2;
     }
 
-#ifdef PARANOID
-    if (sides == 0)
-    {
-        Sys_Error("BoxOnPlaneSide: sides==0");
-    }
-#endif
-
     return sides;
 }
-
-#endif
 
 void AngleVectors(vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 {
@@ -282,7 +271,6 @@ void FloorDivMod(double numer, double denom, int *quotient, int *rem)
     int q, r;
     double x;
 
-#ifndef PARANOID
     if (denom <= 0.0)
     {
         Sys_Error("FloorDivMod: bad denominator %d\n", denom);
@@ -291,7 +279,6 @@ void FloorDivMod(double numer, double denom, int *quotient, int *rem)
 //	if ((floor(numer) != numer) || (floor(denom) != denom))
 //		Sys_Error ("FloorDivMod: non-integer numer or denom %f %f\n",
 //				numer, denom);
-#endif
 
     if (numer >= 0.0)
     {
@@ -344,8 +331,6 @@ int GreatestCommonDivisor(int i1, int i2)
     }
 }
 
-#if !id386
-
 // TODO: move to nonintel.c
 
 /*
@@ -365,5 +350,3 @@ fixed16_t Invert24To16(fixed16_t val)
 
     return (fixed16_t)(((double)0x10000 * (double)0x1000000 / (double)val) + 0.5);
 }
-
-#endif

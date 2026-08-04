@@ -30,9 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mathlib.h" // vec3_t
 #include "cvar.h"    // cvar_t
 
-#ifndef __SOUND__
-#define __SOUND__
-
 #define DEFAULT_SOUND_PACKET_VOLUME 255
 #define DEFAULT_SOUND_PACKET_ATTENUATION 1.0
 
@@ -65,5 +62,3 @@ void S_UnblockSound(void);
 extern cvar_t loadas8bit;
 extern cvar_t bgmvolume;
 extern cvar_t volume;
-
-#endif

@@ -20,18 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // quakedef.h -- primary header for client
 #pragma once
 
-// #define	GLTEST			// experimental stuff
-
-#define QUAKE_GAME // as opposed to utilities
-
 #define VERSION 1.09
 #define GLQUAKE_VERSION 1.00
 #define D3DQUAKE_VERSION 0.01
 #define WINQUAKE_VERSION 0.996
 #define LINUX_VERSION 1.30
 #define X11_VERSION 1.10
-
-// define	PARANOID			// speed sapping error checking
 
 #define GAMENAME "id1"
 
@@ -42,33 +36,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <cstdio>
 #include <cstdlib>
 
-#if defined(_WIN32) && !defined(WINDED)
-
-#if defined(_M_IX86)
-#define __i386__ 1
-#endif
-
 void VID_LockBuffer(void);
 void VID_UnlockBuffer(void);
 
-#else
-
-#define VID_LockBuffer()
-#define VID_UnlockBuffer()
-
-#endif
-
-#if defined __i386__ // && !defined __sun__
-#define id386 1
-#else
-#define id386 0
-#endif
-
-#if id386
-#define UNALIGNED_OK 1 // set to 0 if unaligned accesses are not supported
-#else
-#define UNALIGNED_OK 0
-#endif
+#define UNALIGNED_OK 0 // set to 0 if unaligned accesses are not supported
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 #define CACHE_SIZE 32 // used to align key data structures
@@ -88,10 +59,6 @@ void VID_UnlockBuffer(void);
 
 // fall over
 #define ROLL 2
-
-// This makes anyone on id's net privileged
-// Use for multiplayer testing only - VERY dangerous!!!
-// #define IDGODS
 
 #include "qlimits.h"
 #include "common.h"

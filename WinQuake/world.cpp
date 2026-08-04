@@ -506,8 +506,6 @@ POINT TESTING IN HULLS
 ===============================================================================
 */
 
-#if !id386
-
 /*
 ==================
 SV_HullPointContents
@@ -550,8 +548,6 @@ int SV_HullPointContents(hull_t *hull, int num, vec3_t p)
 
     return num;
 }
-
-#endif // !id386
 
 /*
 ==================
@@ -723,14 +719,6 @@ qboolean SV_RecursiveHullCheck(hull_t *hull, int num, float p1f, float p2f, vec3
     {
         return false;
     }
-
-#ifdef PARANOID
-    if (SV_HullPointContents(sv_hullmodel, mid, node->children[side]) == CONTENTS_SOLID)
-    {
-        Con_Printf("mid PointInHullSolid\n");
-        return false;
-    }
-#endif
 
     if (SV_HullPointContents(hull, node->children[side ^ 1], mid) != CONTENTS_SOLID)
     {

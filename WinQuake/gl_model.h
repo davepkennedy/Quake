@@ -26,9 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "zone.h"    // cache_user_t
 #include "bspfile.h" // MIPLEVELS, MAXLIGHTMAPS, NUM_AMBIENTS, MAX_MAP_HULLS
 
-#ifndef __MODEL__
-#define __MODEL__
-
 #include "modelgen.h"
 #include "spritegn.h"
 
@@ -434,5 +431,3 @@ void Mod_TouchModel(const char *name);
 
 mleaf_t *Mod_PointInLeaf(float *p, model_t *model);
 byte *Mod_LeafPVS(mleaf_t *leaf, model_t *model);
-
-#endif // __MODEL__

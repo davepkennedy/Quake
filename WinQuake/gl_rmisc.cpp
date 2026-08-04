@@ -208,10 +208,6 @@ void R_Init(void)
     R_InitParticles();
     R_InitParticleTexture();
 
-#ifdef GLTEST
-    Test_Init();
-#endif
-
     GL_ReserveTextureNames(16);
     playertextures = texture_extension_number;
     texture_extension_number += 16;

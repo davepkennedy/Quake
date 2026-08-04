@@ -43,10 +43,6 @@ PollProcedure slistPollProcedure = {nullptr, 0.0, Slist_Poll};
 cvar_t net_messagetimeout = {"net_messagetimeout", "300"};
 cvar_t hostname = {"hostname", "UNNAMED"};
 
-#ifdef IDGODS
-cvar_t idgods = {"idgods", "0"};
-#endif
-
 int vcrFile = -1;
 qboolean recording = false;
 
@@ -905,9 +901,6 @@ void NET_Init(void)
 
     Cvar_RegisterVariable(&net_messagetimeout);
     Cvar_RegisterVariable(&hostname);
-#ifdef IDGODS
-    Cvar_RegisterVariable(&idgods);
-#endif
 
     Cmd_AddCommand("slist", NET_Slist_f);
     Cmd_AddCommand("listen", NET_Listen_f);
@@ -1022,25 +1015,3 @@ void SchedulePollProcedure(PollProcedure *proc, double timeOffset)
     prev->next = proc;
 }
 
-#ifdef IDGODS
-#define IDNET 0xc0f62800
-
-qboolean IsID(struct qsockaddr *addr)
-{
-    if (idgods.value == 0.0)
-    {
-        return false;
-    }
-
-    if (addr->sa_family != 2)
-    {
-        return false;
-    }
-
-    if ((BigLong(*reinterpret_cast<int *>(&addr->sa_data[2])) & 0xffffff00) == IDNET)
-    {
-        return true;
-    }
-    return false;
-}
-#endif

@@ -566,11 +566,7 @@ void Draw_Init(void)
     SwapPic(cb);
 
     // hack the version number directly into the pic
-#if defined(__linux__)
-    ver = std::format("(Linux {:2.2f}, gl {:4.2f}) {:4.2f}", (float)LINUX_VERSION, (float)GLQUAKE_VERSION, (float)VERSION);
-#else
     ver = std::format("(gl {:4.2f}) {:4.2f}", (float)GLQUAKE_VERSION, (float)VERSION);
-#endif
     dest = cb->data + 320 * 186 + 320 - 11 - 8 * ver.size();
     y = (int)ver.size();
     for (x = 0; x < y; x++)
