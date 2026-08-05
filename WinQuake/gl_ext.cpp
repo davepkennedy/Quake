@@ -65,50 +65,50 @@ static void *LoadProc(const char *name, bool required)
 
 void GL_LoadExtensions(void)
 {
-    qglActiveTexture = (PFNGLACTIVETEXTUREPROC)LoadProc("glActiveTexture", true);
+    qglActiveTexture = reinterpret_cast<PFNGLACTIVETEXTUREPROC>(LoadProc("glActiveTexture", true));
 
-    qglGenBuffers = (PFNGLGENBUFFERSPROC)LoadProc("glGenBuffers", true);
-    qglDeleteBuffers = (PFNGLDELETEBUFFERSPROC)LoadProc("glDeleteBuffers", true);
-    qglBindBuffer = (PFNGLBINDBUFFERPROC)LoadProc("glBindBuffer", true);
-    qglBufferData = (PFNGLBUFFERDATAPROC)LoadProc("glBufferData", true);
-    qglBufferSubData = (PFNGLBUFFERSUBDATAPROC)LoadProc("glBufferSubData", true);
+    qglGenBuffers = reinterpret_cast<PFNGLGENBUFFERSPROC>(LoadProc("glGenBuffers", true));
+    qglDeleteBuffers = reinterpret_cast<PFNGLDELETEBUFFERSPROC>(LoadProc("glDeleteBuffers", true));
+    qglBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(LoadProc("glBindBuffer", true));
+    qglBufferData = reinterpret_cast<PFNGLBUFFERDATAPROC>(LoadProc("glBufferData", true));
+    qglBufferSubData = reinterpret_cast<PFNGLBUFFERSUBDATAPROC>(LoadProc("glBufferSubData", true));
 
-    qglVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)LoadProc("glVertexAttribPointer", true);
-    qglEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)LoadProc("glEnableVertexAttribArray", true);
-    qglDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)LoadProc("glDisableVertexAttribArray", true);
+    qglVertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(LoadProc("glVertexAttribPointer", true));
+    qglEnableVertexAttribArray = reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(LoadProc("glEnableVertexAttribArray", true));
+    qglDisableVertexAttribArray = reinterpret_cast<PFNGLDISABLEVERTEXATTRIBARRAYPROC>(LoadProc("glDisableVertexAttribArray", true));
 
-    qglCreateShader = (PFNGLCREATESHADERPROC)LoadProc("glCreateShader", true);
-    qglShaderSource = (PFNGLSHADERSOURCEPROC)LoadProc("glShaderSource", true);
-    qglCompileShader = (PFNGLCOMPILESHADERPROC)LoadProc("glCompileShader", true);
-    qglGetShaderiv = (PFNGLGETSHADERIVPROC)LoadProc("glGetShaderiv", true);
-    qglGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)LoadProc("glGetShaderInfoLog", true);
-    qglDeleteShader = (PFNGLDELETESHADERPROC)LoadProc("glDeleteShader", true);
-    qglCreateProgram = (PFNGLCREATEPROGRAMPROC)LoadProc("glCreateProgram", true);
-    qglAttachShader = (PFNGLATTACHSHADERPROC)LoadProc("glAttachShader", true);
-    qglLinkProgram = (PFNGLLINKPROGRAMPROC)LoadProc("glLinkProgram", true);
-    qglGetProgramiv = (PFNGLGETPROGRAMIVPROC)LoadProc("glGetProgramiv", true);
-    qglGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)LoadProc("glGetProgramInfoLog", true);
-    qglUseProgram = (PFNGLUSEPROGRAMPROC)LoadProc("glUseProgram", true);
-    qglDeleteProgram = (PFNGLDELETEPROGRAMPROC)LoadProc("glDeleteProgram", true);
+    qglCreateShader = reinterpret_cast<PFNGLCREATESHADERPROC>(LoadProc("glCreateShader", true));
+    qglShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(LoadProc("glShaderSource", true));
+    qglCompileShader = reinterpret_cast<PFNGLCOMPILESHADERPROC>(LoadProc("glCompileShader", true));
+    qglGetShaderiv = reinterpret_cast<PFNGLGETSHADERIVPROC>(LoadProc("glGetShaderiv", true));
+    qglGetShaderInfoLog = reinterpret_cast<PFNGLGETSHADERINFOLOGPROC>(LoadProc("glGetShaderInfoLog", true));
+    qglDeleteShader = reinterpret_cast<PFNGLDELETESHADERPROC>(LoadProc("glDeleteShader", true));
+    qglCreateProgram = reinterpret_cast<PFNGLCREATEPROGRAMPROC>(LoadProc("glCreateProgram", true));
+    qglAttachShader = reinterpret_cast<PFNGLATTACHSHADERPROC>(LoadProc("glAttachShader", true));
+    qglLinkProgram = reinterpret_cast<PFNGLLINKPROGRAMPROC>(LoadProc("glLinkProgram", true));
+    qglGetProgramiv = reinterpret_cast<PFNGLGETPROGRAMIVPROC>(LoadProc("glGetProgramiv", true));
+    qglGetProgramInfoLog = reinterpret_cast<PFNGLGETPROGRAMINFOLOGPROC>(LoadProc("glGetProgramInfoLog", true));
+    qglUseProgram = reinterpret_cast<PFNGLUSEPROGRAMPROC>(LoadProc("glUseProgram", true));
+    qglDeleteProgram = reinterpret_cast<PFNGLDELETEPROGRAMPROC>(LoadProc("glDeleteProgram", true));
 
-    qglGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)LoadProc("glGetUniformLocation", true);
-    qglUniform1i = (PFNGLUNIFORM1IPROC)LoadProc("glUniform1i", true);
-    qglUniform1f = (PFNGLUNIFORM1FPROC)LoadProc("glUniform1f", true);
-    qglUniform2fv = (PFNGLUNIFORM2FVPROC)LoadProc("glUniform2fv", true);
-    qglUniform3fv = (PFNGLUNIFORM3FVPROC)LoadProc("glUniform3fv", true);
-    qglUniform4fv = (PFNGLUNIFORM4FVPROC)LoadProc("glUniform4fv", true);
-    qglUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)LoadProc("glUniformMatrix4fv", true);
+    qglGetUniformLocation = reinterpret_cast<PFNGLGETUNIFORMLOCATIONPROC>(LoadProc("glGetUniformLocation", true));
+    qglUniform1i = reinterpret_cast<PFNGLUNIFORM1IPROC>(LoadProc("glUniform1i", true));
+    qglUniform1f = reinterpret_cast<PFNGLUNIFORM1FPROC>(LoadProc("glUniform1f", true));
+    qglUniform2fv = reinterpret_cast<PFNGLUNIFORM2FVPROC>(LoadProc("glUniform2fv", true));
+    qglUniform3fv = reinterpret_cast<PFNGLUNIFORM3FVPROC>(LoadProc("glUniform3fv", true));
+    qglUniform4fv = reinterpret_cast<PFNGLUNIFORM4FVPROC>(LoadProc("glUniform4fv", true));
+    qglUniformMatrix4fv = reinterpret_cast<PFNGLUNIFORMMATRIX4FVPROC>(LoadProc("glUniformMatrix4fv", true));
 
-    qglGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)LoadProc("glGenVertexArrays", true);
-    qglDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)LoadProc("glDeleteVertexArrays", true);
-    qglBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)LoadProc("glBindVertexArray", true);
+    qglGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(LoadProc("glGenVertexArrays", true));
+    qglDeleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(LoadProc("glDeleteVertexArrays", true));
+    qglBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(LoadProc("glBindVertexArray", true));
 
-    qglGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)LoadProc("glGenerateMipmap", false);
+    qglGenerateMipmap = reinterpret_cast<PFNGLGENERATEMIPMAPPROC>(LoadProc("glGenerateMipmap", false));
 
-    qglGenSamplers = (PFNGLGENSAMPLERSPROC)LoadProc("glGenSamplers", true);
-    qglDeleteSamplers = (PFNGLDELETESAMPLERSPROC)LoadProc("glDeleteSamplers", true);
-    qglBindSampler = (PFNGLBINDSAMPLERPROC)LoadProc("glBindSampler", true);
-    qglSamplerParameteri = (PFNGLSAMPLERPARAMETERIPROC)LoadProc("glSamplerParameteri", true);
+    qglGenSamplers = reinterpret_cast<PFNGLGENSAMPLERSPROC>(LoadProc("glGenSamplers", true));
+    qglDeleteSamplers = reinterpret_cast<PFNGLDELETESAMPLERSPROC>(LoadProc("glDeleteSamplers", true));
+    qglBindSampler = reinterpret_cast<PFNGLBINDSAMPLERPROC>(LoadProc("glBindSampler", true));
+    qglSamplerParameteri = reinterpret_cast<PFNGLSAMPLERPARAMETERIPROC>(LoadProc("glSamplerParameteri", true));
 
     if (gl_extensions.find("GL_EXT_texture_filter_anisotropic") != std::string::npos)
     {

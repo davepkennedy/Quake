@@ -63,7 +63,7 @@ void InitConProc(HANDLE hFile, HANDLE heventParent, HANDLE heventChild)
         return;
     }
 
-    if (!CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)RequestProc, 0, 0, &dwID))
+    if (!CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(RequestProc), 0, 0, &dwID))
     {
         CloseHandle(heventDone);
         Con_SafePrintf("Couldn't create QHOST thread\n");

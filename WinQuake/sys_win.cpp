@@ -66,7 +66,7 @@ static void Sys_EnableDpiAwareness(void)
     }
 
     SETPROCESSDPIAWARENESSCONTEXTPROC pSetProcessDpiAwarenessContext =
-        (SETPROCESSDPIAWARENESSCONTEXTPROC)GetProcAddress(user32, "SetProcessDpiAwarenessContext");
+        reinterpret_cast<SETPROCESSDPIAWARENESSCONTEXTPROC>(GetProcAddress(user32, "SetProcessDpiAwarenessContext"));
     if (pSetProcessDpiAwarenessContext)
     {
         pSetProcessDpiAwarenessContext(QUAKE_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);

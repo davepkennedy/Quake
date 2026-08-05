@@ -96,7 +96,7 @@ void IN_StartupXInput(void)
         return;
     }
 
-    pXInputGetState = (PFN_XInputGetState)GetProcAddress(xinput_dll, "XInputGetState");
+    pXInputGetState = reinterpret_cast<PFN_XInputGetState>(GetProcAddress(xinput_dll, "XInputGetState"));
 
     if (!pXInputGetState)
     {

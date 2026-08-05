@@ -1488,7 +1488,7 @@ void VID_InitDIB(HINSTANCE hInstance)
 
     /* Register the frame class */
     wc.style = 0;
-    wc.lpfnWndProc = (WNDPROC)MainWndProc;
+    wc.lpfnWndProc = reinterpret_cast<WNDPROC>(MainWndProc);
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = hInstance;
