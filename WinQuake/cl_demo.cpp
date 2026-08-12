@@ -49,9 +49,8 @@ void CL_StopPlayback(void)
         return;
     }
 
-    fclose(cls.demofile);
+    cls.demoPlaybackFile.reset();
     cls.demoplayback = false;
-    cls.demofile = nullptr;
     cls.state = cactive_t::ca_disconnected;
 
     if (cls.timedemo)
@@ -74,14 +73,14 @@ void CL_WriteDemoMessage(void)
     float f;
 
     len = LittleLong(net.message.cursize);
-    fwrite(&len, 4, 1, cls.demofile);
+    cls.demoRecordFile->write(reinterpret_cast<const char *>(&len), sizeof(len));
     for (i = 0; i < 3; i++)
     {
         f = LittleFloat(cl.viewangles[i]);
-        fwrite(&f, 4, 1, cls.demofile);
+        cls.demoRecordFile->write(reinterpret_cast<const char *>(&f), sizeof(f));
     }
-    fwrite(net.message.data, net.message.cursize, 1, cls.demofile);
-    fflush(cls.demofile);
+    cls.demoRecordFile->write(reinterpret_cast<const char *>(net.message.data), net.message.cursize);
+    cls.demoRecordFile->flush();
 }
 
 /*
@@ -122,11 +121,11 @@ int CL_GetMessage(void)
         }
 
         // get the next message
-        fread(&net.message.cursize, 4, 1, cls.demofile);
+        cls.demoPlaybackFile->read(reinterpret_cast<char *>(&net.message.cursize), sizeof(net.message.cursize));
         VectorCopy(cl.mviewangles[0], cl.mviewangles[1]);
         for (i = 0; i < 3; i++)
         {
-            r = (int)fread(&f, 4, 1, cls.demofile);
+            cls.demoPlaybackFile->read(reinterpret_cast<char *>(&f), sizeof(f));
             cl.mviewangles[0][i] = LittleFloat(f);
         }
 
@@ -135,8 +134,8 @@ int CL_GetMessage(void)
         {
             Sys_Error("Demo message > MAX_MSGLEN");
         }
-        r = (int)fread(net.message.data, net.message.cursize, 1, cls.demofile);
-        if (r != 1)
+        cls.demoPlaybackFile->read(reinterpret_cast<char *>(net.message.data), net.message.cursize);
+        if (cls.demoPlaybackFile->gcount() != net.message.cursize)
         {
             CL_StopPlayback();
             return 0;
@@ -199,8 +198,7 @@ void CL_Stop_f(void)
     CL_WriteDemoMessage();
 
     // finish up
-    fclose(cls.demofile);
-    cls.demofile = nullptr;
+    cls.demoRecordFile.reset();
     cls.demorecording = false;
     Con_Printf("Completed demo\n");
 }
@@ -270,15 +268,16 @@ void CL_Record_f(void)
     COM_DefaultExtension(name, ".dem", sizeof(name));
 
     Con_Printf("recording to %s.\n", name);
-    cls.demofile = fopen(name, "wb");
-    if (!cls.demofile)
+    cls.demoRecordFile.emplace(name, std::ios::binary);
+    if (!cls.demoRecordFile->is_open())
     {
+        cls.demoRecordFile.reset();
         Con_Printf("ERROR: couldn't open.\n");
         return;
     }
 
     cls.forcetrack = track;
-    fprintf(cls.demofile, "%i\n", cls.forcetrack);
+    *cls.demoRecordFile << std::format("{}\n", cls.forcetrack);
 
     cls.demorecording = true;
 }
@@ -293,7 +292,6 @@ play [demoname]
 void CL_PlayDemo_f(void)
 {
     char name[256];
-    int c;
     qboolean neg = false;
 
     if (cmd_source != cmd_source_t::src_command)
@@ -319,27 +317,29 @@ void CL_PlayDemo_f(void)
     COM_DefaultExtension(name, ".dem", sizeof(name));
 
     Con_Printf("Playing demo from %s.\n", name);
-    COM_FOpenFile(name, &cls.demofile);
-    if (!cls.demofile)
+    auto opened = COM_FOpenFile(name);
+    if (!opened)
     {
         Con_Printf("ERROR: couldn't open.\n");
         cls.demonum = -1; // stop demo loop
         return;
     }
+    cls.demoPlaybackFile = std::move(opened->stream);
 
     cls.demoplayback = true;
     cls.state = cactive_t::ca_connected;
     cls.forcetrack = 0;
 
-    while ((c = getc(cls.demofile)) != '\n')
+    char ch;
+    while (cls.demoPlaybackFile->get(ch) && ch != '\n')
     {
-        if (c == '-')
+        if (ch == '-')
         {
             neg = true;
         }
         else
         {
-            cls.forcetrack = cls.forcetrack * 10 + (c - '0');
+            cls.forcetrack = cls.forcetrack * 10 + (ch - '0');
         }
     }
 
@@ -347,8 +347,6 @@ void CL_PlayDemo_f(void)
     {
         cls.forcetrack = -cls.forcetrack;
     }
-    // ZOID, fscanf is evil
-    //	fscanf (cls.demofile, "%i\n", &cls.forcetrack);
 }
 
 /*

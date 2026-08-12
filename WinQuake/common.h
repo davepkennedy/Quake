@@ -168,6 +168,7 @@ const char *COM_SkipPath(const char *pathname);
 void COM_StripExtension(const char *in, char *out, size_t outsize);
 void COM_FileBase(const char *in, char *out, size_t outsize);
 void COM_DefaultExtension(char *path, const char *extension, size_t pathsize);
+std::string COM_FileExtension(const char *in);
 
 // Formats into a temp buffer, returning a pointer valid until the next
 // va() call. std::format_string gives compile-time checking of the
@@ -189,19 +190,10 @@ std::string COM_FormatVA(const char *fmt, va_list argptr);
 //============================================================================
 
 extern int com_filesize;
-struct cache_user_t;
 
 extern char com_gamedir[MAX_OSPATH];
 
-void COM_WriteFile(const char *filename, const void *data, int len);
-int COM_OpenFile(const char *filename, int *hndl);
-int COM_FOpenFile(const char *filename, FILE **file);
-void COM_CloseFile(int h);
-
-byte *COM_LoadStackFile(const char *path, void *buffer, int bufsize);
-byte *COM_LoadTempFile(const char *path);
-byte *COM_LoadHunkFile(const char *path);
-void COM_LoadCacheFile(const char *path, struct cache_user_t *cu);
+#include "common_filesystem.h"
 
 extern struct cvar_t registered;
 

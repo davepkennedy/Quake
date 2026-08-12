@@ -128,6 +128,7 @@
     <ClCompile Include="WinQuake\cl_tent.cpp" />
     <ClCompile Include="WinQuake\cmd.cpp" />
     <ClCompile Include="WinQuake\common.cpp" />
+    <ClCompile Include="WinQuake\common_filesystem.cpp" />
     <ClCompile Include="WinQuake\conproc.cpp" />
     <ClCompile Include="WinQuake\console.cpp" />
     <ClCompile Include="WinQuake\crc.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="WinQuake\client.h" />
     <ClInclude Include="WinQuake\cmd.h" />
     <ClInclude Include="WinQuake\common.h" />
+    <ClInclude Include="WinQuake\common_filesystem.h" />
     <ClInclude Include="WinQuake\conproc.h" />
     <ClInclude Include="WinQuake\console.h" />
     <ClInclude Include="WinQuake\crc.h" />

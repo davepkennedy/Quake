@@ -20,7 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // client.h
 #pragma once
 
-#include <cstdio> // FILE
+#include <fstream>
+#include <optional>
 
 #include "qlimits.h" // MAX_STYLESTRING, MAX_SCOREBOARDNAME, MAX_QPATH,
                      // MAX_CL_STATS, MAX_MODELS, MAX_SOUNDS, MAX_EDICTS,
@@ -131,7 +132,11 @@ struct client_static_t
     qboolean demoplayback;
     qboolean timedemo;
     int forcetrack; // -1 = use normal cd track
-    FILE *demofile;
+    // never simultaneously active -- record opens a plain file for writing,
+    // playback opens (possibly pak-archived) for reading, so these are two
+    // distinct stream directions rather than one FILE* doing double duty
+    std::optional<std::ofstream> demoRecordFile;
+    std::optional<std::ifstream> demoPlaybackFile;
     int td_lastframe;   // to meter out one message a frame
     int td_startframe;  // host_framecount at start
     float td_starttime; // realtime at second frame of timedemo

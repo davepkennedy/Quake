@@ -355,7 +355,6 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
     trivertx_t *verts;
     char cache[MAX_QPATH];
     std::string fullpath;
-    FILE *f;
 
     aliasmodel = m;
     paliashdr = hdr; // (aliashdr_t *)Mod_Extradata (m);
@@ -367,14 +366,13 @@ void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr)
     COM_StripExtension(m->name + strlen("progs/"), cache + strlen("glquake/"), sizeof(cache) - strlen("glquake/"));
     Q_strlcat(cache, ".ms2", sizeof(cache));
 
-    COM_FOpenFile(cache, &f);
-    if (f)
+    auto opened = COM_FOpenFile(cache);
+    if (opened)
     {
-        fread(&numcommands, 4, 1, f);
-        fread(&numorder, 4, 1, f);
-        fread(&commands, numcommands * sizeof(commands[0]), 1, f);
-        fread(&vertexorder, numorder * sizeof(vertexorder[0]), 1, f);
-        fclose(f);
+        opened->stream.read(reinterpret_cast<char *>(&numcommands), 4);
+        opened->stream.read(reinterpret_cast<char *>(&numorder), 4);
+        opened->stream.read(reinterpret_cast<char *>(&commands), numcommands * sizeof(commands[0]));
+        opened->stream.read(reinterpret_cast<char *>(&vertexorder), numorder * sizeof(vertexorder[0]));
     }
     else
     {
