@@ -173,12 +173,12 @@ void VectorMA(vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
     vecc[2] = result.z;
 }
 
-vec_t _DotProduct(vec3_t v1, vec3_t v2)
+vec_t DotProduct(const vec3_t v1, const vec3_t v2)
 {
     return glm::dot(glm::make_vec3(v1), glm::make_vec3(v2));
 }
 
-void _VectorSubtract(vec3_t veca, vec3_t vecb, vec3_t out)
+void VectorSubtract(const vec3_t veca, const vec3_t vecb, vec3_t out)
 {
     glm::vec3 result = glm::make_vec3(veca) - glm::make_vec3(vecb);
     out[0] = result.x;
@@ -186,7 +186,7 @@ void _VectorSubtract(vec3_t veca, vec3_t vecb, vec3_t out)
     out[2] = result.z;
 }
 
-void _VectorAdd(vec3_t veca, vec3_t vecb, vec3_t out)
+void VectorAdd(const vec3_t veca, const vec3_t vecb, vec3_t out)
 {
     glm::vec3 result = glm::make_vec3(veca) + glm::make_vec3(vecb);
     out[0] = result.x;
@@ -194,7 +194,7 @@ void _VectorAdd(vec3_t veca, vec3_t vecb, vec3_t out)
     out[2] = result.z;
 }
 
-void _VectorCopy(vec3_t in, vec3_t out)
+void VectorCopy(const vec3_t in, vec3_t out)
 {
     out[0] = in[0];
     out[1] = in[1];

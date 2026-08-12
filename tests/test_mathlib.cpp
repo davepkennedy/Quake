@@ -16,25 +16,25 @@ namespace
 	}
 }
 
-TEST_CASE ("_DotProduct")
+TEST_CASE ("DotProduct")
 {
 	vec3_t a = {1, 2, 3};
 	vec3_t b = {4, 5, 6};
-	CHECK (_DotProduct (a, b) == doctest::Approx (32.0f));
+	CHECK (DotProduct (a, b) == doctest::Approx (32.0f));
 }
 
-TEST_CASE ("_VectorAdd / _VectorSubtract")
+TEST_CASE ("VectorAdd / VectorSubtract")
 {
 	vec3_t a = {1, 2, 3};
 	vec3_t b = {4, -1, 2};
 	vec3_t out;
 
-	_VectorAdd (a, b, out);
+	VectorAdd (a, b, out);
 	CHECK (out[0] == doctest::Approx (5.0f));
 	CHECK (out[1] == doctest::Approx (1.0f));
 	CHECK (out[2] == doctest::Approx (5.0f));
 
-	_VectorSubtract (a, b, out);
+	VectorSubtract (a, b, out);
 	CHECK (out[0] == doctest::Approx (-3.0f));
 	CHECK (out[1] == doctest::Approx (3.0f));
 	CHECK (out[2] == doctest::Approx (1.0f));
