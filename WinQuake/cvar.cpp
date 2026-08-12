@@ -239,13 +239,13 @@ Writes lines containing "set variable value" for all variables
 with the archive flag set to true.
 ============
 */
-void Cvar_WriteVariables(FILE *f)
+void Cvar_WriteVariables(std::ofstream &f)
 {
     for (const auto &[name, var] : cvar_vars)
     {
         if (var->archive)
         {
-            fprintf(f, "%s \"%s\"\n", var->name, var->string.c_str());
+            f << std::format("{} \"{}\"\n", var->name, var->string);
         }
     }
 }

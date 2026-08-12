@@ -507,7 +507,7 @@ ED_Write
 For savegames
 =============
 */
-void ED_Write(FILE *f, edict_t *ed)
+void ED_Write(std::ofstream &f, edict_t *ed)
 {
     ddef_t *d;
     int *v;
@@ -515,11 +515,11 @@ void ED_Write(FILE *f, edict_t *ed)
     char *name;
     int type;
 
-    fprintf(f, "{\n");
+    f << "{\n";
 
     if (ed->free)
     {
-        fprintf(f, "}\n");
+        f << "}\n";
         return;
     }
 
@@ -548,11 +548,11 @@ void ED_Write(FILE *f, edict_t *ed)
             continue;
         }
 
-        fprintf(f, "\"%s\" ", name);
-        fprintf(f, "\"%s\"\n", PR_UglyValueString(static_cast<etype_t>(d->type), reinterpret_cast<eval_t *>(v)).c_str());
+        f << std::format("\"{}\" ", name);
+        f << std::format("\"{}\"\n", PR_UglyValueString(static_cast<etype_t>(d->type), reinterpret_cast<eval_t *>(v)));
     }
 
-    fprintf(f, "}\n");
+    f << "}\n";
 }
 
 void ED_PrintNum(int ent)
@@ -655,14 +655,14 @@ FIXME: need to tag constants, doesn't really work
 ED_WriteGlobals
 =============
 */
-void ED_WriteGlobals(FILE *f)
+void ED_WriteGlobals(std::ofstream &f)
 {
     ddef_t *def;
     int i;
     char *name;
     int type;
 
-    fprintf(f, "{\n");
+    f << "{\n";
     for (i = 0; i < progs->numglobaldefs; i++)
     {
         def = &pr_globaldefs[i];
@@ -680,11 +680,11 @@ void ED_WriteGlobals(FILE *f)
         }
 
         name = pr_strings + def->s_name;
-        fprintf(f, "\"%s\" ", name);
-        fprintf(f, "\"%s\"\n",
-                PR_UglyValueString(static_cast<etype_t>(type), reinterpret_cast<eval_t *>(&pr_globals[def->ofs])).c_str());
+        f << std::format("\"{}\" ", name);
+        f << std::format("\"{}\"\n",
+                          PR_UglyValueString(static_cast<etype_t>(type), reinterpret_cast<eval_t *>(&pr_globals[def->ofs])));
     }
-    fprintf(f, "}\n");
+    f << "}\n";
 }
 
 /*

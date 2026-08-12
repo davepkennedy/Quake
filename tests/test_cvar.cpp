@@ -5,6 +5,8 @@
 
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 
 // cvar_vars is a persistent, process-lifetime registry (see the plan's
 // note on test isolation) -- every cvar_t registered here must have
@@ -116,16 +118,18 @@ TEST_CASE ("Cvar_WriteVariables writes archived cvars, skips non-archived")
 	notArchived.archive = false;
 	Cvar_RegisterVariable (&notArchived);
 
-	FILE *f = tmpfile ();
-	REQUIRE (f != nullptr);
-	Cvar_WriteVariables (f);
+	std::filesystem::path path = std::filesystem::temp_directory_path () / "quaketests_cvar_writevariables.txt";
+	{
+		std::ofstream f (path);
+		REQUIRE (f.is_open ());
+		Cvar_WriteVariables (f);
+	}
 
-	rewind (f);
-	char buffer[4096] = {};
-	fread (buffer, 1, sizeof (buffer) - 1, f);
-	fclose (f);
+	std::ifstream in (path);
+	std::string contents ((std::istreambuf_iterator<char> (in)), std::istreambuf_iterator<char> ());
+	in.close ();
+	std::filesystem::remove (path);
 
-	std::string contents (buffer);
 	CHECK (contents.find ("__test_cvar_archived \"yes\"") != std::string::npos);
 	CHECK (contents.find ("__test_cvar_not_archived") == std::string::npos);
 }

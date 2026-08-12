@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 
+#include <fstream>
 #include <optional>
 
 #include "common.h"       // qboolean, link_t, STRUCT_FROM_LINK
@@ -84,12 +85,12 @@ char *ED_NewString(const char *string);
 // returns a copy of the string allocated from the server's string heap
 
 void ED_Print(edict_t *ed);
-void ED_Write(FILE *f, edict_t *ed);
+void ED_Write(std::ofstream &f, edict_t *ed);
 std::optional<ddef_t *> ED_FindField(const char *name);
 std::optional<dfunction_t *> ED_FindFunction(const char *name);
 const char *ED_ParseEdict(const char *data, edict_t *ent);
 
-void ED_WriteGlobals(FILE *f);
+void ED_WriteGlobals(std::ofstream &f);
 void ED_ParseGlobals(const char *data);
 
 void ED_LoadFromFile(const char *data);

@@ -633,7 +633,7 @@ Key_WriteBindings
 Writes lines containing "bind key value"
 ============
 */
-void Key_WriteBindings(FILE *f)
+void Key_WriteBindings(std::ofstream &f)
 {
     int i;
 
@@ -641,7 +641,7 @@ void Key_WriteBindings(FILE *f)
     {
         if (!keybindings[i].empty())
         {
-            fprintf(f, "bind \"%s\" \"%s\"\n", Key_KeynumToString(i).c_str(), keybindings[i].c_str());
+            f << std::format("bind \"{}\" \"{}\"\n", Key_KeynumToString(i), keybindings[i]);
         }
     }
 }

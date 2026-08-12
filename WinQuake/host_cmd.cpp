@@ -471,7 +471,6 @@ Host_Savegame_f
 void Host_Savegame_f(void)
 {
     char name[256];
-    FILE *f;
     int i;
     char comment[SAVEGAME_COMMENT_LENGTH + 1];
 
@@ -523,23 +522,23 @@ void Host_Savegame_f(void)
     COM_DefaultExtension(name, ".sav", sizeof(name));
 
     Con_Printf("Saving game to %s...\n", name);
-    f = fopen(name, "w");
+    std::ofstream f(name);
     if (!f)
     {
         Con_Printf("ERROR: couldn't open.\n");
         return;
     }
 
-    fprintf(f, "%i\n", SAVEGAME_VERSION);
+    f << std::format("{}\n", SAVEGAME_VERSION);
     Host_SavegameComment(comment);
-    fprintf(f, "%s\n", comment);
+    f << std::format("{}\n", comment);
     for (i = 0; i < NUM_SPAWN_PARMS; i++)
     {
-        fprintf(f, "%f\n", svs.clients->spawn_parms[i]);
+        f << std::format("{:f}\n", svs.clients->spawn_parms[i]);
     }
-    fprintf(f, "%d\n", current_skill);
-    fprintf(f, "%s\n", sv.name);
-    fprintf(f, "%f\n", sv.time);
+    f << std::format("{}\n", current_skill);
+    f << std::format("{}\n", sv.name);
+    f << std::format("{:f}\n", sv.time);
 
     // write the light styles
 
@@ -547,11 +546,11 @@ void Host_Savegame_f(void)
     {
         if (sv.lightstyles[i])
         {
-            fprintf(f, "%s\n", sv.lightstyles[i]);
+            f << std::format("{}\n", sv.lightstyles[i]);
         }
         else
         {
-            fprintf(f, "m\n");
+            f << "m\n";
         }
     }
 
@@ -559,9 +558,8 @@ void Host_Savegame_f(void)
     for (i = 0; i < sv.num_edicts; i++)
     {
         ED_Write(f, EDICT_NUM(i));
-        fflush(f);
+        f.flush();
     }
-    fclose(f);
     Con_Printf("done.\n");
 }
 
@@ -573,12 +571,10 @@ Host_Loadgame_f
 void Host_Loadgame_f(void)
 {
     char name[MAX_OSPATH];
-    FILE *f;
     char mapname[MAX_QPATH];
     float time, tfloat;
-    char str[32768];
-    const char *start;
-    int i, r;
+    std::string tok;
+    int i;
     edict_t *ent;
     int entnum;
     int version;
@@ -605,33 +601,37 @@ void Host_Loadgame_f(void)
     //	SCR_BeginLoadingPlaque ();
 
     Con_Printf("Loading game from %s...\n", name);
-    f = fopen(name, "r");
+    std::ifstream f(name);
     if (!f)
     {
         Con_Printf("ERROR: couldn't open.\n");
         return;
     }
 
-    fscanf(f, "%i\n", &version);
+    f >> version;
     if (version != SAVEGAME_VERSION)
     {
-        fclose(f);
         Con_Printf("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
         return;
     }
-    fscanf(f, "%s\n", str);
+    f >> tok; // comment, unused on load
     for (i = 0; i < NUM_SPAWN_PARMS; i++)
     {
-        fscanf(f, "%f\n", &spawn_parms[i]);
+        f >> spawn_parms[i];
     }
     // this silliness is so we can load 1.06 save files, which have float skill values
-    fscanf(f, "%f\n", &tfloat);
+    f >> tfloat;
     current_skill = (int)(tfloat + 0.1);
     Cvar_SetValue("skill", (float)current_skill);
 
-
-    fscanf(f, "%s\n", mapname);
-    fscanf(f, "%f\n", &time);
+    f >> tok;
+    if (tok.size() >= MAX_QPATH)
+    {
+        Con_Printf("ERROR: map name too long in savegame\n");
+        return;
+    }
+    Q_strlcpy(mapname, tok.c_str(), sizeof(mapname));
+    f >> time;
 
     CL_Disconnect_f();
 
@@ -648,36 +648,30 @@ void Host_Loadgame_f(void)
 
     for (i = 0; i < MAX_LIGHTSTYLES; i++)
     {
-        fscanf(f, "%s\n", str);
-        sv.lightstyles[i] = static_cast<char *>(Hunk_Alloc((int)(strlen(str) + 1)));
-        Q_strlcpy(sv.lightstyles[i], str, strlen(str) + 1);
+        f >> tok;
+        sv.lightstyles[i] = static_cast<char *>(Hunk_Alloc((int)(tok.size() + 1)));
+        Q_strlcpy(sv.lightstyles[i], tok.c_str(), tok.size() + 1);
     }
 
     // load the edicts out of the savegame file
     entnum = -1; // -1 is the globals
-    while (!feof(f))
+    while (f)
     {
-        for (i = 0; i < sizeof(str) - 1; i++)
+        std::string block;
+        char ch;
+        while (f.get(ch))
         {
-            r = fgetc(f);
-            if (r == EOF || !r)
+            if (ch == '\0')
             {
                 break;
             }
-            str[i] = r;
-            if (r == '}')
+            block += ch;
+            if (ch == '}')
             {
-                i++;
                 break;
             }
         }
-        if (i == sizeof(str) - 1)
-        {
-            Sys_Error("Loadgame buffer overflow");
-        }
-        str[i] = 0;
-        start = str;
-        start = COM_Parse(str);
+        const char *start = COM_Parse(block.c_str());
         if (!com_token[0])
         {
             break; // end of file
@@ -711,8 +705,6 @@ void Host_Loadgame_f(void)
 
     sv.num_edicts = entnum;
     sv.time = time;
-
-    fclose(f);
 
     for (i = 0; i < NUM_SPAWN_PARMS; i++)
     {

@@ -460,9 +460,8 @@ int loadable[MAX_SAVEGAMES];
 void M_ScanSaves(void)
 {
     int i, j;
-    char name[MAX_OSPATH];
     std::string path;
-    FILE *f;
+    std::string name;
     int version;
 
     for (i = 0; i < MAX_SAVEGAMES; i++)
@@ -470,14 +469,14 @@ void M_ScanSaves(void)
         Q_strlcpy(m_filenames[i], "--- UNUSED SLOT ---", sizeof(m_filenames[i]));
         loadable[i] = false;
         path = std::format("{}/s{}.sav", com_gamedir, i);
-        f = fopen(path.c_str(), "r");
+        std::ifstream f(path);
         if (!f)
         {
             continue;
         }
-        fscanf(f, "%i\n", &version);
-        fscanf(f, "%79s\n", name);
-        strncpy(m_filenames[i], name, sizeof(m_filenames[i]) - 1);
+        f >> version;
+        f >> name;
+        strncpy(m_filenames[i], name.c_str(), sizeof(m_filenames[i]) - 1);
 
         // change _ back to space
         for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)
@@ -488,7 +487,6 @@ void M_ScanSaves(void)
             }
         }
         loadable[i] = true;
-        fclose(f);
     }
 }
 

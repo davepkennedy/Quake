@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include <string>
+#include <fstream>
 
 #include "common.h" // qboolean
 
@@ -152,7 +153,7 @@ extern keydest_t key_dest;
 
 void Key_Event(int key, qboolean down);
 void Key_Init(void);
-void Key_WriteBindings(FILE *f);
+void Key_WriteBindings(std::ofstream &f);
 void Key_SetBinding(int keynum, const char *binding);
 std::string Key_KeynumToString(int keynum);
 void Key_ClearStates(void);

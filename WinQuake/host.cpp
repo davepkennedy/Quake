@@ -276,13 +276,11 @@ Writes key bindings and archived cvars to config.cfg
 */
 void Host_WriteConfiguration(void)
 {
-    FILE *f;
-
     // dedicated servers initialize the host but don't parse and set the
     // config.cfg cvars
     if (host_initialized & !isDedicated)
     {
-        f = fopen(va("{}/config.cfg", com_gamedir), "w");
+        std::ofstream f(va("{}/config.cfg", com_gamedir));
         if (!f)
         {
             Con_Printf("Couldn't write config.cfg.\n");
@@ -291,8 +289,6 @@ void Host_WriteConfiguration(void)
 
         Key_WriteBindings(f);
         Cvar_WriteVariables(f);
-
-        fclose(f);
     }
 }
 

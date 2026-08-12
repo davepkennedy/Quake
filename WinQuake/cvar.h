@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include <string>
-#include <cstdio> // FILE
+#include <fstream>
 #include <map>
 #include <optional>
 
@@ -96,7 +96,7 @@ qboolean Cvar_Command(void);
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)
 
-void Cvar_WriteVariables(FILE *f);
+void Cvar_WriteVariables(std::ofstream &f);
 // Writes lines containing "set variable value" for all variables
 // with the archive flag set to true.
 
