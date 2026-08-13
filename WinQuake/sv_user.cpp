@@ -207,7 +207,7 @@ void SV_Accelerate(void)
     }
 }
 
-void SV_AirAccelerate(vec3_t wishveloc)
+void SV_AirAccelerate(vec3_t &wishveloc)
 {
     int i;
     float addspeed, wishspd, accelspeed, currentspeed;

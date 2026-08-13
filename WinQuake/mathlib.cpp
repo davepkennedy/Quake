@@ -214,7 +214,7 @@ vec_t Length(vec3_t v)
     return glm::length(glm::make_vec3(v));
 }
 
-float VectorNormalize(vec3_t v)
+float VectorNormalize(vec3_t &v)
 {
     glm::vec3 vv = glm::make_vec3(v);
     float length = glm::length(vv);
@@ -230,7 +230,7 @@ float VectorNormalize(vec3_t v)
     return length;
 }
 
-void VectorInverse(vec3_t v)
+void VectorInverse(vec3_t &v)
 {
     glm::vec3 result = -glm::make_vec3(v);
     v[0] = result.x;

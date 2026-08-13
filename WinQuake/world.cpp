@@ -35,9 +35,9 @@ line of sight checks trace->crosscontent, but bullets don't
 struct moveclip_t
 {
     vec3_t boxmins, boxmaxs; // enclose the test object along entire move
-    float *mins, *maxs;      // size of the moving object
+    vec3_t mins, maxs;       // size of the moving object
     vec3_t mins2, maxs2;     // size when clipping against mosnters
-    float *start, *end;
+    vec3_t start, end;
     trace_t trace;
     int type;
     edict_t *passedict;
@@ -964,10 +964,10 @@ trace_t SV_Move(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, ed
     // clip to world
     clip.trace = SV_ClipMoveToEntity(sv.edicts, start, mins, maxs, end);
 
-    clip.start = start;
-    clip.end = end;
-    clip.mins = mins;
-    clip.maxs = maxs;
+    VectorCopy(start, clip.start);
+    VectorCopy(end, clip.end);
+    VectorCopy(mins, clip.mins);
+    VectorCopy(maxs, clip.maxs);
     clip.type = type;
     clip.passedict = passedict;
 

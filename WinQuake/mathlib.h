@@ -51,8 +51,8 @@ void VectorCopy(const vec3_t in, vec3_t out);
 int VectorCompare(vec3_t v1, vec3_t v2);
 vec_t Length(vec3_t v);
 void CrossProduct(vec3_t v1, vec3_t v2, vec3_t cross);
-float VectorNormalize(vec3_t v); // returns vector length
-void VectorInverse(vec3_t v);
+float VectorNormalize(vec3_t &v); // returns vector length
+void VectorInverse(vec3_t &v);
 void VectorScale(vec3_t in, vec_t scale, vec3_t out);
 int Q_log2(int val);
 
