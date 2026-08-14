@@ -246,7 +246,7 @@ void PF_setmodel(void)
     i = SV_ModelPrecacheIndex(m);
     if (i < 0)
     {
-        PR_RunError("no precache: %s\n", m);
+        PR_RunError("no precache: {}\n", m);
     }
 
     e->v.model = m - pr_strings;

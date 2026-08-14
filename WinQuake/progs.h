@@ -20,8 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 
+#include <format>
 #include <fstream>
 #include <optional>
+#include <string>
+#include <utility>
 
 #include "common.h"       // qboolean, link_t, STRUCT_FROM_LINK
 #include "entity_state.h" // entity_state_t
@@ -133,7 +136,13 @@ extern int pr_xstatement;
 
 extern unsigned short pr_crc;
 
-void PR_RunError(const char *error, ...);
+// Aborts with an already-formatted error message; defined in pr_exec.cpp.
+[[noreturn]] void PR_RunErrorImpl(const std::string &error);
+
+template <typename... Args> [[noreturn]] void PR_RunError(std::format_string<Args...> error, Args &&...args)
+{
+    PR_RunErrorImpl(std::format(error, std::forward<Args>(args)...));
+}
 
 void ED_PrintEdicts(void);
 void ED_PrintNum(int ent);

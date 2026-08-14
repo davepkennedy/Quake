@@ -218,18 +218,11 @@ PR_RunError
 Aborts the currently executing function
 ============
 */
-void PR_RunError(const char *error, ...)
+[[noreturn]] void PR_RunErrorImpl(const std::string &error)
 {
-    va_list argptr;
-    char string[1024];
-
-    va_start(argptr, error);
-    vsnprintf(string, sizeof(string), error, argptr);
-    va_end(argptr);
-
     PR_PrintStatement(pr_statements + pr_xstatement);
     PR_StackTrace();
-    Con_Printf("%s\n", string);
+    Con_Printf("%s\n", error.c_str());
 
     pr_depth = 0; // dump the stack so host_error can shutdown functions
 
@@ -651,7 +644,7 @@ void PR_ExecuteProgram(func_t fnum)
             break;
 
         default:
-            PR_RunError("Bad opcode %i", st->op);
+            PR_RunError("Bad opcode {}", st->op);
         }
     }
 }
