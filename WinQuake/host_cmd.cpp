@@ -60,7 +60,7 @@ void Host_Status_f(void)
     int minutes;
     int hours = 0;
     int j;
-    void (*print)(const char *fmt, ...);
+    bool toClient;
 
     if (cmd_source == cmd_source_t::src_command)
     {
@@ -69,25 +69,40 @@ void Host_Status_f(void)
             Cmd_ForwardToServer();
             return;
         }
-        print = Con_Printf;
+        toClient = false;
     }
     else
     {
-        print = SV_ClientPrintf;
+        toClient = true;
     }
 
-    print("host:    %s\n", Cvar_VariableString("hostname").c_str());
-    print("version: %4.2f\n", VERSION);
+    // Con_Printf is still printf-style (its own future conversion phase), so
+    // the console branch formats here and hands the result off as a plain
+    // "%s" -- SV_ClientPrintf is already std::format-templated.
+    auto print = [toClient]<typename... Args>(std::format_string<Args...> fmt, Args &&...args) {
+        std::string text = std::format(fmt, std::forward<Args>(args)...);
+        if (toClient)
+        {
+            SV_ClientPrintf("{}", text);
+        }
+        else
+        {
+            Con_Printf("%s", text.c_str());
+        }
+    };
+
+    print("host:    {}\n", Cvar_VariableString("hostname"));
+    print("version: {:4.2f}\n", VERSION);
     if (net.tcpipAvailable)
     {
-        print("tcp/ip:  %s\n", NET_TCPIPAddressString().c_str());
+        print("tcp/ip:  {}\n", NET_TCPIPAddressString());
     }
     if (net.ipxAvailable)
     {
-        print("ipx:     %s\n", NET_IPXAddressString().c_str());
+        print("ipx:     {}\n", NET_IPXAddressString());
     }
-    print("map:     %s\n", sv.name);
-    print("players: %i active (%i max)\n\n", net.activeconnections, svs.maxclients);
+    print("map:     {}\n", sv.name);
+    print("players: {} active ({} max)\n\n", net.activeconnections, svs.maxclients);
     for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
     {
         if (!client->active)
@@ -109,9 +124,9 @@ void Host_Status_f(void)
         {
             hours = 0;
         }
-        print("#%-2u %-16.16s  %3i  %2i:%02i:%02i\n", j + 1, client->name, (int)client->edict->v.frags, hours, minutes,
-              seconds);
-        print("   %s\n", client->netconnection->address);
+        print("#{:<2} {:<16.16}  {:3}  {:2}:{:02}:{:02}\n", j + 1, client->name, (int)client->edict->v.frags, hours,
+              minutes, seconds);
+        print("   {}\n", client->netconnection->address);
     }
 }
 
@@ -262,7 +277,7 @@ void Host_Ping_f(void)
             total += client->ping_times[j];
         }
         total /= NUM_PING_TIMES;
-        SV_ClientPrintf("%4i %s\n", (int)(total * 1000), client->name);
+        SV_ClientPrintf("{:4} {}\n", (int)(total * 1000), client->name);
     }
 }
 
@@ -855,7 +870,7 @@ void Host_Say(qboolean teamonly)
             continue;
         }
         host_client = client;
-        SV_ClientPrintf("%s", text);
+        SV_ClientPrintf("{}", text);
     }
     host_client = save;
 
@@ -922,7 +937,7 @@ void Host_Tell_f(void)
             continue;
         }
         host_client = client;
-        SV_ClientPrintf("%s", text.c_str());
+        SV_ClientPrintf("{}", text);
         break;
     }
     host_client = save;
@@ -1034,11 +1049,11 @@ void Host_Pause_f(void)
 
         if (sv.paused)
         {
-            SV_BroadcastPrintf("%s paused the game\n", pr_strings + sv_player->v.netname);
+            SV_BroadcastPrintf("{} paused the game\n", pr_strings + sv_player->v.netname);
         }
         else
         {
-            SV_BroadcastPrintf("%s unpaused the game\n", pr_strings + sv_player->v.netname);
+            SV_BroadcastPrintf("{} unpaused the game\n", pr_strings + sv_player->v.netname);
         }
 
         // send notification to all clients
@@ -1324,11 +1339,11 @@ void Host_Kick_f(void)
         }
         if (message)
         {
-            SV_ClientPrintf("Kicked by %s: %s\n", who, message);
+            SV_ClientPrintf("Kicked by {}: {}\n", who, message);
         }
         else
         {
-            SV_ClientPrintf("Kicked by %s\n", who);
+            SV_ClientPrintf("Kicked by {}\n", who);
         }
         SV_DropClient(false);
     }

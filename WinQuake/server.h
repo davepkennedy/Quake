@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mathlib.h" // vec3_t
 #include "client.h"  // usercmd_t
 #include "progs.h"   // edict_t
+#include <format>
+#include <string>
+#include <utility>
 
 struct server_static_t
 {
@@ -258,8 +261,19 @@ void SV_AddUpdates(void);
 void SV_ClientThink(void);
 void SV_AddClientToServer(struct qsocket_t *ret);
 
-void SV_ClientPrintf(const char *fmt, ...);
-void SV_BroadcastPrintf(const char *fmt, ...);
+// Sends already-formatted text; defined in host.cpp.
+void SV_ClientPrintfImpl(const std::string &text);
+void SV_BroadcastPrintfImpl(const std::string &text);
+
+template <typename... Args> void SV_ClientPrintf(std::format_string<Args...> fmt, Args &&...args)
+{
+    SV_ClientPrintfImpl(std::format(fmt, std::forward<Args>(args)...));
+}
+
+template <typename... Args> void SV_BroadcastPrintf(std::format_string<Args...> fmt, Args &&...args)
+{
+    SV_BroadcastPrintfImpl(std::format(fmt, std::forward<Args>(args)...));
+}
 
 void SV_Physics(void);
 

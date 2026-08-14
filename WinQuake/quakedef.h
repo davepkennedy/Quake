@@ -141,10 +141,23 @@ void Host_InitCommands(void);
 void Host_Init(quakeparms_t *parms);
 void Host_Shutdown(void);
 void Host_Error(const char *error, ...);
-void Host_EndGame(const char *message, ...);
+
+// Sends already-formatted text; defined in host.cpp.
+[[noreturn]] void Host_EndGameImpl(const std::string &message);
+void Host_ClientCommandsImpl(const std::string &text);
+
+template <typename... Args> [[noreturn]] void Host_EndGame(std::format_string<Args...> message, Args &&...args)
+{
+    Host_EndGameImpl(std::format(message, std::forward<Args>(args)...));
+}
+
+template <typename... Args> void Host_ClientCommands(std::format_string<Args...> fmt, Args &&...args)
+{
+    Host_ClientCommandsImpl(std::format(fmt, std::forward<Args>(args)...));
+}
+
 void Host_Frame(float time);
 void Host_Quit_f(void);
-void Host_ClientCommands(const char *fmt, ...);
 void Host_ShutdownServer(qboolean crash);
 
 extern qboolean msg_suppress_1; // suppresses resolution and cache size console output

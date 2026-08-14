@@ -278,7 +278,7 @@ void PF_bprint(void)
     std::string s;
 
     s = PF_VarString(0);
-    SV_BroadcastPrintf("%s", s.c_str());
+    SV_BroadcastPrintf("{}", s);
 }
 
 /*
@@ -826,7 +826,7 @@ void PF_stuffcmd(void)
 
     old = host_client;
     host_client = target;
-    Host_ClientCommands("%s", str);
+    Host_ClientCommands("{}", str);
     host_client = old;
 }
 

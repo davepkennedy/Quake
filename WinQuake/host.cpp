@@ -88,14 +88,9 @@ cvar_t temp1 = {"temp1", "0"};
 Host_EndGame
 ================
 */
-void Host_EndGame(const char *message, ...)
+[[noreturn]] void Host_EndGameImpl(const std::string &message)
 {
-    va_list argptr;
-
-    va_start(argptr, message);
-    std::string string = COM_FormatVA(message, argptr);
-    va_end(argptr);
-    Con_DPrintf("Host_EndGame: %s\n", string.c_str());
+    Con_DPrintf("Host_EndGame: %s\n", message.c_str());
 
     if (sv.active)
     {
@@ -104,7 +99,7 @@ void Host_EndGame(const char *message, ...)
 
     if (cls.state == cactive_t::ca_dedicated)
     {
-        Sys_Error("Host_EndGame: %s\n", string.c_str()); // dedicated servers exit
+        Sys_Error("Host_EndGame: %s\n", message.c_str()); // dedicated servers exit
     }
 
     if (cls.demonum != -1)
@@ -300,16 +295,10 @@ Sends text across to be displayed
 FIXME: make this just a stuffed echo?
 =================
 */
-void SV_ClientPrintf(const char *fmt, ...)
+void SV_ClientPrintfImpl(const std::string &text)
 {
-    va_list argptr;
-
-    va_start(argptr, fmt);
-    std::string string = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
-
     MSG_WriteByte(&host_client->message, svc_print);
-    MSG_WriteString(&host_client->message, string.c_str());
+    MSG_WriteString(&host_client->message, text.c_str());
 }
 
 /*
@@ -319,21 +308,16 @@ SV_BroadcastPrintf
 Sends text to all active clients
 =================
 */
-void SV_BroadcastPrintf(const char *fmt, ...)
+void SV_BroadcastPrintfImpl(const std::string &text)
 {
-    va_list argptr;
     int i;
-
-    va_start(argptr, fmt);
-    std::string string = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
 
     for (i = 0; i < svs.maxclients; i++)
     {
         if (svs.clients[i].active && svs.clients[i].spawned)
         {
             MSG_WriteByte(&svs.clients[i].message, svc_print);
-            MSG_WriteString(&svs.clients[i].message, string.c_str());
+            MSG_WriteString(&svs.clients[i].message, text.c_str());
         }
     }
 }
@@ -345,16 +329,10 @@ Host_ClientCommands
 Send text over to the client to be executed
 =================
 */
-void Host_ClientCommands(const char *fmt, ...)
+void Host_ClientCommandsImpl(const std::string &text)
 {
-    va_list argptr;
-
-    va_start(argptr, fmt);
-    std::string string = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
-
     MSG_WriteByte(&host_client->message, svc_stufftext);
-    MSG_WriteString(&host_client->message, string.c_str());
+    MSG_WriteString(&host_client->message, text.c_str());
 }
 
 /*

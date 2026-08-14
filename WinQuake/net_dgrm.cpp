@@ -65,7 +65,7 @@ void NET_Ban_f(void)
 {
     char addrStr[32];
     char maskStr[32];
-    void (*print)(const char *fmt, ...);
+    bool toClient;
 
     if (cmd_source == cmd_source_t::src_command)
     {
@@ -74,7 +74,7 @@ void NET_Ban_f(void)
             Cmd_ForwardToServer();
             return;
         }
-        print = Con_Printf;
+        toClient = false;
     }
     else
     {
@@ -82,8 +82,23 @@ void NET_Ban_f(void)
         {
             return;
         }
-        print = SV_ClientPrintf;
+        toClient = true;
     }
+
+    // Con_Printf is still printf-style (its own future conversion phase), so
+    // the console branch formats here and hands the result off as a plain
+    // "%s" -- SV_ClientPrintf is already std::format-templated.
+    auto print = [toClient]<typename... Args>(std::format_string<Args...> fmt, Args &&...args) {
+        std::string text = std::format(fmt, std::forward<Args>(args)...);
+        if (toClient)
+        {
+            SV_ClientPrintf("{}", text);
+        }
+        else
+        {
+            Con_Printf("%s", text.c_str());
+        }
+    };
 
     switch (Cmd_Argc())
     {
@@ -92,7 +107,7 @@ void NET_Ban_f(void)
         {
             Q_strlcpy(addrStr, inet_ntoa(*(struct in_addr *)&banAddr), sizeof(addrStr));
             Q_strlcpy(maskStr, inet_ntoa(*(struct in_addr *)&banMask), sizeof(maskStr));
-            print("Banning %s [%s]\n", addrStr, maskStr);
+            print("Banning {} [{}]\n", addrStr, maskStr);
         }
         else
         {

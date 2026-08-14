@@ -156,7 +156,7 @@ void Cvar_Set(const char *var_name, const char *value)
     {
         if (sv.active)
         {
-            SV_BroadcastPrintf("\"%s\" changed to \"%s\"\n", var->name, var->string.c_str());
+            SV_BroadcastPrintf("\"{}\" changed to \"{}\"\n", var->name, var->string);
         }
     }
 }

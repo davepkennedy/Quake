@@ -79,7 +79,7 @@ void Con_DPrintf (const char *fmt, ...)
 
 // Only reachable when sv.active (Cvar_Set's "notify players" branch) --
 // never true in these tests, since nothing here spins up a real server.
-void SV_BroadcastPrintf (const char *fmt, ...)
+void SV_BroadcastPrintfImpl (const std::string &text)
 {
 }
 
