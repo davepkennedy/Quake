@@ -121,9 +121,8 @@ Host_Error
 This shuts down both the client and server
 ================
 */
-void Host_Error(const char *error, ...)
+[[noreturn]] void Host_ErrorImpl(const std::string &error)
 {
-    va_list argptr;
     static qboolean inerror = false;
 
     if (inerror)
@@ -134,10 +133,7 @@ void Host_Error(const char *error, ...)
 
     SCR_EndLoadingPlaque(); // reenable screen updates
 
-    va_start(argptr, error);
-    std::string string = COM_FormatVA(error, argptr);
-    va_end(argptr);
-    Con_Printf("Host_Error: %s\n", string.c_str());
+    Con_Printf("Host_Error: %s\n", error.c_str());
 
     if (sv.active)
     {
@@ -146,7 +142,7 @@ void Host_Error(const char *error, ...)
 
     if (cls.state == cactive_t::ca_dedicated)
     {
-        Sys_Error("Host_Error: %s\n", string.c_str()); // dedicated servers exit
+        Sys_Error("Host_Error: %s\n", error.c_str()); // dedicated servers exit
     }
 
     CL_Disconnect();

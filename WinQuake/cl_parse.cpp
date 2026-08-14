@@ -68,7 +68,7 @@ entity_t *CL_EntityNum(int num)
     {
         if (num >= MAX_EDICTS)
         {
-            Host_Error("CL_EntityNum: %i is an invalid number", num);
+            Host_Error("CL_EntityNum: {} is an invalid number", num);
         }
         while (cl.num_entities <= num)
         {
@@ -123,7 +123,7 @@ void CL_ParseStartSoundPacket(void)
 
     if (ent > MAX_EDICTS)
     {
-        Host_Error("CL_ParseStartSoundPacket: ent = %i", ent);
+        Host_Error("CL_ParseStartSoundPacket: ent = {}", ent);
     }
 
     for (i = 0; i < 3; i++)
@@ -927,7 +927,7 @@ void CL_ParseServerMessage(void)
             i = MSG_ReadLong();
             if (i != PROTOCOL_VERSION)
             {
-                Host_Error("CL_ParseServerMessage: Server is protocol %i instead of %i\n", i, PROTOCOL_VERSION);
+                Host_Error("CL_ParseServerMessage: Server is protocol {} instead of {}\n", i, PROTOCOL_VERSION);
             }
             break;
 
@@ -1056,7 +1056,7 @@ void CL_ParseServerMessage(void)
             i = MSG_ReadByte();
             if (i <= cls.signon)
             {
-                Host_Error("Received signon %i when at %i", i, cls.signon);
+                Host_Error("Received signon {} when at {}", i, cls.signon);
             }
             cls.signon = i;
             CL_SignonReply();

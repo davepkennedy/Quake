@@ -140,15 +140,19 @@ void Host_ServerFrame(void);
 void Host_InitCommands(void);
 void Host_Init(quakeparms_t *parms);
 void Host_Shutdown(void);
-void Host_Error(const char *error, ...);
-
 // Sends already-formatted text; defined in host.cpp.
 [[noreturn]] void Host_EndGameImpl(const std::string &message);
+[[noreturn]] void Host_ErrorImpl(const std::string &error);
 void Host_ClientCommandsImpl(const std::string &text);
 
 template <typename... Args> [[noreturn]] void Host_EndGame(std::format_string<Args...> message, Args &&...args)
 {
     Host_EndGameImpl(std::format(message, std::forward<Args>(args)...));
+}
+
+template <typename... Args> [[noreturn]] void Host_Error(std::format_string<Args...> error, Args &&...args)
+{
+    Host_ErrorImpl(std::format(error, std::forward<Args>(args)...));
 }
 
 template <typename... Args> void Host_ClientCommands(std::format_string<Args...> fmt, Args &&...args)
