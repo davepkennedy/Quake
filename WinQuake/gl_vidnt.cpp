@@ -486,7 +486,7 @@ int VID_SetMode(int modenum, unsigned char *palette)
     if (!msg_suppress_1)
     {
         auto desc = VID_GetModeDescription(vid_modenum);
-        Con_SafePrintf("Video mode %s initialized.\n", desc ? desc->c_str() : "unknown");
+        Con_SafePrintf("Video mode {} initialized.\n", desc ? desc->c_str() : "unknown");
     }
 
     VID_SetPalette(palette);

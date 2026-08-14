@@ -219,7 +219,7 @@ static qboolean SNDDMA_InitWASAPI(void)
     hr = pAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, WASAPI_BUFFER_DURATION, 0, &wfx, nullptr);
     if (FAILED(hr))
     {
-        Con_SafePrintf("WASAPI: IAudioClient::Initialize failed (hr=0x%x)\n", (unsigned)hr);
+        Con_SafePrintf("WASAPI: IAudioClient::Initialize failed (hr=0x{:x})\n", (unsigned)hr);
         return false;
     }
     wasapi_client_initialized = true;
@@ -298,10 +298,10 @@ int SNDDMA_Init(void)
     }
 
     Con_SafePrintf("WASAPI sound initialized\n");
-    Con_SafePrintf("   %d channel(s)\n"
-                   "   %d bits/sample\n"
-                   "   %d samples/sec\n",
-                   shm->channels, shm->samplebits, shm->speed);
+    Con_SafePrintf("   {} channel(s)\n"
+                   "   {} bits/sample\n"
+                   "   {} samples/sec\n",
+                   static_cast<int>(shm->channels), static_cast<int>(shm->samplebits), static_cast<int>(shm->speed));
 
     return 1;
 }

@@ -432,14 +432,9 @@ Con_SafePrintf
 Okay to call even when the screen can't be updated
 ==================
 */
-void Con_SafePrintf(const char *fmt, ...)
+void Con_SafePrintfImpl(const std::string &msg)
 {
-    va_list argptr;
     int temp;
-
-    va_start(argptr, fmt);
-    std::string msg = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
 
     temp = scr_disabled_for_loading;
     scr_disabled_for_loading = true;
