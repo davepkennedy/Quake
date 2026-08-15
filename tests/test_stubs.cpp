@@ -330,33 +330,6 @@ skipwhite:
 	return data;
 }
 
-std::string COM_FormatVA (const char *fmt, va_list argptr)
-{
-	va_list measure;
-	va_copy (measure, argptr);
-	int need = vsnprintf (nullptr, 0, fmt, measure);
-	va_end (measure);
-
-	if (need <= 0)
-		return std::string ();
-
-	std::string msg (need, '\0');
-	vsnprintf (msg.data (), need + 1, fmt, argptr);
-	return msg;
-}
-
-const char *va (const char *format, ...)
-{
-	va_list         argptr;
-	static std::string      string;
-
-	va_start (argptr, format);
-	string = COM_FormatVA (format, argptr);
-	va_end (argptr);
-
-	return string.c_str();
-}
-
 void SZ_Alloc (sizebuf_t *buf, int startsize)
 {
 	if (startsize < 256)

@@ -181,12 +181,6 @@ template <typename... Args> const char *va(std::format_string<Args...> format, A
     return string.c_str();
 }
 
-std::string COM_FormatVA(const char *fmt, va_list argptr);
-// formats fmt/argptr into a string sized exactly to fit -- no fixed buffer,
-// so no truncation and no overflow regardless of message length. argptr
-// must not be used again by the caller afterward (single-pass, matches the
-// usual va_start/va_end pairing convention).
-
 //============================================================================
 
 extern int com_filesize;

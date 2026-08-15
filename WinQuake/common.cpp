@@ -1265,28 +1265,6 @@ void COM_Init(const char *basedir)
     COM_CheckRegistered();
 }
 
-/*
-============
-COM_FormatVA
-============
-*/
-std::string COM_FormatVA(const char *fmt, va_list argptr)
-{
-    va_list measure;
-    va_copy(measure, argptr);
-    int need = vsnprintf(nullptr, 0, fmt, measure);
-    va_end(measure);
-
-    if (need <= 0)
-    {
-        return std::string();
-    }
-
-    std::string msg(need, '\0');
-    vsnprintf(msg.data(), need + 1, fmt, argptr);
-    return msg;
-}
-
 /// just for debugging
 int memsearch(byte *start, int count, int search)
 {
