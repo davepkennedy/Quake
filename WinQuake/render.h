@@ -57,6 +57,8 @@ struct entity_t
     struct model_t *model; // nullptr = no model
     struct efrag_t *efrag; // linked list of efrags
     int frame;
+    int oldframe;          // previous frame, for alias-model animation lerp
+    double frame_start_time; // cl.time when 'frame' most recently changed
     float syncbase; // for client-side animations
     byte *colormap;
     int effects;  // light, particals, etc

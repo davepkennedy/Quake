@@ -414,7 +414,8 @@ float r_avertexnormal_dots[SHADEDOT_QUANT][256] =
 
 float *shadedots = r_avertexnormal_dots[0];
 
-int lastposenum;
+int lastposenum_old, lastposenum_new;
+float lastpose_blend;
 
 // -------------------------------------------------------------------------
 // Alias model renderer state (VAO / VBO / GLSL shader)
@@ -600,17 +601,21 @@ static void Alias_EmitPrimitive(const float cmdverts[][6], int n, qboolean fan)
 GL_DrawAliasFrame
 =============
 */
-void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum)
+void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum0, int posenum1, float blend)
 {
-    trivertx_t *verts;
+    trivertx_t *verts0, *verts1;
     int *order;
     int count;
     float cmdverts[ALIAS_MAX_CMD_VERTS][6];
 
-    lastposenum = posenum;
+    lastposenum_old = posenum0;
+    lastposenum_new = posenum1;
+    lastpose_blend = blend;
 
-    verts = reinterpret_cast<trivertx_t *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->posedata);
-    verts += posenum * paliashdr->poseverts;
+    verts0 = reinterpret_cast<trivertx_t *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->posedata);
+    verts0 += posenum0 * paliashdr->poseverts;
+    verts1 = reinterpret_cast<trivertx_t *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->posedata);
+    verts1 += posenum1 * paliashdr->poseverts;
     order = reinterpret_cast<int *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->commands);
 
     Alias_BeginDraw();
@@ -640,15 +645,25 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum)
                 cmdverts[n][3] = reinterpret_cast<float *>(order)[0];
                 cmdverts[n][4] = reinterpret_cast<float *>(order)[1];
 
-                // normals and vertexes come from the frame list
-                cmdverts[n][0] = verts->v[0];
-                cmdverts[n][1] = verts->v[1];
-                cmdverts[n][2] = verts->v[2];
-                cmdverts[n][5] = shadedots[verts->lightnormalindex] * shadelight;
+                // normals and vertexes come from the frame list -- blend
+                // between the previous and current animation frame's poses
+                // rather than snapping straight to the new one. Lighting
+                // intensity is blended too (a linear blend of the two
+                // shadedots lookups, not a re-normalized vector lerp -- a
+                // standard, cheap approximation since the flicker from
+                // interpolating the scalar directly is imperceptible next
+                // to the position blend).
+                cmdverts[n][0] = verts0->v[0] + (verts1->v[0] - verts0->v[0]) * blend;
+                cmdverts[n][1] = verts0->v[1] + (verts1->v[1] - verts0->v[1]) * blend;
+                cmdverts[n][2] = verts0->v[2] + (verts1->v[2] - verts0->v[2]) * blend;
+                float intensity0 = shadedots[verts0->lightnormalindex] * shadelight;
+                float intensity1 = shadedots[verts1->lightnormalindex] * shadelight;
+                cmdverts[n][5] = intensity0 + (intensity1 - intensity0) * blend;
                 n++;
             }
             order += 2;
-            verts++;
+            verts0++;
+            verts1++;
         } while (--count);
 
         Alias_EmitPrimitive(cmdverts, n, fan);
@@ -664,9 +679,9 @@ GL_DrawAliasShadow
 */
 extern vec3_t lightspot;
 
-void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
+void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum0, int posenum1, float blend)
 {
-    trivertx_t *verts;
+    trivertx_t *verts0, *verts1;
     int *order;
     float height, lheight;
     int count;
@@ -674,8 +689,10 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
 
     lheight = currententity->origin[2] - lightspot[2];
 
-    verts = reinterpret_cast<trivertx_t *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->posedata);
-    verts += posenum * paliashdr->poseverts;
+    verts0 = reinterpret_cast<trivertx_t *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->posedata);
+    verts0 += posenum0 * paliashdr->poseverts;
+    verts1 = reinterpret_cast<trivertx_t *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->posedata);
+    verts1 += posenum1 * paliashdr->poseverts;
     order = reinterpret_cast<int *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->commands);
 
     height = -lheight + 1.0;
@@ -711,10 +728,15 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
 
             if (n < ALIAS_MAX_CMD_VERTS)
             {
+                vec3_t vert;
+                vert[0] = verts0->v[0] + (verts1->v[0] - verts0->v[0]) * blend;
+                vert[1] = verts0->v[1] + (verts1->v[1] - verts0->v[1]) * blend;
+                vert[2] = verts0->v[2] + (verts1->v[2] - verts0->v[2]) * blend;
+
                 vec3_t point;
-                point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-                point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-                point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+                point[0] = vert[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
+                point[1] = vert[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
+                point[2] = vert[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
 
                 point[0] -= shadevector[0] * (point[2] + lheight);
                 point[1] -= shadevector[1] * (point[2] + lheight);
@@ -729,7 +751,8 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
                 n++;
             }
 
-            verts++;
+            verts0++;
+            verts1++;
         } while (--count);
 
         Alias_EmitPrimitive(cmdverts, n, fan);
@@ -740,11 +763,15 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum)
 
 /*
 =================
-R_SetupAliasFrame
+R_PoseForFrame
 
+Resolves a .mdl frame index to a pose index into posedata, handling the
+built-in interval-cycled "frame groups" some models use (e.g. torches
+cycling through several poses on their own timer within a single logical
+frame). Shared by R_SetupAliasFrame's old and new frame lookups below.
 =================
 */
-void R_SetupAliasFrame(int frame, aliashdr_t *paliashdr)
+static int R_PoseForFrame(aliashdr_t *paliashdr, int frame)
 {
     int pose, numposes;
     float interval;
@@ -764,7 +791,47 @@ void R_SetupAliasFrame(int frame, aliashdr_t *paliashdr)
         pose += (int)(CL_Time() / interval) % numposes;
     }
 
-    GL_DrawAliasFrame(paliashdr, pose);
+    return pose;
+}
+
+// QuakeC animation typically advances .frame once every 0.1s (the classic
+// "self.nextthink = time + 0.1" walk-cycle idiom) regardless of how often
+// the server actually simulates -- so even a locally-hosted single-player
+// game, whose entity updates otherwise arrive every render frame, still
+// only gets a new model frame at 10Hz. Blending position over this fixed
+// window (rather than deriving it from network-message timing, which
+// collapses to no interpolation at all for listen servers -- see
+// CL_LerpPoint's sv.active check) is what actually smooths that out.
+constexpr float ALIAS_ANIM_LERP_DURATION = 0.1f;
+
+/*
+=================
+R_SetupAliasFrame
+
+=================
+*/
+void R_SetupAliasFrame(int frame, aliashdr_t *paliashdr)
+{
+    int posenew = R_PoseForFrame(paliashdr, frame);
+    int poseold = posenew;
+    float blend = 1.0f;
+
+    if (!cl_nolerp.value && currententity->oldframe != frame && currententity->oldframe >= 0 &&
+        currententity->oldframe < paliashdr->numframes)
+    {
+        poseold = R_PoseForFrame(paliashdr, currententity->oldframe);
+        blend = (float)((CL_Time() - currententity->frame_start_time) / ALIAS_ANIM_LERP_DURATION);
+        if (blend < 0)
+        {
+            blend = 0;
+        }
+        if (blend > 1)
+        {
+            blend = 1;
+        }
+    }
+
+    GL_DrawAliasFrame(paliashdr, poseold, posenew, blend);
 }
 
 /*
@@ -916,7 +983,7 @@ void R_DrawAliasModel(entity_t *e)
     {
         R_RotateForEntity(e);
         glEnable(GL_BLEND);
-        GL_DrawAliasShadow(paliashdr, lastposenum);
+        GL_DrawAliasShadow(paliashdr, lastposenum_old, lastposenum_new, lastpose_blend);
         glDisable(GL_BLEND);
         r_entity_matrix = glm::mat4(1.0f);
     }

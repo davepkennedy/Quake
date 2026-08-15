@@ -346,6 +346,7 @@ void CL_ParseUpdate(int bits)
     entity_t *ent;
     int num;
     int skin;
+    int newframe;
 
     if (cls.signon == SIGNONS - 1)
     { // first update is the final signon stage
@@ -433,12 +434,28 @@ void CL_ParseUpdate(int bits)
 
     if (bits & U_FRAME)
     {
-        ent->frame = MSG_ReadByte();
+        newframe = MSG_ReadByte();
     }
     else
     {
-        ent->frame = ent->baseline.frame;
+        newframe = ent->baseline.frame;
     }
+
+    if (forcelink)
+    {
+        // No valid previous state to blend from -- either this entity was
+        // just (re)linked (see the forcelink assignment above) or this slot
+        // was reused by a different world entity since we last saw it.
+        // Snap instead of animating in from garbage.
+        ent->oldframe = newframe;
+        ent->frame_start_time = cl.time;
+    }
+    else if (newframe != ent->frame)
+    {
+        ent->oldframe = ent->frame;
+        ent->frame_start_time = cl.time;
+    }
+    ent->frame = newframe;
 
     if (bits & U_COLORMAP)
     {
