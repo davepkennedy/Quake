@@ -90,7 +90,7 @@ Host_EndGame
 */
 [[noreturn]] void Host_EndGameImpl(const std::string &message)
 {
-    Con_DPrintf("Host_EndGame: %s\n", message.c_str());
+    Con_DPrintf("Host_EndGame: {}\n", message);
 
     if (sv.active)
     {

@@ -348,7 +348,7 @@ int Datagram_GetMessage(qsocket_t *sock)
             {
                 count = sequence - sock->unreliableReceiveSequence;
                 droppedDatagrams += count;
-                Con_DPrintf("Dropped %u datagram(s)\n", count);
+                Con_DPrintf("Dropped {} datagram(s)\n", count);
             }
             sock->unreliableReceiveSequence = sequence + 1;
 

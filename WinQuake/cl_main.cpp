@@ -283,7 +283,7 @@ void CL_EstablishConnection(const char *host)
     {
         Host_Error("CL_Connect: connect failed\n");
     }
-    Con_DPrintf("CL_EstablishConnection: connected to %s\n", host);
+    Con_DPrintf("CL_EstablishConnection: connected to {}\n", host);
 
     cls.demonum = -1; // not in the demo loop now
     cls.state = cactive_t::ca_connected;
@@ -301,7 +301,7 @@ void CL_SignonReply(void)
 {
     std::string str;
 
-    Con_DPrintf("CL_SignonReply: %i\n", cls.signon);
+    Con_DPrintf("CL_SignonReply: {}\n", cls.signon);
 
     switch (cls.signon)
     {

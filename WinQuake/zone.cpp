@@ -895,7 +895,7 @@ Cache_Report
 */
 void Cache_Report(void)
 {
-    Con_DPrintf("%4.1f megabyte data cache\n",
+    Con_DPrintf("{:4.1f} megabyte data cache\n",
                 (mem.hunk_size - mem.hunk_high_used - mem.hunk_low_used) / (float)(1024 * 1024));
 }
 

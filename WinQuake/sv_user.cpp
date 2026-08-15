@@ -663,7 +663,7 @@ qboolean SV_ReadClientMessage(void)
                 }
                 else
                 {
-                    Con_DPrintf("%s tried to %s\n", host_client->name, s.c_str());
+                    Con_DPrintf("{} tried to {}\n", host_client->name, s);
                 }
                 break;
 

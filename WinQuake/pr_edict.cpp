@@ -1061,7 +1061,7 @@ void ED_LoadFromFile(const char *data)
         PR_ExecuteProgram(*func - pr_functions);
     }
 
-    Con_DPrintf("%i entities inhibited\n", inhibit);
+    Con_DPrintf("{} entities inhibited\n", inhibit);
 }
 
 /*
@@ -1086,7 +1086,7 @@ void PR_LoadProgs(void)
     {
         Sys_Error("PR_LoadProgs: couldn't load progs.dat");
     }
-    Con_DPrintf("Programs occupy %iK.\n", com_filesize / 1024);
+    Con_DPrintf("Programs occupy {}K.\n", com_filesize / 1024);
 
     for (i = 0; i < com_filesize; i++)
     {

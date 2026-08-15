@@ -409,18 +409,12 @@ Con_DPrintf
 A Con_Printf that only shows up if the "developer" cvar is set
 ================
 */
-void Con_DPrintf(const char *fmt, ...)
+void Con_DPrintfImpl(const std::string &msg)
 {
-    va_list argptr;
-
     if (!developer.value)
     {
         return; // don't confuse non-developers with techie stuff...
     }
-
-    va_start(argptr, fmt);
-    std::string msg = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
 
     Con_Printf("%s", msg.c_str());
 }

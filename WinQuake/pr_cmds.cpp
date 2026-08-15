@@ -936,7 +936,7 @@ PF_dprint
 */
 void PF_dprint(void)
 {
-    Con_DPrintf("%s", PF_VarString(0).c_str());
+    Con_DPrintf("{}", PF_VarString(0));
 }
 
 char *pr_string_temp; // allocated from hunk in PR_LoadProgs so offset from pr_strings fits in int

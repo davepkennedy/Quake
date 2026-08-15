@@ -1067,7 +1067,7 @@ int MapKey(int key)
     }
     if (scantokey[key] == 0)
     {
-        Con_DPrintf("key 0x%02x has no translation\n", key);
+        Con_DPrintf("key 0x{:02x} has no translation\n", key);
     }
     return scantokey[key];
 }

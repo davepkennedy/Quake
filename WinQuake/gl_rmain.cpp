@@ -751,7 +751,7 @@ void R_SetupAliasFrame(int frame, aliashdr_t *paliashdr)
 
     if ((frame >= paliashdr->numframes) || (frame < 0))
     {
-        Con_DPrintf("R_AliasSetupFrame: no such frame %d\n", frame);
+        Con_DPrintf("R_AliasSetupFrame: no such frame {}\n", frame);
         frame = 0;
     }
 

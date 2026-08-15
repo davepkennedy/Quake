@@ -926,12 +926,12 @@ void NET_Init(void)
     std::string ipxAddress = NET_IPXAddressString();
     if (!ipxAddress.empty())
     {
-        Con_DPrintf("IPX address %s\n", ipxAddress.c_str());
+        Con_DPrintf("IPX address {}\n", ipxAddress);
     }
     std::string tcpipAddress = NET_TCPIPAddressString();
     if (!tcpipAddress.empty())
     {
-        Con_DPrintf("TCP/IP address %s\n", tcpipAddress.c_str());
+        Con_DPrintf("TCP/IP address {}\n", tcpipAddress);
     }
 }
 
