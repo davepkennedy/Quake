@@ -300,7 +300,7 @@ qpic_t *Draw_CachePic(const char *path)
     dat = reinterpret_cast<qpic_t *>(COM_LoadTempFile(path));
     if (!dat)
     {
-        Sys_Error("Draw_CachePic: failed to load %s", path);
+        Sys_Error("Draw_CachePic: failed to load {}", path);
     }
     SwapPic(dat);
 

@@ -208,7 +208,7 @@ int Sys_FileOpenWrite(const char *path)
     sys_handles[i].open(path, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!sys_handles[i].is_open())
     {
-        Sys_Error("Error opening %s: %s", path, strerror(errno));
+        Sys_Error("Error opening {}: {}", path, strerror(errno));
     }
 
     VID_ForceLockState(t);
@@ -356,10 +356,8 @@ void Sys_Init(void)
     Sys_InitFloatTime();
 }
 
-[[noreturn]] void Sys_Error(const char *error, ...)
+[[noreturn]] void Sys_ErrorImpl(const std::string &error)
 {
-    va_list argptr;
-    char text[1024], text2[1024];
     const char *text3 = "Press Enter to exit\n";
     const char *text4 = "***********************************\n";
     const char *text5 = "\n";
@@ -376,21 +374,12 @@ void Sys_Init(void)
         VID_ForceUnlockedAndReturnState();
     }
 
-    va_start(argptr, error);
-    vsnprintf(text, sizeof(text), error, argptr);
-    va_end(argptr);
-
     if (isDedicated)
     {
-        va_start(argptr, error);
-        vsnprintf(text, sizeof(text), error, argptr);
-        va_end(argptr);
-
-        auto text2Result = std::format_to_n(text2, sizeof(text2) - 1, "ERROR: {}\n", text);
-        *text2Result.out = '\0';
+        std::string text2 = std::format("ERROR: {}\n", error);
         WriteFile(houtput, text5, (DWORD)strlen(text5), &dummy, nullptr);
         WriteFile(houtput, text4, (DWORD)strlen(text4), &dummy, nullptr);
-        WriteFile(houtput, text2, (DWORD)strlen(text2), &dummy, nullptr);
+        WriteFile(houtput, text2.c_str(), (DWORD)text2.size(), &dummy, nullptr);
         WriteFile(houtput, text3, (DWORD)strlen(text3), &dummy, nullptr);
         WriteFile(houtput, text4, (DWORD)strlen(text4), &dummy, nullptr);
 
@@ -409,11 +398,11 @@ void Sys_Init(void)
         {
             in_sys_error0 = 1;
             VID_SetDefaultMode();
-            MessageBox(nullptr, text, "Quake Error", MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
+            MessageBox(nullptr, error.c_str(), "Quake Error", MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
         }
         else
         {
-            MessageBox(nullptr, text, "Double Quake Error", MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
+            MessageBox(nullptr, error.c_str(), "Double Quake Error", MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
         }
     }
 

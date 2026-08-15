@@ -18,14 +18,9 @@
 // and calls ExitProcess -- unusable inside a test binary. This throws
 // instead, so BoxOnPlaneSide's and FloorDivMod's error paths can be
 // asserted with CHECK_THROWS_AS rather than only testing happy paths.
-[[noreturn]] void Sys_Error (const char *error, ...)
+[[noreturn]] void Sys_ErrorImpl (const std::string &error)
 {
-	char text[1024];
-	va_list argptr;
-	va_start (argptr, error);
-	vsnprintf (text, sizeof(text), error, argptr);
-	va_end (argptr);
-	throw SysErrorException (text);
+	throw SysErrorException (error);
 }
 
 // ===========================================================================
@@ -391,7 +386,7 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 			Sys_Error ("SZ_GetSpace: overflow without allowoverflow set");
 
 		if (length > buf->maxsize)
-			Sys_Error ("SZ_GetSpace: %i is > full buffer size", length);
+			Sys_Error ("SZ_GetSpace: {} is > full buffer size", length);
 
 		buf->overflowed = true;
 		Con_Printf ("SZ_GetSpace: overflow");

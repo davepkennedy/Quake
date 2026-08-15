@@ -1034,7 +1034,7 @@ void SV_Physics_Client(edict_t *ent, int num)
         break;
 
     default:
-        Sys_Error("SV_Physics_client: bad movetype %i", (int)ent->v.movetype);
+        Sys_Error("SV_Physics_client: bad movetype {}", (int)ent->v.movetype);
     }
 
     //
@@ -1320,7 +1320,7 @@ void SV_Physics(void)
             SV_Physics_Toss(ent);
         else
         {
-            Sys_Error("SV_Physics: bad movetype %i", (int)ent->v.movetype);
+            Sys_Error("SV_Physics: bad movetype {}", (int)ent->v.movetype);
         }
     }
 

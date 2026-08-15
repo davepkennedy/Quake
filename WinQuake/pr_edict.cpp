@@ -1003,7 +1003,7 @@ void ED_LoadFromFile(const char *data)
         }
         if (com_token[0] != '{')
         {
-            Sys_Error("ED_LoadFromFile: found %s when expecting {", com_token);
+            Sys_Error("ED_LoadFromFile: found {} when expecting {{", com_token);
         }
 
         if (!ent)
@@ -1101,7 +1101,7 @@ void PR_LoadProgs(void)
 
     if (progs->version != PROG_VERSION)
     {
-        Sys_Error("progs.dat has wrong version number (%i should be %i)", progs->version, PROG_VERSION);
+        Sys_Error("progs.dat has wrong version number ({} should be {})", progs->version, PROG_VERSION);
     }
     if (progs->crc != PROGHEADER_CRC)
     {
@@ -1195,7 +1195,7 @@ edict_t *EDICT_NUM(int n)
 {
     if (n < 0 || n >= sv.max_edicts)
     {
-        Sys_Error("EDICT_NUM: bad number %i", n);
+        Sys_Error("EDICT_NUM: bad number {}", n);
     }
     return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(sv.edicts) + (n)*pr_edict_size);
 }
@@ -1218,7 +1218,7 @@ edict_t *PROG_TO_EDICT(int prog)
 {
     if (prog < 0 || prog >= sv.max_edicts * pr_edict_size)
     {
-        Sys_Error("PROG_TO_EDICT: bad prog offset %i", prog);
+        Sys_Error("PROG_TO_EDICT: bad prog offset {}", prog);
     }
     return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(sv.edicts) + prog);
 }

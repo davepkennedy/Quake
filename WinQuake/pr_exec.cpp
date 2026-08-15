@@ -331,7 +331,7 @@ static eval_t *PR_FieldAddress(int ofs)
 {
     if (ofs < 0 || ofs >= sv.max_edicts * pr_edict_size)
     {
-        Sys_Error("PR_FieldAddress: bad offset %i", ofs);
+        Sys_Error("PR_FieldAddress: bad offset {}", ofs);
     }
     return reinterpret_cast<eval_t *>(reinterpret_cast<byte *>(sv.edicts) + ofs);
 }

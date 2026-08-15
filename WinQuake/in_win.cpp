@@ -865,7 +865,7 @@ PDWORD RawValuePointer(int axis)
     case JOY_AXIS_V:
         return &ji.dwVpos;
     default:
-        Sys_Error("RawValuePointer: invalid axis %d", axis);
+        Sys_Error("RawValuePointer: invalid axis {}", axis);
     }
 }
 

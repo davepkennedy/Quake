@@ -581,17 +581,17 @@ void PF_sound(void)
 
     if (volume < 0 || volume > 255)
     {
-        Sys_Error("SV_StartSound: volume = %i", volume);
+        Sys_Error("SV_StartSound: volume = {}", volume);
     }
 
     if (attenuation < 0 || attenuation > 4)
     {
-        Sys_Error("SV_StartSound: attenuation = %f", attenuation);
+        Sys_Error("SV_StartSound: attenuation = {}", attenuation);
     }
 
     if (channel < 0 || channel > 7)
     {
-        Sys_Error("SV_StartSound: channel = %i", channel);
+        Sys_Error("SV_StartSound: channel = {}", channel);
     }
 
     SV_StartSound(entity, channel, sample, volume, attenuation);

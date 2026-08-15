@@ -255,7 +255,7 @@ sfx_t *S_FindName(const char *name)
 
     if (Q_strlen(name) >= MAX_QPATH)
     {
-        Sys_Error("Sound name too long: %s", name);
+        Sys_Error("Sound name too long: {}", name);
     }
 
     // see if already loaded

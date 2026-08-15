@@ -189,7 +189,7 @@ void *Z_Malloc(int size)
     buf = Z_TagMalloc(size, 1);
     if (!buf)
     {
-        Sys_Error("Z_Malloc: failed on allocation of %i bytes", size);
+        Sys_Error("Z_Malloc: failed on allocation of {} bytes", size);
     }
     Q_memset(buf, 0, size);
 
@@ -471,14 +471,14 @@ void *Hunk_AllocName(int size, const char *name)
 
     if (size < 0)
     {
-        Sys_Error("Hunk_Alloc: bad size: %i", size);
+        Sys_Error("Hunk_Alloc: bad size: {}", size);
     }
 
     size = sizeof(hunk_t) + ((size + 15) & ~15);
 
     if (mem.hunk_size - mem.hunk_low_used - mem.hunk_high_used < size)
     {
-        Sys_Error("Hunk_Alloc: failed on %i bytes", size);
+        Sys_Error("Hunk_Alloc: failed on {} bytes", size);
     }
 
     h = reinterpret_cast<hunk_t *>(mem.hunk_base + mem.hunk_low_used);
@@ -519,7 +519,7 @@ void *HunkMemoryResource::do_allocate(size_t bytes, size_t alignment)
     // allocation here is naturally 16-byte aligned already.
     if (alignment > 16)
     {
-        Sys_Error("HunkMemoryResource::do_allocate: alignment %zu not supported", alignment);
+        Sys_Error("HunkMemoryResource::do_allocate: alignment {} not supported", alignment);
     }
     return Hunk_AllocName((int)bytes, "pmr");
 }
@@ -551,7 +551,7 @@ void Hunk_FreeToLowMark(size_t mark)
 {
     if (mark > mem.hunk_low_used)
     {
-        Sys_Error("Hunk_FreeToLowMark: bad mark %zu", mark);
+        Sys_Error("Hunk_FreeToLowMark: bad mark {}", mark);
     }
     memset(mem.hunk_base + mark, 0, mem.hunk_low_used - mark);
     mem.hunk_low_used = mark;
@@ -577,7 +577,7 @@ void Hunk_FreeToHighMark(size_t mark)
     }
     if (mark > mem.hunk_high_used)
     {
-        Sys_Error("Hunk_FreeToHighMark: bad mark %zu", mark);
+        Sys_Error("Hunk_FreeToHighMark: bad mark {}", mark);
     }
     memset(mem.hunk_base + mem.hunk_size - mem.hunk_high_used, 0, mem.hunk_high_used - mark);
     mem.hunk_high_used = mark;
@@ -594,7 +594,7 @@ void *Hunk_HighAllocName(int size, const char *name)
 
     if (size < 0)
     {
-        Sys_Error("Hunk_HighAllocName: bad size: %i", size);
+        Sys_Error("Hunk_HighAllocName: bad size: {}", size);
     }
 
     if (mem.hunk_tempactive)
@@ -792,7 +792,7 @@ cache_system_t *Cache_TryAlloc(int size, qboolean nobottom)
     {
         if (mem.hunk_size - mem.hunk_high_used - mem.hunk_low_used < size)
         {
-            Sys_Error("Cache_TryAlloc: %i is greater then free hunk", size);
+            Sys_Error("Cache_TryAlloc: {} is greater then free hunk", size);
         }
 
         newcs = reinterpret_cast<cache_system_t *>((mem.hunk_base + mem.hunk_low_used));
@@ -989,7 +989,7 @@ void *Cache_Alloc(cache_user_t *c, int size, const char *name)
 
     if (size <= 0)
     {
-        Sys_Error("Cache_Alloc: size %i", size);
+        Sys_Error("Cache_Alloc: size {}", size);
     }
 
     size = (size + sizeof(cache_system_t) + 15) & ~15;

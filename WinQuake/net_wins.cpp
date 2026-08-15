@@ -178,7 +178,7 @@ int WINS_Init(void)
             myAddr = inet_addr(com_argv[i + 1]);
             if (myAddr == INADDR_NONE)
             {
-                Sys_Error("%s is not a valid IP address", com_argv[i + 1]);
+                Sys_Error("{} is not a valid IP address", com_argv[i + 1]);
             }
             my_tcpip_address = com_argv[i + 1];
         }
@@ -280,7 +280,7 @@ int WINS_OpenSocket(int port)
         return newsocket;
     }
 
-    Sys_Error("Unable to bind to %s", WINS_AddrToString((struct qsockaddr *)&address).c_str());
+    Sys_Error("Unable to bind to {}", WINS_AddrToString((struct qsockaddr *)&address));
 }
 
 //=============================================================================

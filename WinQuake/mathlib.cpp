@@ -273,7 +273,7 @@ void FloorDivMod(double numer, double denom, int *quotient, int *rem)
 
     if (denom <= 0.0)
     {
-        Sys_Error("FloorDivMod: bad denominator %d\n", denom);
+        Sys_Error("FloorDivMod: bad denominator {}\n", denom);
     }
 
 //	if ((floor(numer) != numer) || (floor(denom) != denom))

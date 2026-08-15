@@ -157,7 +157,7 @@ public:
         f.read(reinterpret_cast<char *>(&header), sizeof(header));
         if (header.id[0] != 'P' || header.id[1] != 'A' || header.id[2] != 'C' || header.id[3] != 'K')
         {
-            Sys_Error("%s is not a packfile", packfile.c_str());
+            Sys_Error("{} is not a packfile", packfile);
         }
         header.dirofs = LittleLong(header.dirofs);
         header.dirlen = LittleLong(header.dirlen);
@@ -166,7 +166,7 @@ public:
 
         if (numpackfiles > MAX_FILES_IN_PACK)
         {
-            Sys_Error("%s has %i files", packfile.c_str(), numpackfiles);
+            Sys_Error("{} has {} files", packfile, numpackfiles);
         }
 
         if (numpackfiles != PAK0_COUNT)
@@ -377,7 +377,7 @@ static byte *COM_LoadFile(const char *path, int usehunk)
 
     if (!buf)
     {
-        Sys_Error("COM_LoadFile: not enough space for %s", path);
+        Sys_Error("COM_LoadFile: not enough space for {}", path);
     }
 
     buf[len] = 0;
@@ -555,7 +555,7 @@ void COM_InitFilesystem(void)
                 auto pack = PackArchive::Load(com_argv[i]);
                 if (!pack)
                 {
-                    Sys_Error("Couldn't load packfile: %s", com_argv[i]);
+                    Sys_Error("Couldn't load packfile: {}", com_argv[i]);
                 }
                 com_searchpaths.insert(com_searchpaths.begin(), std::move(pack));
             }

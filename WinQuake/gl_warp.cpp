@@ -72,7 +72,7 @@ void SubdividePolygon(int numverts, float *verts)
 
     if (numverts > 60)
     {
-        Sys_Error("numverts = %i", numverts);
+        Sys_Error("numverts = {}", numverts);
     }
 
     BoundPoly(numverts, verts, mins, maxs);

@@ -53,7 +53,13 @@ void Sys_MakeCodeWriteable(size_t startaddr, size_t length);
 //
 void Sys_DebugLog(const char *file, const char *fmt, ...);
 
-[[noreturn]] void Sys_Error(const char *error, ...);
+// Aborts with an already-formatted error message; defined in sys_win.cpp.
+[[noreturn]] void Sys_ErrorImpl(const std::string &error);
+
+template <typename... Args> [[noreturn]] void Sys_Error(std::format_string<Args...> error, Args &&...args)
+{
+    Sys_ErrorImpl(std::format(error, std::forward<Args>(args)...));
+}
 // an error will cause the entire program to exit
 
 // Sends already-formatted text to the console (dedicated-server output).

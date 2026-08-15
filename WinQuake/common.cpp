@@ -823,7 +823,7 @@ void *SZ_GetSpace(sizebuf_t *buf, int length)
 
         if (length > buf->maxsize)
         {
-            Sys_Error("SZ_GetSpace: %i is > full buffer size", length);
+            Sys_Error("SZ_GetSpace: {} is > full buffer size", length);
         }
 
         buf->overflowed = true;
