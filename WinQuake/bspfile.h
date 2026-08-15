@@ -147,7 +147,6 @@ constexpr int CONTENTS_CURRENT_270 = -12;
 constexpr int CONTENTS_CURRENT_UP = -13;
 constexpr int CONTENTS_CURRENT_DOWN = -14;
 
-// !!! if this is changed, it must be changed in asm_i386.h too !!!
 struct dnode_t
 {
     int planenum;

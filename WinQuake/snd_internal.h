@@ -25,14 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // of this, so this header is closing a gap, not fixing a live violation.
 #pragma once
 
-// !!! if this is changed, it much be changed in asm_i386.h too !!!
 struct portable_samplepair_t
 {
     int left;
     int right;
 };
 
-// !!! if this is changed, it much be changed in asm_i386.h too !!!
 struct sfxcache_t
 {
     int length;
@@ -57,7 +55,6 @@ struct dma_t
     unsigned char *buffer;
 };
 
-// !!! if this is changed, it much be changed in asm_i386.h too !!!
 struct channel_t
 {
     sfx_t *sfx;      // sfx number

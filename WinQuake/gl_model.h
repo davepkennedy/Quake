@@ -61,7 +61,6 @@ constexpr int SIDE_BACK = 1;
 constexpr int SIDE_ON = 2;
 
 // plane_t structure
-// !!! if this is changed, it must be changed in asm_i386.h too !!!
 struct mplane_t
 {
     vec3_t normal;
@@ -193,7 +192,6 @@ struct mleaf_t
     byte ambient_sound_level[NUM_AMBIENTS];
 };
 
-// !!! if this is changed, it must be changed in asm_i386.h too !!!
 struct hull_t
 {
     dclipnode_t *clipnodes;
