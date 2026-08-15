@@ -381,7 +381,7 @@ void Draw_TextureMode_f(void)
         {
             if (gl_filter_min == modes[i].minimize)
             {
-                Con_Printf("%s\n", modes[i].name);
+                Con_Printf("{}\n", modes[i].name);
                 return;
             }
         }

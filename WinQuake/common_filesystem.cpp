@@ -207,7 +207,7 @@ public:
             pack->entries.push_back(std::move(entry));
         }
 
-        Con_Printf("Added packfile %s (%i files)\n", packfile.c_str(), numpackfiles);
+        Con_Printf("Added packfile {} ({} files)\n", packfile, numpackfiles);
         return pack;
     }
 
@@ -255,7 +255,7 @@ static void COM_Path_f(void)
     Con_Printf("Current search path:\n");
     for (const auto &entry : com_searchpaths)
     {
-        Con_Printf("%s\n", entry->Describe().c_str());
+        Con_Printf("{}\n", entry->Describe());
     }
 }
 

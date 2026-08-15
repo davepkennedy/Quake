@@ -52,14 +52,9 @@ void ClearConPrint ()
 	g_lastConPrint.clear ();
 }
 
-void Con_Printf (const char *fmt, ...)
+void Con_PrintfImpl (const std::string &msg)
 {
-	char text[1024];
-	va_list argptr;
-	va_start (argptr, fmt);
-	vsnprintf (text, sizeof(text), fmt, argptr);
-	va_end (argptr);
-	g_lastConPrint = text;
+	g_lastConPrint = msg;
 }
 
 void Con_DPrintfImpl (const std::string &msg)

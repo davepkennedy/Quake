@@ -226,7 +226,7 @@ void CL_ParseServerInfo(void)
     i = MSG_ReadLong();
     if (i != PROTOCOL_VERSION)
     {
-        Con_Printf("Server returned version %i, not %i", i, PROTOCOL_VERSION);
+        Con_Printf("Server returned version {}, not {}", i, PROTOCOL_VERSION);
         return;
     }
 
@@ -234,7 +234,7 @@ void CL_ParseServerInfo(void)
     cl.maxclients = MSG_ReadByte();
     if (cl.maxclients < 1 || cl.maxclients > MAX_SCOREBOARD)
     {
-        Con_Printf("Bad maxclients (%u) from server\n", cl.maxclients);
+        Con_Printf("Bad maxclients ({}) from server\n", cl.maxclients);
         return;
     }
     cl.scores = (scoreboard_t *)Hunk_AllocName(cl.maxclients * sizeof(*cl.scores), "scores");
@@ -249,7 +249,7 @@ void CL_ParseServerInfo(void)
     // seperate the printfs so the server message can have a color
     Con_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
                "\36\36\36\37\n\n");
-    Con_Printf("%c%s\n", 2, str.c_str());
+    Con_Printf("{}{}\n", static_cast<char>(2), str);
 
     //
     // first we go through and touch all of the precache data that still
@@ -302,7 +302,7 @@ void CL_ParseServerInfo(void)
         cl.model_precache[i] = Mod_ForName(model_precache[i], false);
         if (cl.model_precache[i] == nullptr)
         {
-            Con_Printf("Model %s not found\n", model_precache[i]);
+            Con_Printf("Model {} not found\n", model_precache[i]);
             return;
         }
         CL_KeepaliveMessage();
@@ -847,7 +847,7 @@ void CL_ParseStaticSound(void)
 
 #define SHOWNET(x)                                                                                                     \
     if (cl_shownet.value == 2)                                                                                         \
-        Con_Printf("%3i:%s\n", msg_readcount - 1, x);
+        Con_Printf("{:3}:{}\n", msg_readcount - 1, x);
 
 /*
 =====================
@@ -864,7 +864,7 @@ void CL_ParseServerMessage(void)
     //
     if (cl_shownet.value == 1)
     {
-        Con_Printf("%i ", net.message.cursize);
+        Con_Printf("{} ", net.message.cursize);
     }
     else if (cl_shownet.value == 2)
     {
@@ -935,7 +935,7 @@ void CL_ParseServerMessage(void)
             Host_EndGame("Server disconnected\n");
 
         case svc_print:
-            Con_Printf("%s", MSG_ReadString().c_str());
+            Con_Printf("{}", MSG_ReadString());
             break;
 
         case svc_centerprint:

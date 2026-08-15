@@ -139,14 +139,14 @@ sfxcache_t *S_LoadSound(sfx_t *s)
 
     if (!data)
     {
-        Con_Printf("Couldn't load %s\n", namebuffer.c_str());
+        Con_Printf("Couldn't load {}\n", namebuffer);
         return nullptr;
     }
 
     info = GetWavinfo(s->name, data, com_filesize);
     if (info.channels != 1)
     {
-        Con_Printf("%s is a stereo sample\n", s->name);
+        Con_Printf("{} is a stereo sample\n", s->name);
         return nullptr;
     }
 
@@ -300,7 +300,7 @@ wavinfo_t GetWavinfo(const char *name, byte *wav, int wavlength)
     {
         data_p += 32;
         info.loopstart = GetLittleLong();
-        //		Con_Printf("loopstart=%d\n", sfx->loopstart);
+        //		Con_Printf("loopstart={}\n", sfx->loopstart);
 
         // if the next chunk is a LIST chunk, look for a cue length marker
         FindNextChunk("LIST");
@@ -311,7 +311,7 @@ wavinfo_t GetWavinfo(const char *name, byte *wav, int wavlength)
                 data_p += 24;
                 i = GetLittleLong(); // samples in loop
                 info.samples = info.loopstart + i;
-                //				Con_Printf("looped length: %i\n", i);
+                //				Con_Printf("looped length: {}\n", i);
             }
         }
     }

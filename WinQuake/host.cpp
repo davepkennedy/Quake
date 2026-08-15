@@ -133,7 +133,7 @@ This shuts down both the client and server
 
     SCR_EndLoadingPlaque(); // reenable screen updates
 
-    Con_Printf("Host_Error: %s\n", error.c_str());
+    Con_Printf("Host_Error: {}\n", error);
 
     if (sv.active)
     {
@@ -459,7 +459,7 @@ void Host_ShutdownServer(qboolean crash)
     count = NET_SendToAll(&buf, 5);
     if (count)
     {
-        Con_Printf("Host_ShutdownServer: NET_SendToAll failed for %u clients\n", count);
+        Con_Printf("Host_ShutdownServer: NET_SendToAll failed for {} clients\n", count);
     }
 
     for (i = 0, host_client = svs.clients; i < svs.maxclients; i++, host_client++)
@@ -701,7 +701,7 @@ void _Host_Frame(float time)
             time3 = Sys_FloatTime();
             pass2 = (time2 - time1) * 1000;
             pass3 = (time3 - time2) * 1000;
-            Con_Printf("%3i tot %3i server %3i gfx %3i snd\n", pass1 + pass2 + pass3, pass1, pass2, pass3);
+            Con_Printf("{:3} tot {:3} server {:3} gfx {:3} snd\n", pass1 + pass2 + pass3, pass1, pass2, pass3);
         }
 
         host_framecount++;
@@ -749,7 +749,7 @@ void Host_Frame(float time)
         }
     }
 
-    Con_Printf("serverprofile: %2i clients %2i msec\n", c, m);
+    Con_Printf("serverprofile: {:2} clients {:2} msec\n", c, m);
 }
 
 //============================================================================
@@ -871,7 +871,7 @@ void Host_Init(quakeparms_t *parms)
     SV_Init();
 
     Con_Printf("Exe: " __TIME__ " " __DATE__ "\n");
-    Con_Printf("%4.1f megabyte heap\n", parms->memsize / (1024 * 1024.0));
+    Con_Printf("{:4.1f} megabyte heap\n", parms->memsize / (1024 * 1024.0));
 
     R_InitTextures(); // needed even for dedicated servers
 

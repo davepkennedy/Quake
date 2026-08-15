@@ -712,7 +712,7 @@ void SCR_ScreenShot_f(void)
     }
     COM_WriteFile(pcxname, buffer.data(), glwidth * glheight * 3 + 18);
 
-    Con_Printf("Wrote %s\n", pcxname);
+    Con_Printf("Wrote {}\n", pcxname);
 }
 
 //=============================================================================

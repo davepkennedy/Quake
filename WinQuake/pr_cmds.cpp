@@ -57,7 +57,7 @@ void PF_error(void)
     edict_t *ed;
 
     s = PF_VarString(0);
-    Con_Printf("======SERVER ERROR in %s:\n%s\n", pr_strings + pr_xfunction->s_name, s.c_str());
+    Con_Printf("======SERVER ERROR in {}:\n{}\n", pr_strings + pr_xfunction->s_name, s);
     ed = PROG_TO_EDICT(pr_global_struct->self);
     ED_Print(ed);
 
@@ -80,7 +80,7 @@ void PF_objerror(void)
     edict_t *ed;
 
     s = PF_VarString(0);
-    Con_Printf("======OBJECT ERROR in %s:\n%s\n", pr_strings + pr_xfunction->s_name, s.c_str());
+    Con_Printf("======OBJECT ERROR in {}:\n{}\n", pr_strings + pr_xfunction->s_name, s);
     ed = PROG_TO_EDICT(pr_global_struct->self);
     ED_Print(ed);
     ED_Free(ed);
@@ -530,7 +530,7 @@ void PF_ambientsound(void)
     soundnum = SV_SoundPrecacheIndex(samp);
     if (soundnum < 0)
     {
-        Con_Printf("no precache: %s\n", samp);
+        Con_Printf("no precache: {}\n", samp);
         return;
     }
 

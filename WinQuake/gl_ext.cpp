@@ -113,7 +113,7 @@ void GL_LoadExtensions(void)
     if (gl_extensions.find("GL_EXT_texture_filter_anisotropic") != std::string::npos)
     {
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max_anisotropy);
-        Con_Printf("Anisotropic filtering: %.0fx\n", gl_max_anisotropy);
+        Con_Printf("Anisotropic filtering: {:.0f}x\n", gl_max_anisotropy);
     }
 
     Con_Printf("GL extensions loaded\n");

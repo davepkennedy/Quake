@@ -85,18 +85,14 @@ void NET_Ban_f(void)
         toClient = true;
     }
 
-    // Con_Printf is still printf-style (its own future conversion phase), so
-    // the console branch formats here and hands the result off as a plain
-    // "%s" -- SV_ClientPrintf is already std::format-templated.
     auto print = [toClient]<typename... Args>(std::format_string<Args...> fmt, Args &&...args) {
-        std::string text = std::format(fmt, std::forward<Args>(args)...);
         if (toClient)
         {
-            SV_ClientPrintf("{}", text);
+            SV_ClientPrintf(fmt, std::forward<Args>(args)...);
         }
         else
         {
-            Con_Printf("%s", text.c_str());
+            Con_Printf(fmt, std::forward<Args>(args)...);
         }
     };
 
@@ -437,9 +433,9 @@ int Datagram_GetMessage(qsocket_t *sock)
 
 void PrintStats(qsocket_t *s)
 {
-    Con_Printf("canSend = %4u   \n", s->canSend);
-    Con_Printf("sendSeq = %4u   ", s->sendSequence);
-    Con_Printf("recvSeq = %4u   \n", s->receiveSequence);
+    Con_Printf("canSend = {:4}   \n", static_cast<int>(s->canSend));
+    Con_Printf("sendSeq = {:4}   ", s->sendSequence);
+    Con_Printf("recvSeq = {:4}   \n", s->receiveSequence);
     Con_Printf("\n");
 }
 
@@ -449,16 +445,16 @@ void NET_Stats_f(void)
 
     if (Cmd_Argc() == 1)
     {
-        Con_Printf("unreliable messages sent   = %i\n", net.unreliableMessagesSent);
-        Con_Printf("unreliable messages recv   = %i\n", net.unreliableMessagesReceived);
-        Con_Printf("reliable messages sent     = %i\n", net.messagesSent);
-        Con_Printf("reliable messages received = %i\n", net.messagesReceived);
-        Con_Printf("packetsSent                = %i\n", packetsSent);
-        Con_Printf("packetsReSent              = %i\n", packetsReSent);
-        Con_Printf("packetsReceived            = %i\n", packetsReceived);
-        Con_Printf("receivedDuplicateCount     = %i\n", receivedDuplicateCount);
-        Con_Printf("shortPacketCount           = %i\n", shortPacketCount);
-        Con_Printf("droppedDatagrams           = %i\n", droppedDatagrams);
+        Con_Printf("unreliable messages sent   = {}\n", net.unreliableMessagesSent);
+        Con_Printf("unreliable messages recv   = {}\n", net.unreliableMessagesReceived);
+        Con_Printf("reliable messages sent     = {}\n", net.messagesSent);
+        Con_Printf("reliable messages received = {}\n", net.messagesReceived);
+        Con_Printf("packetsSent                = {}\n", packetsSent);
+        Con_Printf("packetsReSent              = {}\n", packetsReSent);
+        Con_Printf("packetsReceived            = {}\n", packetsReceived);
+        Con_Printf("receivedDuplicateCount     = {}\n", receivedDuplicateCount);
+        Con_Printf("shortPacketCount           = {}\n", shortPacketCount);
+        Con_Printf("droppedDatagrams           = {}\n", droppedDatagrams);
     }
     else if (Q_strcmp(Cmd_Argv(1), "*") == 0)
     {
@@ -558,7 +554,7 @@ static void Test_Poll(void)
         connectTime = MSG_ReadLong();
         Q_strlcpy(address, MSG_ReadString().c_str(), sizeof(address));
 
-        Con_Printf("%s\n  frags:%3i  colors:%u %u  time:%u\n  %s\n", name, frags, colors >> 4, colors & 0x0f,
+        Con_Printf("{}\n  frags:{:3}  colors:{} {}  time:{}\n  {}\n", name, frags, colors >> 4, colors & 0x0f,
                    connectTime / 60, address);
     }
 
@@ -705,7 +701,7 @@ static void Test2_Poll(void)
         }
         Q_strlcpy(value, MSG_ReadString().c_str(), sizeof(value));
 
-        Con_Printf("%-16.16s  %-16.16s\n", name, value);
+        Con_Printf("{:<16.16}  {:<16.16}\n", name, value);
 
         SZ_Clear(&net.message);
         // save space for the header, filled in later
@@ -1426,7 +1422,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
     if (ret == 0)
     {
         reason = "No Response";
-        Con_Printf("%s\n", reason);
+        Con_Printf("{}\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
         return errorReturn();
     }
@@ -1434,7 +1430,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
     if (ret == -1)
     {
         reason = "Network Error";
-        Con_Printf("%s\n", reason);
+        Con_Printf("{}\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
         return errorReturn();
     }
@@ -1443,7 +1439,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
     if (ret == CCREP_REJECT)
     {
         rejectReason = MSG_ReadString();
-        Con_Printf("%s", rejectReason.c_str());
+        Con_Printf("{}", rejectReason);
         Q_strlcpy(m_return_reason, rejectReason.c_str(), sizeof(m_return_reason));
         return errorReturn();
     }
@@ -1456,7 +1452,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
     else
     {
         reason = "Bad Response";
-        Con_Printf("%s\n", reason);
+        Con_Printf("{}\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
         return errorReturn();
     }
@@ -1470,7 +1466,7 @@ static qsocket_t *_Datagram_Connect(const char *host)
     if (dfunc.Connect(newsock, &sock->addr) == -1)
     {
         reason = "Connect to Game failed";
-        Con_Printf("%s\n", reason);
+        Con_Printf("{}\n", reason);
         Q_strlcpy(m_return_reason, reason, sizeof(m_return_reason));
         return errorReturn();
     }

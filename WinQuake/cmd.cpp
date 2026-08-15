@@ -294,10 +294,10 @@ void Cmd_Exec_f(void)
     f = reinterpret_cast<char *>(COM_LoadHunkFile(Cmd_Argv(1)));
     if (!f)
     {
-        Con_Printf("couldn't exec %s\n", Cmd_Argv(1));
+        Con_Printf("couldn't exec {}\n", Cmd_Argv(1));
         return;
     }
-    Con_Printf("execing %s\n", Cmd_Argv(1));
+    Con_Printf("execing {}\n", Cmd_Argv(1));
 
     Cbuf_InsertText(f);
     Hunk_FreeToLowMark(mark);
@@ -316,7 +316,7 @@ void Cmd_Echo_f(void)
 
     for (i = 1; i < Cmd_Argc(); i++)
     {
-        Con_Printf("%s ", Cmd_Argv(i));
+        Con_Printf("{} ", Cmd_Argv(i));
     }
     Con_Printf("\n");
 }
@@ -339,7 +339,7 @@ void Cmd_Alias_f(void)
         Con_Printf("Current alias commands:\n");
         for (const auto &[name, value] : cmd_alias)
         {
-            Con_Printf("%s : %s\n", name.c_str(), value.c_str());
+            Con_Printf("{} : {}\n", name, value);
         }
         return;
     }
@@ -512,7 +512,7 @@ void Cmd_AddCommand(const char *cmd_name, xcommand_t function)
     // fail if the command is a variable name
     if (Cvar_VariableString(cmd_name)[0])
     {
-        Con_Printf("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
+        Con_Printf("Cmd_AddCommand: {} already defined as a var\n", cmd_name);
         return;
     }
 
@@ -521,7 +521,7 @@ void Cmd_AddCommand(const char *cmd_name, xcommand_t function)
     // fail if the command already exists
     if (cmd_functions.find(key) != cmd_functions.end())
     {
-        Con_Printf("Cmd_AddCommand: %s already defined\n", cmd_name);
+        Con_Printf("Cmd_AddCommand: {} already defined\n", cmd_name);
         return;
     }
 
@@ -602,7 +602,7 @@ void Cmd_ExecuteString(const char *text, cmd_source_t src)
     // check cvars
     if (!Cvar_Command())
     {
-        Con_Printf("Unknown command \"%s\"\n", Cmd_Argv(0));
+        Con_Printf("Unknown command \"{}\"\n", Cmd_Argv(0));
     }
 }
 
@@ -617,7 +617,7 @@ void Cmd_ForwardToServer(void)
 {
     if (cls.state != cactive_t::ca_connected)
     {
-        Con_Printf("Can't \"%s\", not connected\n", Cmd_Argv(0));
+        Con_Printf("Can't \"{}\", not connected\n", Cmd_Argv(0));
         return;
     }
 

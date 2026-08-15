@@ -21,7 +21,7 @@ GLuint GL_CompileShader(GLenum type, const char *src)
         qglGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
         char *log = new char[len + 1]();
         qglGetShaderInfoLog(s, len, nullptr, log);
-        Con_Printf("Shader compile error:\n%s\n", log);
+        Con_Printf("Shader compile error:\n{}\n", log);
         delete[] log;
         qglDeleteShader(s);
         return 0;
@@ -63,7 +63,7 @@ GLProgram GL_BuildProgram(const char *vert_src, const char *frag_src)
         qglGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
         char *log = new char[len + 1]();
         qglGetProgramInfoLog(prog, len, nullptr, log);
-        Con_Printf("Shader link error:\n%s\n", log);
+        Con_Printf("Shader link error:\n{}\n", log);
         delete[] log;
         qglDeleteProgram(prog);
         return GLProgram();

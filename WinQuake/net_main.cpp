@@ -143,7 +143,7 @@ static void NET_Listen_f(void)
 {
     if (Cmd_Argc() != 2)
     {
-        Con_Printf("\"listen\" is \"%u\"\n", listening ? 1 : 0);
+        Con_Printf("\"listen\" is \"{}\"\n", listening ? 1 : 0);
         return;
     }
 
@@ -165,7 +165,7 @@ static void MaxPlayers_f(void)
 
     if (Cmd_Argc() != 2)
     {
-        Con_Printf("\"maxplayers\" is \"%u\"\n", svs.maxclients);
+        Con_Printf("\"maxplayers\" is \"{}\"\n", svs.maxclients);
         return;
     }
 
@@ -183,7 +183,7 @@ static void MaxPlayers_f(void)
     if (n > svs.maxclientslimit)
     {
         n = svs.maxclientslimit;
-        Con_Printf("\"maxplayers\" set to \"%u\"\n", n);
+        Con_Printf("\"maxplayers\" set to \"{}\"\n", n);
     }
 
     if ((n == 1) && listening)
@@ -213,7 +213,7 @@ static void NET_Port_f(void)
 
     if (Cmd_Argc() != 2)
     {
-        Con_Printf("\"port\" is \"%u\"\n", net_hostport);
+        Con_Printf("\"port\" is \"{}\"\n", net_hostport);
         return;
     }
 
@@ -250,12 +250,12 @@ static void PrintSlist(void)
     {
         if (hostcache[n].maxusers)
         {
-            Con_Printf("%-15.15s %-15.15s %2u/%2u\n", hostcache[n].name, hostcache[n].map, hostcache[n].users,
+            Con_Printf("{:<15.15} {:<15.15} {:2}/{:2}\n", hostcache[n].name, hostcache[n].map, hostcache[n].users,
                        hostcache[n].maxusers);
         }
         else
         {
-            Con_Printf("%-15.15s %-15.15s\n", hostcache[n].name, hostcache[n].map);
+            Con_Printf("{:<15.15} {:<15.15}\n", hostcache[n].name, hostcache[n].map);
         }
     }
     slistLastShown = n;
@@ -412,7 +412,7 @@ qsocket_t *NET_Connect(const char *host)
                 return nullptr;
             }
             host = hostcache[0].cname;
-            Con_Printf("Connecting to...\n%s @ %s\n\n", hostcache[0].name, host);
+            Con_Printf("Connecting to...\n{} @ {}\n\n", hostcache[0].name, host);
         }
 
         if (hostCacheCount)

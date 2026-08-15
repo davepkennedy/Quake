@@ -64,7 +64,13 @@ void Con_CheckResize(void);
 void Con_Init(void);
 void Con_DrawConsole(int lines, qboolean drawinput);
 void Con_Print(const char *txt);
-void Con_Printf(const char *fmt, ...);
+// Sends already-formatted text; defined in console.cpp.
+void Con_PrintfImpl(const std::string &msg);
+
+template <typename... Args> void Con_Printf(std::format_string<Args...> fmt, Args &&...args)
+{
+    Con_PrintfImpl(std::format(fmt, std::forward<Args>(args)...));
+}
 // Sends already-formatted text; defined in console.cpp.
 void Con_DPrintfImpl(const std::string &msg);
 

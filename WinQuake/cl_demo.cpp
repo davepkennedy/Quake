@@ -245,7 +245,7 @@ void CL_Record_f(void)
     if (c == 4)
     {
         track = atoi(Cmd_Argv(3));
-        Con_Printf("Forcing CD track to %i\n", cls.forcetrack);
+        Con_Printf("Forcing CD track to {}\n", cls.forcetrack);
     }
     else
     {
@@ -267,7 +267,7 @@ void CL_Record_f(void)
     //
     COM_DefaultExtension(name, ".dem", sizeof(name));
 
-    Con_Printf("recording to %s.\n", name);
+    Con_Printf("recording to {}.\n", name);
     cls.demoRecordFile.emplace(name, std::ios::binary);
     if (!cls.demoRecordFile->is_open())
     {
@@ -316,7 +316,7 @@ void CL_PlayDemo_f(void)
     Q_strlcpy(name, Cmd_Argv(1), sizeof(name));
     COM_DefaultExtension(name, ".dem", sizeof(name));
 
-    Con_Printf("Playing demo from %s.\n", name);
+    Con_Printf("Playing demo from {}.\n", name);
     auto opened = COM_FOpenFile(name);
     if (!opened)
     {
@@ -369,7 +369,7 @@ void CL_FinishTimeDemo(void)
     {
         time = 1;
     }
-    Con_Printf("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
+    Con_Printf("{} frames {:5.1f} seconds {:5.1f} fps\n", frames, time, frames / time);
 }
 
 /*

@@ -170,7 +170,7 @@ void Key_Console(int key)
     {
         Cbuf_AddText(key_lines[edit_line] + 1); // skip the >
         Cbuf_AddText("\n");
-        Con_Printf("%s\n", key_lines[edit_line]);
+        Con_Printf("{}\n", key_lines[edit_line]);
         edit_line = (edit_line + 1) & 31;
         history_line = edit_line;
         key_lines[edit_line][0] = ']';
@@ -556,7 +556,7 @@ void Key_Unbind_f(void)
     b = Key_StringToKeynum(Cmd_Argv(1));
     if (b == -1)
     {
-        Con_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+        Con_Printf("\"{}\" isn't a valid key\n", Cmd_Argv(1));
         return;
     }
 
@@ -595,7 +595,7 @@ void Key_Bind_f(void)
     b = Key_StringToKeynum(Cmd_Argv(1));
     if (b == -1)
     {
-        Con_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+        Con_Printf("\"{}\" isn't a valid key\n", Cmd_Argv(1));
         return;
     }
 
@@ -603,11 +603,11 @@ void Key_Bind_f(void)
     {
         if (!keybindings[b].empty())
         {
-            Con_Printf("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b].c_str());
+            Con_Printf("\"{}\" = \"{}\"\n", Cmd_Argv(1), keybindings[b]);
         }
         else
         {
-            Con_Printf("\"%s\" is not bound\n", Cmd_Argv(1));
+            Con_Printf("\"{}\" is not bound\n", Cmd_Argv(1));
         }
         return;
     }
@@ -766,7 +766,7 @@ void Key_Event(int key, qboolean down)
 
         if (key >= 200 && keybindings[key].empty())
         {
-            Con_Printf("%s is unbound, hit F4 to set.\n", Key_KeynumToString(key).c_str());
+            Con_Printf("{} is unbound, hit F4 to set.\n", Key_KeynumToString(key));
         }
     }
 

@@ -76,18 +76,14 @@ void Host_Status_f(void)
         toClient = true;
     }
 
-    // Con_Printf is still printf-style (its own future conversion phase), so
-    // the console branch formats here and hands the result off as a plain
-    // "%s" -- SV_ClientPrintf is already std::format-templated.
     auto print = [toClient]<typename... Args>(std::format_string<Args...> fmt, Args &&...args) {
-        std::string text = std::format(fmt, std::forward<Args>(args)...);
         if (toClient)
         {
-            SV_ClientPrintf("{}", text);
+            SV_ClientPrintf(fmt, std::forward<Args>(args)...);
         }
         else
         {
-            Con_Printf("%s", text.c_str());
+            Con_Printf(fmt, std::forward<Args>(args)...);
         }
     };
 
@@ -536,7 +532,7 @@ void Host_Savegame_f(void)
     snprintf(name, sizeof(name), "%s/%s", com_gamedir, Cmd_Argv(1));
     COM_DefaultExtension(name, ".sav", sizeof(name));
 
-    Con_Printf("Saving game to %s...\n", name);
+    Con_Printf("Saving game to {}...\n", name);
     std::ofstream f(name);
     if (!f)
     {
@@ -615,7 +611,7 @@ void Host_Loadgame_f(void)
     // been used.  The menu calls it before stuffing loadgame command
     //	SCR_BeginLoadingPlaque ();
 
-    Con_Printf("Loading game from %s...\n", name);
+    Con_Printf("Loading game from {}...\n", name);
     std::ifstream f(name);
     if (!f)
     {
@@ -626,7 +622,7 @@ void Host_Loadgame_f(void)
     f >> version;
     if (version != SAVEGAME_VERSION)
     {
-        Con_Printf("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
+        Con_Printf("Savegame is version {}, not {}\n", version, SAVEGAME_VERSION);
         return;
     }
     f >> tok; // comment, unused on load
@@ -748,7 +744,7 @@ void Host_Name_f(void)
 
     if (Cmd_Argc() == 1)
     {
-        Con_Printf("\"name\" is \"%s\"\n", cl_name.string.c_str());
+        Con_Printf("\"name\" is \"{}\"\n", cl_name.string);
         return;
     }
     if (Cmd_Argc() == 2)
@@ -780,7 +776,7 @@ void Host_Name_f(void)
     {
         if (Q_strcmp(host_client->name, newName) != 0)
         {
-            Con_Printf("%s renamed to %s\n", host_client->name, newName);
+            Con_Printf("{} renamed to {}\n", host_client->name, newName);
         }
     }
     Q_strlcpy(host_client->name, newName, sizeof(host_client->name));
@@ -795,7 +791,7 @@ void Host_Name_f(void)
 
 void Host_Version_f(void)
 {
-    Con_Printf("Version %4.2f\n", VERSION);
+    Con_Printf("Version {:4.2f}\n", VERSION);
     Con_Printf("Exe: " __TIME__ " " __DATE__ "\n");
 }
 
@@ -955,7 +951,7 @@ void Host_Color_f(void)
 
     if (Cmd_Argc() == 1)
     {
-        Con_Printf("\"color\" is \"%i %i\"\n", ((int)cl_color.value) >> 4, ((int)cl_color.value) & 0x0f);
+        Con_Printf("\"color\" is \"{} {}\"\n", ((int)cl_color.value) >> 4, ((int)cl_color.value) & 0x0f);
         Con_Printf("color <0-13> [0-13]\n");
         return;
     }
@@ -1582,7 +1578,7 @@ void Host_Viewmodel_f(void)
     m = Mod_ForName(Cmd_Argv(1), false);
     if (!m)
     {
-        Con_Printf("Can't load %s\n", Cmd_Argv(1));
+        Con_Printf("Can't load {}\n", Cmd_Argv(1));
         return;
     }
 
@@ -1629,7 +1625,7 @@ void PrintFrameName(model_t *m, int frame)
     }
     pframedesc = &hdr->frames[frame];
 
-    Con_Printf("frame %i: %s\n", frame, pframedesc->name);
+    Con_Printf("frame {}: {}\n", frame, pframedesc->name);
 }
 
 /*
@@ -1714,10 +1710,10 @@ void Host_Startdemos_f(void)
     c = Cmd_Argc() - 1;
     if (c > MAX_DEMOS)
     {
-        Con_Printf("Max %i demos in demoloop\n", MAX_DEMOS);
+        Con_Printf("Max {} demos in demoloop\n", MAX_DEMOS);
         c = MAX_DEMOS;
     }
-    Con_Printf("%i demo(s) in loop\n", c);
+    Con_Printf("{} demo(s) in loop\n", c);
 
     for (i = 1; i < c + 1; i++)
     {

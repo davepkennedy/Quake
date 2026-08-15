@@ -336,14 +336,9 @@ void Con_Print(const char *txt)
 Con_DebugLog
 ================
 */
-void Con_DebugLog(const char *file, const char *fmt, ...)
+void Con_DebugLog(const char *file, const std::string &data)
 {
-    va_list argptr;
     int fd;
-
-    va_start(argptr, fmt);
-    std::string data = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
 
     fd = _open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
     _write(fd, data.c_str(), (unsigned)data.size());
@@ -357,22 +352,17 @@ Con_Printf
 Handles cursor positioning, line wrapping, etc
 ================
 */
-void Con_Printf(const char *fmt, ...)
+void Con_PrintfImpl(const std::string &msg)
 {
-    va_list argptr;
     static qboolean inupdate;
 
-    va_start(argptr, fmt);
-    std::string msg = COM_FormatVA(fmt, argptr);
-    va_end(argptr);
-
     // also echo to debugging console
-    Sys_Printf("{}", msg.c_str()); // also echo to debugging console
+    Sys_Printf("{}", msg); // also echo to debugging console
 
     // log all messages to file
     if (con.debuglog)
     {
-        Con_DebugLog(va("{}/qconsole.log", com_gamedir), "%s", msg.c_str());
+        Con_DebugLog(va("{}/qconsole.log", com_gamedir), msg);
     }
 
     if (!con.initialized)
@@ -416,7 +406,7 @@ void Con_DPrintfImpl(const std::string &msg)
         return; // don't confuse non-developers with techie stuff...
     }
 
-    Con_Printf("%s", msg.c_str());
+    Con_Printf("{}", msg);
 }
 
 /*
@@ -432,7 +422,7 @@ void Con_SafePrintfImpl(const std::string &msg)
 
     temp = scr_disabled_for_loading;
     scr_disabled_for_loading = true;
-    Con_Printf("%s", msg.c_str());
+    Con_Printf("{}", msg);
     scr_disabled_for_loading = temp;
 }
 
@@ -623,7 +613,7 @@ void Con_NotifyBox(char *text)
     Con_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
                "\36\36\36\37\n");
 
-    Con_Printf(text);
+    Con_Printf("{}", text);
 
     Con_Printf("Press a key.\n");
     Con_Printf("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"

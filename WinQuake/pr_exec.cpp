@@ -101,7 +101,7 @@ void PR_PrintStatement(dstatement_t *s)
 
     if ((unsigned)s->op < sizeof(pr_opnames) / sizeof(pr_opnames[0]))
     {
-        Con_Printf("%s ", pr_opnames[s->op]);
+        Con_Printf("{} ", pr_opnames[s->op]);
         i = (int)strlen(pr_opnames[s->op]);
         for (; i < 10; i++)
         {
@@ -111,30 +111,30 @@ void PR_PrintStatement(dstatement_t *s)
 
     if (s->op == OP_IF || s->op == OP_IFNOT)
     {
-        Con_Printf("%sbranch %i", PR_GlobalString(s->a).c_str(), s->b);
+        Con_Printf("{}branch {}", PR_GlobalString(s->a), s->b);
     }
     else if (s->op == OP_GOTO)
     {
-        Con_Printf("branch %i", s->a);
+        Con_Printf("branch {}", s->a);
     }
     else if ((unsigned)(s->op - OP_STORE_F) < 6)
     {
-        Con_Printf("%s", PR_GlobalString(s->a).c_str());
-        Con_Printf("%s", PR_GlobalStringNoContents(s->b).c_str());
+        Con_Printf("{}", PR_GlobalString(s->a));
+        Con_Printf("{}", PR_GlobalStringNoContents(s->b));
     }
     else
     {
         if (s->a)
         {
-            Con_Printf("%s", PR_GlobalString(s->a).c_str());
+            Con_Printf("{}", PR_GlobalString(s->a));
         }
         if (s->b)
         {
-            Con_Printf("%s", PR_GlobalString(s->b).c_str());
+            Con_Printf("{}", PR_GlobalString(s->b));
         }
         if (s->c)
         {
-            Con_Printf("%s", PR_GlobalStringNoContents(s->c).c_str());
+            Con_Printf("{}", PR_GlobalStringNoContents(s->c));
         }
     }
     Con_Printf("\n");
@@ -167,7 +167,7 @@ void PR_StackTrace(void)
         }
         else
         {
-            Con_Printf("%12s : %s\n", pr_strings + f->s_file, pr_strings + f->s_name);
+            Con_Printf("{:>12} : {}\n", pr_strings + f->s_file, pr_strings + f->s_name);
         }
     }
 }
@@ -203,7 +203,7 @@ void PR_Profile_f(void)
         {
             if (num < 10)
             {
-                Con_Printf("%7i %s\n", best->profile, pr_strings + best->s_name);
+                Con_Printf("{:7} {}\n", best->profile, pr_strings + best->s_name);
             }
             num++;
             best->profile = 0;
@@ -222,7 +222,7 @@ Aborts the currently executing function
 {
     PR_PrintStatement(pr_statements + pr_xstatement);
     PR_StackTrace();
-    Con_Printf("%s\n", error.c_str());
+    Con_Printf("{}\n", error);
 
     pr_depth = 0; // dump the stack so host_error can shutdown functions
 

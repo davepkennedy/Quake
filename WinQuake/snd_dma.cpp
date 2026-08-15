@@ -82,14 +82,14 @@ void S_SoundInfo_f(void)
         return;
     }
 
-    Con_Printf("%5d stereo\n", shm->channels - 1);
-    Con_Printf("%5d samples\n", shm->samples);
-    Con_Printf("%5d samplepos\n", shm->samplepos);
-    Con_Printf("%5d samplebits\n", shm->samplebits);
-    Con_Printf("%5d submission_chunk\n", shm->submission_chunk);
-    Con_Printf("%5d speed\n", shm->speed);
-    Con_Printf("0x%x dma buffer\n", shm->buffer);
-    Con_Printf("%5d total_channels\n", sound.total_channels);
+    Con_Printf("{:5} stereo\n", static_cast<int>(shm->channels) - 1);
+    Con_Printf("{:5} samples\n", static_cast<int>(shm->samples));
+    Con_Printf("{:5} samplepos\n", static_cast<int>(shm->samplepos));
+    Con_Printf("{:5} samplebits\n", static_cast<int>(shm->samplebits));
+    Con_Printf("{:5} submission_chunk\n", static_cast<int>(shm->submission_chunk));
+    Con_Printf("{:5} speed\n", static_cast<int>(shm->speed));
+    Con_Printf("{} dma buffer\n", static_cast<void *>(shm->buffer));
+    Con_Printf("{:5} total_channels\n", sound.total_channels);
 }
 
 /*
@@ -194,7 +194,7 @@ void S_Init(void)
         shm->buffer = (unsigned char *)Hunk_AllocName(1 << 16, "shmbuf");
     }
 
-    Con_Printf("Sound sampling rate: %i\n", shm->speed);
+    Con_Printf("Sound sampling rate: {}\n", static_cast<int>(shm->speed));
 
     // provides a tick sound until washed clean
 
@@ -618,7 +618,7 @@ void S_StaticSound(sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 
     if (sc->loopstart == -1)
     {
-        Con_Printf("Sound %s not looped\n", sfx->name);
+        Con_Printf("Sound {} not looped\n", sfx->name);
         return;
     }
 
@@ -798,7 +798,7 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
             }
         }
 
-        Con_Printf("----(%i)----\n", total);
+        Con_Printf("----({})----\n", total);
     }
 
     // mix some sound
@@ -956,9 +956,9 @@ void S_SoundList(void)
         {
             Con_Printf(" ");
         }
-        Con_Printf("(%2db) %6i : %s\n", sc->width * 8, size, sfx->name);
+        Con_Printf("({:2}b) {:6} : {}\n", sc->width * 8, size, sfx->name);
     }
-    Con_Printf("Total resident: %i\n", total);
+    Con_Printf("Total resident: {}\n", total);
 }
 
 void S_LocalSound(const char *sample)
@@ -977,7 +977,7 @@ void S_LocalSound(const char *sample)
     sfx = S_PrecacheSound(sample);
     if (!sfx)
     {
-        Con_Printf("S_LocalSound: can't cache %s\n", sample);
+        Con_Printf("S_LocalSound: can't cache {}\n", sample);
         return;
     }
     S_StartSound(cl.viewentity, -1, sfx, vec3_origin, 1, 1);

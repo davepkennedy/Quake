@@ -711,20 +711,20 @@ void GL_Init(void)
         const char *vendor = reinterpret_cast<const char *>(glGetString(GL_VENDOR));
         gl_vendor = vendor ? vendor : "";
     }
-    Con_Printf("GL_VENDOR: %s\n", gl_vendor.c_str());
+    Con_Printf("GL_VENDOR: {}\n", gl_vendor);
     {
         const char *renderer = reinterpret_cast<const char *>(glGetString(GL_RENDERER));
         gl_renderer = renderer ? renderer : "";
     }
-    Con_Printf("GL_RENDERER: %s\n", gl_renderer.c_str());
+    Con_Printf("GL_RENDERER: {}\n", gl_renderer);
 
     {
         const char *version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
         gl_version = version ? version : "";
     }
-    Con_Printf("GL_VERSION: %s\n", gl_version.c_str());
+    Con_Printf("GL_VERSION: {}\n", gl_version);
     gl_extensions = GL_BuildExtensionsString();
-    Con_Printf("GL_EXTENSIONS: %s\n", gl_extensions.c_str());
+    Con_Printf("GL_EXTENSIONS: {}\n", gl_extensions);
 
     //	Con_Printf ("%s %s\n", gl_renderer, gl_version);
 
@@ -1416,7 +1416,7 @@ VID_DescribeCurrentMode_f
 void VID_DescribeCurrentMode_f(void)
 {
     auto desc = VID_GetExtModeDescription(vid_modenum);
-    Con_Printf("%s\n", desc ? desc->c_str() : "unknown");
+    Con_Printf("{}\n", desc ? desc->c_str() : "unknown");
 }
 
 /*
@@ -1429,11 +1429,11 @@ void VID_NumModes_f(void)
 
     if (nummodes == 1)
     {
-        Con_Printf("%d video mode is available\n", nummodes);
+        Con_Printf("{} video mode is available\n", nummodes);
     }
     else
     {
-        Con_Printf("%d video modes are available\n", nummodes);
+        Con_Printf("{} video modes are available\n", nummodes);
     }
 }
 
@@ -1452,7 +1452,7 @@ void VID_DescribeMode_f(void)
     leavecurrentmode = 0;
 
     auto desc = VID_GetExtModeDescription(modenum);
-    Con_Printf("%s\n", desc ? desc->c_str() : "invalid mode");
+    Con_Printf("{}\n", desc ? desc->c_str() : "invalid mode");
 
     leavecurrentmode = t;
 }
@@ -1476,7 +1476,7 @@ void VID_DescribeModes_f(void)
     {
         pv = VID_GetModePtr(i);
         auto pinfo = VID_GetExtModeDescription(i);
-        Con_Printf("%2d: %s\n", i, pinfo ? pinfo->c_str() : "unknown");
+        Con_Printf("{:2}: {}\n", i, pinfo ? pinfo->c_str() : "unknown");
     }
 
     leavecurrentmode = t;

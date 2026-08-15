@@ -160,7 +160,7 @@ mspriteframe_t *R_GetSpriteFrame(entity_t *currententity)
 
     if ((frame >= psprite->numframes) || (frame < 0))
     {
-        Con_Printf("R_DrawSprite: no such frame %d\n", frame);
+        Con_Printf("R_DrawSprite: no such frame {}\n", frame);
         frame = 0;
     }
 
@@ -1541,6 +1541,6 @@ void R_RenderView(void)
     {
         //		glFinish ();
         time2 = Sys_FloatTime();
-        Con_Printf("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys);
+        Con_Printf("{:3} ms  {:4} wpoly {:4} epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys);
     }
 }

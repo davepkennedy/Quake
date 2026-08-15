@@ -814,7 +814,7 @@ void IN_StartupJoystick(void)
     // abort startup if we didn't find a valid joystick
     if (mmr != JOYERR_NOERROR)
     {
-        Con_Printf("\njoystick not found -- no valid joysticks (%x)\n\n", mmr);
+        Con_Printf("\njoystick not found -- no valid joysticks ({:x})\n\n", mmr);
         return;
     }
 
@@ -823,7 +823,7 @@ void IN_StartupJoystick(void)
     memset(&jc, 0, sizeof(jc));
     if ((mmr = joyGetDevCaps(joy_id, &jc, sizeof(jc))) != JOYERR_NOERROR)
     {
-        Con_Printf("\njoystick not found -- invalid joystick capabilities (%x)\n\n", mmr);
+        Con_Printf("\njoystick not found -- invalid joystick capabilities ({:x})\n\n", mmr);
         return;
     }
 
@@ -904,7 +904,7 @@ void Joy_AdvancedUpdate_f(void)
         if (Q_strcmp(joy_name.string.c_str(), "joystick") != 0)
         {
             // notify user of advanced controller
-            Con_Printf("\n%s configured\n\n", joy_name.string.c_str());
+            Con_Printf("\n{} configured\n\n", joy_name.string);
         }
 
         // advanced initialization here

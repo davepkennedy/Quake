@@ -348,11 +348,11 @@ void R_ReadPointFile_f(void)
     auto opened = COM_FOpenFile(name);
     if (!opened)
     {
-        Con_Printf("couldn't open %s\n", name.c_str());
+        Con_Printf("couldn't open {}\n", name);
         return;
     }
 
-    Con_Printf("Reading %s...\n", name.c_str());
+    Con_Printf("Reading {}...\n", name);
     c = 0;
     for (;;)
     {
@@ -380,7 +380,7 @@ void R_ReadPointFile_f(void)
         VectorCopy(org, p->org);
     }
 
-    Con_Printf("%i points read\n", c);
+    Con_Printf("{} points read\n", c);
 }
 
 /*

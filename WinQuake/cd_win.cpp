@@ -139,7 +139,7 @@ void CDAudio_Play(byte track, qboolean looping)
     }
     if (mciStatusParms.dwReturn != MCI_CDA_TRACK_AUDIO)
     {
-        Con_Printf("CDAudio: track %i is not audio\n", track);
+        Con_Printf("CDAudio: track {} is not audio\n", track);
         return;
     }
 
@@ -316,7 +316,7 @@ static void CD_f(void)
             {
                 if (remap[n] != n)
                 {
-                    Con_Printf("  %u -> %u\n", n, remap[n]);
+                    Con_Printf("  {} -> {}\n", n, remap[n]);
                 }
             }
             return;
@@ -387,16 +387,16 @@ static void CD_f(void)
 
     if (Q_strcasecmp(command, "info") == 0)
     {
-        Con_Printf("%u tracks\n", maxTrack);
+        Con_Printf("{} tracks\n", maxTrack);
         if (playing)
         {
-            Con_Printf("Currently %s track %u\n", playLooping ? "looping" : "playing", playTrack);
+            Con_Printf("Currently {} track {}\n", playLooping ? "looping" : "playing", playTrack);
         }
         else if (wasPlaying)
         {
-            Con_Printf("Paused %s track %u\n", playLooping ? "looping" : "playing", playTrack);
+            Con_Printf("Paused {} track {}\n", playLooping ? "looping" : "playing", playTrack);
         }
-        Con_Printf("Volume is %f\n", cdvolume);
+        Con_Printf("Volume is {}\n", cdvolume);
         return;
     }
 }
@@ -483,7 +483,7 @@ int CDAudio_Init(void)
     mciOpenParms.lpstrDeviceType = "cdaudio";
     if (dwReturn = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_SHAREABLE, (DWORD_PTR)&mciOpenParms))
     {
-        Con_Printf("CDAudio_Init: MCI_OPEN failed (%i)\n", dwReturn);
+        Con_Printf("CDAudio_Init: MCI_OPEN failed ({})\n", dwReturn);
         return -1;
     }
     wDeviceID = mciOpenParms.wDeviceID;
@@ -492,7 +492,7 @@ int CDAudio_Init(void)
     mciSetParms.dwTimeFormat = MCI_FORMAT_TMSF;
     if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&mciSetParms))
     {
-        Con_Printf("MCI_SET_TIME_FORMAT failed (%i)\n", dwReturn);
+        Con_Printf("MCI_SET_TIME_FORMAT failed ({})\n", dwReturn);
         mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD_PTR) nullptr);
         return -1;
     }

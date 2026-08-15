@@ -271,11 +271,11 @@ void Z_Print(memzone_t *zone)
 {
     memblock_t *block;
 
-    Con_Printf("zone size: %i  location: %p\n", mem.mainzone->size, mem.mainzone);
+    Con_Printf("zone size: {}  location: {}\n", mem.mainzone->size, static_cast<void *>(mem.mainzone));
 
     for (block = zone->blocklist.next;; block = block->next)
     {
-        Con_Printf("block:%p    size:%7i    tag:%3i\n", block, block->size, block->tag);
+        Con_Printf("block:{}    size:{:7}    tag:{:3}\n", static_cast<void *>(block), block->size, block->tag);
 
         if (block->next == &zone->blocklist)
         {
@@ -390,7 +390,7 @@ void Hunk_Print(qboolean all)
     starthigh = reinterpret_cast<hunk_t *>(mem.hunk_base + mem.hunk_size - mem.hunk_high_used);
     endhigh = reinterpret_cast<hunk_t *>(mem.hunk_base + mem.hunk_size);
 
-    Con_Printf("          :%8i total hunk size\n", mem.hunk_size);
+    Con_Printf("          :{:8} total hunk size\n", mem.hunk_size);
     Con_Printf("-------------------------\n");
 
     while (1)
@@ -401,7 +401,7 @@ void Hunk_Print(qboolean all)
         if (h == endlow)
         {
             Con_Printf("-------------------------\n");
-            Con_Printf("          :%8i REMAINING\n", mem.hunk_size - mem.hunk_low_used - mem.hunk_high_used);
+            Con_Printf("          :{:8} REMAINING\n", mem.hunk_size - mem.hunk_low_used - mem.hunk_high_used);
             Con_Printf("-------------------------\n");
             h = starthigh;
         }
@@ -437,7 +437,7 @@ void Hunk_Print(qboolean all)
         memcpy(name, h->name, 8);
         if (all)
         {
-            Con_Printf("%8p :%8i %8s\n", h, h->size, name);
+            Con_Printf("{:8} :{:8} {:>8}\n", static_cast<void *>(h), h->size, name);
         }
 
         //
@@ -447,7 +447,7 @@ void Hunk_Print(qboolean all)
         {
             if (!all)
             {
-                Con_Printf("          :%8i %8s (TOTAL)\n", sum, name);
+                Con_Printf("          :{:8} {:>8} (TOTAL)\n", sum, name);
             }
             count = 0;
             sum = 0;
@@ -457,7 +457,7 @@ void Hunk_Print(qboolean all)
     }
 
     Con_Printf("-------------------------\n");
-    Con_Printf("%8i total blocks\n", totalblocks);
+    Con_Printf("{:8} total blocks\n", totalblocks);
 }
 
 /*
@@ -607,7 +607,7 @@ void *Hunk_HighAllocName(int size, const char *name)
 
     if (mem.hunk_size - mem.hunk_low_used - mem.hunk_high_used < size)
     {
-        Con_Printf("Hunk_HighAlloc: failed on %i bytes\n", size);
+        Con_Printf("Hunk_HighAlloc: failed on {} bytes\n", size);
         return nullptr;
     }
 
@@ -883,7 +883,7 @@ void Cache_Print(void)
 
     for (cd = mem.cache_head.next; cd != &mem.cache_head; cd = cd->next)
     {
-        Con_Printf("%8i : %s\n", cd->size, cd->name);
+        Con_Printf("{:8} : {}\n", cd->size, cd->name);
     }
 }
 

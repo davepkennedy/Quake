@@ -462,7 +462,7 @@ void ED_Print(edict_t *ed)
         return;
     }
 
-    Con_Printf("\nEDICT %i:\n", NUM_FOR_EDICT(ed));
+    Con_Printf("\nEDICT {}:\n", NUM_FOR_EDICT(ed));
     for (i = 1; i < progs->numfielddefs; i++)
     {
         d = &pr_fielddefs[i];
@@ -489,14 +489,14 @@ void ED_Print(edict_t *ed)
             continue;
         }
 
-        Con_Printf("%s", name);
+        Con_Printf("{}", name);
         l = (int)strlen(name);
         while (l++ < 15)
         {
             Con_Printf(" ");
         }
 
-        Con_Printf("%s\n", PR_ValueString(static_cast<etype_t>(d->type), reinterpret_cast<eval_t *>(v)).c_str());
+        Con_Printf("{}\n", PR_ValueString(static_cast<etype_t>(d->type), reinterpret_cast<eval_t *>(v)));
     }
 }
 
@@ -571,7 +571,7 @@ void ED_PrintEdicts(void)
 {
     int i;
 
-    Con_Printf("%i entities\n", sv.num_edicts);
+    Con_Printf("{} entities\n", sv.num_edicts);
     for (i = 0; i < sv.num_edicts; i++)
     {
         ED_PrintNum(i);
@@ -634,11 +634,11 @@ void ED_Count(void)
         }
     }
 
-    Con_Printf("num_edicts:%3i\n", sv.num_edicts);
-    Con_Printf("active    :%3i\n", active);
-    Con_Printf("view      :%3i\n", models);
-    Con_Printf("touch     :%3i\n", solid);
-    Con_Printf("step      :%3i\n", step);
+    Con_Printf("num_edicts:{:3}\n", sv.num_edicts);
+    Con_Printf("active    :{:3}\n", active);
+    Con_Printf("view      :{:3}\n", models);
+    Con_Printf("touch     :{:3}\n", solid);
+    Con_Printf("step      :{:3}\n", step);
 }
 
 /*
@@ -727,7 +727,7 @@ void ED_ParseGlobals(const char *data)
         key = ED_FindGlobal(keyname);
         if (!key)
         {
-            Con_Printf("'%s' is not a global\n", keyname);
+            Con_Printf("'{}' is not a global\n", keyname);
             continue;
         }
 
@@ -828,7 +828,7 @@ qboolean ED_ParseEpair(void *base, ddef_t *key, const char *s)
         std::optional<ddef_t *> def = ED_FindField(s);
         if (!def)
         {
-            Con_Printf("Can't find field %s\n", s);
+            Con_Printf("Can't find field {}\n", s);
             return false;
         }
         *static_cast<int *>(d) = G_INT((*def)->ofs);
@@ -839,7 +839,7 @@ qboolean ED_ParseEpair(void *base, ddef_t *key, const char *s)
         std::optional<dfunction_t *> func = ED_FindFunction(s);
         if (!func)
         {
-            Con_Printf("Can't find function %s\n", s);
+            Con_Printf("Can't find function {}\n", s);
             return false;
         }
         *static_cast<func_t *>(d) = *func - pr_functions;
@@ -943,7 +943,7 @@ const char *ED_ParseEdict(const char *data, edict_t *ent)
         key = ED_FindField(keyname);
         if (!key)
         {
-            Con_Printf("'%s' is not a field\n", keyname);
+            Con_Printf("'{}' is not a field\n", keyname);
             continue;
         }
 
