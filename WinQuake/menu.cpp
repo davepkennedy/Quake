@@ -55,11 +55,6 @@ int m_return_state;
 qboolean m_return_onerror;
 char m_return_reason[32];
 
-#define StartingGame (multiPlayerMenu.cursor == 1)
-#define JoiningGame (multiPlayerMenu.cursor == 0)
-#define IPXConfig (netMenu.cursor == 0)
-#define TCPIPConfig (netMenu.cursor == 1)
-
 void M_ConfigureNetSubsystem(void);
 
 /*
@@ -991,6 +986,26 @@ class NetMenu : public MenuScreen
 };
 NetMenu netMenu;
 
+inline bool StartingGame()
+{
+    return multiPlayerMenu.cursor == 1;
+}
+
+inline bool JoiningGame()
+{
+    return multiPlayerMenu.cursor == 0;
+}
+
+inline bool IPXConfig()
+{
+    return netMenu.cursor == 0;
+}
+
+inline bool TCPIPConfig()
+{
+    return netMenu.cursor == 1;
+}
+
 const char *net_helpMessage[] = {
     /* .........1.........2.... */
     " Novell network LANs    ", " or Windows 95 DOS-box. ", "                        ", "(LAN=Local Area Network)",
@@ -1813,7 +1828,7 @@ void M_Menu_LanConfig_f(void)
     m_entersound = true;
     if (lanConfigMenu.cursor == -1)
     {
-        if (JoiningGame && TCPIPConfig)
+        if (JoiningGame() && TCPIPConfig())
         {
             lanConfigMenu.cursor = 2;
         }
@@ -1822,7 +1837,7 @@ void M_Menu_LanConfig_f(void)
             lanConfigMenu.cursor = 1;
         }
     }
-    if (StartingGame && lanConfigMenu.cursor == 2)
+    if (StartingGame() && lanConfigMenu.cursor == 2)
     {
         lanConfigMenu.cursor = 1;
     }
@@ -1847,7 +1862,7 @@ void LanConfigMenu::Draw(void)
     basex = (320 - p->width) / 2;
     M_DrawPic(basex, 4, p);
 
-    if (StartingGame)
+    if (StartingGame())
     {
         startJoin = "New Game";
     }
@@ -1855,7 +1870,7 @@ void LanConfigMenu::Draw(void)
     {
         startJoin = "Join Game";
     }
-    if (IPXConfig)
+    if (IPXConfig())
     {
         protocol = "IPX";
     }
@@ -1867,7 +1882,7 @@ void LanConfigMenu::Draw(void)
     basex += 8;
 
     M_Print(basex, 52, "Address:");
-    if (IPXConfig)
+    if (IPXConfig())
     {
         M_Print(basex + 9 * 8, 52, NET_IPXAddressString().c_str());
     }
@@ -1880,7 +1895,7 @@ void LanConfigMenu::Draw(void)
     M_DrawTextBox(basex + 8 * 8, lanConfig_cursor_table[0] - 8, 6, 1);
     M_Print(basex + 9 * 8, lanConfig_cursor_table[0], portname);
 
-    if (JoiningGame)
+    if (JoiningGame())
     {
         M_Print(basex, lanConfig_cursor_table[1], "Search for local games...");
         M_Print(basex, 108, "Join game at:");
@@ -1953,7 +1968,7 @@ void LanConfigMenu::Key(int key)
 
         if (cursor == 1)
         {
-            if (StartingGame)
+            if (StartingGame())
             {
                 M_Menu_GameOptions_f();
                 break;
@@ -2023,7 +2038,7 @@ void LanConfigMenu::Key(int key)
         }
     }
 
-    if (StartingGame && cursor == 2)
+    if (StartingGame() && cursor == 2)
     {
         if (key == K_UPARROW)
         {
@@ -2906,7 +2921,7 @@ void M_ConfigureNetSubsystem(void)
 
     Cbuf_AddText("stopdemo\n");
 
-    if (IPXConfig || TCPIPConfig)
+    if (IPXConfig() || TCPIPConfig())
     {
         net_hostport = lanConfigMenu.port;
     }
