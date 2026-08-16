@@ -12,6 +12,16 @@ struct SysErrorException : std::runtime_error
 	explicit SysErrorException (const std::string &msg) : std::runtime_error (msg) {}
 };
 
+// Thrown by the test-only Host_Error implementation in test_stubs.cpp,
+// standing in for the real host.cpp version's Host_ShutdownServer +
+// CL_Disconnect + Host_AbortFrame unwind. PR_RunError funnels through
+// Host_Error (see pr_exec.cpp), so this is what CHECK_THROWS_AS asserts
+// against for VM error paths (runaway loop, stack overflow, bad opcode, ...).
+struct HostErrorException : std::runtime_error
+{
+	explicit HostErrorException (const std::string &msg) : std::runtime_error (msg) {}
+};
+
 // Captures the last message passed to the test-only Con_Printf, so tests
 // can assert on error-path text (duplicate registration, name collisions,
 // "Unknown command") instead of only checking "didn't crash".
@@ -35,3 +45,24 @@ void SV_WallFriction (edict_t *ent, trace_t *trace);
 // isn't something to rely on -- whichever runs first performs the real
 // initialization exactly once.
 void EnsureMemoryInit ();
+
+// Idempotent (static-bool guarded, same shape as EnsureMemoryInit): calls
+// EnsureMemoryInit(), sets the LittleLong/LittleShort byte-swap function
+// pointers to identity (this project only targets little-endian x64
+// Windows, so there's no real detection dance to reproduce -- see
+// common.cpp's COM_Init), then calls the real PR_LoadProgs() once against
+// tests/fixtures/progs.dat (extracted from id1/PAK0.PAK -- see
+// tools/extract_progs_fixture.ps1). Must not be called more than once per
+// process: PR_LoadProgs unconditionally re-parses and re-Hunk_Allocs, and
+// doctest's cross-TEST_CASE ordering isn't guaranteed, so every test that
+// needs real progs.dat data calls this and relies on the guard.
+void EnsureRealProgsLoaded ();
+
+// Idempotent, must be called after EnsureRealProgsLoaded() (needs
+// pr_edict_size to size the pool correctly). Hunk_Allocs a small edict
+// pool, points sv.edicts/max_edicts at it, and reserves slot 0 as the
+// world entity (sv.num_edicts = 1) -- matching the real engine's
+// convention (ED_Alloc starts scanning from svs.maxclients+1). Tests that
+// call ED_Alloc/EDICT_NUM/PROG_TO_EDICT need this first; sv{} otherwise
+// zero-inits max_edicts to 0, so every edict access fails immediately.
+void EnsureTestEdictsInit ();

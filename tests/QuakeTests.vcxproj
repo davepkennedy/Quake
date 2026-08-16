@@ -115,12 +115,16 @@
     <ClCompile Include="..\WinQuake\cvar.cpp" />
     <ClCompile Include="..\WinQuake\cmd.cpp" />
     <ClCompile Include="..\WinQuake\zone.cpp" />
+    <ClCompile Include="..\WinQuake\crc.cpp" />
+    <ClCompile Include="..\WinQuake\pr_exec.cpp" />
+    <ClCompile Include="..\WinQuake\pr_edict.cpp" />
     <ClCompile Include="test_stubs.cpp" />
     <ClCompile Include="test_mathlib.cpp" />
     <ClCompile Include="test_cvar.cpp" />
     <ClCompile Include="test_cmd.cpp" />
     <ClCompile Include="test_physics.cpp" />
     <ClCompile Include="test_zone.cpp" />
+    <ClCompile Include="test_pr_exec.cpp" />
   </ItemGroup>
 
   <ItemGroup>

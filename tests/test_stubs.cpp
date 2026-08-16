@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -23,6 +24,17 @@
 	throw SysErrorException (error);
 }
 
+// pr_exec.cpp/pr_edict.cpp's only other error-abort path (PR_RunError
+// funnels into Host_Error, not Sys_Error -- see pr_exec.cpp's
+// PR_RunErrorImpl). The real host.cpp version calls SCR_EndLoadingPlaque,
+// Host_ShutdownServer, and CL_Disconnect before throwing Host_AbortFrame --
+// none of that is compiled into this test binary, so this throws a
+// distinguishable exception instead, same shape as Sys_ErrorImpl above.
+[[noreturn]] void Host_ErrorImpl (const std::string &error)
+{
+	throw HostErrorException (error);
+}
+
 // ===========================================================================
 // Shared cross-file test setup
 // ===========================================================================
@@ -37,6 +49,50 @@ void EnsureMemoryInit ()
 	{
 		static char buffer[4 * 1024 * 1024];
 		Memory_Init (buffer, sizeof (buffer));
+		initialized = true;
+	}
+}
+
+// See test_stubs.h. LittleLong/LittleShort are runtime-set function
+// pointers (real assignment happens in COM_Init, not compiled here) --
+// this project only targets little-endian x64 Windows, so identity is the
+// correct (and only sensible) answer rather than reproducing COM_Init's
+// byte-order detection.
+static short IdentityShort (short l)
+{
+	return l;
+}
+
+static int IdentityLong (int l)
+{
+	return l;
+}
+
+void EnsureRealProgsLoaded ()
+{
+	static bool loaded = false;
+	if (!loaded)
+	{
+		EnsureMemoryInit ();
+		LittleShort = IdentityShort;
+		LittleLong = IdentityLong;
+		PR_LoadProgs ();
+		loaded = true;
+	}
+}
+
+void EnsureTestEdictsInit ()
+{
+	static bool initialized = false;
+	if (!initialized)
+	{
+		EnsureRealProgsLoaded ();
+
+		constexpr int kTestMaxEdicts = 64;
+		sv.edicts = static_cast<edict_t *> (Hunk_AllocName (kTestMaxEdicts * pr_edict_size, "test_edicts"));
+		sv.max_edicts = kTestMaxEdicts;
+		sv.num_edicts = 1; // slot 0 reserved as the world entity, matching ED_Alloc's svs.maxclients+1 scan start
+		sv.state = server_state_t::ss_loading;
 		initialized = true;
 	}
 }
@@ -68,10 +124,50 @@ void SV_BroadcastPrintfImpl (const std::string &text)
 {
 }
 
-// Only reachable via Cmd_Exec_f (exec a .cfg file), which no test calls.
+// Real minimal loader, deliberately bypassing the pak/search-path machinery
+// in common_filesystem.cpp (COM_LoadFile/COM_FOpenFile) -- reads a fixture
+// file straight from tests/fixtures/ via ifstream instead, matching
+// COM_LoadFile's real usehunk==1 contract exactly (Hunk_AllocName(len+1,
+// tag), buf[len]=0, com_filesize set) so the real, unmodified PR_LoadProgs
+// (compiled for real from pr_edict.cpp) can run against it -- its
+// byte-swap/CRC/version-check logic is genuinely exercised, not duplicated.
+//
+// Resolves tests/fixtures/ from __FILE__ (this file's own absolute path,
+// via /FC's "full path in diagnostics" -- already on by default for this
+// project) rather than a project-level preprocessor define: an embedded
+// $(SolutionDir) macro contains backslashes, and MSBuild's own quoting of
+// PreprocessorDefinitions double-escapes any \" inside the define value,
+// producing a malformed string literal (confirmed by trying it first) --
+// __FILE__ sidesteps that entirely since the compiler always emits it as
+// an already-correctly-escaped string literal.
+int com_filesize;
+
+static std::string FixturesDir ()
+{
+	std::string thisFile = __FILE__; // e.g. C:\...\tests\test_stubs.cpp
+	size_t lastSlash = thisFile.find_last_of ("\\/");
+	std::string dir = (lastSlash == std::string::npos) ? "" : thisFile.substr (0, lastSlash + 1);
+	return dir + "fixtures/";
+}
+
 byte *COM_LoadHunkFile (const char *path)
 {
-	return nullptr;
+	std::string fullPath = FixturesDir () + path;
+	std::ifstream f (fullPath, std::ios::binary | std::ios::ate);
+	if (!f)
+	{
+		com_filesize = -1;
+		return nullptr;
+	}
+
+	std::streamsize len = f.tellg ();
+	f.seekg (0);
+
+	byte *buf = static_cast<byte *> (Hunk_AllocName ((int)len + 1, "progs.dat"));
+	f.read (reinterpret_cast<char *> (buf), len);
+	buf[len] = 0;
+	com_filesize = (int)len;
+	return buf;
 }
 
 // Only reachable via Cmd_ForwardToServer, which no test calls.
@@ -96,6 +192,49 @@ client_static_t cls{};
 // Cmd_AddCommand refuses to register after this is set (real init is
 // host.cpp's Host_Init, near the very end) -- stays false for tests.
 qboolean host_initialized = false;
+
+// ===========================================================================
+// pr_exec.cpp / pr_edict.cpp's platform-boundary stubs
+// ===========================================================================
+
+// ED_Alloc reads svs.maxclients (0 here, matching the real engine's "no
+// clients connected yet" state -- EnsureTestEdictsInit reserves slot 0 as
+// the world entity the same way ED_Alloc's own svs.maxclients+1 scan start
+// does for a real server).
+server_static_t svs{};
+
+// Link-time only: ED_LoadFromFile reads deathmatch.value and PR_LoadGame
+// reads current_skill, but no Phase-1 test calls either function (they pull
+// in map/savegame-parsing concerns out of scope for the interpreter/edict
+// tests here -- see the roadmap in the plan this was built from).
+cvar_t deathmatch = {"deathmatch", "0"};
+int current_skill = 0;
+
+// pr_cmds.cpp (the ~90 PF_* builtins) is out of scope for Phase 1 -- the
+// real-progs.dat tests deliberately exercise only builtin-free QC functions
+// (e.g. SUB_Null), so pr_builtins is never actually dereferenced; this just
+// satisfies the linker for progs.h's extern declarations.
+builtin_t *pr_builtins = nullptr;
+int pr_numbuiltins = 0;
+
+// Also defined in pr_cmds.cpp (out of scope for Phase 1, not compiled here)
+// -- PR_LoadProgs allocates into it so the pointer difference from
+// pr_strings fits in a 32-bit string_t on x64 (see progs.h's comment).
+char *pr_string_temp;
+
+// LittleShort/LittleLong are runtime-set function pointers, real storage
+// defined in common.cpp (not compiled here) and assigned in COM_Init.
+// EnsureRealProgsLoaded() (below) points them at identity functions, since
+// this project only targets little-endian x64 Windows.
+short (*LittleShort) (short l);
+int (*LittleLong) (int l);
+
+// Called only from ED_Free, to unlink from the live entity-linking/area-tree
+// system (world.cpp) -- not compiled into this test binary. No test links
+// an edict into the world tree, so a no-op is correct here.
+void SV_UnlinkEdict (edict_t *ent)
+{
+}
 
 // ===========================================================================
 // Duplicated from common.cpp for test isolation.
@@ -152,6 +291,18 @@ void Q_strcat (char *dest, const char *src)
 {
 	dest += Q_strlen(dest);
 	Q_strcpy (dest, src);
+}
+
+// pr_edict.cpp's ED_Parse* functions need this one too.
+void Q_strlcpy (char *dest, const char *src, size_t destsize)
+{
+	if (destsize == 0)
+		return;
+
+	size_t i = 0;
+	for (; i < destsize - 1 && src[i]; i++)
+		dest[i] = src[i];
+	dest[i] = 0;
 }
 
 int Q_strncasecmp (const char *s1, const char *s2, int n)
