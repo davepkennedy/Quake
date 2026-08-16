@@ -189,7 +189,6 @@
        Header files
        ================================================================ -->
   <ItemGroup>
-    <ClInclude Include="WinQuake\anorm_dots.h" />
     <ClInclude Include="WinQuake\anorms.h" />
     <ClInclude Include="WinQuake\bspfile.h" />
     <ClInclude Include="WinQuake\cdaudio.h" />

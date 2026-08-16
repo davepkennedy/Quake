@@ -406,14 +406,6 @@ float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 vec3_t shadevector;
 float shadelight, ambientlight;
 
-// precalculated dot products for quantized angles
-#define SHADEDOT_QUANT 16
-float r_avertexnormal_dots[SHADEDOT_QUANT][256] =
-#include "anorm_dots.h"
-    ;
-
-float *shadedots = r_avertexnormal_dots[0];
-
 int lastposenum_old, lastposenum_new;
 float lastpose_blend;
 
@@ -435,38 +427,53 @@ static GLint u_alias_mvp = -1;
 static GLint u_alias_tex = -1;
 static GLint u_alias_color = -1;
 static GLint u_alias_flat = -1;
+static GLint u_alias_shadevector = -1;
+static GLint u_alias_shadelight = -1;
 
 // gl_mesh.cpp's StripLength/FanLength cap any single command at 128 verts
 // (fixed-size stripverts[128]/striptris[128]); 256 leaves headroom.
 #define ALIAS_MAX_CMD_VERTS 256
 #define ALIAS_STREAM_VERTS ((ALIAS_MAX_CMD_VERTS - 2) * 3)
-static float alias_stream[ALIAS_STREAM_VERTS * 6]; // pos3 + uv2 + intensity1
+#define ALIAS_VERT_FLOATS 8 // pos3 + uv2 + normal3
+static float alias_stream[ALIAS_STREAM_VERTS * ALIAS_VERT_FLOATS];
 
+// The per-vertex normal (model-space, not touched by u_mvp -- shadevector is
+// pre-counter-rotated by the entity's yaw on the CPU side instead, the same
+// trick the old precomputed-shadedots table relied on) is interpolated
+// across the triangle and renormalized per pixel, replacing the old
+// per-vertex-only flat/Gouraud shading with real per-pixel lighting.
 static const char alias_vert_src[] = "#version 450 core\n"
                                      "layout(location = 0) in vec3 a_pos;\n"
                                      "layout(location = 1) in vec2 a_uv;\n"
-                                     "layout(location = 2) in float a_intensity;\n"
+                                     "layout(location = 2) in vec3 a_normal;\n"
                                      "uniform mat4 u_mvp;\n"
                                      "out vec2 v_uv;\n"
-                                     "out float v_intensity;\n"
+                                     "out vec3 v_normal;\n"
                                      "void main() {\n"
                                      "    v_uv = a_uv;\n"
-                                     "    v_intensity = a_intensity;\n"
+                                     "    v_normal = a_normal;\n"
                                      "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
                                      "}\n";
 
+// Reproduces the original shadedots formula (dot(normal, shadevector) + 1,
+// scaled by shadelight -- see r_avertexnormal_dots' generation) per pixel
+// instead of per vertex.
 static const char alias_frag_src[] = "#version 450 core\n"
                                      "in vec2 v_uv;\n"
-                                     "in float v_intensity;\n"
+                                     "in vec3 v_normal;\n"
                                      "uniform sampler2D u_tex;\n"
                                      "uniform vec4 u_color;\n"
                                      "uniform int u_flat;\n"
+                                     "uniform vec3 u_shadevector;\n"
+                                     "uniform float u_shadelight;\n"
                                      "out vec4 frag_color;\n"
                                      "void main() {\n"
                                      "    if (u_flat != 0)\n"
                                      "        frag_color = u_color;\n"
-                                     "    else\n"
-                                     "        frag_color = vec4(texture(u_tex, v_uv).rgb * v_intensity, 1.0);\n"
+                                     "    else {\n"
+                                     "        float intensity = (dot(normalize(v_normal), u_shadevector) + 1.0) * u_shadelight;\n"
+                                     "        frag_color = vec4(texture(u_tex, v_uv).rgb * intensity, 1.0);\n"
+                                     "    }\n"
                                      "}\n";
 
 static void Alias_InitRenderer(void)
@@ -487,6 +494,8 @@ static void Alias_InitRenderer(void)
     u_alias_tex = qglGetUniformLocation(alias_prog, "u_tex");
     u_alias_color = qglGetUniformLocation(alias_prog, "u_color");
     u_alias_flat = qglGetUniformLocation(alias_prog, "u_flat");
+    u_alias_shadevector = qglGetUniformLocation(alias_prog, "u_shadevector");
+    u_alias_shadelight = qglGetUniformLocation(alias_prog, "u_shadelight");
     qglUseProgram(0);
 
     alias_vao = GLVertexArray::Create();
@@ -494,14 +503,16 @@ static void Alias_InitRenderer(void)
     qglBindVertexArray(alias_vao);
     qglBindBuffer(GL_ARRAY_BUFFER, alias_vbo);
     qglBufferData(GL_ARRAY_BUFFER, sizeof(alias_stream), nullptr, GL_STREAM_DRAW);
-    // location 0: xyz  (3 floats, offset 0, stride 6*4=24)
-    qglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+    // location 0: xyz  (3 floats, offset 0, stride 8*4=32)
+    qglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, ALIAS_VERT_FLOATS * sizeof(float), nullptr);
     qglEnableVertexAttribArray(0);
     // location 1: uv  (2 floats, offset 12)
-    qglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(3 * sizeof(float)));
+    qglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, ALIAS_VERT_FLOATS * sizeof(float),
+                            reinterpret_cast<void *>(3 * sizeof(float)));
     qglEnableVertexAttribArray(1);
-    // location 2: intensity  (1 float, offset 20)
-    qglVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void *>(5 * sizeof(float)));
+    // location 2: normal  (3 floats, offset 20)
+    qglVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, ALIAS_VERT_FLOATS * sizeof(float),
+                            reinterpret_cast<void *>(5 * sizeof(float)));
     qglEnableVertexAttribArray(2);
     qglBindVertexArray(0);
     qglBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -548,10 +559,10 @@ static void Alias_EndDraw(void)
 // Triangulates one command's worth of vertices (a GL_TRIANGLE_FAN or
 // GL_TRIANGLE_STRIP, per the original fixed-function primitive type) into
 // the stream buffer and draws it. cmdverts holds n vertices of
-// (x,y,z, u,v, intensity). Mirrors the standard OpenGL strip winding rule
+// (x,y,z, u,v, nx,ny,nz). Mirrors the standard OpenGL strip winding rule
 // (alternating vertex order every other triangle) since we no longer have
 // glBegin(GL_TRIANGLE_STRIP) doing that for us.
-static void Alias_EmitPrimitive(const float cmdverts[][6], int n, qboolean fan)
+static void Alias_EmitPrimitive(const float cmdverts[][ALIAS_VERT_FLOATS], int n, qboolean fan)
 {
     if (n < 3)
     {
@@ -583,16 +594,17 @@ static void Alias_EmitPrimitive(const float cmdverts[][6], int n, qboolean fan)
             i2 = i + 2;
         }
 
-        memcpy(out, cmdverts[i0], 6 * sizeof(float));
-        out += 6;
-        memcpy(out, cmdverts[i1], 6 * sizeof(float));
-        out += 6;
-        memcpy(out, cmdverts[i2], 6 * sizeof(float));
-        out += 6;
+        memcpy(out, cmdverts[i0], ALIAS_VERT_FLOATS * sizeof(float));
+        out += ALIAS_VERT_FLOATS;
+        memcpy(out, cmdverts[i1], ALIAS_VERT_FLOATS * sizeof(float));
+        out += ALIAS_VERT_FLOATS;
+        memcpy(out, cmdverts[i2], ALIAS_VERT_FLOATS * sizeof(float));
+        out += ALIAS_VERT_FLOATS;
     }
 
     int nverts = ntri * 3;
-    qglBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(nverts * 6 * sizeof(float)), alias_stream, GL_STREAM_DRAW);
+    qglBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(nverts * ALIAS_VERT_FLOATS * sizeof(float)), alias_stream,
+                  GL_STREAM_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, nverts);
 }
 
@@ -606,7 +618,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum0, int posenum1, float 
     trivertx_t *verts0, *verts1;
     int *order;
     int count;
-    float cmdverts[ALIAS_MAX_CMD_VERTS][6];
+    float cmdverts[ALIAS_MAX_CMD_VERTS][ALIAS_VERT_FLOATS];
 
     lastposenum_old = posenum0;
     lastposenum_new = posenum1;
@@ -621,6 +633,8 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum0, int posenum1, float 
     Alias_BeginDraw();
     Alias_SetMVP();
     qglUniform1i(u_alias_flat, 0);
+    qglUniform3fv(u_alias_shadevector, 1, shadevector);
+    qglUniform1f(u_alias_shadelight, shadelight);
 
     while (1)
     {
@@ -645,20 +659,21 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum0, int posenum1, float 
                 cmdverts[n][3] = reinterpret_cast<float *>(order)[0];
                 cmdverts[n][4] = reinterpret_cast<float *>(order)[1];
 
-                // normals and vertexes come from the frame list -- blend
+                // vertexes and normals come from the frame list -- blend
                 // between the previous and current animation frame's poses
-                // rather than snapping straight to the new one. Lighting
-                // intensity is blended too (a linear blend of the two
-                // shadedots lookups, not a re-normalized vector lerp -- a
-                // standard, cheap approximation since the flicker from
-                // interpolating the scalar directly is imperceptible next
-                // to the position blend).
+                // rather than snapping straight to the new one. The
+                // (unnormalized) blended normal is interpolated again across
+                // the triangle and renormalized per pixel in the fragment
+                // shader, giving real per-pixel lighting instead of the old
+                // flat-shaded-per-vertex look.
                 cmdverts[n][0] = verts0->v[0] + (verts1->v[0] - verts0->v[0]) * blend;
                 cmdverts[n][1] = verts0->v[1] + (verts1->v[1] - verts0->v[1]) * blend;
                 cmdverts[n][2] = verts0->v[2] + (verts1->v[2] - verts0->v[2]) * blend;
-                float intensity0 = shadedots[verts0->lightnormalindex] * shadelight;
-                float intensity1 = shadedots[verts1->lightnormalindex] * shadelight;
-                cmdverts[n][5] = intensity0 + (intensity1 - intensity0) * blend;
+                float *normal0 = r_avertexnormals[verts0->lightnormalindex];
+                float *normal1 = r_avertexnormals[verts1->lightnormalindex];
+                cmdverts[n][5] = normal0[0] + (normal1[0] - normal0[0]) * blend;
+                cmdverts[n][6] = normal0[1] + (normal1[1] - normal0[1]) * blend;
+                cmdverts[n][7] = normal0[2] + (normal1[2] - normal0[2]) * blend;
                 n++;
             }
             order += 2;
@@ -685,7 +700,7 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum0, int posenum1, float
     int *order;
     float height, lheight;
     int count;
-    float cmdverts[ALIAS_MAX_CMD_VERTS][6];
+    float cmdverts[ALIAS_MAX_CMD_VERTS][ALIAS_VERT_FLOATS];
 
     lheight = currententity->origin[2] - lightspot[2];
 
@@ -748,6 +763,8 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum0, int posenum1, float
                 cmdverts[n][3] = 0.f;
                 cmdverts[n][4] = 0.f;
                 cmdverts[n][5] = 0.f;
+                cmdverts[n][6] = 0.f;
+                cmdverts[n][7] = 0.f;
                 n++;
             }
 
@@ -919,7 +936,6 @@ void R_DrawAliasModel(entity_t *e)
         ambientlight = shadelight = 256;
     }
 
-    shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
     shadelight = shadelight / 200.0;
 
     an = e->angles[1] / 180 * M_PI;
