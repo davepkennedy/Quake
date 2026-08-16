@@ -531,6 +531,15 @@ float CL_LerpPoint(void)
     return frac;
 }
 
+// Mirrors gl_rmain.cpp's ALIAS_ANIM_LERP_DURATION: QuakeC think-driven
+// entities (monsters, doors, ...) typically only move once every ~0.1s
+// (the classic "self.nextthink = time + 0.1" idiom) regardless of how
+// often the server actually simulates, so a locally-hosted single-player
+// game -- whose entity updates otherwise arrive every render frame, via
+// CL_LerpPoint's sv.active check forcing frac=1 -- still needs this fixed
+// window to smooth movement between those infrequent real position changes.
+constexpr float MOVEMENT_LERP_DURATION = 0.1f;
+
 /*
 ===============
 CL_RelinkEntities
@@ -608,7 +617,22 @@ void CL_RelinkEntities(void)
         }
         else
         { // if the delta is large, assume a teleport and don't lerp
-            f = frac;
+            if (sv.active)
+            {
+                f = (float)((cl.time - ent->origin_change_time) / MOVEMENT_LERP_DURATION);
+                if (f < 0)
+                {
+                    f = 0;
+                }
+                if (f > 1)
+                {
+                    f = 1;
+                }
+            }
+            else
+            {
+                f = frac;
+            }
             for (j = 0; j < 3; j++)
             {
                 delta[j] = ent->msg_origins[0][j] - ent->msg_origins[1][j];

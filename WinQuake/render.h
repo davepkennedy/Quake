@@ -59,6 +59,7 @@ struct entity_t
     int frame;
     int oldframe;          // previous frame, for alias-model animation lerp
     double frame_start_time; // cl.time when 'frame' most recently changed
+    double origin_change_time; // cl.time when msg_origins[0]/msg_angles[0] most recently changed value
     float syncbase; // for client-side animations
     byte *colormap;
     int effects;  // light, particals, etc

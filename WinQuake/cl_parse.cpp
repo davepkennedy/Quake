@@ -577,6 +577,21 @@ void CL_ParseUpdate(int bits)
         ent->forcelink = true;
     }
 
+    // Timestamp real origin/angle transitions (as opposed to an update that
+    // just re-sends the same value) for CL_RelinkEntities' sv.active lerp
+    // path -- see its comment for why the network-message-arrival-based
+    // frac from CL_LerpPoint can't be reused here. msg_origins[1]/
+    // msg_angles[1] still hold the pre-update value at this point (the
+    // shift into them happened before the reads above), so this comparison
+    // mirrors the frame-transition check in the U_FRAME block.
+    if (forcelink || ent->msg_origins[0][0] != ent->msg_origins[1][0] ||
+        ent->msg_origins[0][1] != ent->msg_origins[1][1] || ent->msg_origins[0][2] != ent->msg_origins[1][2] ||
+        ent->msg_angles[0][0] != ent->msg_angles[1][0] || ent->msg_angles[0][1] != ent->msg_angles[1][1] ||
+        ent->msg_angles[0][2] != ent->msg_angles[1][2])
+    {
+        ent->origin_change_time = cl.time;
+    }
+
     if (forcelink)
     { // didn't have an update last message
         VectorCopy(ent->msg_origins[0], ent->msg_origins[1]);
