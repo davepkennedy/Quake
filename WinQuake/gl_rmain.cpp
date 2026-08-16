@@ -83,6 +83,7 @@ cvar_t r_speeds = {"r_speeds", "0"};
 cvar_t r_fullbright = {"r_fullbright", "0"};
 cvar_t r_lightmap = {"r_lightmap", "0"};
 cvar_t r_shadows = {"r_shadows", "0"};
+cvar_t r_tessellation = {"r_tessellation", "0"};
 cvar_t r_mirroralpha = {"r_mirroralpha", "1"};
 cvar_t r_wateralpha = {"r_wateralpha", "1"};
 cvar_t r_dynamic = {"r_dynamic", "1"};
@@ -410,14 +411,17 @@ int lastposenum_old, lastposenum_new;
 float lastpose_blend;
 
 // -------------------------------------------------------------------------
-// Alias model renderer state (VAO / VBO / GLSL shader)
+// Alias model renderer state (VAO / VBO / GLSL shaders)
 //
-// Shared by the skin-textured model draw (GL_DrawAliasFrame) and the flat
-// blob-shadow draw (GL_DrawAliasShadow): both walk the same precomputed
-// triangle-strip/fan "command" stream from gl_mesh.cpp (count, then that
-// many (u,v) pairs interleaved with the pose's trivertx_t stream), just
-// with different per-vertex data and, for shadows, a flat uniform color
-// instead of the sampled+shaded skin texture.
+// Two separate programs share one VAO/VBO (same pos3+uv2+normal3 vertex
+// layout): alias_prog is the skin-textured draw (GL_DrawAliasFrame), a full
+// 4-stage tessellation pipeline; alias_shadow_prog is the flat blob-shadow
+// draw (GL_DrawAliasShadow), a plain 2-stage pipeline with no tessellation
+// and no lighting. They used to be one program with a runtime u_flat
+// branch, but a tessellated program can only be drawn with GL_PATCHES, and
+// the shadow's silhouette is deliberately left untessellated (simpler, and
+// a rounded shadow blob isn't worth the complexity) -- so they're separate
+// now, each with only the uniforms it actually needs.
 // -------------------------------------------------------------------------
 
 static GLVertexArray alias_vao;
@@ -425,10 +429,13 @@ static GLBuffer alias_vbo;
 static GLProgram alias_prog;
 static GLint u_alias_mvp = -1;
 static GLint u_alias_tex = -1;
-static GLint u_alias_color = -1;
-static GLint u_alias_flat = -1;
 static GLint u_alias_shadevector = -1;
 static GLint u_alias_shadelight = -1;
+static GLint u_alias_tess_level = -1;
+
+static GLProgram alias_shadow_prog;
+static GLint u_alias_shadow_mvp = -1;
+static GLint u_alias_shadow_color = -1;
 
 // gl_mesh.cpp's StripLength/FanLength cap any single command at 128 verts
 // (fixed-size stripverts[128]/striptris[128]); 256 leaves headroom.
@@ -437,44 +444,134 @@ static GLint u_alias_shadelight = -1;
 #define ALIAS_VERT_FLOATS 8 // pos3 + uv2 + normal3
 static float alias_stream[ALIAS_STREAM_VERTS * ALIAS_VERT_FLOATS];
 
-// The per-vertex normal (model-space, not touched by u_mvp -- shadevector is
-// pre-counter-rotated by the entity's yaw on the CPU side instead, the same
-// trick the old precomputed-shadedots table relied on) is interpolated
-// across the triangle and renormalized per pixel, replacing the old
-// per-vertex-only flat/Gouraud shading with real per-pixel lighting.
+// Vertex stage just passes the raw model-space control-point data through
+// to the tessellation control shader -- no MVP transform here. PN-triangle
+// curving (in the TES below) has to happen before the perspective
+// transform, in the same affine space the vertex positions/normals are
+// already in.
 static const char alias_vert_src[] = "#version 450 core\n"
                                      "layout(location = 0) in vec3 a_pos;\n"
                                      "layout(location = 1) in vec2 a_uv;\n"
                                      "layout(location = 2) in vec3 a_normal;\n"
-                                     "uniform mat4 u_mvp;\n"
-                                     "out vec2 v_uv;\n"
-                                     "out vec3 v_normal;\n"
+                                     "out vec3 vs_pos;\n"
+                                     "out vec2 vs_uv;\n"
+                                     "out vec3 vs_normal;\n"
                                      "void main() {\n"
-                                     "    v_uv = a_uv;\n"
-                                     "    v_normal = a_normal;\n"
-                                     "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
+                                     "    vs_pos = a_pos;\n"
+                                     "    vs_uv = a_uv;\n"
+                                     "    vs_normal = a_normal;\n"
                                      "}\n";
 
+// One triangle in, one patch (3 control points) out. u_tess_level drives
+// both the inner and all three outer tessellation levels uniformly --
+// gl_TessLevelOuter/Inner must be set to >=1 or the patch is discarded
+// entirely, so r_tessellation 0 (its default) is clamped to 1, which
+// evaluates the PN-triangle patch at just its 3 corners -- exactly the
+// original flat triangle, byte-for-byte, so tessellation is fully off by
+// default rather than just "very subtle."
+static const char alias_tcs_src[] = "#version 450 core\n"
+                                    "layout(vertices = 3) out;\n"
+                                    "in vec3 vs_pos[];\n"
+                                    "in vec2 vs_uv[];\n"
+                                    "in vec3 vs_normal[];\n"
+                                    "out vec3 tcs_pos[];\n"
+                                    "out vec2 tcs_uv[];\n"
+                                    "out vec3 tcs_normal[];\n"
+                                    "uniform float u_tess_level;\n"
+                                    "void main() {\n"
+                                    "    tcs_pos[gl_InvocationID] = vs_pos[gl_InvocationID];\n"
+                                    "    tcs_uv[gl_InvocationID] = vs_uv[gl_InvocationID];\n"
+                                    "    tcs_normal[gl_InvocationID] = vs_normal[gl_InvocationID];\n"
+                                    "    if (gl_InvocationID == 0) {\n"
+                                    "        float level = max(u_tess_level, 1.0);\n"
+                                    "        gl_TessLevelOuter[0] = level;\n"
+                                    "        gl_TessLevelOuter[1] = level;\n"
+                                    "        gl_TessLevelOuter[2] = level;\n"
+                                    "        gl_TessLevelInner[0] = level;\n"
+                                    "    }\n"
+                                    "}\n";
+
+// Curved PN-triangles (Vlachos et al., "Curved PN Triangles", 2001): bulges
+// each flat triangle into a cubic Bezier patch using only its own 3 corner
+// positions/normals -- no new geometry data -- while still passing exactly
+// through those 3 corners, so adjacent triangles stay seamlessly joined at
+// shared edges. Barycentric (u,v,w) = gl_TessCoord.xyz map to corners
+// 0/1/2 respectively (u=1,v=w=0 evaluates to exactly tcs_pos[0], etc).
+// UV and the normal (later renormalized per pixel in the fragment shader,
+// same as the un-tessellated per-pixel lighting this feeds into) are
+// blended with plain barycentric linear interpolation -- only position
+// needs the curved treatment.
+static const char alias_tes_src[] = "#version 450 core\n"
+                                    "layout(triangles, equal_spacing, ccw) in;\n"
+                                    "in vec3 tcs_pos[];\n"
+                                    "in vec2 tcs_uv[];\n"
+                                    "in vec3 tcs_normal[];\n"
+                                    "out vec2 v_uv;\n"
+                                    "out vec3 v_normal;\n"
+                                    "uniform mat4 u_mvp;\n"
+                                    "void main() {\n"
+                                    "    float u = gl_TessCoord.x, v = gl_TessCoord.y, w = gl_TessCoord.z;\n"
+                                    "    vec3 p0 = tcs_pos[0], p1 = tcs_pos[1], p2 = tcs_pos[2];\n"
+                                    "    vec3 n0 = normalize(tcs_normal[0]);\n"
+                                    "    vec3 n1 = normalize(tcs_normal[1]);\n"
+                                    "    vec3 n2 = normalize(tcs_normal[2]);\n"
+                                    "    vec3 b300 = p0;\n"
+                                    "    vec3 b030 = p1;\n"
+                                    "    vec3 b003 = p2;\n"
+                                    "    vec3 b210 = (2.0*p0 + p1 - dot(p1-p0, n0)*n0) / 3.0;\n"
+                                    "    vec3 b120 = (2.0*p1 + p0 - dot(p0-p1, n1)*n1) / 3.0;\n"
+                                    "    vec3 b021 = (2.0*p1 + p2 - dot(p2-p1, n1)*n1) / 3.0;\n"
+                                    "    vec3 b012 = (2.0*p2 + p1 - dot(p1-p2, n2)*n2) / 3.0;\n"
+                                    "    vec3 b102 = (2.0*p2 + p0 - dot(p0-p2, n2)*n2) / 3.0;\n"
+                                    "    vec3 b201 = (2.0*p0 + p2 - dot(p2-p0, n0)*n0) / 3.0;\n"
+                                    "    vec3 centerE = (b210+b120+b021+b012+b102+b201) / 6.0;\n"
+                                    "    vec3 centerV = (p0+p1+p2) / 3.0;\n"
+                                    "    vec3 b111 = centerE + (centerE - centerV) / 2.0;\n"
+                                    "    float uu = u*u, vv = v*v, ww = w*w;\n"
+                                    "    vec3 curvedPos = b300*uu*u + b030*vv*v + b003*ww*w\n"
+                                    "        + b210*3.0*uu*v + b120*3.0*u*vv\n"
+                                    "        + b021*3.0*vv*w + b012*3.0*v*ww\n"
+                                    "        + b102*3.0*ww*u + b201*3.0*w*uu\n"
+                                    "        + b111*6.0*u*v*w;\n"
+                                    "    v_uv = tcs_uv[0]*u + tcs_uv[1]*v + tcs_uv[2]*w;\n"
+                                    "    v_normal = n0*u + n1*v + n2*w;\n"
+                                    "    gl_Position = u_mvp * vec4(curvedPos, 1.0);\n"
+                                    "}\n";
+
 // Reproduces the original shadedots formula (dot(normal, shadevector) + 1,
-// scaled by shadelight -- see r_avertexnormal_dots' generation) per pixel
-// instead of per vertex.
+// scaled by shadelight -- see r_avertexnormal_dots' generation, closed out
+// when this went per-pixel) per pixel rather than per vertex. No u_flat
+// branch anymore -- this program is only ever used for the lit, textured
+// skin draw; the shadow draw uses alias_shadow_prog instead.
 static const char alias_frag_src[] = "#version 450 core\n"
                                      "in vec2 v_uv;\n"
                                      "in vec3 v_normal;\n"
                                      "uniform sampler2D u_tex;\n"
-                                     "uniform vec4 u_color;\n"
-                                     "uniform int u_flat;\n"
                                      "uniform vec3 u_shadevector;\n"
                                      "uniform float u_shadelight;\n"
                                      "out vec4 frag_color;\n"
                                      "void main() {\n"
-                                     "    if (u_flat != 0)\n"
-                                     "        frag_color = u_color;\n"
-                                     "    else {\n"
-                                     "        float intensity = (dot(normalize(v_normal), u_shadevector) + 1.0) * u_shadelight;\n"
-                                     "        frag_color = vec4(texture(u_tex, v_uv).rgb * intensity, 1.0);\n"
-                                     "    }\n"
+                                     "    float intensity = (dot(normalize(v_normal), u_shadevector) + 1.0) * u_shadelight;\n"
+                                     "    frag_color = vec4(texture(u_tex, v_uv).rgb * intensity, 1.0);\n"
                                      "}\n";
+
+// Shadow pipeline: plain, untessellated, unlit. The shadow's already-
+// projected-flat position is computed on the CPU (see GL_DrawAliasShadow)
+// exactly as before tessellation existed; this just transforms and
+// flat-colors it.
+static const char alias_shadow_vert_src[] = "#version 450 core\n"
+                                            "layout(location = 0) in vec3 a_pos;\n"
+                                            "uniform mat4 u_mvp;\n"
+                                            "void main() {\n"
+                                            "    gl_Position = u_mvp * vec4(a_pos, 1.0);\n"
+                                            "}\n";
+
+static const char alias_shadow_frag_src[] = "#version 450 core\n"
+                                            "uniform vec4 u_color;\n"
+                                            "out vec4 frag_color;\n"
+                                            "void main() {\n"
+                                            "    frag_color = u_color;\n"
+                                            "}\n";
 
 static void Alias_InitRenderer(void)
 {
@@ -483,20 +580,32 @@ static void Alias_InitRenderer(void)
         return;
     }
 
-    alias_prog = GL_BuildProgram(alias_vert_src, alias_frag_src);
+    alias_prog = GL_BuildProgram(alias_vert_src, alias_tcs_src, alias_tes_src, alias_frag_src);
     if (!alias_prog)
     {
         Sys_Error("Alias_InitRenderer: shader compile failed");
+    }
+    alias_shadow_prog = GL_BuildProgram(alias_shadow_vert_src, alias_shadow_frag_src);
+    if (!alias_shadow_prog)
+    {
+        Sys_Error("Alias_InitRenderer: shadow shader compile failed");
     }
 
     qglUseProgram(alias_prog);
     u_alias_mvp = qglGetUniformLocation(alias_prog, "u_mvp");
     u_alias_tex = qglGetUniformLocation(alias_prog, "u_tex");
-    u_alias_color = qglGetUniformLocation(alias_prog, "u_color");
-    u_alias_flat = qglGetUniformLocation(alias_prog, "u_flat");
     u_alias_shadevector = qglGetUniformLocation(alias_prog, "u_shadevector");
     u_alias_shadelight = qglGetUniformLocation(alias_prog, "u_shadelight");
+    u_alias_tess_level = qglGetUniformLocation(alias_prog, "u_tess_level");
+
+    qglUseProgram(alias_shadow_prog);
+    u_alias_shadow_mvp = qglGetUniformLocation(alias_shadow_prog, "u_mvp");
+    u_alias_shadow_color = qglGetUniformLocation(alias_shadow_prog, "u_color");
     qglUseProgram(0);
+
+    // The only patch shape this renderer ever draws (GL_DrawAliasFrame's
+    // triangles); global GL state, so set once rather than per draw call.
+    qglPatchParameteri(GL_PATCH_VERTICES, 3);
 
     alias_vao = GLVertexArray::Create();
     alias_vbo = GLBuffer::Create();
@@ -521,7 +630,8 @@ static void Alias_InitRenderer(void)
 // Explicit teardown, called from Host_Shutdown before VID_Shutdown() destroys
 // the GL context -- see gl_shader.h's comment on why this can't be left to
 // these globals' own (static-duration) destructors. Covers both the
-// billboard and alias-model renderers, this file's two trios.
+// billboard and alias-model renderers, this file's two trios (plus the
+// alias shadow program).
 void GL_RMain_Shutdown(void)
 {
     billboard_vao.Release();
@@ -531,23 +641,23 @@ void GL_RMain_Shutdown(void)
     alias_vao.Release();
     alias_vbo.Release();
     alias_prog.Release();
+    alias_shadow_prog.Release();
 }
 
-static void Alias_BeginDraw(void)
+static void Alias_BeginDraw(GLuint program)
 {
     Alias_InitRenderer();
     GL_DisableMultitexture();
-    qglUseProgram(alias_prog);
+    qglUseProgram(program);
     qglBindVertexArray(alias_vao);
     qglBindBuffer(GL_ARRAY_BUFFER, alias_vbo);
-    qglUniform1i(u_alias_tex, 0);
 }
 
-static void Alias_SetMVP(void)
+static void Alias_SetMVP(GLint mvp_location)
 {
     float mvp[16];
     GL_GetMVP(mvp);
-    qglUniformMatrix4fv(u_alias_mvp, 1, GL_FALSE, mvp);
+    qglUniformMatrix4fv(mvp_location, 1, GL_FALSE, mvp);
 }
 
 static void Alias_EndDraw(void)
@@ -561,8 +671,9 @@ static void Alias_EndDraw(void)
 // the stream buffer and draws it. cmdverts holds n vertices of
 // (x,y,z, u,v, nx,ny,nz). Mirrors the standard OpenGL strip winding rule
 // (alternating vertex order every other triangle) since we no longer have
-// glBegin(GL_TRIANGLE_STRIP) doing that for us.
-static void Alias_EmitPrimitive(const float cmdverts[][ALIAS_VERT_FLOATS], int n, qboolean fan)
+// glBegin(GL_TRIANGLE_STRIP) doing that for us. mode is GL_PATCHES for the
+// tessellated skin draw or GL_TRIANGLES for the untessellated shadow draw.
+static void Alias_EmitPrimitive(const float cmdverts[][ALIAS_VERT_FLOATS], int n, qboolean fan, GLenum mode)
 {
     if (n < 3)
     {
@@ -605,7 +716,7 @@ static void Alias_EmitPrimitive(const float cmdverts[][ALIAS_VERT_FLOATS], int n
     int nverts = ntri * 3;
     qglBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(nverts * ALIAS_VERT_FLOATS * sizeof(float)), alias_stream,
                   GL_STREAM_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, nverts);
+    glDrawArrays(mode, 0, nverts);
 }
 
 /*
@@ -630,11 +741,12 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum0, int posenum1, float 
     verts1 += posenum1 * paliashdr->poseverts;
     order = reinterpret_cast<int *>(reinterpret_cast<byte *>(paliashdr) + paliashdr->commands);
 
-    Alias_BeginDraw();
-    Alias_SetMVP();
-    qglUniform1i(u_alias_flat, 0);
+    Alias_BeginDraw(alias_prog);
+    Alias_SetMVP(u_alias_mvp);
+    qglUniform1i(u_alias_tex, 0);
     qglUniform3fv(u_alias_shadevector, 1, shadevector);
     qglUniform1f(u_alias_shadelight, shadelight);
+    qglUniform1f(u_alias_tess_level, r_tessellation.value);
 
     while (1)
     {
@@ -681,7 +793,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int posenum0, int posenum1, float 
             verts1++;
         } while (--count);
 
-        Alias_EmitPrimitive(cmdverts, n, fan);
+        Alias_EmitPrimitive(cmdverts, n, fan, GL_PATCHES);
     }
 
     Alias_EndDraw();
@@ -712,12 +824,11 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum0, int posenum1, float
 
     height = -lheight + 1.0;
 
-    Alias_BeginDraw();
-    Alias_SetMVP();
-    qglUniform1i(u_alias_flat, 1);
+    Alias_BeginDraw(alias_shadow_prog);
+    Alias_SetMVP(u_alias_shadow_mvp);
     {
         const float shadow_color[4] = {0.f, 0.f, 0.f, 0.5f};
-        qglUniform4fv(u_alias_color, 1, shadow_color);
+        qglUniform4fv(u_alias_shadow_color, 1, shadow_color);
     }
 
     while (1)
@@ -772,7 +883,7 @@ void GL_DrawAliasShadow(aliashdr_t *paliashdr, int posenum0, int posenum1, float
             verts1++;
         } while (--count);
 
-        Alias_EmitPrimitive(cmdverts, n, fan);
+        Alias_EmitPrimitive(cmdverts, n, fan, GL_TRIANGLES);
     }
 
     Alias_EndDraw();

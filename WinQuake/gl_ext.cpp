@@ -49,6 +49,8 @@ PFNGLDELETESAMPLERSPROC qglDeleteSamplers = nullptr;
 PFNGLBINDSAMPLERPROC qglBindSampler = nullptr;
 PFNGLSAMPLERPARAMETERIPROC qglSamplerParameteri = nullptr;
 
+PFNGLPATCHPARAMETERIPROC qglPatchParameteri = nullptr;
+
 float gl_max_anisotropy = 1.0f;
 
 // -------------------------------------------------------------------------
@@ -109,6 +111,8 @@ void GL_LoadExtensions(void)
     qglDeleteSamplers = reinterpret_cast<PFNGLDELETESAMPLERSPROC>(LoadProc("glDeleteSamplers", true));
     qglBindSampler = reinterpret_cast<PFNGLBINDSAMPLERPROC>(LoadProc("glBindSampler", true));
     qglSamplerParameteri = reinterpret_cast<PFNGLSAMPLERPARAMETERIPROC>(LoadProc("glSamplerParameteri", true));
+
+    qglPatchParameteri = reinterpret_cast<PFNGLPATCHPARAMETERIPROC>(LoadProc("glPatchParameteri", true));
 
     if (gl_extensions.find("GL_EXT_texture_filter_anisotropic") != std::string::npos)
     {

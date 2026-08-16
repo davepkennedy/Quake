@@ -41,6 +41,12 @@ typedef ptrdiff_t GLintptr;
 #define GL_LINK_STATUS 0x8B82
 #define GL_INFO_LOG_LENGTH 0x8B84
 
+// GL 4.0 – tessellation shaders
+#define GL_TESS_EVALUATION_SHADER 0x8E87
+#define GL_TESS_CONTROL_SHADER 0x8E88
+#define GL_PATCH_VERTICES 0x8E72
+#define GL_PATCHES 0x000E
+
 // -------------------------------------------------------------------------
 // Function pointer typedefs
 // -------------------------------------------------------------------------
@@ -101,6 +107,9 @@ typedef void(APIENTRY *PFNGLDELETESAMPLERSPROC)(GLsizei count, const GLuint *sam
 typedef void(APIENTRY *PFNGLBINDSAMPLERPROC)(GLuint unit, GLuint sampler);
 typedef void(APIENTRY *PFNGLSAMPLERPARAMETERIPROC)(GLuint sampler, GLenum pname, GLint param);
 
+// GL 4.0 – tessellation shaders
+typedef void(APIENTRY *PFNGLPATCHPARAMETERIPROC)(GLenum pname, GLint value);
+
 // -------------------------------------------------------------------------
 // Global function pointer declarations  (defined in gl_ext.cpp)
 // -------------------------------------------------------------------------
@@ -149,6 +158,8 @@ extern PFNGLGENSAMPLERSPROC qglGenSamplers;
 extern PFNGLDELETESAMPLERSPROC qglDeleteSamplers;
 extern PFNGLBINDSAMPLERPROC qglBindSampler;
 extern PFNGLSAMPLERPARAMETERIPROC qglSamplerParameteri;
+
+extern PFNGLPATCHPARAMETERIPROC qglPatchParameteri;
 
 // Max anisotropy queried at init; 1.0 means extension unavailable
 extern float gl_max_anisotropy;

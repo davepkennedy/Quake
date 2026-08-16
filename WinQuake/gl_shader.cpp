@@ -70,3 +70,59 @@ GLProgram GL_BuildProgram(const char *vert_src, const char *frag_src)
     }
     return GLProgram(prog);
 }
+
+GLProgram GL_BuildProgram(const char *vert_src, const char *tcs_src, const char *tes_src, const char *frag_src)
+{
+    GLuint vert = GL_CompileShader(GL_VERTEX_SHADER, vert_src);
+    GLuint tcs = GL_CompileShader(GL_TESS_CONTROL_SHADER, tcs_src);
+    GLuint tes = GL_CompileShader(GL_TESS_EVALUATION_SHADER, tes_src);
+    GLuint frag = GL_CompileShader(GL_FRAGMENT_SHADER, frag_src);
+
+    if (!vert || !tcs || !tes || !frag)
+    {
+        if (vert)
+        {
+            qglDeleteShader(vert);
+        }
+        if (tcs)
+        {
+            qglDeleteShader(tcs);
+        }
+        if (tes)
+        {
+            qglDeleteShader(tes);
+        }
+        if (frag)
+        {
+            qglDeleteShader(frag);
+        }
+        return GLProgram();
+    }
+
+    GLuint prog = qglCreateProgram();
+    qglAttachShader(prog, vert);
+    qglAttachShader(prog, tcs);
+    qglAttachShader(prog, tes);
+    qglAttachShader(prog, frag);
+    qglLinkProgram(prog);
+
+    qglDeleteShader(vert);
+    qglDeleteShader(tcs);
+    qglDeleteShader(tes);
+    qglDeleteShader(frag);
+
+    GLint ok = 0;
+    qglGetProgramiv(prog, GL_LINK_STATUS, &ok);
+    if (!ok)
+    {
+        GLint len = 0;
+        qglGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
+        char *log = new char[len + 1]();
+        qglGetProgramInfoLog(prog, len, nullptr, log);
+        Con_Printf("Shader link error:\n{}\n", log);
+        delete[] log;
+        qglDeleteProgram(prog);
+        return GLProgram();
+    }
+    return GLProgram(prog);
+}

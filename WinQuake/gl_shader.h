@@ -221,6 +221,10 @@ GLuint GL_CompileShader(GLenum type, const char *src);
 // Returns an empty (handle 0) GLProgram and prints error on failure.
 GLProgram GL_BuildProgram(const char *vert_src, const char *frag_src);
 
+// Same, for a 4-stage tessellation pipeline (vertex, tessellation control,
+// tessellation evaluation, fragment).
+GLProgram GL_BuildProgram(const char *vert_src, const char *tcs_src, const char *tes_src, const char *frag_src);
+
 // Combines the CPU-side r_proj_matrix, r_world_matrix (view), and r_entity_matrix
 // (identity unless a per-entity model transform is active -- see R_RotateForEntity)
 // into a single column-major 4x4 matrix, ready for glUniformMatrix4fv. Replaces the
