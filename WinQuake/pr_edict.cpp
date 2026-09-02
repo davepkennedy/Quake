@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_edict.c -- entity dictionary
 
+#include <unordered_map>
+
 #include "quakedef.h"
 
 dprograms_t *progs;
@@ -1064,6 +1066,175 @@ void ED_LoadFromFile(const char *data)
     Con_DPrintf("{} entities inhibited\n", inhibit);
 }
 
+namespace
+{
+    // Global-pool offsets whose etype_t is a trustworthy static fact for the
+    // whole program, built from pr_globaldefs. Deliberately covers only
+    // entity/string/function/field: a wrong operand of one of these types
+    // becomes a bad pointer or a bad lookup (PR_FieldAddress, ED_FindFunction,
+    // a raw pr_strings offset) -- the family where a type mismatch is a real
+    // safety issue, not just wrong arithmetic.
+    //
+    // ev_float/ev_vector are deliberately excluded: verified empirically
+    // against id1's own compiled progs.dat that qcc's real output reuses a
+    // single global-pool offset for an ev_vector def and an unrelated
+    // ev_float def at different points in a function's temporary-value
+    // lifetime (126 such offsets exist in the shipped file) -- a static
+    // single-type map for that family would reject legitimate, unmodified
+    // id1 bytecode. No such collision exists for entity/string/function/
+    // field in the shipped file (confirmed the same way).
+    std::unordered_map<int, etype_t> PR_BuildOperandTypeMap()
+    {
+        std::unordered_map<int, etype_t> types;
+        for (int i = 0; i < progs->numglobaldefs; i++)
+        {
+            etype_t type = static_cast<etype_t>(pr_globaldefs[i].type & ~DEF_SAVEGLOBAL);
+            if (type == etype_t::ev_entity || type == etype_t::ev_string || type == etype_t::ev_function ||
+                type == etype_t::ev_field)
+            {
+                types[pr_globaldefs[i].ofs] = type;
+            }
+        }
+        return types;
+    }
+} // namespace
+
+/*
+===============
+PR_ValidateOperandTypes
+
+Defense-in-depth check for a hand-edited/malformed progs.dat: cross-
+references every opcode's entity/string/function/field-typed operand
+slots against progs.dat's own pr_globaldefs reflection data, and rejects
+the file if any disagree. A temp/local slot with no reflection entry
+(most of them -- only ~40% of operand slots in id1's real progs.dat have
+one at all) is unverifiable and treated as fine; this is a best-effort
+net; it doesn't touch PR_ExecuteProgram's hot path at all -- runs once,
+here, at load time. Given external linkage (declared in progs.h) rather
+than folded into PR_LoadProgs, purely so tests can drive it directly
+against hand-built synthetic data instead of a real binary progs.dat file.
+===============
+*/
+void PR_ValidateOperandTypes(void)
+{
+    auto globalTypes = PR_BuildOperandTypeMap();
+
+    auto check = [&](int statementIndex, int ofs, etype_t expected) {
+        auto it = globalTypes.find(ofs);
+        if (it == globalTypes.end())
+        {
+            return;
+        }
+        if (it->second != expected)
+        {
+            Sys_Error(
+                "PR_LoadProgs: statement {} expects a type-{} operand at global offset {}, but progs.dat's "
+                "own reflection data says it's type {} -- progs.dat appears malformed",
+                statementIndex, static_cast<int>(expected), ofs, static_cast<int>(it->second));
+        }
+    };
+
+    for (int i = 0; i < progs->numstatements; i++)
+    {
+        dstatement_t &st = pr_statements[i];
+        switch (st.op)
+        {
+        case OP_EQ_S:
+        case OP_NE_S:
+        case OP_STORE_S:
+            check(i, st.a, etype_t::ev_string);
+            check(i, st.b, etype_t::ev_string);
+            break;
+        case OP_EQ_E:
+        case OP_NE_E:
+        case OP_STORE_ENT:
+            check(i, st.a, etype_t::ev_entity);
+            check(i, st.b, etype_t::ev_entity);
+            break;
+        case OP_EQ_FNC:
+        case OP_NE_FNC:
+        case OP_STORE_FNC:
+            check(i, st.a, etype_t::ev_function);
+            check(i, st.b, etype_t::ev_function);
+            break;
+        case OP_STORE_FLD:
+            check(i, st.a, etype_t::ev_field);
+            check(i, st.b, etype_t::ev_field);
+            break;
+        case OP_LOAD_F:
+        case OP_LOAD_V:
+        case OP_ADDRESS:
+            check(i, st.a, etype_t::ev_entity);
+            check(i, st.b, etype_t::ev_field);
+            break;
+        case OP_LOAD_S:
+            check(i, st.a, etype_t::ev_entity);
+            check(i, st.b, etype_t::ev_field);
+            check(i, st.c, etype_t::ev_string);
+            break;
+        case OP_LOAD_ENT:
+            check(i, st.a, etype_t::ev_entity);
+            check(i, st.b, etype_t::ev_field);
+            check(i, st.c, etype_t::ev_entity);
+            break;
+        case OP_LOAD_FLD:
+            check(i, st.a, etype_t::ev_entity);
+            check(i, st.b, etype_t::ev_field);
+            check(i, st.c, etype_t::ev_field);
+            break;
+        case OP_LOAD_FNC:
+            check(i, st.a, etype_t::ev_entity);
+            check(i, st.b, etype_t::ev_field);
+            check(i, st.c, etype_t::ev_function);
+            break;
+        case OP_STOREP_S:
+            check(i, st.a, etype_t::ev_string);
+            break;
+        case OP_STOREP_ENT:
+            check(i, st.a, etype_t::ev_entity);
+            break;
+        case OP_STOREP_FLD:
+            check(i, st.a, etype_t::ev_field);
+            break;
+        case OP_STOREP_FNC:
+            check(i, st.a, etype_t::ev_function);
+            break;
+        case OP_NOT_S:
+            check(i, st.a, etype_t::ev_string);
+            break;
+        case OP_NOT_ENT:
+            check(i, st.a, etype_t::ev_entity);
+            break;
+        case OP_NOT_FNC:
+            check(i, st.a, etype_t::ev_function);
+            break;
+        case OP_CALL0:
+        case OP_CALL1:
+        case OP_CALL2:
+        case OP_CALL3:
+        case OP_CALL4:
+        case OP_CALL5:
+        case OP_CALL6:
+        case OP_CALL7:
+        case OP_CALL8:
+            check(i, st.a, etype_t::ev_function);
+            break;
+        case OP_STATE:
+            check(i, st.b, etype_t::ev_function);
+            break;
+        default:
+            // Every other opcode's typed operands are ev_float/ev_vector
+            // (arithmetic/comparison -- not worth this check's memory-
+            // safety guarantee), or aren't global-pool value slots at all
+            // (OP_GOTO's branch offset, OP_RETURN/OP_DONE's polymorphic
+            // return value, OP_STORE_V/OP_STOREP_V's use as a generic
+            // 3-word bulk copy regardless of nominal type -- a real qcc
+            // code-gen quirk, confirmed against id1's progs.dat).
+            break;
+        }
+    }
+}
+
 /*
 ===============
 PR_LoadProgs
@@ -1165,6 +1336,8 @@ void PR_LoadProgs(void)
     {
         (reinterpret_cast<int *>(pr_globals))[i] = LittleLong((reinterpret_cast<int *>(pr_globals))[i]);
     }
+
+    PR_ValidateOperandTypes();
 }
 
 /*

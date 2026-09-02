@@ -78,6 +78,7 @@ void PR_Init(void);
 
 void PR_ExecuteProgram(func_t fnum);
 void PR_LoadProgs(void);
+void PR_ValidateOperandTypes(void); // called by PR_LoadProgs; exposed so tests can drive it against synthetic data
 
 void PR_Profile_f(void);
 

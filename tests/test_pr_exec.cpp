@@ -38,11 +38,13 @@ namespace
 		static constexpr int NUM_GLOBALS = 256;
 		static constexpr int NUM_STATEMENTS = 64;
 		static constexpr int NUM_FUNCTIONS = 8;
+		static constexpr int NUM_GLOBALDEFS = 16;
 
 		dprograms_t header{};
 		float globals[NUM_GLOBALS]{};
 		dstatement_t statements[NUM_STATEMENTS]{};
 		dfunction_t functions[NUM_FUNCTIONS]{};
+		ddef_t globaldefs[NUM_GLOBALDEFS]{};
 		char strings[1] = {0};
 
 		dprograms_t *savedProgs;
@@ -51,6 +53,7 @@ namespace
 		char *savedStrings;
 		float *savedGlobals;
 		globalvars_t *savedGlobalStruct;
+		ddef_t *savedGlobaldefs;
 		int savedDepth;
 		int savedLocalstackUsed;
 		builtin_t *savedBuiltins;
@@ -59,17 +62,19 @@ namespace
 		SyntheticProgsGuard ()
 			: savedProgs (progs), savedFunctions (pr_functions), savedStatements (pr_statements),
 			  savedStrings (pr_strings), savedGlobals (pr_globals), savedGlobalStruct (pr_global_struct),
-			  savedDepth (pr_vm.depth), savedLocalstackUsed (pr_vm.localstack_used), savedBuiltins (pr_builtins),
-			  savedNumBuiltins (pr_numbuiltins)
+			  savedGlobaldefs (pr_globaldefs), savedDepth (pr_vm.depth), savedLocalstackUsed (pr_vm.localstack_used),
+			  savedBuiltins (pr_builtins), savedNumBuiltins (pr_numbuiltins)
 		{
 			header.numfunctions = NUM_FUNCTIONS;
 			header.numstatements = NUM_STATEMENTS;
+			header.numglobaldefs = 0; // tests that need globaldefs set header.numglobaldefs themselves
 			progs = &header;
 			pr_functions = functions;
 			pr_statements = statements;
 			pr_strings = strings;
 			pr_globals = globals;
 			pr_global_struct = reinterpret_cast<globalvars_t *> (globals);
+			pr_globaldefs = globaldefs;
 			pr_vm.depth = 0;
 			pr_vm.localstack_used = 0;
 		}
@@ -82,6 +87,7 @@ namespace
 			pr_strings = savedStrings;
 			pr_globals = savedGlobals;
 			pr_global_struct = savedGlobalStruct;
+			pr_globaldefs = savedGlobaldefs;
 			pr_vm.depth = savedDepth;
 			pr_vm.localstack_used = savedLocalstackUsed;
 			pr_builtins = savedBuiltins;
@@ -396,4 +402,79 @@ TEST_CASE ("Real edict field round-trips through OP_ADDRESS/OP_STOREP_F/OP_LOAD_
 
 	CHECK (guard.globals[OFS_RETURN] == doctest::Approx (123.0f));
 	CHECK (e->v.health == doctest::Approx (123.0f));
+}
+
+// ===========================================================================
+// PR_ValidateOperandTypes -- load-time defense-in-depth check (phase 3 of
+// the VM-separation initiative, load-time-only design; see
+// project_quake_vm_separation.md for why a runtime tagged-value model was
+// ruled out). Synthetic ddef_t/dstatement_t data, same pattern as the
+// synthetic opcode tests above.
+// ===========================================================================
+
+TEST_CASE ("PR_ValidateOperandTypes: accepts correctly-typed operands")
+{
+	SyntheticProgsGuard guard;
+	constexpr int ENTITY_SLOT = 40, FIELD_SLOT = 41;
+
+	guard.globaldefs[0] = {static_cast<unsigned short> (etype_t::ev_entity), ENTITY_SLOT, 0};
+	guard.globaldefs[1] = {static_cast<unsigned short> (etype_t::ev_field), FIELD_SLOT, 0};
+	guard.header.numglobaldefs = 2;
+
+	guard.statements[0] = {OP_LOAD_FNC, ENTITY_SLOT, FIELD_SLOT, 42};
+	guard.header.numstatements = 1;
+
+	CHECK_NOTHROW (PR_ValidateOperandTypes ());
+}
+
+TEST_CASE ("PR_ValidateOperandTypes: rejects a mistyped operand against progs.dat's own reflection data")
+{
+	SyntheticProgsGuard guard;
+	constexpr int SLOT = 40;
+
+	// SLOT's own globaldef says it's a function, but this statement uses it
+	// as OP_STOREP_ENT's source operand -- an entity. Real-world equivalent:
+	// hand-edited/corrupted progs.dat bytecode referencing the wrong offset.
+	// (ev_float/ev_vector defs are deliberately excluded from the checked
+	// map entirely -- see PR_BuildOperandTypeMap -- so this test uses two
+	// types that ARE both checked, function vs. entity, to produce a real
+	// detectable mismatch.)
+	guard.globaldefs[0] = {static_cast<unsigned short> (etype_t::ev_function), SLOT, 0};
+	guard.header.numglobaldefs = 1;
+
+	guard.statements[0] = {OP_STOREP_ENT, SLOT, 41, 0};
+	guard.header.numstatements = 1;
+
+	CHECK_THROWS_AS (PR_ValidateOperandTypes (), SysErrorException);
+}
+
+TEST_CASE ("PR_ValidateOperandTypes: a slot with no reflection entry is unverifiable, not rejected")
+{
+	SyntheticProgsGuard guard;
+
+	// No globaldefs at all -- every compiler temp/local looks like this.
+	guard.header.numglobaldefs = 0;
+	guard.statements[0] = {OP_STOREP_ENT, 40, 41, 0};
+	guard.header.numstatements = 1;
+
+	CHECK_NOTHROW (PR_ValidateOperandTypes ());
+}
+
+TEST_CASE ("PR_ValidateOperandTypes: float/vector operands are never checked, even when mistyped")
+{
+	// Mirrors the real id1 progs.dat's own legitimate behavior: a global
+	// offset's def can say ev_vector while an unrelated OP_ADD_F reuses that
+	// same offset as a float temp elsewhere in the program (confirmed
+	// empirically -- 126 such offsets exist in the shipped progs.dat). This
+	// opcode family is deliberately excluded from the check entirely.
+	SyntheticProgsGuard guard;
+	constexpr int SLOT = 40;
+
+	guard.globaldefs[0] = {static_cast<unsigned short> (etype_t::ev_vector), SLOT, 0};
+	guard.header.numglobaldefs = 1;
+
+	guard.statements[0] = {OP_ADD_F, SLOT, SLOT, SLOT};
+	guard.header.numstatements = 1;
+
+	CHECK_NOTHROW (PR_ValidateOperandTypes ());
 }
