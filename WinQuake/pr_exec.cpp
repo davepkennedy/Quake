@@ -24,25 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-struct prstack_t
-{
-    int s;
-    dfunction_t *f;
-};
-
-#define MAX_STACK_DEPTH 32
-prstack_t pr_stack[MAX_STACK_DEPTH];
-int pr_depth;
-
-#define LOCALSTACK_SIZE 2048
-int localstack[LOCALSTACK_SIZE];
-int localstack_used;
-
-qboolean pr_trace;
-dfunction_t *pr_xfunction;
-int pr_xstatement;
-
-int pr_argc;
+pr_vm_state_t pr_vm;
 
 const char *pr_opnames[] = {"DONE",
 
@@ -150,16 +132,16 @@ void PR_StackTrace(void)
     dfunction_t *f;
     int i;
 
-    if (pr_depth == 0)
+    if (pr_vm.depth == 0)
     {
         Con_Printf("<NO STACK>\n");
         return;
     }
 
-    pr_stack[pr_depth].f = pr_xfunction;
-    for (i = pr_depth; i >= 0; i--)
+    pr_vm.stack[pr_vm.depth].f = pr_vm.xfunction;
+    for (i = pr_vm.depth; i >= 0; i--)
     {
-        f = pr_stack[i].f;
+        f = pr_vm.stack[i].f;
 
         if (!f)
         {
@@ -220,11 +202,11 @@ Aborts the currently executing function
 */
 [[noreturn]] void PR_RunErrorImpl(const std::string &error)
 {
-    PR_PrintStatement(pr_statements + pr_xstatement);
+    PR_PrintStatement(pr_statements + pr_vm.xstatement);
     PR_StackTrace();
     Con_Printf("{}\n", error);
 
-    pr_depth = 0; // dump the stack so host_error can shutdown functions
+    pr_vm.depth = 0; // dump the stack so host_error can shutdown functions
 
     Host_Error("Program error");
 }
@@ -248,26 +230,26 @@ int PR_EnterFunction(dfunction_t *f)
 {
     int i, j, c, o;
 
-    pr_stack[pr_depth].s = pr_xstatement;
-    pr_stack[pr_depth].f = pr_xfunction;
-    pr_depth++;
-    if (pr_depth >= MAX_STACK_DEPTH)
+    pr_vm.stack[pr_vm.depth].s = pr_vm.xstatement;
+    pr_vm.stack[pr_vm.depth].f = pr_vm.xfunction;
+    pr_vm.depth++;
+    if (pr_vm.depth >= pr_vm_state_t::MAX_STACK_DEPTH)
     {
         PR_RunError("stack overflow");
     }
 
     // save off any locals that the new function steps on
     c = f->locals;
-    if (localstack_used + c > LOCALSTACK_SIZE)
+    if (pr_vm.localstack_used + c > pr_vm_state_t::LOCALSTACK_SIZE)
     {
         PR_RunError("PR_ExecuteProgram: locals stack overflow\n");
     }
 
     for (i = 0; i < c; i++)
     {
-        localstack[localstack_used + i] = (reinterpret_cast<int *>(pr_globals))[f->parm_start + i];
+        pr_vm.localstack[pr_vm.localstack_used + i] = (reinterpret_cast<int *>(pr_globals))[f->parm_start + i];
     }
-    localstack_used += c;
+    pr_vm.localstack_used += c;
 
     // copy parameters
     o = f->parm_start;
@@ -280,7 +262,7 @@ int PR_EnterFunction(dfunction_t *f)
         }
     }
 
-    pr_xfunction = f;
+    pr_vm.xfunction = f;
     return f->first_statement - 1; // offset the s++
 }
 
@@ -293,28 +275,28 @@ int PR_LeaveFunction(void)
 {
     int i, c;
 
-    if (pr_depth <= 0)
+    if (pr_vm.depth <= 0)
     {
         Sys_Error("prog stack underflow");
     }
 
     // restore locals from the stack
-    c = pr_xfunction->locals;
-    localstack_used -= c;
-    if (localstack_used < 0)
+    c = pr_vm.xfunction->locals;
+    pr_vm.localstack_used -= c;
+    if (pr_vm.localstack_used < 0)
     {
         PR_RunError("PR_ExecuteProgram: locals stack underflow\n");
     }
 
     for (i = 0; i < c; i++)
     {
-        (reinterpret_cast<int *>(pr_globals))[pr_xfunction->parm_start + i] = localstack[localstack_used + i];
+        (reinterpret_cast<int *>(pr_globals))[pr_vm.xfunction->parm_start + i] = pr_vm.localstack[pr_vm.localstack_used + i];
     }
 
     // up stack
-    pr_depth--;
-    pr_xfunction = pr_stack[pr_depth].f;
-    return pr_stack[pr_depth].s;
+    pr_vm.depth--;
+    pr_vm.xfunction = pr_vm.stack[pr_vm.depth].f;
+    return pr_vm.stack[pr_vm.depth].s;
 }
 
 /*
@@ -365,10 +347,10 @@ void PR_ExecuteProgram(func_t fnum)
     f = &pr_functions[fnum];
 
     runaway = 100000;
-    pr_trace = false;
+    pr_vm.trace = false;
 
     // make a stack frame
-    exitdepth = pr_depth;
+    exitdepth = pr_vm.depth;
 
     s = PR_EnterFunction(f);
 
@@ -386,10 +368,10 @@ void PR_ExecuteProgram(func_t fnum)
             PR_RunError("runaway loop error");
         }
 
-        pr_xfunction->profile++;
-        pr_xstatement = s;
+        pr_vm.xfunction->profile++;
+        pr_vm.xstatement = s;
 
-        if (pr_trace)
+        if (pr_vm.trace)
         {
             PR_PrintStatement(st);
         }
@@ -598,7 +580,7 @@ void PR_ExecuteProgram(func_t fnum)
         case OP_CALL6:
         case OP_CALL7:
         case OP_CALL8:
-            pr_argc = st->op - OP_CALL0;
+            pr_vm.argc = st->op - OP_CALL0;
             if (!a->function)
             {
                 PR_RunError("nullptr function");
@@ -627,7 +609,7 @@ void PR_ExecuteProgram(func_t fnum)
             pr_globals[OFS_RETURN + 2] = pr_globals[st->a + 2];
 
             s = PR_LeaveFunction();
-            if (pr_depth == exitdepth)
+            if (pr_vm.depth == exitdepth)
             {
                 return; // all done
             }

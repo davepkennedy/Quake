@@ -34,7 +34,7 @@ std::string PF_VarString(int first)
 {
     std::string out;
 
-    for (int i = first; i < pr_argc; i++)
+    for (int i = first; i < pr_vm.argc; i++)
     {
         out += G_STRING((OFS_PARM0 + i * 3));
     }
@@ -57,7 +57,7 @@ void PF_error(void)
     edict_t *ed;
 
     s = PF_VarString(0);
-    Con_Printf("======SERVER ERROR in {}:\n{}\n", pr_strings + pr_xfunction->s_name, s);
+    Con_Printf("======SERVER ERROR in {}:\n{}\n", pr_strings + pr_vm.xfunction->s_name, s);
     ed = PROG_TO_EDICT(pr_global_struct->self);
     ED_Print(ed);
 
@@ -80,7 +80,7 @@ void PF_objerror(void)
     edict_t *ed;
 
     s = PF_VarString(0);
-    Con_Printf("======OBJECT ERROR in {}:\n{}\n", pr_strings + pr_xfunction->s_name, s);
+    Con_Printf("======OBJECT ERROR in {}:\n{}\n", pr_strings + pr_vm.xfunction->s_name, s);
     ed = PROG_TO_EDICT(pr_global_struct->self);
     ED_Print(ed);
     ED_Free(ed);
@@ -1088,12 +1088,12 @@ void PF_coredump(void)
 
 void PF_traceon(void)
 {
-    pr_trace = true;
+    pr_vm.trace = true;
 }
 
 void PF_traceoff(void)
 {
-    pr_trace = false;
+    pr_vm.trace = false;
 }
 
 void PF_eprint(void)
@@ -1133,13 +1133,13 @@ void PF_walkmove(void)
     move[2] = 0;
 
     // save program state, because SV_movestep may call other progs
-    oldf = pr_xfunction;
+    oldf = pr_vm.xfunction;
     oldself = pr_global_struct->self;
 
     G_FLOAT(OFS_RETURN) = SV_movestep(ent, move, true);
 
     // restore program state
-    pr_xfunction = oldf;
+    pr_vm.xfunction = oldf;
     pr_global_struct->self = oldself;
 }
 

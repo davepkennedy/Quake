@@ -128,11 +128,36 @@ typedef void (*builtin_t)(void);
 extern builtin_t *pr_builtins;
 extern int pr_numbuiltins;
 
-extern int pr_argc;
+// PR_ExecuteProgram's per-call-stack-frame interpreter state: the call
+// stack, the locals-save stack, and the currently-executing statement/
+// function. Still a single file-scope instance (pr_vm, in pr_exec.cpp) --
+// only one VM possible by construction, same as every other global-state
+// singleton in this codebase (con/sound/mem/net/cl/sv) -- but now named
+// and grouped instead of being bare, ungrouped globals.
+struct pr_vm_state_t
+{
+    struct prstack_t
+    {
+        int s;
+        dfunction_t *f;
+    };
 
-extern qboolean pr_trace;
-extern dfunction_t *pr_xfunction;
-extern int pr_xstatement;
+    static constexpr int MAX_STACK_DEPTH = 32;
+    static constexpr int LOCALSTACK_SIZE = 2048;
+
+    prstack_t stack[MAX_STACK_DEPTH]{};
+    int depth = 0;
+
+    int localstack[LOCALSTACK_SIZE]{};
+    int localstack_used = 0;
+
+    qboolean trace = false;
+    dfunction_t *xfunction = nullptr;
+    int xstatement = 0;
+
+    int argc = 0; // number of arguments passed to the builtin currently executing
+};
+extern pr_vm_state_t pr_vm;
 
 extern unsigned short pr_crc;
 

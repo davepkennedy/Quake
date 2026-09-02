@@ -3,14 +3,6 @@
 #include "quakedef.h"
 #include "test_stubs.h"
 
-// pr_exec.cpp's call-stack depth counters are file-scope globals with
-// external linkage but no header declaration (see the plan this test file
-// was built from -- this absence is itself part of what "no VM-instance
-// encapsulation" means). Declared here so SyntheticProgsGuard can save and
-// restore them.
-extern int pr_depth;
-extern int localstack_used;
-
 namespace
 {
 	// Sets a global slot's raw INTEGER bit pattern (not a numeric float
@@ -67,7 +59,7 @@ namespace
 		SyntheticProgsGuard ()
 			: savedProgs (progs), savedFunctions (pr_functions), savedStatements (pr_statements),
 			  savedStrings (pr_strings), savedGlobals (pr_globals), savedGlobalStruct (pr_global_struct),
-			  savedDepth (pr_depth), savedLocalstackUsed (localstack_used), savedBuiltins (pr_builtins),
+			  savedDepth (pr_vm.depth), savedLocalstackUsed (pr_vm.localstack_used), savedBuiltins (pr_builtins),
 			  savedNumBuiltins (pr_numbuiltins)
 		{
 			header.numfunctions = NUM_FUNCTIONS;
@@ -78,8 +70,8 @@ namespace
 			pr_strings = strings;
 			pr_globals = globals;
 			pr_global_struct = reinterpret_cast<globalvars_t *> (globals);
-			pr_depth = 0;
-			localstack_used = 0;
+			pr_vm.depth = 0;
+			pr_vm.localstack_used = 0;
 		}
 
 		~SyntheticProgsGuard ()
@@ -90,8 +82,8 @@ namespace
 			pr_strings = savedStrings;
 			pr_globals = savedGlobals;
 			pr_global_struct = savedGlobalStruct;
-			pr_depth = savedDepth;
-			localstack_used = savedLocalstackUsed;
+			pr_vm.depth = savedDepth;
+			pr_vm.localstack_used = savedLocalstackUsed;
 			pr_builtins = savedBuiltins;
 			pr_numbuiltins = savedNumBuiltins;
 		}
@@ -232,16 +224,16 @@ TEST_CASE ("PR_EnterFunction/PR_LeaveFunction: depth and parameters propagate ac
 	PR_ExecuteProgram (1);
 
 	CHECK (guard.globals[OFS_RETURN] == doctest::Approx (10.0f));
-	CHECK (pr_depth == 0);
+	CHECK (pr_vm.depth == 0);
 }
 
 TEST_CASE ("PR_ExecuteProgram: OP_CALL0 dispatches to a builtin without pushing a call frame")
 {
 	// Builtins execute inline (pr_exec.cpp's OP_CALLn case calls
-	// pr_builtins[i]() directly, with no PR_EnterFunction) -- so pr_depth
+	// pr_builtins[i]() directly, with no PR_EnterFunction) -- so pr_vm.depth
 	// during the builtin should equal the CALLER's depth (1), not 2.
 	static int depthDuringBuiltin = -1;
-	static builtin_t testBuiltins[2] = {nullptr, [] () { depthDuringBuiltin = pr_depth; }};
+	static builtin_t testBuiltins[2] = {nullptr, [] () { depthDuringBuiltin = pr_vm.depth; }};
 
 	SyntheticProgsGuard guard;
 	constexpr int FUNC_SLOT = 40;
@@ -260,7 +252,7 @@ TEST_CASE ("PR_ExecuteProgram: OP_CALL0 dispatches to a builtin without pushing 
 	PR_ExecuteProgram (1);
 
 	CHECK (depthDuringBuiltin == 1);
-	CHECK (pr_depth == 0);
+	CHECK (pr_vm.depth == 0);
 }
 
 TEST_CASE ("PR_EnterFunction: unbounded recursive CALL0 throws once MAX_STACK_DEPTH is exceeded")
