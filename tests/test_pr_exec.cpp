@@ -404,6 +404,33 @@ TEST_CASE ("Real edict field round-trips through OP_ADDRESS/OP_STOREP_F/OP_LOAD_
 	CHECK (e->v.health == doctest::Approx (123.0f));
 }
 
+TEST_CASE ("PR_ExecuteProgram: OP_LOAD_F with a wildly out-of-range field offset throws instead of reading OOB")
+{
+	// Regression test for the VM-separation phase-4 fix: OP_LOAD_F/V/S/ENT/
+	// FLD/FNC used to compute ed->v + fieldOfs and dereference it directly
+	// with no bounds check at all (unlike OP_STOREP_*, which always went
+	// through PR_FieldAddress's check) -- a corrupted/malformed field offset
+	// on a LOAD was a silent out-of-bounds read. Now routed through the same
+	// PR_FieldAddress check via PR_EdictFieldOffset.
+	EnsureTestEdictsInit ();
+
+	edict_t *e = ED_Alloc ();
+	int edictProgOfs = EDICT_TO_PROG (e);
+
+	SyntheticProgsGuard guard;
+	constexpr int EDICT_SLOT = 40, FIELDOFS_SLOT = 41, RESULT_SLOT = 42;
+	constexpr int HUGE_BAD_FIELD_OFFSET = 10'000'000;
+
+	guard.functions[1] = {0, OFS_PARM0, 0, 0, 0, 0, 0, {}};
+	guard.statements[0] = {OP_LOAD_F, EDICT_SLOT, FIELDOFS_SLOT, RESULT_SLOT};
+	guard.statements[1] = {OP_RETURN, RESULT_SLOT, 0, 0};
+
+	SetGlobalInt (guard.globals, EDICT_SLOT, edictProgOfs);
+	SetGlobalInt (guard.globals, FIELDOFS_SLOT, HUGE_BAD_FIELD_OFFSET);
+
+	CHECK_THROWS_AS (PR_ExecuteProgram (1), SysErrorException);
+}
+
 // ===========================================================================
 // PR_ValidateOperandTypes -- load-time defense-in-depth check (phase 3 of
 // the VM-separation initiative, load-time-only design; see

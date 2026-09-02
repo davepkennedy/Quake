@@ -320,6 +320,23 @@ static eval_t *PR_FieldAddress(int ofs)
 
 /*
 ====================
+PR_EdictFieldOffset
+
+Computes an edict-relative field word offset (as read directly from a
+dstatement_t's b operand by OP_ADDRESS/OP_LOAD_*) as an absolute byte
+offset from sv.edicts, in the same units PR_FieldAddress bounds-checks --
+the shared arithmetic OP_ADDRESS, OP_LOAD_F/FLD/ENT/S/FNC, and OP_LOAD_V
+all need before that check.
+====================
+*/
+static int PR_EdictFieldOffset(edict_t *ed, int fieldWordOfs)
+{
+    return static_cast<int>(reinterpret_cast<byte *>(reinterpret_cast<int *>(&ed->v) + fieldWordOfs) -
+                             reinterpret_cast<byte *>(sv.edicts));
+}
+
+/*
+====================
 PR_ExecuteProgram
 ====================
 */
@@ -529,8 +546,7 @@ void PR_ExecuteProgram(func_t fnum)
             {
                 PR_RunError("assignment to world entity");
             }
-            c->_int = (int)(reinterpret_cast<byte *>(reinterpret_cast<int *>(&ed->v) + b->_int) -
-                            reinterpret_cast<byte *>(sv.edicts));
+            c->_int = PR_EdictFieldOffset(ed, b->_int);
             break;
 
         case OP_LOAD_F:
@@ -539,13 +555,13 @@ void PR_ExecuteProgram(func_t fnum)
         case OP_LOAD_S:
         case OP_LOAD_FNC:
             ed = PROG_TO_EDICT(a->edict);
-            a = reinterpret_cast<eval_t *>(reinterpret_cast<int *>(&ed->v) + b->_int);
+            a = PR_FieldAddress(PR_EdictFieldOffset(ed, b->_int));
             c->_int = a->_int;
             break;
 
         case OP_LOAD_V:
             ed = PROG_TO_EDICT(a->edict);
-            a = reinterpret_cast<eval_t *>(reinterpret_cast<int *>(&ed->v) + b->_int);
+            a = PR_FieldAddress(PR_EdictFieldOffset(ed, b->_int));
             c->vector[0] = a->vector[0];
             c->vector[1] = a->vector[1];
             c->vector[2] = a->vector[2];
