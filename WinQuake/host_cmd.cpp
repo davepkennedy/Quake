@@ -1045,11 +1045,11 @@ void Host_Pause_f(void)
 
         if (sv.paused)
         {
-            SV_BroadcastPrintf("{} paused the game\n", pr_strings + sv_player->v.netname);
+            SV_BroadcastPrintf("{} paused the game\n", PR_GetString(sv_player->v.netname));
         }
         else
         {
-            SV_BroadcastPrintf("{} unpaused the game\n", pr_strings + sv_player->v.netname);
+            SV_BroadcastPrintf("{} unpaused the game\n", PR_GetString(sv_player->v.netname));
         }
 
         // send notification to all clients
@@ -1550,7 +1550,7 @@ std::optional<edict_t *> FindViewthing(void)
     for (i = 0; i < sv.num_edicts; i++)
     {
         e = EDICT_NUM(i);
-        if (!strcmp(pr_strings + e->v.classname, "viewthing"))
+        if (!strcmp(PR_GetString(e->v.classname), "viewthing"))
         {
             return e;
         }

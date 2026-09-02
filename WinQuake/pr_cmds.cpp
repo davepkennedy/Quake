@@ -57,7 +57,7 @@ void PF_error(void)
     edict_t *ed;
 
     s = PF_VarString(0);
-    Con_Printf("======SERVER ERROR in {}:\n{}\n", pr_strings + pr_vm.xfunction->s_name, s);
+    Con_Printf("======SERVER ERROR in {}:\n{}\n", PR_GetString(pr_vm.xfunction->s_name), s);
     ed = PROG_TO_EDICT(pr_global_struct->self);
     ED_Print(ed);
 
@@ -80,7 +80,7 @@ void PF_objerror(void)
     edict_t *ed;
 
     s = PF_VarString(0);
-    Con_Printf("======OBJECT ERROR in {}:\n{}\n", pr_strings + pr_vm.xfunction->s_name, s);
+    Con_Printf("======OBJECT ERROR in {}:\n{}\n", PR_GetString(pr_vm.xfunction->s_name), s);
     ed = PROG_TO_EDICT(pr_global_struct->self);
     ED_Print(ed);
     ED_Free(ed);
@@ -249,7 +249,7 @@ void PF_setmodel(void)
         PR_RunError("no precache: {}\n", m);
     }
 
-    e->v.model = m - pr_strings;
+    e->v.model = G_INT(OFS_PARM1); // same string_t handle m was resolved from -- static or dynamic, unchanged
     e->v.modelindex = i; // SV_ModelIndex (m);
 
     mod = SV_ModelForIndex((int)e->v.modelindex); // Mod_ForName (m, true);
@@ -1544,7 +1544,7 @@ void PF_makestatic(void)
 
     MSG_WriteByte(signon, svc_spawnstatic);
 
-    MSG_WriteByte(signon, SV_ModelIndex(pr_strings + ent->v.model));
+    MSG_WriteByte(signon, SV_ModelIndex(PR_GetString(ent->v.model)));
 
     MSG_WriteByte(signon, ent->v.frame);
     MSG_WriteByte(signon, ent->v.colormap);

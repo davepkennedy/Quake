@@ -115,13 +115,20 @@ edict_t *NEXT_EDICT(edict_t *e);
 edict_t *G_EDICT(int ofs);
 int G_EDICTNUM(int ofs);
 #define G_VECTOR(o) (&pr_globals[o])
-#define G_STRING(o) (pr_strings + *reinterpret_cast<string_t *>(&pr_globals[o]))
+#define G_STRING(o) (PR_GetString(*reinterpret_cast<string_t *>(&pr_globals[o])))
 #define G_FUNCTION(o) (*reinterpret_cast<func_t *>(&pr_globals[o]))
 
 #define E_FLOAT(e, o) ((reinterpret_cast<float *>(&e->v))[o])
 #define E_INT(e, o) (*reinterpret_cast<int *>(&(reinterpret_cast<float *>(&e->v))[o]))
 #define E_VECTOR(e, o) (&(reinterpret_cast<float *>(&e->v))[o])
-#define E_STRING(e, o) (pr_strings + *reinterpret_cast<string_t *>(&(reinterpret_cast<float *>(&e->v))[o]))
+#define E_STRING(e, o) (PR_GetString(*reinterpret_cast<string_t *>(&(reinterpret_cast<float *>(&e->v))[o])))
+
+// string_t indirection (pr_edict.cpp): resolves any string_t -- a static
+// pr_strings offset, or a dynamic handle from PR_SetString -- to its text.
+// See the definitions for the encoding (negative = dynamic) and why
+// pr_string_temp's ftos()/vtos() results don't need to change at all.
+char *PR_GetString(string_t num);
+string_t PR_SetString(const char *s);
 
 extern int type_size[8];
 

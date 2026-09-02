@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_edict.c -- entity dictionary
 
+#include <deque>
 #include <unordered_map>
 
 #include "quakedef.h"
@@ -34,6 +35,76 @@ float *pr_globals; // same as pr_global_struct
 int pr_edict_size; // in bytes
 
 unsigned short pr_crc;
+
+namespace
+{
+    // Backing store for dynamically-created strings (ED_NewString results --
+    // entity string-typed fields set from map/savegame data -- see
+    // PR_SetString's one call site in ED_ParseEpair). Encoded as negative
+    // string_t values so they can never collide with a real (always >= 0)
+    // offset into the static pr_strings blob: index i is exposed as
+    // string_t -(i + 1). Cleared at the top of PR_LoadProgs, matching
+    // Host_ClearMemory's own per-level hunk reset in SV_SpawnServer -- same
+    // lifetime bound the old Hunk_Alloc-based ED_NewString strings already
+    // had (freed together at the next level load, never before), not a new
+    // leak risk.
+    //
+    // std::deque, not std::vector: PR_GetString hands out a raw char* into
+    // an element's storage, and a short (SSO) std::string's character
+    // buffer lives inside the std::string object itself -- a vector
+    // reallocation move-constructs each element into new storage, which
+    // relocates that inline buffer and silently invalidates every char*
+    // PR_GetString has ever returned for a short dynamic string (confirmed
+    // the hard way: real crash, "SV_ModelIndex: model <garbage> not
+    // precached", entity precaching read a stale post-reallocation
+    // pointer). deque's emplace_back never moves existing elements, so
+    // every returned char* stays valid for this table's lifetime.
+    std::deque<std::string> pr_dynamic_strings;
+}
+
+/*
+============
+PR_GetString
+
+Resolves any string_t (a static pr_strings offset, or a dynamic handle from
+PR_SetString) to its text. Returns "<bad string>" for an out-of-range
+dynamic handle rather than indexing pr_dynamic_strings out of bounds --
+same defense-in-depth spirit as PR_ValidateOperandTypes, for a malformed
+progs.dat or savegame that manufactures a bad string_t some other way.
+============
+*/
+char *PR_GetString(string_t num)
+{
+    if (num >= 0)
+    {
+        return pr_strings + num;
+    }
+    size_t index = static_cast<size_t>(-num - 1);
+    if (index >= pr_dynamic_strings.size())
+    {
+        static char bad[] = "<bad string>";
+        return bad;
+    }
+    return pr_dynamic_strings[index].data();
+}
+
+/*
+============
+PR_SetString
+
+Interns a copy of s as a dynamic string and returns its handle. The only
+call site today is ED_ParseEpair (entity string fields from map/savegame
+data); pr_string_temp's ftos()/vtos() results are deliberately left on
+their existing pointer-difference encoding (see pr_cmds.cpp) -- both
+encodings are string_t-compatible since PR_GetString's num >= 0 branch
+still handles a raw pr_strings-relative offset exactly as before.
+============
+*/
+string_t PR_SetString(const char *s)
+{
+    pr_dynamic_strings.emplace_back(s);
+    return -static_cast<string_t>(pr_dynamic_strings.size());
+}
 
 int type_size[8] = {1, sizeof(string_t) / 4, 1, 3, 1, 1, sizeof(func_t) / 4, 1};
 
@@ -200,7 +271,7 @@ std::optional<ddef_t *> ED_FindField(const char *name)
     for (i = 0; i < progs->numfielddefs; i++)
     {
         def = &pr_fielddefs[i];
-        if (!strcmp(pr_strings + def->s_name, name))
+        if (!strcmp(PR_GetString(def->s_name), name))
         {
             return def;
         }
@@ -221,7 +292,7 @@ std::optional<ddef_t *> ED_FindGlobal(char *name)
     for (i = 0; i < progs->numglobaldefs; i++)
     {
         def = &pr_globaldefs[i];
-        if (!strcmp(pr_strings + def->s_name, name))
+        if (!strcmp(PR_GetString(def->s_name), name))
         {
             return def;
         }
@@ -242,7 +313,7 @@ std::optional<dfunction_t *> ED_FindFunction(const char *name)
     for (i = 0; i < progs->numfunctions; i++)
     {
         func = &pr_functions[i];
-        if (!strcmp(pr_strings + func->s_name, name))
+        if (!strcmp(PR_GetString(func->s_name), name))
         {
             return func;
         }
@@ -302,18 +373,18 @@ std::string PR_ValueString(etype_t type, eval_t *val)
     switch (type)
     {
     case etype_t::ev_string:
-        line = pr_strings + val->string;
+        line = PR_GetString(val->string);
         break;
     case etype_t::ev_entity:
         line = std::format("entity {}", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
         break;
     case etype_t::ev_function:
         f = pr_functions + val->function;
-        line = std::format("{}()", pr_strings + f->s_name);
+        line = std::format("{}()", PR_GetString(f->s_name));
         break;
     case etype_t::ev_field: {
         auto fdef = ED_FieldAtOfs(val->_int);
-        line = fdef ? std::format(".{}", pr_strings + (*fdef)->s_name) : ".<bad field>";
+        line = fdef ? std::format(".{}", PR_GetString((*fdef)->s_name)) : ".<bad field>";
     }
     break;
     case etype_t::ev_void:
@@ -354,18 +425,18 @@ std::string PR_UglyValueString(etype_t type, eval_t *val)
     switch (type)
     {
     case etype_t::ev_string:
-        line = pr_strings + val->string;
+        line = PR_GetString(val->string);
         break;
     case etype_t::ev_entity:
         line = std::format("{}", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
         break;
     case etype_t::ev_function:
         f = pr_functions + val->function;
-        line = pr_strings + f->s_name;
+        line = PR_GetString(f->s_name);
         break;
     case etype_t::ev_field: {
         auto fdef = ED_FieldAtOfs(val->_int);
-        line = fdef ? std::string(pr_strings + (*fdef)->s_name) : "<bad field>";
+        line = fdef ? std::string(PR_GetString((*fdef)->s_name)) : "<bad field>";
     }
     break;
     case etype_t::ev_void:
@@ -406,7 +477,7 @@ std::string PR_GlobalString(int ofs)
     }
     else
     {
-        line = std::format("{}({}){}", ofs, pr_strings + (*def)->s_name,
+        line = std::format("{}({}){}", ofs, PR_GetString((*def)->s_name),
                             PR_ValueString(static_cast<etype_t>((*def)->type), val));
     }
 
@@ -430,7 +501,7 @@ std::string PR_GlobalStringNoContents(int ofs)
     }
     else
     {
-        line = std::format("{}({})", ofs, pr_strings + (*def)->s_name);
+        line = std::format("{}({})", ofs, PR_GetString((*def)->s_name));
     }
 
     while (line.size() < 20)
@@ -468,7 +539,7 @@ void ED_Print(edict_t *ed)
     for (i = 1; i < progs->numfielddefs; i++)
     {
         d = &pr_fielddefs[i];
-        name = pr_strings + d->s_name;
+        name = PR_GetString(d->s_name);
         if (name[strlen(name) - 2] == '_')
         {
             continue; // skip _x, _y, _z vars
@@ -528,7 +599,7 @@ void ED_Write(std::ofstream &f, edict_t *ed)
     for (i = 1; i < progs->numfielddefs; i++)
     {
         d = &pr_fielddefs[i];
-        name = pr_strings + d->s_name;
+        name = PR_GetString(d->s_name);
         if (name[strlen(name) - 2] == '_')
         {
             continue; // skip _x, _y, _z vars
@@ -681,7 +752,7 @@ void ED_WriteGlobals(std::ofstream &f)
             continue;
         }
 
-        name = pr_strings + def->s_name;
+        name = PR_GetString(def->s_name);
         f << std::format("\"{}\" ", name);
         f << std::format("\"{}\"\n",
                           PR_UglyValueString(static_cast<etype_t>(type), reinterpret_cast<eval_t *>(&pr_globals[def->ofs])));
@@ -799,7 +870,7 @@ qboolean ED_ParseEpair(void *base, ddef_t *key, const char *s)
     switch (static_cast<etype_t>(key->type & ~DEF_SAVEGLOBAL))
     {
     case etype_t::ev_string:
-        *static_cast<string_t *>(d) = (string_t)(ED_NewString(s) - pr_strings);
+        *static_cast<string_t *>(d) = PR_SetString(ED_NewString(s));
         break;
 
     case etype_t::ev_float:
@@ -1049,7 +1120,7 @@ void ED_LoadFromFile(const char *data)
         }
 
         // look for the spawn function
-        func = ED_FindFunction(pr_strings + ent->v.classname);
+        func = ED_FindFunction(PR_GetString(ent->v.classname));
 
         if (!func)
         {
@@ -1249,6 +1320,8 @@ void PR_LoadProgs(void)
     {
         gefvCache[i].field[0] = 0;
     }
+
+    pr_dynamic_strings.clear();
 
     CRC_Init(&pr_crc);
 

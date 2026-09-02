@@ -405,7 +405,7 @@ void SV_SendServerinfo(client_t *client)
         MSG_WriteByte(&client->message, GAME_COOP);
     }
 
-    snprintf(message, sizeof(message), "%s", pr_strings + sv.edicts->v.message);
+    snprintf(message, sizeof(message), "%s", PR_GetString(sv.edicts->v.message));
 
     MSG_WriteString(&client->message, message);
 
@@ -663,7 +663,7 @@ void SV_WriteEntitiesToClient(edict_t *clent, sizebuf_t *msg)
         if (ent != clent) // clent is ALLWAYS sent
         {
             // ignore ents without visible models
-            if (!ent->v.modelindex || !pr_strings[ent->v.model])
+            if (!ent->v.modelindex || !PR_GetString(ent->v.model)[0])
             {
                 continue;
             }
@@ -988,7 +988,7 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
     }
     if (bits & SU_WEAPON)
     {
-        MSG_WriteByte(msg, SV_ModelIndex(pr_strings + ent->v.weaponmodel));
+        MSG_WriteByte(msg, SV_ModelIndex(PR_GetString(ent->v.weaponmodel)));
     }
 
     MSG_WriteShort(msg, ent->v.health);
@@ -1281,7 +1281,7 @@ void SV_CreateBaseline(void)
         else
         {
             svent->baseline.colormap = 0;
-            svent->baseline.modelindex = SV_ModelIndex(pr_strings + svent->v.model);
+            svent->baseline.modelindex = SV_ModelIndex(PR_GetString(svent->v.model));
         }
 
         //

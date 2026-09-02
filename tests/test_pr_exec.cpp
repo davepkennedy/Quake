@@ -505,3 +505,60 @@ TEST_CASE ("PR_ValidateOperandTypes: float/vector operands are never checked, ev
 
 	CHECK_NOTHROW (PR_ValidateOperandTypes ());
 }
+
+// ===========================================================================
+// PR_GetString/PR_SetString -- phase 5 of the VM-separation initiative.
+// string_t's dynamic-handle encoding (negative = index into an internal
+// table) and the static pr_strings offset path (unchanged, non-negative).
+// ===========================================================================
+
+TEST_CASE ("PR_SetString/PR_GetString: round-trips independent, non-aliasing strings")
+{
+	EnsureRealProgsLoaded (); // PR_LoadProgs clears the dynamic-string table
+
+	string_t a = PR_SetString ("first");
+	string_t b = PR_SetString ("second");
+
+	// Unlike pr_string_temp's shared-buffer ftos()/vtos() (deliberately left
+	// alone -- see PR_SetString's comment), two PR_SetString results must
+	// both still be independently readable afterwards.
+	CHECK (std::string (PR_GetString (a)) == "first");
+	CHECK (std::string (PR_GetString (b)) == "second");
+	CHECK (a != b);
+}
+
+TEST_CASE ("PR_GetString: a static (non-negative) offset resolves through pr_strings exactly as before")
+{
+	EnsureRealProgsLoaded ();
+
+	// string_t 0 is the standard QC "no string" sentinel -- pr_strings[0] is
+	// always the empty string by construction (PR_LoadProgs's loaded blob).
+	CHECK (std::string (PR_GetString (0)) == "");
+}
+
+TEST_CASE ("PR_GetString: an out-of-range dynamic handle returns a safe fallback, not garbage/UB")
+{
+	EnsureRealProgsLoaded ();
+
+	CHECK (std::string (PR_GetString (-999999)) == "<bad string>");
+}
+
+TEST_CASE ("ED_ParseEdict sets a string field via PR_SetString, resolvable end-to-end through PR_GetString")
+{
+	// Exercises the real production path every entity in every level goes
+	// through: ED_ParseEdict -> ED_ParseEpair -> PR_SetString for a
+	// map-file string value, then whatever reads it back (here, directly;
+	// in the real engine, ED_FindFunction(PR_GetString(ent->v.classname))
+	// picks the spawn function -- see ED_LoadFromFile).
+	EnsureTestEdictsInit ();
+
+	edict_t *e = ED_Alloc ();
+	// ED_ParseEdict expects the opening '{' already consumed by the caller
+	// (matching ED_LoadFromFile's own usage -- it calls COM_Parse for the
+	// brace before calling ED_ParseEdict).
+	const char *entityText = COM_Parse ("{\n\"classname\" \"info_null\"\n}");
+	REQUIRE (std::string (com_token) == "{");
+	ED_ParseEdict (entityText, e);
+
+	CHECK (std::string (PR_GetString (e->v.classname)) == "info_null");
+}
