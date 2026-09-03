@@ -311,11 +311,11 @@ within an edict rather than the edict itself.
 */
 static eval_t *PR_FieldAddress(int ofs)
 {
-    if (ofs < 0 || ofs >= sv.max_edicts * pr_edict_size)
+    if (ofs < 0 || ofs >= SV_MaxEdicts() * pr_edict_size)
     {
         Sys_Error("PR_FieldAddress: bad offset {}", ofs);
     }
-    return reinterpret_cast<eval_t *>(reinterpret_cast<byte *>(sv.edicts) + ofs);
+    return reinterpret_cast<eval_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + ofs);
 }
 
 /*
@@ -324,15 +324,15 @@ PR_EdictFieldOffset
 
 Computes an edict-relative field word offset (as read directly from a
 dstatement_t's b operand by OP_ADDRESS/OP_LOAD_*) as an absolute byte
-offset from sv.edicts, in the same units PR_FieldAddress bounds-checks --
-the shared arithmetic OP_ADDRESS, OP_LOAD_F/FLD/ENT/S/FNC, and OP_LOAD_V
-all need before that check.
+offset from SV_EdictsBase(), in the same units PR_FieldAddress bounds-
+checks -- the shared arithmetic OP_ADDRESS, OP_LOAD_F/FLD/ENT/S/FNC, and
+OP_LOAD_V all need before that check.
 ====================
 */
 static int PR_EdictFieldOffset(edict_t *ed, int fieldWordOfs)
 {
     return static_cast<int>(reinterpret_cast<byte *>(reinterpret_cast<int *>(&ed->v) + fieldWordOfs) -
-                             reinterpret_cast<byte *>(sv.edicts));
+                             reinterpret_cast<byte *>(SV_EdictsBase()));
 }
 
 /*
@@ -474,7 +474,7 @@ void PR_ExecuteProgram(func_t fnum)
             c->_float = !a->function;
             break;
         case OP_NOT_ENT:
-            c->_float = (PROG_TO_EDICT(a->edict) == sv.edicts);
+            c->_float = (PROG_TO_EDICT(a->edict) == SV_EdictsBase());
             break;
 
         case OP_EQ_F:
@@ -542,7 +542,7 @@ void PR_ExecuteProgram(func_t fnum)
 
         case OP_ADDRESS:
             ed = PROG_TO_EDICT(a->edict);
-            if (ed == sv.edicts && sv.state == server_state_t::ss_active)
+            if (ed == SV_EdictsBase() && SV_State() == server_state_t::ss_active)
             {
                 PR_RunError("assignment to world entity");
             }

@@ -204,6 +204,17 @@ int SV_NumEdicts(void);                   // sv.num_edicts
 int SV_NumClients(void);                  // svs.maxclients
 client_t *SV_ClientForEntNum(int entnum); // 1-based; nullptr if entnum isn't a client
 
+// Narrow VM edict-addressing accessors -- for pr_exec.cpp/pr_edict.cpp, the
+// interpreter core itself (EDICT_NUM/PROG_TO_EDICT/PR_FieldAddress and
+// friends), which convert between edict_t* and prog-relative offsets/
+// numbers constantly. SV_ReserveNextEdictSlot is the one real mutation
+// here (ED_Alloc's fallback path when no freed edict is reusable) -- not a
+// plain getter, so it's named for what it does rather than what it reads.
+edict_t *SV_EdictsBase(void);      // sv.edicts
+int SV_MaxEdicts(void);            // sv.max_edicts
+int SV_ReserveNextEdictSlot(void); // sv.num_edicts++, returns the new slot's index
+void SV_SetLightStyle(int style, char *val); // sv.lightstyles[style]
+
 // Narrow network-buffer accessors -- same idea, for QuakeC builtins that
 // write directly to one of the server's outgoing message buffers instead
 // of going through WriteDest()'s destination dispatch.

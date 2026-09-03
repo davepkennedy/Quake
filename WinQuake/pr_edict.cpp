@@ -163,12 +163,12 @@ edict_t *ED_Alloc(void)
     int i;
     edict_t *e;
 
-    for (i = svs.maxclients + 1; i < sv.num_edicts; i++)
+    for (i = SV_NumClients() + 1; i < SV_NumEdicts(); i++)
     {
         e = EDICT_NUM(i);
         // the first couple seconds of server time can involve a lot of
         // freeing and allocating, so relax the replacement policy
-        if (e->free && (e->freetime < 2 || sv.time - e->freetime > 0.5))
+        if (e->free && (e->freetime < 2 || SV_Time() - e->freetime > 0.5))
         {
             ED_ClearEdict(e);
             return e;
@@ -180,7 +180,7 @@ edict_t *ED_Alloc(void)
         Sys_Error("ED_Alloc: no free edicts");
     }
 
-    sv.num_edicts++;
+    i = SV_ReserveNextEdictSlot();
     e = EDICT_NUM(i);
     ED_ClearEdict(e);
 
@@ -211,7 +211,7 @@ void ED_Free(edict_t *ed)
     ed->v.nextthink = -1;
     ed->v.solid = 0;
 
-    ed->freetime = sv.time;
+    ed->freetime = SV_Time();
 }
 
 //===========================================================================
@@ -644,8 +644,8 @@ void ED_PrintEdicts(void)
 {
     int i;
 
-    Con_Printf("{} entities\n", sv.num_edicts);
-    for (i = 0; i < sv.num_edicts; i++)
+    Con_Printf("{} entities\n", SV_NumEdicts());
+    for (i = 0; i < SV_NumEdicts(); i++)
     {
         ED_PrintNum(i);
     }
@@ -663,7 +663,7 @@ void ED_PrintEdict_f(void)
     int i;
 
     i = Q_atoi(Cmd_Argv(1));
-    if (i >= sv.num_edicts)
+    if (i >= SV_NumEdicts())
     {
         Con_Printf("Bad edict number\n");
         return;
@@ -685,7 +685,7 @@ void ED_Count(void)
     int active, models, solid, step;
 
     active = models = solid = step = 0;
-    for (i = 0; i < sv.num_edicts; i++)
+    for (i = 0; i < SV_NumEdicts(); i++)
     {
         ent = EDICT_NUM(i);
         if (ent->free)
@@ -707,7 +707,7 @@ void ED_Count(void)
         }
     }
 
-    Con_Printf("num_edicts:{:3}\n", sv.num_edicts);
+    Con_Printf("num_edicts:{:3}\n", SV_NumEdicts());
     Con_Printf("active    :{:3}\n", active);
     Con_Printf("view      :{:3}\n", models);
     Con_Printf("touch     :{:3}\n", solid);
@@ -945,7 +945,7 @@ const char *ED_ParseEdict(const char *data, edict_t *ent)
     init = false;
 
     // clear it
-    if (ent != sv.edicts) // hack
+    if (ent != SV_EdictsBase()) // hack
     {
         memset(&ent->v, 0, progs->entityfields * 4);
     }
@@ -1063,7 +1063,7 @@ void ED_LoadFromFile(const char *data)
 
     ent = nullptr;
     inhibit = 0;
-    pr_global_struct->time = sv.time;
+    pr_global_struct->time = SV_Time();
 
     // parse ents
     while (1)
@@ -1439,21 +1439,21 @@ void PR_Init(void)
 
 edict_t *EDICT_NUM(int n)
 {
-    if (n < 0 || n >= sv.max_edicts)
+    if (n < 0 || n >= SV_MaxEdicts())
     {
         Sys_Error("EDICT_NUM: bad number {}", n);
     }
-    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(sv.edicts) + (n)*pr_edict_size);
+    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + (n)*pr_edict_size);
 }
 
 int NUM_FOR_EDICT(edict_t *e)
 {
     int b;
 
-    b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(sv.edicts);
+    b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(SV_EdictsBase());
     b = b / pr_edict_size;
 
-    if (b < 0 || b >= sv.num_edicts)
+    if (b < 0 || b >= SV_NumEdicts())
     {
         Sys_Error("NUM_FOR_EDICT: bad pointer");
     }
@@ -1462,17 +1462,17 @@ int NUM_FOR_EDICT(edict_t *e)
 
 edict_t *PROG_TO_EDICT(int prog)
 {
-    if (prog < 0 || prog >= sv.max_edicts * pr_edict_size)
+    if (prog < 0 || prog >= SV_MaxEdicts() * pr_edict_size)
     {
         Sys_Error("PROG_TO_EDICT: bad prog offset {}", prog);
     }
-    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(sv.edicts) + prog);
+    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + prog);
 }
 
 int EDICT_TO_PROG(edict_t *e)
 {
-    int b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(sv.edicts);
-    if (b < 0 || b >= sv.max_edicts * pr_edict_size)
+    int b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(SV_EdictsBase());
+    if (b < 0 || b >= SV_MaxEdicts() * pr_edict_size)
     {
         Sys_Error("EDICT_TO_PROG: bad edict pointer");
     }
@@ -1492,8 +1492,8 @@ int G_EDICTNUM(int ofs)
 edict_t *NEXT_EDICT(edict_t *e)
 {
     edict_t *n = reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(e) + pr_edict_size);
-    int b = reinterpret_cast<byte *>(n) - reinterpret_cast<byte *>(sv.edicts);
-    if (b < 0 || b > sv.max_edicts * pr_edict_size)
+    int b = reinterpret_cast<byte *>(n) - reinterpret_cast<byte *>(SV_EdictsBase());
+    if (b < 0 || b > SV_MaxEdicts() * pr_edict_size)
     {
         Sys_Error("NEXT_EDICT: walked off the edict array");
     }

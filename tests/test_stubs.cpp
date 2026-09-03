@@ -203,6 +203,48 @@ qboolean host_initialized = false;
 // does for a real server).
 server_static_t svs{};
 
+// pr_exec.cpp/pr_edict.cpp now go through server.h's narrow accessors
+// (SV_EdictsBase/SV_MaxEdicts/etc) instead of touching sv./svs. directly --
+// real implementations, mirroring sv_main.cpp's exactly (which isn't
+// compiled into this project), operating on the same sv/svs instances
+// defined above. Not fakes: same bodies, same data, just duplicated here
+// because sv_main.cpp itself pulls in far more than this test project
+// needs (networking, client management, ...).
+edict_t *SV_EdictsBase(void)
+{
+	return sv.edicts;
+}
+
+int SV_MaxEdicts(void)
+{
+	return sv.max_edicts;
+}
+
+int SV_NumEdicts(void)
+{
+	return sv.num_edicts;
+}
+
+int SV_NumClients(void)
+{
+	return svs.maxclients;
+}
+
+int SV_ReserveNextEdictSlot(void)
+{
+	return sv.num_edicts++;
+}
+
+double SV_Time(void)
+{
+	return sv.time;
+}
+
+server_state_t SV_State(void)
+{
+	return sv.state;
+}
+
 // Link-time only: ED_LoadFromFile reads deathmatch.value and PR_LoadGame
 // reads current_skill, but no Phase-1 test calls either function (they pull
 // in map/savegame-parsing concerns out of scope for the interpreter/edict

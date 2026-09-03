@@ -1195,7 +1195,7 @@ void PF_lightstyle(void)
     val = G_STRING(OFS_PARM1);
 
     // change the string in sv
-    sv.lightstyles[style] = val;
+    SV_SetLightStyle(style, val);
 
     // send message to all clients on this server
     if (SV_State() != server_state_t::ss_active)

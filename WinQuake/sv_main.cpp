@@ -34,6 +34,26 @@ int SV_NumEdicts(void)
     return sv.num_edicts;
 }
 
+edict_t *SV_EdictsBase(void)
+{
+    return sv.edicts;
+}
+
+int SV_MaxEdicts(void)
+{
+    return sv.max_edicts;
+}
+
+int SV_ReserveNextEdictSlot(void)
+{
+    return sv.num_edicts++;
+}
+
+void SV_SetLightStyle(int style, char *val)
+{
+    sv.lightstyles[style] = val;
+}
+
 int SV_NumClients(void)
 {
     return svs.maxclients;
