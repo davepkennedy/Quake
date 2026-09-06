@@ -145,10 +145,8 @@ qboolean SV_RunThink(edict_t *ent)
                              // by a trigger with a local time.
     }
     ent->v.nextthink = 0;
-    pr_global_struct->time = thinktime;
-    pr_global_struct->self = EDICT_TO_PROG(ent);
-    pr_global_struct->other = EDICT_TO_PROG(sv.edicts);
-    PR_ExecuteProgram(ent->v.think);
+    PR_SetGlobalTime(thinktime);
+    PR_ExecuteEntityFunction(ent, ent->v.think);
     return !ent->free;
 }
 
@@ -161,28 +159,22 @@ Two entities have touched, so run their touch functions
 */
 void SV_Impact(edict_t *e1, edict_t *e2)
 {
-    int old_self, old_other;
+    edict_t *old_self = PR_GetSelf();
+    edict_t *old_other = PR_GetOther();
 
-    old_self = pr_global_struct->self;
-    old_other = pr_global_struct->other;
-
-    pr_global_struct->time = sv.time;
+    PR_SetGlobalTime(sv.time);
     if (e1->v.touch && e1->v.solid != SOLID_NOT)
     {
-        pr_global_struct->self = EDICT_TO_PROG(e1);
-        pr_global_struct->other = EDICT_TO_PROG(e2);
-        PR_ExecuteProgram(e1->v.touch);
+        PR_ExecuteEntityFunction(e1, e2, e1->v.touch);
     }
 
     if (e2->v.touch && e2->v.solid != SOLID_NOT)
     {
-        pr_global_struct->self = EDICT_TO_PROG(e2);
-        pr_global_struct->other = EDICT_TO_PROG(e1);
-        PR_ExecuteProgram(e2->v.touch);
+        PR_ExecuteEntityFunction(e2, e1, e2->v.touch);
     }
 
-    pr_global_struct->self = old_self;
-    pr_global_struct->other = old_other;
+    PR_SetSelf(old_self);
+    PR_SetOther(old_other);
 }
 
 /*
@@ -574,9 +566,7 @@ void SV_PushMove(edict_t *pusher, float movetime)
             // otherwise, just stay in place until the obstacle is gone
             if (pusher->v.blocked)
             {
-                pr_global_struct->self = EDICT_TO_PROG(pusher);
-                pr_global_struct->other = EDICT_TO_PROG(check);
-                PR_ExecuteProgram(pusher->v.blocked);
+                PR_ExecuteEntityFunction(pusher, check, pusher->v.blocked);
             }
 
             // move back any entities we already moved
@@ -627,10 +617,8 @@ void SV_Physics_Pusher(edict_t *ent)
     if (thinktime > oldltime && thinktime <= ent->v.ltime)
     {
         ent->v.nextthink = 0;
-        pr_global_struct->time = sv.time;
-        pr_global_struct->self = EDICT_TO_PROG(ent);
-        pr_global_struct->other = EDICT_TO_PROG(sv.edicts);
-        PR_ExecuteProgram(ent->v.think);
+        PR_SetGlobalTime(sv.time);
+        PR_ExecuteEntityFunction(ent, ent->v.think);
         if (ent->free)
         {
             return;
@@ -977,8 +965,8 @@ void SV_Physics_Client(edict_t *ent, int num)
     //
     // call standard client pre-think
     //
-    pr_global_struct->time = sv.time;
-    pr_global_struct->self = EDICT_TO_PROG(ent);
+    PR_SetGlobalTime(sv.time);
+    PR_SetSelf(ent); // other deliberately left untouched, matching the original -- unlike the think/touch/blocked call sites above, nothing here ever set it
     PR_ExecuteProgram(pr_global_struct->PlayerPreThink);
 
     //
@@ -1042,8 +1030,8 @@ void SV_Physics_Client(edict_t *ent, int num)
     //
     SV_LinkEdict(ent, true);
 
-    pr_global_struct->time = sv.time;
-    pr_global_struct->self = EDICT_TO_PROG(ent);
+    PR_SetGlobalTime(sv.time);
+    PR_SetSelf(ent); // other deliberately left untouched, matching the original
     PR_ExecuteProgram(pr_global_struct->PlayerPostThink);
 }
 
@@ -1272,10 +1260,8 @@ void SV_Physics(void)
     edict_t *ent;
 
     // let the progs know that a new frame has started
-    pr_global_struct->self = EDICT_TO_PROG(sv.edicts);
-    pr_global_struct->other = EDICT_TO_PROG(sv.edicts);
-    pr_global_struct->time = sv.time;
-    PR_ExecuteProgram(pr_global_struct->StartFrame);
+    PR_SetGlobalTime(sv.time);
+    PR_ExecuteEntityFunction(sv.edicts, sv.edicts, pr_global_struct->StartFrame);
 
     // SV_CheckAllEnts ();
 
@@ -1290,7 +1276,7 @@ void SV_Physics(void)
             continue;
         }
 
-        if (pr_global_struct->force_retouch)
+        if (PR_ForceRetouchPending())
         {
             SV_LinkEdict(ent, true); // force retouch even for stationary
         }
@@ -1324,9 +1310,9 @@ void SV_Physics(void)
         }
     }
 
-    if (pr_global_struct->force_retouch)
+    if (PR_ForceRetouchPending())
     {
-        pr_global_struct->force_retouch--;
+        PR_DecrementForceRetouch();
     }
 
     sv.time += host_frametime;

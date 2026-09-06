@@ -147,6 +147,120 @@ void ED_ClearEdict(edict_t *e)
     e->free = false;
 }
 
+// ===========================================================================
+// pr_global_struct/progs accessors for app code (host.cpp/host_cmd.cpp/
+// sv_main.cpp/sv_move.cpp/sv_phys.cpp/world.cpp) -- the mirror image of
+// server.h's SV_* accessors. See progs.h for the rationale and grouping.
+// ===========================================================================
+
+void PR_ExecuteEntityFunction(edict_t *self, func_t fnum)
+{
+    PR_ExecuteEntityFunction(self, EDICT_NUM(0), fnum);
+}
+
+void PR_ExecuteEntityFunction(edict_t *self, edict_t *other, func_t fnum)
+{
+    pr_global_struct->self = EDICT_TO_PROG(self);
+    pr_global_struct->other = EDICT_TO_PROG(other);
+    PR_ExecuteProgram(fnum);
+}
+
+edict_t *PR_GetSelf(void)
+{
+    return PROG_TO_EDICT(pr_global_struct->self);
+}
+
+void PR_SetSelf(edict_t *self)
+{
+    pr_global_struct->self = EDICT_TO_PROG(self);
+}
+
+edict_t *PR_GetOther(void)
+{
+    return PROG_TO_EDICT(pr_global_struct->other);
+}
+
+void PR_SetOther(edict_t *other)
+{
+    pr_global_struct->other = EDICT_TO_PROG(other);
+}
+
+void PR_SetGlobalTime(double time)
+{
+    pr_global_struct->time = time;
+}
+
+void PR_SetFrameTime(float frametime)
+{
+    pr_global_struct->frametime = frametime;
+}
+
+qboolean PR_IsDeathmatch(void)
+{
+    return pr_global_struct->deathmatch != 0;
+}
+
+void PR_SetGameMode(qboolean isDeathmatch, qboolean isCoop)
+{
+    pr_global_struct->deathmatch = isDeathmatch;
+    pr_global_struct->coop = isCoop;
+}
+
+void PR_SetMapName(const char *name)
+{
+    pr_global_struct->mapname = PR_SetString(name);
+}
+
+int PR_GetServerFlags(void)
+{
+    return (int)pr_global_struct->serverflags;
+}
+
+void PR_SetServerFlags(int flags)
+{
+    pr_global_struct->serverflags = flags;
+}
+
+float PR_GetSpawnParm(int index)
+{
+    return (&pr_global_struct->parm1)[index];
+}
+
+void PR_SetSpawnParm(int index, float value)
+{
+    (&pr_global_struct->parm1)[index] = value;
+}
+
+int PR_TotalSecrets(void)
+{
+    return (int)pr_global_struct->total_secrets;
+}
+
+int PR_TotalMonsters(void)
+{
+    return (int)pr_global_struct->total_monsters;
+}
+
+int PR_FoundSecrets(void)
+{
+    return (int)pr_global_struct->found_secrets;
+}
+
+int PR_KilledMonsters(void)
+{
+    return (int)pr_global_struct->killed_monsters;
+}
+
+qboolean PR_ForceRetouchPending(void)
+{
+    return pr_global_struct->force_retouch != 0;
+}
+
+void PR_DecrementForceRetouch(void)
+{
+    pr_global_struct->force_retouch--;
+}
+
 /*
 =================
 ED_Alloc

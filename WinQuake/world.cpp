@@ -291,7 +291,7 @@ void SV_TouchLinks(edict_t *ent, areanode_t *node)
 {
     link_t *l, *next;
     edict_t *touch;
-    int old_self, old_other;
+    edict_t *old_self, *old_other;
 
     // touch linked edicts
     for (l = node->trigger_edicts.next; l != &node->trigger_edicts; l = next)
@@ -312,16 +312,14 @@ void SV_TouchLinks(edict_t *ent, areanode_t *node)
         {
             continue;
         }
-        old_self = pr_global_struct->self;
-        old_other = pr_global_struct->other;
+        old_self = PR_GetSelf();
+        old_other = PR_GetOther();
 
-        pr_global_struct->self = EDICT_TO_PROG(touch);
-        pr_global_struct->other = EDICT_TO_PROG(ent);
-        pr_global_struct->time = sv.time;
-        PR_ExecuteProgram(touch->v.touch);
+        PR_SetGlobalTime(sv.time);
+        PR_ExecuteEntityFunction(touch, ent, touch->v.touch);
 
-        pr_global_struct->self = old_self;
-        pr_global_struct->other = old_other;
+        PR_SetSelf(old_self);
+        PR_SetOther(old_other);
     }
 
     // recurse down both sides

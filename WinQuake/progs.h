@@ -84,6 +84,64 @@ void PR_Profile_f(void);
 
 edict_t *ED_Alloc(void);
 void ED_Free(edict_t *ed);
+void ED_ClearEdict(edict_t *e); // zeroes e->v and clears e->free -- the correct way to reset an edict's fields
+
+// Narrow accessors onto pr_global_struct/progs -- the mirror image of
+// server.h's SV_* accessors: those let the VM touch app state without
+// reaching into sv./svs. by name, these let the APP (host.cpp/host_cmd.cpp/
+// sv_main.cpp/sv_move.cpp/sv_phys.cpp/world.cpp) touch VM state without
+// reaching into pr_global_struct/progs by name. See
+// project_quake_vm_separation.md, phase 7.
+
+// The dominant calling convention throughout sv_phys.cpp/world.cpp/
+// host.cpp/host_cmd.cpp/sv_main.cpp: set self (and usually other, reset to
+// the world entity when there is no real "other"), then invoke a QC
+// function. Collapsing the 2-3 raw pr_global_struct-> assignments these
+// call sites used to do by hand into one call removes the chance of
+// forgetting one of them.
+void PR_ExecuteEntityFunction(edict_t *self, func_t fnum);               // other reset to the world entity
+void PR_ExecuteEntityFunction(edict_t *self, edict_t *other, func_t fnum);
+
+// Self/time primitives, for the handful of call sites that don't fit the
+// shape above: host.cpp's explicit save/restore around ClientDisconnect,
+// sv_move.cpp's read of the currently-executing function's self, and the
+// entry points that only need one of self/time set (or already have self
+// set from a preceding call).
+edict_t *PR_GetSelf(void);
+void PR_SetSelf(edict_t *self);
+edict_t *PR_GetOther(void);
+void PR_SetOther(edict_t *other);
+void PR_SetGlobalTime(double time);
+void PR_SetFrameTime(float frametime);
+
+// Game-mode/level config -- set once at level spawn (SV_SpawnServer),
+// read from various places afterward (host_cmd.cpp's cheat-command guards,
+// item-flags encoding).
+qboolean PR_IsDeathmatch(void);
+void PR_SetGameMode(qboolean isDeathmatch, qboolean isCoop);
+void PR_SetMapName(const char *name);
+int PR_GetServerFlags(void);
+void PR_SetServerFlags(int flags);
+
+// Spawn parms (parm1..parm16, NUM_SPAWN_PARMS of them) -- carries a
+// client's inventory/stats across a changelevel. Replaces raw
+// (&pr_global_struct->parm1)[i] pointer arithmetic, which silently
+// depended on progdefs.q1 laying those 16 floats out contiguously.
+float PR_GetSpawnParm(int index); // 0-based, 0..NUM_SPAWN_PARMS-1
+void PR_SetSpawnParm(int index, float value);
+
+// Intermission stats, read-only from the app side -- QC increments these
+// itself; the engine only ever reports them (host_cmd.cpp's svc_updatestat
+// messages).
+int PR_TotalSecrets(void);
+int PR_TotalMonsters(void);
+int PR_FoundSecrets(void);
+int PR_KilledMonsters(void);
+
+// sv_phys.cpp's per-frame "did anything ask for a forced relink" flag:
+// checked once per entity, decremented once per frame if set.
+qboolean PR_ForceRetouchPending(void);
+void PR_DecrementForceRetouch(void);
 
 char *ED_NewString(const char *string);
 // returns a copy of the string allocated from the server's string heap

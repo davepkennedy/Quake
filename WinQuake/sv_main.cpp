@@ -512,7 +512,7 @@ void SV_ConnectClient(int clientnum)
         PR_ExecuteProgram(pr_global_struct->SetNewParms);
         for (i = 0; i < NUM_SPAWN_PARMS; i++)
         {
-            client->spawn_parms[i] = (&pr_global_struct->parm1)[i];
+            client->spawn_parms[i] = PR_GetSpawnParm(i);
         }
     }
 
@@ -928,7 +928,7 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
     }
     else
     {
-        items = (int)ent->v.items | ((int)pr_global_struct->serverflags << 28);
+        items = (int)ent->v.items | (PR_GetServerFlags() << 28);
     }
 
     bits |= SU_ITEMS;
@@ -1358,7 +1358,7 @@ void SV_SaveSpawnparms(void)
 {
     int i, j;
 
-    svs.serverflags = pr_global_struct->serverflags;
+    svs.serverflags = PR_GetServerFlags();
 
     for (i = 0, host_client = svs.clients; i < svs.maxclients; i++, host_client++)
     {
@@ -1368,11 +1368,11 @@ void SV_SaveSpawnparms(void)
         }
 
         // call the progs to get default spawn parms for the new client
-        pr_global_struct->self = EDICT_TO_PROG(host_client->edict);
+        PR_SetSelf(host_client->edict); // other deliberately left untouched, matching the original
         PR_ExecuteProgram(pr_global_struct->SetChangeParms);
         for (j = 0; j < NUM_SPAWN_PARMS; j++)
         {
-            host_client->spawn_parms[j] = (&pr_global_struct->parm1)[j];
+            host_client->spawn_parms[j] = PR_GetSpawnParm(j);
         }
     }
 }
@@ -1501,8 +1501,7 @@ void SV_SpawnServer(char *server)
     // load the rest of the entities
     //
     ent = EDICT_NUM(0);
-    memset(&ent->v, 0, progs->entityfields * 4);
-    ent->free = false;
+    ED_ClearEdict(ent);
     // mod_known[] is a BSS global array; copy name to hunk so string_t offset from pr_strings fits in int on x64
     tmp = static_cast<char *>(Hunk_Alloc((int)strlen(sv.worldmodel->name) + 1));
     Q_strlcpy(tmp, sv.worldmodel->name, strlen(sv.worldmodel->name) + 1);
@@ -1513,20 +1512,17 @@ void SV_SpawnServer(char *server)
 
     if (coop.value)
     {
-        pr_global_struct->coop = coop.value;
+        PR_SetGameMode(0, coop.value);
     }
     else
     {
-        pr_global_struct->deathmatch = deathmatch.value;
+        PR_SetGameMode(deathmatch.value, 0);
     }
 
-    // sv is a BSS global; copy sv.name to hunk so the string_t offset from pr_strings fits in int on x64
-    tmp = static_cast<char *>(Hunk_Alloc((int)strlen(sv.name) + 1));
-    Q_strlcpy(tmp, sv.name, strlen(sv.name) + 1);
-    pr_global_struct->mapname = (int)(tmp - pr_strings);
+    PR_SetMapName(sv.name);
 
     // serverflags are for cross level information (sigils)
-    pr_global_struct->serverflags = svs.serverflags;
+    PR_SetServerFlags(svs.serverflags);
 
     ED_LoadFromFile(sv.worldmodel->entities);
 

@@ -341,7 +341,7 @@ if (crash = true), don't bother sending signofs
 */
 void SV_DropClient(qboolean crash)
 {
-    int saveSelf;
+    edict_t *saveSelf;
     int i;
     client_t *client;
 
@@ -358,10 +358,10 @@ void SV_DropClient(qboolean crash)
         {
             // call the prog function for removing a client
             // this will set the body to a dead frame, among other things
-            saveSelf = pr_global_struct->self;
-            pr_global_struct->self = EDICT_TO_PROG(host_client->edict);
+            saveSelf = PR_GetSelf();
+            PR_SetSelf(host_client->edict);
             PR_ExecuteProgram(pr_global_struct->ClientDisconnect);
-            pr_global_struct->self = saveSelf;
+            PR_SetSelf(saveSelf);
         }
 
         Sys_Printf("Client {} removed\n", host_client->name);
@@ -569,7 +569,7 @@ Host_ServerFrame
 void Host_ServerFrame(void)
 {
     // run the world state
-    pr_global_struct->frametime = host_frametime;
+    PR_SetFrameTime(host_frametime);
 
     // set the time and clear the general datagram
     SV_ClearDatagram();
