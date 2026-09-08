@@ -32,7 +32,6 @@ ddef_t *pr_globaldefs;
 dstatement_t *pr_statements;
 globalvars_t *pr_global_struct;
 float *pr_globals; // same as pr_global_struct
-int pr_edict_size; // in bytes
 
 unsigned short pr_crc;
 
@@ -148,118 +147,178 @@ void ED_ClearEdict(edict_t *e)
 }
 
 // ===========================================================================
-// pr_global_struct/progs accessors for app code (host.cpp/host_cmd.cpp/
-// sv_main.cpp/sv_move.cpp/sv_phys.cpp/world.cpp) -- the mirror image of
-// server.h's SV_* accessors. See progs.h for the rationale and grouping.
+// The QuakeC backend's own implementation of qc_backend_t (qc_backend.h).
+// File-local: nothing outside pr_edict.cpp calls these directly anymore --
+// app code goes through g_qcBackend, the QC interpreter's own internals
+// call PR_ExecuteProgram/etc directly (no need to ask "who am I" when the
+// answer is always "myself"). See project_quake_vm_separation.md, phase 8.
 // ===========================================================================
 
-void PR_ExecuteEntityFunction(edict_t *self, func_t fnum)
+namespace
 {
-    PR_ExecuteEntityFunction(self, EDICT_NUM(0), fnum);
-}
+    void QC_ExecuteFunction(func_t fnum)
+    {
+        PR_ExecuteProgram(fnum);
+    }
 
-void PR_ExecuteEntityFunction(edict_t *self, edict_t *other, func_t fnum)
-{
-    pr_global_struct->self = EDICT_TO_PROG(self);
-    pr_global_struct->other = EDICT_TO_PROG(other);
-    PR_ExecuteProgram(fnum);
-}
+    void QC_ExecuteEntityFunctionWithOther(edict_t *self, edict_t *other, func_t fnum)
+    {
+        pr_global_struct->self = EDICT_TO_PROG(self);
+        pr_global_struct->other = EDICT_TO_PROG(other);
+        PR_ExecuteProgram(fnum);
+    }
 
-edict_t *PR_GetSelf(void)
-{
-    return PROG_TO_EDICT(pr_global_struct->self);
-}
+    void QC_ExecuteEntityFunction(edict_t *self, func_t fnum)
+    {
+        QC_ExecuteEntityFunctionWithOther(self, EDICT_NUM(0), fnum);
+    }
 
-void PR_SetSelf(edict_t *self)
-{
-    pr_global_struct->self = EDICT_TO_PROG(self);
-}
+    edict_t *QC_GetSelf(void)
+    {
+        return PROG_TO_EDICT(pr_global_struct->self);
+    }
 
-edict_t *PR_GetOther(void)
-{
-    return PROG_TO_EDICT(pr_global_struct->other);
-}
+    void QC_SetSelf(edict_t *self)
+    {
+        pr_global_struct->self = EDICT_TO_PROG(self);
+    }
 
-void PR_SetOther(edict_t *other)
-{
-    pr_global_struct->other = EDICT_TO_PROG(other);
-}
+    edict_t *QC_GetOther(void)
+    {
+        return PROG_TO_EDICT(pr_global_struct->other);
+    }
 
-void PR_SetGlobalTime(double time)
-{
-    pr_global_struct->time = time;
-}
+    void QC_SetOther(edict_t *other)
+    {
+        pr_global_struct->other = EDICT_TO_PROG(other);
+    }
 
-void PR_SetFrameTime(float frametime)
-{
-    pr_global_struct->frametime = frametime;
-}
+    void QC_SetGlobalTime(double time)
+    {
+        pr_global_struct->time = time;
+    }
 
-qboolean PR_IsDeathmatch(void)
-{
-    return pr_global_struct->deathmatch != 0;
-}
+    void QC_SetFrameTime(float frametime)
+    {
+        pr_global_struct->frametime = frametime;
+    }
 
-void PR_SetGameMode(qboolean isDeathmatch, qboolean isCoop)
-{
-    pr_global_struct->deathmatch = isDeathmatch;
-    pr_global_struct->coop = isCoop;
-}
+    qboolean QC_IsDeathmatch(void)
+    {
+        return pr_global_struct->deathmatch != 0;
+    }
 
-void PR_SetMapName(const char *name)
-{
-    pr_global_struct->mapname = PR_SetString(name);
-}
+    void QC_SetGameMode(qboolean isDeathmatch, qboolean isCoop)
+    {
+        pr_global_struct->deathmatch = isDeathmatch;
+        pr_global_struct->coop = isCoop;
+    }
 
-int PR_GetServerFlags(void)
-{
-    return (int)pr_global_struct->serverflags;
-}
+    void QC_SetMapName(const char *name)
+    {
+        pr_global_struct->mapname = PR_SetString(name);
+    }
 
-void PR_SetServerFlags(int flags)
-{
-    pr_global_struct->serverflags = flags;
-}
+    int QC_GetServerFlags(void)
+    {
+        return (int)pr_global_struct->serverflags;
+    }
 
-float PR_GetSpawnParm(int index)
-{
-    return (&pr_global_struct->parm1)[index];
-}
+    void QC_SetServerFlags(int flags)
+    {
+        pr_global_struct->serverflags = flags;
+    }
 
-void PR_SetSpawnParm(int index, float value)
-{
-    (&pr_global_struct->parm1)[index] = value;
-}
+    float QC_GetSpawnParm(int index)
+    {
+        return (&pr_global_struct->parm1)[index];
+    }
 
-int PR_TotalSecrets(void)
-{
-    return (int)pr_global_struct->total_secrets;
-}
+    void QC_SetSpawnParm(int index, float value)
+    {
+        (&pr_global_struct->parm1)[index] = value;
+    }
 
-int PR_TotalMonsters(void)
-{
-    return (int)pr_global_struct->total_monsters;
-}
+    int QC_TotalSecrets(void)
+    {
+        return (int)pr_global_struct->total_secrets;
+    }
 
-int PR_FoundSecrets(void)
-{
-    return (int)pr_global_struct->found_secrets;
-}
+    int QC_TotalMonsters(void)
+    {
+        return (int)pr_global_struct->total_monsters;
+    }
 
-int PR_KilledMonsters(void)
-{
-    return (int)pr_global_struct->killed_monsters;
-}
+    int QC_FoundSecrets(void)
+    {
+        return (int)pr_global_struct->found_secrets;
+    }
 
-qboolean PR_ForceRetouchPending(void)
-{
-    return pr_global_struct->force_retouch != 0;
-}
+    int QC_KilledMonsters(void)
+    {
+        return (int)pr_global_struct->killed_monsters;
+    }
 
-void PR_DecrementForceRetouch(void)
-{
-    pr_global_struct->force_retouch--;
-}
+    qboolean QC_ForceRetouchPending(void)
+    {
+        return pr_global_struct->force_retouch != 0;
+    }
+
+    void QC_DecrementForceRetouch(void)
+    {
+        pr_global_struct->force_retouch--;
+    }
+
+    func_t QC_StartFrameFunc(void)
+    {
+        return pr_global_struct->StartFrame;
+    }
+
+    func_t QC_PlayerPreThinkFunc(void)
+    {
+        return pr_global_struct->PlayerPreThink;
+    }
+
+    func_t QC_PlayerPostThinkFunc(void)
+    {
+        return pr_global_struct->PlayerPostThink;
+    }
+
+    func_t QC_ClientKillFunc(void)
+    {
+        return pr_global_struct->ClientKill;
+    }
+
+    func_t QC_ClientConnectFunc(void)
+    {
+        return pr_global_struct->ClientConnect;
+    }
+
+    func_t QC_PutClientInServerFunc(void)
+    {
+        return pr_global_struct->PutClientInServer;
+    }
+
+    func_t QC_ClientDisconnectFunc(void)
+    {
+        return pr_global_struct->ClientDisconnect;
+    }
+
+    func_t QC_SetNewParmsFunc(void)
+    {
+        return pr_global_struct->SetNewParms;
+    }
+
+    func_t QC_SetChangeParmsFunc(void)
+    {
+        return pr_global_struct->SetChangeParms;
+    }
+
+    int QC_GetEdictExtraSize(void)
+    {
+        return progs->entityfields * 4;
+    }
+} // namespace
 
 /*
 =================
@@ -1163,13 +1222,21 @@ ED_Alloc, because otherwise an error loading the map would have entity
 number references out of order.
 
 Creates a server's entity / program execution context by
-parsing textual entity definitions out of an ent file.
+parsing textual entity definitions out of an ent file, and spawns each
+one (looks up and calls its classname's spawn function).
 
-Used for both fresh maps and savegame loads.  A fresh map would also need
-to call ED_CallSpawnFunctions () to let the objects initialize themselves.
+isDeathmatch/skill decide which entities are inhibited (SPAWNFLAG_NOT_*)
+-- passed in by the caller rather than read from the deathmatch cvar/
+current_skill directly, so this doesn't reach into engine state on its
+own (see qc_backend_t::SpawnEntitiesForLevel).
+
+The only caller today is SV_SpawnServer, for a fresh map load. Savegame
+loading is a separate path (Host_Loadgame_f) that doesn't call spawn
+functions at all, since the save file already captured each entity's
+fully-spawned state.
 ================
 */
-void ED_LoadFromFile(const char *data)
+void ED_LoadFromFile(const char *data, qboolean isDeathmatch, int skill)
 {
     edict_t *ent;
     int inhibit;
@@ -1204,7 +1271,7 @@ void ED_LoadFromFile(const char *data)
         data = ED_ParseEdict(data, ent);
 
         // remove things from different skill levels or deathmatch
-        if (deathmatch.value)
+        if (isDeathmatch)
         {
             if (((int)ent->v.spawnflags & SPAWNFLAG_NOT_DEATHMATCH))
             {
@@ -1213,9 +1280,9 @@ void ED_LoadFromFile(const char *data)
                 continue;
             }
         }
-        else if ((current_skill == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY)) ||
-                 (current_skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM)) ||
-                 (current_skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)))
+        else if ((skill == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY)) ||
+                 (skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM)) ||
+                 (skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)))
         {
             ED_Free(ent);
             inhibit++;
@@ -1480,8 +1547,6 @@ void PR_LoadProgs(void)
     // pointer difference gigabytes wide and causing truncation when stored as string_t (int).
     pr_string_temp = static_cast<char *>(Hunk_Alloc(128));
 
-    pr_edict_size = progs->entityfields * 4 + sizeof(edict_t) - sizeof(entvars_t);
-
     // byte swap the lumps
     for (i = 0; i < progs->numstatements; i++)
     {
@@ -1551,47 +1616,8 @@ void PR_Init(void)
     Cvar_RegisterVariable(&saved4);
 }
 
-edict_t *EDICT_NUM(int n)
-{
-    if (n < 0 || n >= SV_MaxEdicts())
-    {
-        Sys_Error("EDICT_NUM: bad number {}", n);
-    }
-    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + (n)*pr_edict_size);
-}
-
-int NUM_FOR_EDICT(edict_t *e)
-{
-    int b;
-
-    b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(SV_EdictsBase());
-    b = b / pr_edict_size;
-
-    if (b < 0 || b >= SV_NumEdicts())
-    {
-        Sys_Error("NUM_FOR_EDICT: bad pointer");
-    }
-    return b;
-}
-
-edict_t *PROG_TO_EDICT(int prog)
-{
-    if (prog < 0 || prog >= SV_MaxEdicts() * pr_edict_size)
-    {
-        Sys_Error("PROG_TO_EDICT: bad prog offset {}", prog);
-    }
-    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + prog);
-}
-
-int EDICT_TO_PROG(edict_t *e)
-{
-    int b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(SV_EdictsBase());
-    if (b < 0 || b >= SV_MaxEdicts() * pr_edict_size)
-    {
-        Sys_Error("EDICT_TO_PROG: bad edict pointer");
-    }
-    return b;
-}
+// EDICT_NUM/NUM_FOR_EDICT/PROG_TO_EDICT/EDICT_TO_PROG/NEXT_EDICT moved to
+// sv_main.cpp (declared in server.h) -- see progs.h's note near the top.
 
 edict_t *G_EDICT(int ofs)
 {
@@ -1603,13 +1629,69 @@ int G_EDICTNUM(int ofs)
     return NUM_FOR_EDICT(G_EDICT(ofs));
 }
 
-edict_t *NEXT_EDICT(edict_t *e)
-{
-    edict_t *n = reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(e) + pr_edict_size);
-    int b = reinterpret_cast<byte *>(n) - reinterpret_cast<byte *>(SV_EdictsBase());
-    if (b < 0 || b > SV_MaxEdicts() * pr_edict_size)
-    {
-        Sys_Error("NEXT_EDICT: walked off the edict array");
-    }
-    return n;
-}
+// ===========================================================================
+// The single populated qc_backend_t instance -- the QuakeC bytecode
+// interpreter's own implementation of the interface declared in
+// qc_backend.h. A second backend (Lua, Python, ...) would populate its
+// own qc_backend_t the same way and point g_qcBackend at it instead; no
+// caller of g_qcBackend anywhere in the engine would need to change.
+// ===========================================================================
+
+static qc_backend_t g_theQuakeCBackend = {
+    "QuakeC",
+
+    PR_Init,
+    PR_LoadProgs,
+    QC_GetEdictExtraSize,
+    ED_LoadFromFile,
+
+    ED_ClearEdict,
+    GetEdictFieldValue,
+
+    QC_ExecuteFunction,
+    QC_ExecuteEntityFunction,
+    QC_ExecuteEntityFunctionWithOther,
+    QC_GetSelf,
+    QC_SetSelf,
+    QC_GetOther,
+    QC_SetOther,
+    QC_SetGlobalTime,
+    QC_SetFrameTime,
+
+    QC_StartFrameFunc,
+    QC_PlayerPreThinkFunc,
+    QC_PlayerPostThinkFunc,
+    QC_ClientKillFunc,
+    QC_ClientConnectFunc,
+    QC_PutClientInServerFunc,
+    QC_ClientDisconnectFunc,
+    QC_SetNewParmsFunc,
+    QC_SetChangeParmsFunc,
+
+    QC_IsDeathmatch,
+    QC_SetGameMode,
+    QC_SetMapName,
+    QC_GetServerFlags,
+    QC_SetServerFlags,
+
+    QC_GetSpawnParm,
+    QC_SetSpawnParm,
+
+    QC_TotalSecrets,
+    QC_TotalMonsters,
+    QC_FoundSecrets,
+    QC_KilledMonsters,
+
+    QC_ForceRetouchPending,
+    QC_DecrementForceRetouch,
+
+    PR_GetString,
+    PR_SetString,
+
+    ED_WriteGlobals,
+    ED_Write,
+    ED_ParseGlobals,
+    ED_ParseEdict,
+};
+
+qc_backend_t *g_qcBackend = &g_theQuakeCBackend;

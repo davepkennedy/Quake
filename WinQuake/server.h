@@ -215,6 +215,25 @@ int SV_MaxEdicts(void);            // sv.max_edicts
 int SV_ReserveNextEdictSlot(void); // sv.num_edicts++, returns the new slot's index
 void SV_SetLightStyle(int style, char *val); // sv.lightstyles[style]
 
+// The edict array's per-entity stride, in bytes -- sizeof(entvars_t) plus
+// whatever extra fields the active qc_backend_t's loaded game logic
+// declares beyond the standard set (qc_backend_t::GetEdictExtraSize).
+// Computed once per level spawn (SV_SpawnServer, right after
+// g_qcBackend->LoadGameLogic), used everywhere sv.edicts is indexed.
+extern int pr_edict_size;
+
+// Pure array-index/pointer/prog-offset conversions over sv.edicts --
+// moved here from pr_edict.cpp (phase 8): despite the "prog" in two of
+// these names (a holdover from QuakeC's own addressing convention for an
+// `entity`-typed value), there's nothing QC-interpreter-specific about
+// any of them -- they're app-owned entity-pool utilities used throughout
+// the engine, not just by the QC backend. See qc_backend.h.
+edict_t *EDICT_NUM(int n);
+int NUM_FOR_EDICT(edict_t *e);
+edict_t *PROG_TO_EDICT(int prog);
+int EDICT_TO_PROG(edict_t *e);
+edict_t *NEXT_EDICT(edict_t *e);
+
 // Narrow network-buffer accessors -- same idea, for QuakeC builtins that
 // write directly to one of the server's outgoing message buffers instead
 // of going through WriteDest()'s destination dispatch.

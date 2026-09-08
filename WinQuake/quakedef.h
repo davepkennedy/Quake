@@ -81,6 +81,7 @@ void VID_UnlockBuffer(void);
 #include "render.h"
 #include "client.h"
 #include "progs.h"
+#include "qc_backend.h"
 #include "server.h"
 
 #include "gl_model.h"

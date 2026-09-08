@@ -312,14 +312,14 @@ void SV_TouchLinks(edict_t *ent, areanode_t *node)
         {
             continue;
         }
-        old_self = PR_GetSelf();
-        old_other = PR_GetOther();
+        old_self = g_qcBackend->GetSelf();
+        old_other = g_qcBackend->GetOther();
 
-        PR_SetGlobalTime(sv.time);
-        PR_ExecuteEntityFunction(touch, ent, touch->v.touch);
+        g_qcBackend->SetGlobalTime(sv.time);
+        g_qcBackend->ExecuteEntityFunctionWithOther(touch, ent, touch->v.touch);
 
-        PR_SetSelf(old_self);
-        PR_SetOther(old_other);
+        g_qcBackend->SetSelf(old_self);
+        g_qcBackend->SetOther(old_other);
     }
 
     // recurse down both sides

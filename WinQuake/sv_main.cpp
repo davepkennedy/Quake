@@ -54,6 +54,61 @@ void SV_SetLightStyle(int style, char *val)
     sv.lightstyles[style] = val;
 }
 
+int pr_edict_size;
+
+edict_t *EDICT_NUM(int n)
+{
+    if (n < 0 || n >= SV_MaxEdicts())
+    {
+        Sys_Error("EDICT_NUM: bad number {}", n);
+    }
+    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + (n)*pr_edict_size);
+}
+
+int NUM_FOR_EDICT(edict_t *e)
+{
+    int b;
+
+    b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(SV_EdictsBase());
+    b = b / pr_edict_size;
+
+    if (b < 0 || b >= SV_NumEdicts())
+    {
+        Sys_Error("NUM_FOR_EDICT: bad pointer");
+    }
+    return b;
+}
+
+edict_t *PROG_TO_EDICT(int prog)
+{
+    if (prog < 0 || prog >= SV_MaxEdicts() * pr_edict_size)
+    {
+        Sys_Error("PROG_TO_EDICT: bad prog offset {}", prog);
+    }
+    return reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(SV_EdictsBase()) + prog);
+}
+
+int EDICT_TO_PROG(edict_t *e)
+{
+    int b = reinterpret_cast<byte *>(e) - reinterpret_cast<byte *>(SV_EdictsBase());
+    if (b < 0 || b >= SV_MaxEdicts() * pr_edict_size)
+    {
+        Sys_Error("EDICT_TO_PROG: bad edict pointer");
+    }
+    return b;
+}
+
+edict_t *NEXT_EDICT(edict_t *e)
+{
+    edict_t *n = reinterpret_cast<edict_t *>(reinterpret_cast<byte *>(e) + pr_edict_size);
+    int b = reinterpret_cast<byte *>(n) - reinterpret_cast<byte *>(SV_EdictsBase());
+    if (b < 0 || b > SV_MaxEdicts() * pr_edict_size)
+    {
+        Sys_Error("NEXT_EDICT: walked off the edict array");
+    }
+    return n;
+}
+
 int SV_NumClients(void)
 {
     return svs.maxclients;
@@ -425,7 +480,7 @@ void SV_SendServerinfo(client_t *client)
         MSG_WriteByte(&client->message, GAME_COOP);
     }
 
-    snprintf(message, sizeof(message), "%s", PR_GetString(sv.edicts->v.message));
+    snprintf(message, sizeof(message), "%s", g_qcBackend->GetString(sv.edicts->v.message));
 
     MSG_WriteString(&client->message, message);
 
@@ -509,10 +564,10 @@ void SV_ConnectClient(int clientnum)
     else
     {
         // call the progs to get default spawn parms for the new client
-        PR_ExecuteProgram(pr_global_struct->SetNewParms);
+        g_qcBackend->ExecuteFunction(g_qcBackend->SetNewParmsFunc());
         for (i = 0; i < NUM_SPAWN_PARMS; i++)
         {
-            client->spawn_parms[i] = PR_GetSpawnParm(i);
+            client->spawn_parms[i] = g_qcBackend->GetSpawnParm(i);
         }
     }
 
@@ -683,7 +738,7 @@ void SV_WriteEntitiesToClient(edict_t *clent, sizebuf_t *msg)
         if (ent != clent) // clent is ALLWAYS sent
         {
             // ignore ents without visible models
-            if (!ent->v.modelindex || !PR_GetString(ent->v.model)[0])
+            if (!ent->v.modelindex || !g_qcBackend->GetString(ent->v.model)[0])
             {
                 continue;
             }
@@ -920,7 +975,7 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
 
 // stuff the sigil bits into the high bits of items for sbar, or else
 // mix in items2
-    val = GetEdictFieldValue(ent, "items2");
+    val = g_qcBackend->GetEdictFieldValue(ent, "items2");
 
     if (val)
     {
@@ -928,7 +983,7 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
     }
     else
     {
-        items = (int)ent->v.items | (PR_GetServerFlags() << 28);
+        items = (int)ent->v.items | (g_qcBackend->GetServerFlags() << 28);
     }
 
     bits |= SU_ITEMS;
@@ -1008,7 +1063,7 @@ void SV_WriteClientdataToMessage(edict_t *ent, sizebuf_t *msg)
     }
     if (bits & SU_WEAPON)
     {
-        MSG_WriteByte(msg, SV_ModelIndex(PR_GetString(ent->v.weaponmodel)));
+        MSG_WriteByte(msg, SV_ModelIndex(g_qcBackend->GetString(ent->v.weaponmodel)));
     }
 
     MSG_WriteShort(msg, ent->v.health);
@@ -1301,7 +1356,7 @@ void SV_CreateBaseline(void)
         else
         {
             svent->baseline.colormap = 0;
-            svent->baseline.modelindex = SV_ModelIndex(PR_GetString(svent->v.model));
+            svent->baseline.modelindex = SV_ModelIndex(g_qcBackend->GetString(svent->v.model));
         }
 
         //
@@ -1358,7 +1413,7 @@ void SV_SaveSpawnparms(void)
 {
     int i, j;
 
-    svs.serverflags = PR_GetServerFlags();
+    svs.serverflags = g_qcBackend->GetServerFlags();
 
     for (i = 0, host_client = svs.clients; i < svs.maxclients; i++, host_client++)
     {
@@ -1368,11 +1423,11 @@ void SV_SaveSpawnparms(void)
         }
 
         // call the progs to get default spawn parms for the new client
-        PR_SetSelf(host_client->edict); // other deliberately left untouched, matching the original
-        PR_ExecuteProgram(pr_global_struct->SetChangeParms);
+        g_qcBackend->SetSelf(host_client->edict); // other deliberately left untouched, matching the original
+        g_qcBackend->ExecuteFunction(g_qcBackend->SetChangeParmsFunc());
         for (j = 0; j < NUM_SPAWN_PARMS; j++)
         {
-            host_client->spawn_parms[j] = PR_GetSpawnParm(j);
+            host_client->spawn_parms[j] = g_qcBackend->GetSpawnParm(j);
         }
     }
 }
@@ -1438,8 +1493,9 @@ void SV_SpawnServer(char *server)
 
     Q_strlcpy(sv.name, server, sizeof(sv.name));
 
-    // load progs to get entity field count
-    PR_LoadProgs();
+    // load the game logic backend to get entity field count
+    g_qcBackend->LoadGameLogic();
+    pr_edict_size = sizeof(edict_t) - sizeof(entvars_t) + g_qcBackend->GetEdictExtraSize();
 
     // allocate server memory
     sv.max_edicts = MAX_EDICTS;
@@ -1501,7 +1557,7 @@ void SV_SpawnServer(char *server)
     // load the rest of the entities
     //
     ent = EDICT_NUM(0);
-    ED_ClearEdict(ent);
+    g_qcBackend->ClearEdict(ent);
     // mod_known[] is a BSS global array; copy name to hunk so string_t offset from pr_strings fits in int on x64
     tmp = static_cast<char *>(Hunk_Alloc((int)strlen(sv.worldmodel->name) + 1));
     Q_strlcpy(tmp, sv.worldmodel->name, strlen(sv.worldmodel->name) + 1);
@@ -1512,19 +1568,19 @@ void SV_SpawnServer(char *server)
 
     if (coop.value)
     {
-        PR_SetGameMode(0, coop.value);
+        g_qcBackend->SetGameMode(0, coop.value);
     }
     else
     {
-        PR_SetGameMode(deathmatch.value, 0);
+        g_qcBackend->SetGameMode(deathmatch.value, 0);
     }
 
-    PR_SetMapName(sv.name);
+    g_qcBackend->SetMapName(sv.name);
 
     // serverflags are for cross level information (sigils)
-    PR_SetServerFlags(svs.serverflags);
+    g_qcBackend->SetServerFlags(svs.serverflags);
 
-    ED_LoadFromFile(sv.worldmodel->entities);
+    g_qcBackend->SpawnEntitiesForLevel(sv.worldmodel->entities, deathmatch.value != 0, current_skill);
 
     sv.active = true;
 

@@ -88,6 +88,11 @@ void EnsureTestEdictsInit ()
 	{
 		EnsureRealProgsLoaded ();
 
+		// Real engine flow (SV_SpawnServer, sv_main.cpp) computes this right
+		// after loading the game logic backend -- not part of PR_LoadProgs
+		// itself since phase 8, so tests need to do it too.
+		pr_edict_size = sizeof (edict_t) - sizeof (entvars_t) + g_qcBackend->GetEdictExtraSize ();
+
 		constexpr int kTestMaxEdicts = 64;
 		sv.edicts = static_cast<edict_t *> (Hunk_AllocName (kTestMaxEdicts * pr_edict_size, "test_edicts"));
 		sv.max_edicts = kTestMaxEdicts;
@@ -245,12 +250,61 @@ server_state_t SV_State(void)
 	return sv.state;
 }
 
-// Link-time only: ED_LoadFromFile reads deathmatch.value and PR_LoadGame
-// reads current_skill, but no Phase-1 test calls either function (they pull
-// in map/savegame-parsing concerns out of scope for the interpreter/edict
-// tests here -- see the roadmap in the plan this was built from).
-cvar_t deathmatch = {"deathmatch", "0"};
-int current_skill = 0;
+// EDICT_NUM/NUM_FOR_EDICT/PROG_TO_EDICT/EDICT_TO_PROG/NEXT_EDICT/
+// pr_edict_size moved to sv_main.cpp (phase 8) -- same "real implementation,
+// duplicated here because sv_main.cpp itself isn't compiled into this
+// project" reasoning as the SV_* accessors above.
+int pr_edict_size;
+
+edict_t *EDICT_NUM (int n)
+{
+	if (n < 0 || n >= SV_MaxEdicts ())
+	{
+		Sys_Error ("EDICT_NUM: bad number {}", n);
+	}
+	return reinterpret_cast<edict_t *> (reinterpret_cast<byte *> (SV_EdictsBase ()) + (n)*pr_edict_size);
+}
+
+int NUM_FOR_EDICT (edict_t *e)
+{
+	int b = reinterpret_cast<byte *> (e) - reinterpret_cast<byte *> (SV_EdictsBase ());
+	b = b / pr_edict_size;
+	if (b < 0 || b >= SV_NumEdicts ())
+	{
+		Sys_Error ("NUM_FOR_EDICT: bad pointer");
+	}
+	return b;
+}
+
+edict_t *PROG_TO_EDICT (int prog)
+{
+	if (prog < 0 || prog >= SV_MaxEdicts () * pr_edict_size)
+	{
+		Sys_Error ("PROG_TO_EDICT: bad prog offset {}", prog);
+	}
+	return reinterpret_cast<edict_t *> (reinterpret_cast<byte *> (SV_EdictsBase ()) + prog);
+}
+
+int EDICT_TO_PROG (edict_t *e)
+{
+	int b = reinterpret_cast<byte *> (e) - reinterpret_cast<byte *> (SV_EdictsBase ());
+	if (b < 0 || b >= SV_MaxEdicts () * pr_edict_size)
+	{
+		Sys_Error ("EDICT_TO_PROG: bad edict pointer");
+	}
+	return b;
+}
+
+edict_t *NEXT_EDICT (edict_t *e)
+{
+	edict_t *n = reinterpret_cast<edict_t *> (reinterpret_cast<byte *> (e) + pr_edict_size);
+	int b = reinterpret_cast<byte *> (n) - reinterpret_cast<byte *> (SV_EdictsBase ());
+	if (b < 0 || b > SV_MaxEdicts () * pr_edict_size)
+	{
+		Sys_Error ("NEXT_EDICT: walked off the edict array");
+	}
+	return n;
+}
 
 // pr_cmds.cpp (the ~90 PF_* builtins) is out of scope for Phase 1 -- the
 // real-progs.dat tests deliberately exercise only builtin-free QC functions

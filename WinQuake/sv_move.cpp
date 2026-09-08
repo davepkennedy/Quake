@@ -464,7 +464,7 @@ void SV_MoveToGoal(void)
     edict_t *ent, *goal;
     float dist;
 
-    ent = PR_GetSelf();
+    ent = g_qcBackend->GetSelf();
     goal = PROG_TO_EDICT(ent->v.goalentity);
     dist = G_FLOAT(OFS_PARM0);
 

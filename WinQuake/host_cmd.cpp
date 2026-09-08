@@ -141,7 +141,7 @@ void Host_God_f(void)
         return;
     }
 
-    if (PR_IsDeathmatch() && !host_client->privileged)
+    if (g_qcBackend->IsDeathmatch() && !host_client->privileged)
     {
         return;
     }
@@ -165,7 +165,7 @@ void Host_Notarget_f(void)
         return;
     }
 
-    if (PR_IsDeathmatch() && !host_client->privileged)
+    if (g_qcBackend->IsDeathmatch() && !host_client->privileged)
     {
         return;
     }
@@ -191,7 +191,7 @@ void Host_Noclip_f(void)
         return;
     }
 
-    if (PR_IsDeathmatch() && !host_client->privileged)
+    if (g_qcBackend->IsDeathmatch() && !host_client->privileged)
     {
         return;
     }
@@ -225,7 +225,7 @@ void Host_Fly_f(void)
         return;
     }
 
-    if (PR_IsDeathmatch() && !host_client->privileged)
+    if (g_qcBackend->IsDeathmatch() && !host_client->privileged)
     {
         return;
     }
@@ -565,10 +565,10 @@ void Host_Savegame_f(void)
         }
     }
 
-    ED_WriteGlobals(f);
+    g_qcBackend->WriteGlobals(f);
     for (i = 0; i < sv.num_edicts; i++)
     {
-        ED_Write(f, EDICT_NUM(i));
+        g_qcBackend->WriteEdict(f, EDICT_NUM(i));
         f.flush();
     }
     Con_Printf("done.\n");
@@ -694,14 +694,14 @@ void Host_Loadgame_f(void)
 
         if (entnum == -1)
         { // parse the global vars
-            ED_ParseGlobals(start);
+            g_qcBackend->ReadGlobals(start);
         }
         else
         { // parse an edict
 
             ent = EDICT_NUM(entnum);
-            ED_ClearEdict(ent);
-            ED_ParseEdict(start, ent);
+            g_qcBackend->ClearEdict(ent);
+            g_qcBackend->ReadEdict(start, ent);
 
             // link it into the bsp tree
             if (!ent->free)
@@ -1016,9 +1016,9 @@ void Host_Kill_f(void)
         return;
     }
 
-    PR_SetGlobalTime(sv.time);
-    PR_SetSelf(sv_player); // other deliberately left untouched, matching the original
-    PR_ExecuteProgram(pr_global_struct->ClientKill);
+    g_qcBackend->SetGlobalTime(sv.time);
+    g_qcBackend->SetSelf(sv_player); // other deliberately left untouched, matching the original
+    g_qcBackend->ExecuteFunction(g_qcBackend->ClientKillFunc());
 }
 
 /*
@@ -1044,11 +1044,11 @@ void Host_Pause_f(void)
 
         if (sv.paused)
         {
-            SV_BroadcastPrintf("{} paused the game\n", PR_GetString(sv_player->v.netname));
+            SV_BroadcastPrintf("{} paused the game\n", g_qcBackend->GetString(sv_player->v.netname));
         }
         else
         {
-            SV_BroadcastPrintf("{} unpaused the game\n", PR_GetString(sv_player->v.netname));
+            SV_BroadcastPrintf("{} unpaused the game\n", g_qcBackend->GetString(sv_player->v.netname));
         }
 
         // send notification to all clients
@@ -1118,7 +1118,7 @@ void Host_Spawn_f(void)
         // set up the edict
         ent = host_client->edict;
 
-        ED_ClearEdict(ent);
+        g_qcBackend->ClearEdict(ent);
         ent->v.colormap = NUM_FOR_EDICT(ent);
         ent->v.team = (host_client->colors & 15) + 1;
         ent->v.netname = host_client->name - pr_strings;
@@ -1127,21 +1127,21 @@ void Host_Spawn_f(void)
 
         for (i = 0; i < NUM_SPAWN_PARMS; i++)
         {
-            PR_SetSpawnParm(i, host_client->spawn_parms[i]);
+            g_qcBackend->SetSpawnParm(i, host_client->spawn_parms[i]);
         }
 
         // call the spawn function
 
-        PR_SetGlobalTime(sv.time);
-        PR_SetSelf(sv_player); // other deliberately left untouched, matching the original
-        PR_ExecuteProgram(pr_global_struct->ClientConnect);
+        g_qcBackend->SetGlobalTime(sv.time);
+        g_qcBackend->SetSelf(sv_player); // other deliberately left untouched, matching the original
+        g_qcBackend->ExecuteFunction(g_qcBackend->ClientConnectFunc());
 
         if ((Sys_FloatTime() - host_client->netconnection->connecttime) <= sv.time)
         {
             Sys_Printf("{} entered the game\n", host_client->name);
         }
 
-        PR_ExecuteProgram(pr_global_struct->PutClientInServer);
+        g_qcBackend->ExecuteFunction(g_qcBackend->PutClientInServerFunc());
     }
 
     // send all current names, colors, and frag counts
@@ -1177,19 +1177,19 @@ void Host_Spawn_f(void)
     //
     MSG_WriteByte(&host_client->message, svc_updatestat);
     MSG_WriteByte(&host_client->message, STAT_TOTALSECRETS);
-    MSG_WriteLong(&host_client->message, PR_TotalSecrets());
+    MSG_WriteLong(&host_client->message, g_qcBackend->TotalSecrets());
 
     MSG_WriteByte(&host_client->message, svc_updatestat);
     MSG_WriteByte(&host_client->message, STAT_TOTALMONSTERS);
-    MSG_WriteLong(&host_client->message, PR_TotalMonsters());
+    MSG_WriteLong(&host_client->message, g_qcBackend->TotalMonsters());
 
     MSG_WriteByte(&host_client->message, svc_updatestat);
     MSG_WriteByte(&host_client->message, STAT_SECRETS);
-    MSG_WriteLong(&host_client->message, PR_FoundSecrets());
+    MSG_WriteLong(&host_client->message, g_qcBackend->FoundSecrets());
 
     MSG_WriteByte(&host_client->message, svc_updatestat);
     MSG_WriteByte(&host_client->message, STAT_MONSTERS);
-    MSG_WriteLong(&host_client->message, PR_KilledMonsters());
+    MSG_WriteLong(&host_client->message, g_qcBackend->KilledMonsters());
 
     //
     // send a fixangle
@@ -1254,7 +1254,7 @@ void Host_Kick_f(void)
             return;
         }
     }
-    else if (PR_IsDeathmatch() && !host_client->privileged)
+    else if (g_qcBackend->IsDeathmatch() && !host_client->privileged)
     {
         return;
     }
@@ -1371,7 +1371,7 @@ void Host_Give_f(void)
         return;
     }
 
-    if (PR_IsDeathmatch() && !host_client->privileged)
+    if (g_qcBackend->IsDeathmatch() && !host_client->privileged)
     {
         return;
     }
@@ -1430,7 +1430,7 @@ void Host_Give_f(void)
     case 's':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_shells1");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_shells1");
             if (val)
             {
                 (*val)->_float = v;
@@ -1442,7 +1442,7 @@ void Host_Give_f(void)
     case 'n':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_nails1");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_nails1");
             if (val)
             {
                 (*val)->_float = v;
@@ -1460,7 +1460,7 @@ void Host_Give_f(void)
     case 'l':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_lava_nails");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_lava_nails");
             if (val)
             {
                 (*val)->_float = v;
@@ -1474,7 +1474,7 @@ void Host_Give_f(void)
     case 'r':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_rockets1");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_rockets1");
             if (val)
             {
                 (*val)->_float = v;
@@ -1492,7 +1492,7 @@ void Host_Give_f(void)
     case 'm':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_multi_rockets");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_multi_rockets");
             if (val)
             {
                 (*val)->_float = v;
@@ -1509,7 +1509,7 @@ void Host_Give_f(void)
     case 'c':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_cells1");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_cells1");
             if (val)
             {
                 (*val)->_float = v;
@@ -1527,7 +1527,7 @@ void Host_Give_f(void)
     case 'p':
         if (rogue)
         {
-            val = GetEdictFieldValue(sv_player, "ammo_plasma");
+            val = g_qcBackend->GetEdictFieldValue(sv_player, "ammo_plasma");
             if (val)
             {
                 (*val)->_float = v;
@@ -1549,7 +1549,7 @@ std::optional<edict_t *> FindViewthing(void)
     for (i = 0; i < sv.num_edicts; i++)
     {
         e = EDICT_NUM(i);
-        if (!strcmp(PR_GetString(e->v.classname), "viewthing"))
+        if (!strcmp(g_qcBackend->GetString(e->v.classname), "viewthing"))
         {
             return e;
         }

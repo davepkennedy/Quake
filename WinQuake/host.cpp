@@ -358,10 +358,10 @@ void SV_DropClient(qboolean crash)
         {
             // call the prog function for removing a client
             // this will set the body to a dead frame, among other things
-            saveSelf = PR_GetSelf();
-            PR_SetSelf(host_client->edict);
-            PR_ExecuteProgram(pr_global_struct->ClientDisconnect);
-            PR_SetSelf(saveSelf);
+            saveSelf = g_qcBackend->GetSelf();
+            g_qcBackend->SetSelf(host_client->edict);
+            g_qcBackend->ExecuteFunction(g_qcBackend->ClientDisconnectFunc());
+            g_qcBackend->SetSelf(saveSelf);
         }
 
         Sys_Printf("Client {} removed\n", host_client->name);
@@ -569,7 +569,7 @@ Host_ServerFrame
 void Host_ServerFrame(void)
 {
     // run the world state
-    PR_SetFrameTime(host_frametime);
+    g_qcBackend->SetFrameTime(host_frametime);
 
     // set the time and clear the general datagram
     SV_ClearDatagram();
@@ -865,7 +865,7 @@ void Host_Init(quakeparms_t *parms)
     Key_Init();
     Con_Init();
     M_Init();
-    PR_Init();
+    g_qcBackend->Init();
     Mod_Init();
     NET_Init();
     SV_Init();

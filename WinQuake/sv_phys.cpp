@@ -99,12 +99,12 @@ void SV_CheckVelocity(edict_t *ent)
     {
         if (IS_NAN(ent->v.velocity[i]))
         {
-            Con_Printf("Got a NaN velocity on {}\n", PR_GetString(ent->v.classname));
+            Con_Printf("Got a NaN velocity on {}\n", g_qcBackend->GetString(ent->v.classname));
             ent->v.velocity[i] = 0;
         }
         if (IS_NAN(ent->v.origin[i]))
         {
-            Con_Printf("Got a NaN origin on {}\n", PR_GetString(ent->v.classname));
+            Con_Printf("Got a NaN origin on {}\n", g_qcBackend->GetString(ent->v.classname));
             ent->v.origin[i] = 0;
         }
         if (ent->v.velocity[i] > sv_maxvelocity.value)
@@ -145,8 +145,8 @@ qboolean SV_RunThink(edict_t *ent)
                              // by a trigger with a local time.
     }
     ent->v.nextthink = 0;
-    PR_SetGlobalTime(thinktime);
-    PR_ExecuteEntityFunction(ent, ent->v.think);
+    g_qcBackend->SetGlobalTime(thinktime);
+    g_qcBackend->ExecuteEntityFunction(ent, ent->v.think);
     return !ent->free;
 }
 
@@ -159,22 +159,22 @@ Two entities have touched, so run their touch functions
 */
 void SV_Impact(edict_t *e1, edict_t *e2)
 {
-    edict_t *old_self = PR_GetSelf();
-    edict_t *old_other = PR_GetOther();
+    edict_t *old_self = g_qcBackend->GetSelf();
+    edict_t *old_other = g_qcBackend->GetOther();
 
-    PR_SetGlobalTime(sv.time);
+    g_qcBackend->SetGlobalTime(sv.time);
     if (e1->v.touch && e1->v.solid != SOLID_NOT)
     {
-        PR_ExecuteEntityFunction(e1, e2, e1->v.touch);
+        g_qcBackend->ExecuteEntityFunctionWithOther(e1, e2, e1->v.touch);
     }
 
     if (e2->v.touch && e2->v.solid != SOLID_NOT)
     {
-        PR_ExecuteEntityFunction(e2, e1, e2->v.touch);
+        g_qcBackend->ExecuteEntityFunctionWithOther(e2, e1, e2->v.touch);
     }
 
-    PR_SetSelf(old_self);
-    PR_SetOther(old_other);
+    g_qcBackend->SetSelf(old_self);
+    g_qcBackend->SetOther(old_other);
 }
 
 /*
@@ -399,7 +399,7 @@ void SV_AddGravity(edict_t *ent)
 
     std::optional<eval_t *> val;
 
-    val = GetEdictFieldValue(ent, "gravity");
+    val = g_qcBackend->GetEdictFieldValue(ent, "gravity");
     if (val && (*val)->_float)
     {
         ent_gravity = (*val)->_float;
@@ -566,7 +566,7 @@ void SV_PushMove(edict_t *pusher, float movetime)
             // otherwise, just stay in place until the obstacle is gone
             if (pusher->v.blocked)
             {
-                PR_ExecuteEntityFunction(pusher, check, pusher->v.blocked);
+                g_qcBackend->ExecuteEntityFunctionWithOther(pusher, check, pusher->v.blocked);
             }
 
             // move back any entities we already moved
@@ -617,8 +617,8 @@ void SV_Physics_Pusher(edict_t *ent)
     if (thinktime > oldltime && thinktime <= ent->v.ltime)
     {
         ent->v.nextthink = 0;
-        PR_SetGlobalTime(sv.time);
-        PR_ExecuteEntityFunction(ent, ent->v.think);
+        g_qcBackend->SetGlobalTime(sv.time);
+        g_qcBackend->ExecuteEntityFunction(ent, ent->v.think);
         if (ent->free)
         {
             return;
@@ -965,9 +965,9 @@ void SV_Physics_Client(edict_t *ent, int num)
     //
     // call standard client pre-think
     //
-    PR_SetGlobalTime(sv.time);
-    PR_SetSelf(ent); // other deliberately left untouched, matching the original -- unlike the think/touch/blocked call sites above, nothing here ever set it
-    PR_ExecuteProgram(pr_global_struct->PlayerPreThink);
+    g_qcBackend->SetGlobalTime(sv.time);
+    g_qcBackend->SetSelf(ent); // other deliberately left untouched, matching the original -- unlike the think/touch/blocked call sites above, nothing here ever set it
+    g_qcBackend->ExecuteFunction(g_qcBackend->PlayerPreThinkFunc());
 
     //
     // do a move
@@ -1030,9 +1030,9 @@ void SV_Physics_Client(edict_t *ent, int num)
     //
     SV_LinkEdict(ent, true);
 
-    PR_SetGlobalTime(sv.time);
-    PR_SetSelf(ent); // other deliberately left untouched, matching the original
-    PR_ExecuteProgram(pr_global_struct->PlayerPostThink);
+    g_qcBackend->SetGlobalTime(sv.time);
+    g_qcBackend->SetSelf(ent); // other deliberately left untouched, matching the original
+    g_qcBackend->ExecuteFunction(g_qcBackend->PlayerPostThinkFunc());
 }
 
 //============================================================================
@@ -1260,8 +1260,8 @@ void SV_Physics(void)
     edict_t *ent;
 
     // let the progs know that a new frame has started
-    PR_SetGlobalTime(sv.time);
-    PR_ExecuteEntityFunction(sv.edicts, sv.edicts, pr_global_struct->StartFrame);
+    g_qcBackend->SetGlobalTime(sv.time);
+    g_qcBackend->ExecuteEntityFunctionWithOther(sv.edicts, sv.edicts, g_qcBackend->StartFrameFunc());
 
     // SV_CheckAllEnts ();
 
@@ -1276,7 +1276,7 @@ void SV_Physics(void)
             continue;
         }
 
-        if (PR_ForceRetouchPending())
+        if (g_qcBackend->ForceRetouchPending())
         {
             SV_LinkEdict(ent, true); // force retouch even for stationary
         }
@@ -1310,9 +1310,9 @@ void SV_Physics(void)
         }
     }
 
-    if (PR_ForceRetouchPending())
+    if (g_qcBackend->ForceRetouchPending())
     {
-        PR_DecrementForceRetouch();
+        g_qcBackend->DecrementForceRetouch();
     }
 
     sv.time += host_frametime;
