@@ -69,10 +69,18 @@ static GLint u_world_tex = -1;
 static GLint u_world_lm = -1;
 static GLint u_world_lmonly = -1;
 static GLint u_world_alpha = -1;
+static GLint u_world_wireframe = -1;
+static GLint u_world_wirecolor = -1;
 
 // Current alpha for the world shader -- 1.0 (opaque) except while R_Mirror
 // redraws the mirror quad through this same shader with r_mirroralpha.value.
 static float world_alpha = 1.0f;
+
+// r_showpvs debug view (see R_DrawWorld/R_RecursiveWorldNode): draws every
+// surface the PVS/leaf traversal marks visible as a flat-colored wireframe
+// instead of the normal textured+lightmapped fill.
+static bool world_wireframe = false;
+static const float world_wire_color[3] = {0.4f, 1.0f, 0.4f};
 
 void R_World_SetAlpha(float a)
 {
@@ -102,8 +110,14 @@ static const char world_frag_src[] = "#version 450 core\n"
                                      "uniform sampler2D u_lm;\n"
                                      "uniform int u_lm_only;\n"
                                      "uniform float u_alpha;\n"
+                                     "uniform int u_wireframe;\n"
+                                     "uniform vec3 u_wire_color;\n"
                                      "out vec4 frag_color;\n"
                                      "void main() {\n"
+                                     "    if (u_wireframe != 0) {\n"
+                                     "        frag_color = vec4(u_wire_color, 1.0);\n"
+                                     "        return;\n"
+                                     "    }\n"
                                      "    float lit = 1.0 - texture(u_lm, v_lmuv).r;\n"
                                      "    if (u_lm_only != 0)\n"
                                      "        frag_color = vec4(lit, lit, lit, u_alpha);\n"
@@ -422,6 +436,8 @@ void R_World_InitRenderer(void)
     u_world_lm = qglGetUniformLocation(world_prog, "u_lm");
     u_world_lmonly = qglGetUniformLocation(world_prog, "u_lm_only");
     u_world_alpha = qglGetUniformLocation(world_prog, "u_alpha");
+    u_world_wireframe = qglGetUniformLocation(world_prog, "u_wireframe");
+    u_world_wirecolor = qglGetUniformLocation(world_prog, "u_wire_color");
     qglUseProgram(0);
 
     world_vao = GLVertexArray::Create();
@@ -469,6 +485,8 @@ static void R_World_BeginDraw(void)
     qglUniform1i(u_world_lm, 1);
     qglUniform1i(u_world_lmonly, (int)r_lightmap.value);
     qglUniform1f(u_world_alpha, world_alpha);
+    qglUniform1i(u_world_wireframe, world_wireframe ? 1 : 0);
+    qglUniform3fv(u_world_wirecolor, 1, world_wire_color);
 }
 
 static void R_World_EndDraw(void)
@@ -1038,7 +1056,10 @@ void R_RecursiveWorldNode(mnode_t *node)
     {
         return;
     }
-    if (R_CullBox(node->mins, node->maxs))
+    // r_showpvs: skip the frustum cull too, so the PVS debug view shows the
+    // full envelope of what the leaf traversal considers visible regardless
+    // of which way the camera is pointed.
+    if (!r_showpvs.value && R_CullBox(node->mins, node->maxs))
     {
         return;
     }
@@ -1125,6 +1146,16 @@ void R_RecursiveWorldNode(mnode_t *node)
                     continue;
                 }
 
+                if (r_showpvs.value)
+                {
+                    // PVS debug view: wireframe every surface the leaf
+                    // traversal marked visible, front- or back-facing --
+                    // deliberately the superset the backface test below
+                    // would otherwise partially hide.
+                    DrawWorldSurfacePoly(surf->polys, surf->lightmaptexturenum, false);
+                    continue;
+                }
+
                 // don't backface underwater surfaces, because they warp
                 if (!(surf->flags & SURF_UNDERWATER) && ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK)))
                 {
@@ -1179,6 +1210,24 @@ void R_DrawWorld(void)
     currententity = &ent;
     currenttexture = -1;
 
+    if (r_showpvs.value)
+    {
+        // Wireframe the PVS instead of the normal textured+lightmapped
+        // world: one shader/VAO bind for the whole traversal, surfaces are
+        // drawn immediately as they're walked (see R_RecursiveWorldNode)
+        // rather than sorted into per-texture chains.
+        world_wireframe = true;
+        R_World_BeginDraw();
+        R_World_SetMVP();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        R_RecursiveWorldNode(CL_WorldModel()->nodes);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        R_World_EndDraw();
+        world_wireframe = false;
+        return;
+    }
 
     R_RecursiveWorldNode(CL_WorldModel()->nodes);
 

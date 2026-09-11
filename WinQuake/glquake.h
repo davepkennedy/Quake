@@ -213,6 +213,7 @@ extern cvar_t r_mirroralpha;
 extern cvar_t r_wateralpha;
 extern cvar_t r_dynamic;
 extern cvar_t r_novis;
+extern cvar_t r_showpvs;
 
 extern cvar_t gl_clear;
 extern cvar_t gl_cull;
