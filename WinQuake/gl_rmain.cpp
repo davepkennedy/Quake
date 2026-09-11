@@ -1539,6 +1539,41 @@ R_Clear
 */
 void R_Clear(void)
 {
+    static bool r_showpvs_was_active = false;
+
+    if (r_showpvs.value)
+    {
+        // The color-buffer-clear skip below is an optimization that relies
+        // on the normal opaque world draw covering every pixel every frame.
+        // The PVS wireframe debug view doesn't -- most of the screen is
+        // untouched background -- so without an explicit clear, wireframe
+        // lines from old camera positions never go away and the view
+        // fills in solid over a few frames of movement. Always clear both
+        // buffers here regardless of gl_clear/gl_ztrick.
+        //
+        // Also override the glClearColor set at GL init (gl_vidnt.cpp's
+        // deliberate alarm-red, there specifically so any *normal-mode*
+        // frame that fails to cover a pixel is obvious) -- against a
+        // wireframe view that red is just noise, not a diagnostic signal,
+        // so use black here instead. Restored below when r_showpvs goes
+        // back to 0, since glClearColor is otherwise only ever set once at
+        // GL init, not every frame.
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gldepthmin = 0;
+        gldepthmax = 1;
+        glDepthFunc(GL_LEQUAL);
+        glDepthRange(gldepthmin, gldepthmax);
+        r_showpvs_was_active = true;
+        return;
+    }
+
+    if (r_showpvs_was_active)
+    {
+        glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+        r_showpvs_was_active = false;
+    }
+
     if (r_mirroralpha.value != 1.0)
     {
         if (gl_clear.value)
